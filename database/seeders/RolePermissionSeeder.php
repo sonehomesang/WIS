@@ -1,0 +1,145 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Role;
+use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
+
+/**
+ * RBAC seed — source of truth: docs/v2/RBAC_MATRIX.md (from seed_roles.ts).
+ * 21 menus × 6 actions = 126 permissions; 7 roles + scope_rules.
+ */
+class RolePermissionSeeder extends Seeder
+{
+    /** @var list<string> */
+    private array $menus = [
+        'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo',
+        'catalog', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
+        'users', 'roles', 'settings', 'reports', 'audit', 'notifications',
+    ];
+
+    /** @var list<string> */
+    private array $actions = ['view', 'create', 'edit', 'delete', 'activate', 'deactivate'];
+
+    public function run(): void
+    {
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        // 1. Create 126 permissions
+        foreach ($this->menus as $menu) {
+            foreach ($this->actions as $action) {
+                Permission::firstOrCreate(['name' => "{$menu}.{$action}", 'guard_name' => 'web']);
+            }
+        }
+
+        // 2. Roles + matrix + scope_rules
+        $matrix = $this->matrix();
+        $scopes = $this->scopes();
+
+        foreach ($matrix as $roleName => $perMenu) {
+            $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+            $role->scope_rules = $scopes[$roleName];
+            $role->save();
+
+            $perms = [];
+            foreach ($perMenu as $menu => $primitive) {
+                foreach ($this->expand($primitive) as $action) {
+                    $perms[] = "{$menu}.{$action}";
+                }
+            }
+            $role->syncPermissions($perms);
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    /** Expand a permission-set primitive into its action list. */
+    private function expand(string $primitive): array
+    {
+        return match ($primitive) {
+            'allTrue' => ['view', 'create', 'edit', 'delete', 'activate', 'deactivate'],
+            'adminPerm' => ['view', 'create', 'edit', 'activate', 'deactivate'], // all minus delete
+            'viewOnly' => ['view'],
+            'viewCreateEdit' => ['view', 'create', 'edit'],
+            'viewCreateActivate' => ['view', 'create', 'activate'],
+            'viewCreateEditDeactivate' => ['view', 'create', 'edit', 'deactivate'],
+            'allFalse' => [],
+        };
+    }
+
+    /** Fill all menus with one primitive. */
+    private function allMenus(string $primitive): array
+    {
+        return array_fill_keys($this->menus, $primitive);
+    }
+
+    /** role => [menu => primitive] — verbatim from RBAC_MATRIX.md. */
+    private function matrix(): array
+    {
+        $superAdmin = $this->allMenus('allTrue');
+
+        $admin = $this->allMenus('adminPerm');
+        $admin['roles'] = 'viewOnly';
+
+        $warehouse = $this->allMenus('viewOnly');
+        foreach (['inventory', 'borrow', 'deposit', 'da', 'oga', 'expo'] as $m) {
+            $warehouse[$m] = 'adminPerm';
+        }
+        foreach (['roles', 'settings', 'audit'] as $m) {
+            $warehouse[$m] = 'allFalse';
+        }
+
+        $approver = $this->allMenus('viewOnly');
+        foreach (['borrow', 'deposit', 'request', 'da'] as $m) {
+            $approver[$m] = 'viewCreateActivate';
+        }
+        foreach (['users', 'roles', 'settings', 'audit'] as $m) {
+            $approver[$m] = 'allFalse';
+        }
+
+        $lineManager = $approver; // same permissions; scope differs
+
+        $requester = $this->allMenus('allFalse');
+        $requester['dashboard'] = 'viewOnly';
+        foreach (['borrow', 'deposit', 'request'] as $m) {
+            $requester[$m] = 'viewCreateEditDeactivate';
+        }
+        foreach (['inventory', 'da', 'oga', 'expo', 'catalog'] as $m) {
+            $requester[$m] = 'viewOnly';
+        }
+        $requester['notifications'] = 'viewOnly';
+
+        $supplier = $this->allMenus('allFalse');
+        $supplier['dashboard'] = 'viewOnly';
+        $supplier['request'] = 'viewOnly';
+        $supplier['oga'] = 'viewOnly';
+        $supplier['catalog'] = 'viewCreateEdit';
+        $supplier['notifications'] = 'viewOnly';
+
+        return [
+            'super_admin' => $superAdmin,
+            'admin' => $admin,
+            'warehouse_staff' => $warehouse,
+            'approver' => $approver,
+            'line_manager' => $lineManager,
+            'requester' => $requester,
+            'supplier' => $supplier,
+        ];
+    }
+
+    /** role => scope_rules. */
+    private function scopes(): array
+    {
+        return [
+            'super_admin' => ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
+            'admin' => ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
+            'warehouse_staff' => ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
+            'approver' => ['transactionScope' => 'assigned', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
+            'line_manager' => ['transactionScope' => 'assigned', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
+            'requester' => ['transactionScope' => 'own', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
+            'supplier' => ['transactionScope' => 'own_orders', 'inventoryScope' => 'none', 'catalogScope' => 'own_supplier'],
+        ];
+    }
+}
