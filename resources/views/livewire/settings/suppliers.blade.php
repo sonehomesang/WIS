@@ -41,6 +41,7 @@
                             <td class="px-4 py-2 text-gray-600">{{ $s->default_currency }}</td>
                             <td class="px-4 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $s->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $s->is_active ? 'active' : 'inactive' }}</span></td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
+                                <a href="{{ route('settings.suppliers.show', $s->id) }}" wire:navigate class="p-1 hover:text-sky-700 inline-block" title="Contracts / VAT"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></a>
                                 @canany(['supplier.activate', 'supplier.deactivate'])<button wire:click="toggle({{ $s->id }})" class="p-1 {{ $s->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $s->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany
                                 @can('supplier.edit')<button wire:click="editItem({{ $s->id }})" class="p-1 hover:text-gray-800" aria-label="Edit"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
                                 @can('supplier.delete')<button wire:click="delete({{ $s->id }})" wire:confirm="ລຶບ supplier ນີ້?" class="p-1 hover:text-red-600" aria-label="Delete"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
@@ -63,6 +64,7 @@
                     </div>
                     <div class="text-xs text-gray-500 mt-1">{{ $s->contact_person ?: '—' }} @if($s->contact_phone)· {{ $s->contact_phone }}@endif · {{ $s->default_currency }}</div>
                     <div class="flex gap-2 mt-2">
+                        <a href="{{ route('settings.suppliers.show', $s->id) }}" wire:navigate class="text-xs border rounded px-2 py-1 min-h-[36px] inline-flex items-center">Contracts</a>
                         @canany(['supplier.activate', 'supplier.deactivate'])<button wire:click="toggle({{ $s->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">{{ $s->is_active ? 'Disable' : 'Enable' }}</button>@endcanany
                         @can('supplier.edit')<button wire:click="editItem({{ $s->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Edit</button>@endcan
                         @can('supplier.delete')<button wire:click="delete({{ $s->id }})" wire:confirm="ລຶບ supplier ນີ້?" class="text-xs border rounded px-2 py-1 min-h-[36px]">Delete</button>@endcan
@@ -89,6 +91,18 @@
                     </div>
                     <div><label class="block text-sm text-gray-600 mb-1">ຊື່ອັງກິດ (name_en)</label><input type="text" wire:model="name_en" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     <div><label class="block text-sm text-gray-600 mb-1">ສະກຸນເງິນ</label><select wire:model="default_currency" class="w-full rounded-md border-gray-300 text-sm"><option>LAK</option><option>THB</option><option>USD</option></select></div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">VAT (%) <span class="text-xs text-gray-400">· ວ່າງ = global</span></label>
+                        <input type="number" step="0.01" min="0" max="100" wire:model="vat_rate" placeholder="global" class="w-full rounded-md border-gray-300 text-sm" />
+                        @error('vat_rate')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    @if ($editingId)
+                        <div class="md:col-span-2">
+                            <label class="block text-sm text-gray-600 mb-1">ເຫດຜົນປ່ຽນ VAT <span class="text-xs text-gray-400">(ບັງຄັບຖ້າປ່ຽນ rate)</span></label>
+                            <input type="text" wire:model="vat_reason" placeholder="ເຊັ່ນ: ສັນຍາໃໝ່ 2026 / ນະໂຍບາຍລັດ" class="w-full rounded-md border-gray-300 text-sm" />
+                            @error('vat_reason')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    @endif
                     <div><label class="block text-sm text-gray-600 mb-1">ຜູ້ຕິດຕໍ່</label><input type="text" wire:model="contact_person" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     <div><label class="block text-sm text-gray-600 mb-1">ໂທ</label><input type="text" wire:model="contact_phone" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     <div><label class="block text-sm text-gray-600 mb-1">Email</label><input type="email" wire:model="contact_email" class="w-full rounded-md border-gray-300 text-sm" />@error('contact_email')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror</div>

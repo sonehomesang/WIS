@@ -10,7 +10,7 @@
         ['label' => 'Audit log', 'perm' => 'audit.view'],
         ['label' => 'Reports', 'perm' => 'reports.view'],
         ['label' => 'Notifications', 'perm' => 'settings.view'],
-        ['label' => 'System', 'perm' => 'settings.view'],
+        ['label' => 'System', 'perm' => 'settings.view', 'route' => 'settings.system'],
     ];
 @endphp
 

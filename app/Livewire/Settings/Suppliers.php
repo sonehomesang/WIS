@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Supplier;
+use App\Models\SupplierVatChange;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -28,6 +29,9 @@ class Suppliers extends Component
     public string $default_currency = 'LAK';
     public string $notes = '';
     public bool $is_active = true;
+    public $vat_rate = null;               // null = use global
+    public ?float $originalVatRate = null;
+    public string $vat_reason = '';
 
     public function mount(): void
     {
@@ -55,6 +59,9 @@ class Suppliers extends Component
         $this->default_currency = $m->default_currency;
         $this->notes = $m->notes ?? '';
         $this->is_active = (bool) $m->is_active;
+        $this->vat_rate = $m->vat_rate !== null ? (float) $m->vat_rate : null;
+        $this->originalVatRate = $this->vat_rate;
+        $this->vat_reason = '';
         $this->resetValidation();
         $this->showModal = true;
     }
@@ -63,7 +70,10 @@ class Suppliers extends Component
     {
         abort_unless(auth()->user()->can('supplier.'.($this->editingId ? 'edit' : 'create')), 403);
 
-        $data = $this->validate([
+        $newRate = ($this->vat_rate === '' || $this->vat_rate === null) ? null : (float) $this->vat_rate;
+        $vatChanged = $this->editingId && $newRate !== ($this->originalVatRate === null ? null : (float) $this->originalVatRate);
+
+        $rules = [
             'name' => ['required', 'string', 'max:256', Rule::unique('suppliers', 'name')->whereNull('deleted_at')->ignore($this->editingId)],
             'name_en' => ['nullable', 'string', 'max:256'],
             'contact_person' => ['nullable', 'string', 'max:256'],
@@ -73,17 +83,46 @@ class Suppliers extends Component
             'tax_id' => ['nullable', 'string', 'max:64'],
             'payment_terms' => ['nullable', 'string', 'max:128'],
             'default_currency' => ['required', 'in:LAK,THB,USD'],
+            'vat_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['boolean'],
-        ], [], ['name' => 'ຊື່']);
+        ];
+        if ($vatChanged) {
+            $rules['vat_reason'] = ['required', 'string', 'max:500'];
+        }
+        $data = $this->validate($rules, [], ['name' => 'ຊື່', 'vat_reason' => 'ເຫດຜົນ', 'vat_rate' => 'VAT']);
 
         $uid = auth()->id();
-        $payload = collect($data)->map(fn ($v) => $v === '' ? null : $v)->toArray();
-        $payload['is_active'] = $this->is_active;
-        $payload['updated_by'] = $uid;
+        $payload = [
+            'name' => $data['name'],
+            'name_en' => $data['name_en'] ?: null,
+            'contact_person' => $data['contact_person'] ?: null,
+            'contact_phone' => $data['contact_phone'] ?: null,
+            'contact_email' => $data['contact_email'] ?: null,
+            'address' => $data['address'] ?: null,
+            'tax_id' => $data['tax_id'] ?: null,
+            'payment_terms' => $data['payment_terms'] ?: null,
+            'default_currency' => $data['default_currency'],
+            'vat_rate' => $newRate,
+            'notes' => $data['notes'] ?: null,
+            'is_active' => $this->is_active,
+            'updated_by' => $uid,
+        ];
 
         if ($this->editingId) {
-            Supplier::findOrFail($this->editingId)->update($payload);
+            $supplier = Supplier::findOrFail($this->editingId);
+            $supplier->update($payload);
+            if ($vatChanged) {
+                $supplier->vatChanges()->create([
+                    'old_rate' => $this->originalVatRate,
+                    'new_rate' => $newRate,
+                    'reason' => $this->vat_reason ?: null,
+                    'changed_by' => $uid,
+                    'changed_at' => now(),
+                ]);
+                $this->originalVatRate = $newRate;
+                $this->vat_reason = '';
+            }
         } else {
             $payload['slug'] = $this->uniqueSlug($data['name']);
             $payload['created_by'] = $uid;
@@ -121,6 +160,9 @@ class Suppliers extends Component
         $this->default_currency = 'LAK';
         $this->notes = '';
         $this->is_active = true;
+        $this->vat_rate = null;
+        $this->originalVatRate = null;
+        $this->vat_reason = '';
         $this->resetValidation();
     }
 

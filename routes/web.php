@@ -45,4 +45,12 @@ Route::get('settings/suppliers', \App\Livewire\Settings\Suppliers::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.suppliers');
 
+Route::get('settings/suppliers/{supplier}', \App\Livewire\Settings\SupplierDetail::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.suppliers.show');
+
+Route::get('settings/system', \App\Livewire\Settings\System::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.system');
+
 require __DIR__.'/auth.php';
