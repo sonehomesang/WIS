@@ -1,0 +1,146 @@
+<?php
+
+namespace App\Livewire\Settings;
+
+use App\Models\Department;
+use App\Models\Role;
+use App\Models\Unit;
+use App\Models\User;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+
+#[Layout('layouts.app')]
+class Users extends Component
+{
+    public string $search = '';
+
+    // Modal + form
+    public bool $showModal = false;
+    public ?int $editingId = null;
+    public string $display_name = '';
+    public string $email = '';
+    public string $password = '';
+    public string $role = '';
+    public ?int $unit_id = null;
+    public ?int $department_id = null;
+    public string $status = 'active';
+
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->can('users.view'), 403);
+    }
+
+    public function updatedUnitId(): void
+    {
+        $this->department_id = null;   // reset department when unit changes
+    }
+
+    public function newUser(): void
+    {
+        $this->resetForm();
+        $this->showModal = true;
+    }
+
+    public function editUser(int $id): void
+    {
+        $user = User::with('roles')->findOrFail($id);
+        $this->editingId = $user->id;
+        $this->display_name = $user->display_name;
+        $this->email = $user->email;
+        $this->password = '';
+        $this->role = $user->roles->first()?->name ?? '';
+        $this->unit_id = $user->unit_id;
+        $this->department_id = $user->department_id;
+        $this->status = $user->status;
+        $this->resetValidation();
+        $this->showModal = true;
+    }
+
+    public function save(): void
+    {
+        abort_unless(auth()->user()->can('users.'.($this->editingId ? 'edit' : 'create')), 403);
+
+        $data = $this->validate([
+            'display_name' => ['required', 'string', 'max:256'],
+            'email' => ['required', 'email', 'max:256', Rule::unique('users', 'email')->ignore($this->editingId)],
+            'password' => $this->editingId ? ['nullable', 'min:8'] : ['required', 'min:8'],
+            'role' => ['required', 'exists:roles,name'],
+            'unit_id' => ['nullable', 'exists:units,id'],
+            'department_id' => ['nullable', 'exists:departments,id'],
+            'status' => ['required', 'in:active,pending,locked'],
+        ]);
+
+        $attrs = [
+            'display_name' => $data['display_name'],
+            'email' => $data['email'],
+            'unit_id' => $data['unit_id'] ?: null,
+            'department_id' => $data['department_id'] ?: null,
+            'status' => $data['status'],
+        ];
+
+        if ($this->editingId) {
+            $user = User::findOrFail($this->editingId);
+            $user->fill($attrs);
+            if (filled($this->password)) {
+                $user->password = $this->password;   // 'hashed' cast hashes on save
+            }
+            $user->save();
+        } else {
+            $user = User::create($attrs + ['password' => $this->password, 'auth_provider' => 'password']);
+        }
+
+        $user->syncRoles([$this->role]);
+
+        $this->showModal = false;
+        $this->dispatch('saved');
+    }
+
+    public function approve(int $id): void
+    {
+        abort_unless(auth()->user()->can('users.activate'), 403);
+        User::whereKey($id)->update(['status' => 'active']);
+    }
+
+    public function toggleLock(int $id): void
+    {
+        $user = User::findOrFail($id);
+        $target = $user->status === 'locked' ? 'active' : 'locked';
+        abort_unless(auth()->user()->can('users.'.($target === 'locked' ? 'deactivate' : 'activate')), 403);
+        $user->update(['status' => $target]);
+    }
+
+    protected function resetForm(): void
+    {
+        $this->editingId = null;
+        $this->display_name = '';
+        $this->email = '';
+        $this->password = '';
+        $this->role = '';
+        $this->unit_id = null;
+        $this->department_id = null;
+        $this->status = 'active';
+        $this->resetValidation();
+    }
+
+    public function render(): View
+    {
+        $users = User::with(['roles', 'unit', 'department'])
+            ->when($this->search, function ($q) {
+                $q->where(fn ($w) => $w->where('display_name', 'like', "%{$this->search}%")
+                    ->orWhere('email', 'like', "%{$this->search}%"));
+            })
+            ->orderBy('display_name')
+            ->get();
+
+        return view('livewire.settings.users', [
+            'users' => $users,
+            'roles' => Role::orderBy('name')->pluck('name'),
+            'units' => Unit::where('is_active', true)->orderBy('name')->get(),
+            'formDepartments' => $this->unit_id
+                ? Department::where('unit_id', $this->unit_id)->where('is_active', true)->orderBy('name')->get()
+                : collect(),
+        ]);
+    }
+}
