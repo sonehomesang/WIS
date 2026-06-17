@@ -1,0 +1,310 @@
+<?php
+
+namespace App\Livewire\Settings;
+
+use App\Models\Building;
+use App\Models\Location;
+use App\Models\Room;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+
+#[Layout('layouts.app')]
+class Facilities extends Component
+{
+    public ?int $selectedLocationId = null;
+    public ?int $selectedBuildingId = null;
+
+    // Modal + form
+    public bool $showModal = false;
+    public string $type = 'location';   // location | building | room
+    public ?int $editingId = null;
+    public ?int $parentId = null;       // location_id (building) | building_id (room)
+
+    public string $name = '';
+    public string $name_en = '';
+    public string $address = '';
+    public string $code = '';
+    public string $btype = 'other';
+    public string $function = '';
+    public string $description = '';
+    public bool $is_active = true;
+
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->can('locations.view'), 403);
+        $this->selectedLocationId = Location::orderBy('name')->value('id');
+        $this->selectedBuildingId = $this->selectedLocationId
+            ? Building::where('location_id', $this->selectedLocationId)->orderBy('name')->value('id')
+            : null;
+    }
+
+    public function selectLocation(int $id): void
+    {
+        $this->selectedLocationId = $id;
+        $this->selectedBuildingId = Building::where('location_id', $id)->orderBy('name')->value('id');
+    }
+
+    public function selectBuilding(int $id): void
+    {
+        $this->selectedBuildingId = $id;
+    }
+
+    public function newLocation(): void
+    {
+        $this->resetForm('location');
+        $this->showModal = true;
+    }
+
+    public function editLocation(int $id): void
+    {
+        $m = Location::findOrFail($id);
+        $this->resetForm('location');
+        $this->editingId = $m->id;
+        $this->name = $m->name;
+        $this->name_en = $m->name_en ?? '';
+        $this->address = $m->address ?? '';
+        $this->description = $m->description ?? '';
+        $this->is_active = (bool) $m->is_active;
+        $this->showModal = true;
+    }
+
+    public function newBuilding(): void
+    {
+        if (! $this->selectedLocationId) {
+            return;
+        }
+        $this->resetForm('building');
+        $this->parentId = $this->selectedLocationId;
+        $this->showModal = true;
+    }
+
+    public function editBuilding(int $id): void
+    {
+        $m = Building::findOrFail($id);
+        $this->resetForm('building');
+        $this->editingId = $m->id;
+        $this->parentId = $m->location_id;
+        $this->name = $m->name;
+        $this->name_en = $m->name_en ?? '';
+        $this->code = $m->code ?? '';
+        $this->btype = $m->type;
+        $this->description = $m->description ?? '';
+        $this->is_active = (bool) $m->is_active;
+        $this->showModal = true;
+    }
+
+    public function newRoom(): void
+    {
+        if (! $this->selectedBuildingId) {
+            return;
+        }
+        $this->resetForm('room');
+        $this->parentId = $this->selectedBuildingId;
+        $this->showModal = true;
+    }
+
+    public function editRoom(int $id): void
+    {
+        $m = Room::findOrFail($id);
+        $this->resetForm('room');
+        $this->editingId = $m->id;
+        $this->parentId = $m->building_id;
+        $this->name = $m->name;
+        $this->function = $m->function ?? '';
+        $this->description = $m->description ?? '';
+        $this->is_active = (bool) $m->is_active;
+        $this->showModal = true;
+    }
+
+    public function save(): void
+    {
+        $menus = ['location' => 'locations', 'building' => 'buildings', 'room' => 'rooms'];
+        $menu = $menus[$this->type];
+        abort_unless(auth()->user()->can("{$menu}.".($this->editingId ? 'edit' : 'create')), 403);
+
+        // name unique within parent scope (locations unique globally)
+        if ($this->type === 'location') {
+            $nameRule = Rule::unique('locations', 'name')->whereNull('deleted_at')->ignore($this->editingId);
+        } elseif ($this->type === 'building') {
+            $nameRule = Rule::unique('buildings', 'name')->where('location_id', $this->parentId)->whereNull('deleted_at')->ignore($this->editingId);
+        } else {
+            $nameRule = Rule::unique('rooms', 'name')->where('building_id', $this->parentId)->whereNull('deleted_at')->ignore($this->editingId);
+        }
+
+        $rules = [
+            'name' => ['required', 'string', 'max:256', $nameRule],
+            'name_en' => ['nullable', 'string', 'max:256'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'is_active' => ['boolean'],
+        ];
+        if ($this->type === 'location') {
+            $rules['address'] = ['nullable', 'string', 'max:1000'];
+        } elseif ($this->type === 'building') {
+            $rules['parentId'] = ['required', 'exists:locations,id'];
+            $rules['code'] = ['nullable', 'string', 'max:64'];
+            $rules['btype'] = ['required', 'in:office,warehouse,workshop,powerhouse,other'];
+        } else {
+            $rules['parentId'] = ['required', 'exists:buildings,id'];
+            $rules['function'] = ['nullable', 'string', 'max:256'];
+        }
+        $this->validate($rules, [], ['name' => 'ຊື່', 'parentId' => 'parent']);
+
+        $uid = auth()->id();
+        $base = [
+            'name' => $this->name,
+            'name_en' => $this->name_en ?: null,
+            'description' => $this->description ?: null,
+            'is_active' => $this->is_active,
+            'updated_by' => $uid,
+        ];
+
+        if ($this->type === 'location') {
+            $base['address'] = $this->address ?: null;
+            if ($this->editingId) {
+                Location::findOrFail($this->editingId)->update($base);
+            } else {
+                $base['slug'] = $this->uniqueSlug($this->name, 'locations');
+                $base['created_by'] = $uid;
+                $this->selectedLocationId = Location::create($base)->id;
+                $this->selectedBuildingId = null;
+            }
+        } elseif ($this->type === 'building') {
+            $base['location_id'] = $this->parentId;
+            $base['code'] = $this->code ?: null;
+            $base['type'] = $this->btype;
+            if ($this->editingId) {
+                Building::findOrFail($this->editingId)->update($base);
+            } else {
+                $base['slug'] = $this->uniqueSlug($this->name, 'buildings');
+                $base['created_by'] = $uid;
+                $this->selectedLocationId = $this->parentId;
+                $this->selectedBuildingId = Building::create($base)->id;
+            }
+        } else {
+            $base['building_id'] = $this->parentId;
+            $base['function'] = $this->function ?: null;
+            if ($this->editingId) {
+                Room::findOrFail($this->editingId)->update($base);
+            } else {
+                $base['slug'] = $this->uniqueSlug($this->name, 'rooms');
+                $base['created_by'] = $uid;
+                $this->selectedBuildingId = $this->parentId;
+                Room::create($base);
+            }
+        }
+
+        $this->showModal = false;
+        $this->dispatch('saved');
+    }
+
+    public function toggleLocation(int $id): void
+    {
+        $m = Location::findOrFail($id);
+        abort_unless(auth()->user()->can('locations.'.($m->is_active ? 'deactivate' : 'activate')), 403);
+        $m->update(['is_active' => ! $m->is_active, 'updated_by' => auth()->id()]);
+    }
+
+    public function deleteLocation(int $id): void
+    {
+        abort_unless(auth()->user()->can('locations.delete'), 403);
+        $m = Location::findOrFail($id);
+        if ($m->buildings()->exists()) {
+            $this->addError('row', 'ລຶບ Location ບໍ່ໄດ້ — ຍັງມີ Building ຢູ່ພາຍໃນ.');
+
+            return;
+        }
+        $m->delete();
+        if ($this->selectedLocationId === $id) {
+            $this->selectedLocationId = Location::orderBy('name')->value('id');
+            $this->selectedBuildingId = $this->selectedLocationId
+                ? Building::where('location_id', $this->selectedLocationId)->orderBy('name')->value('id')
+                : null;
+        }
+    }
+
+    public function toggleBuilding(int $id): void
+    {
+        $m = Building::findOrFail($id);
+        abort_unless(auth()->user()->can('buildings.'.($m->is_active ? 'deactivate' : 'activate')), 403);
+        $m->update(['is_active' => ! $m->is_active, 'updated_by' => auth()->id()]);
+    }
+
+    public function deleteBuilding(int $id): void
+    {
+        abort_unless(auth()->user()->can('buildings.delete'), 403);
+        $m = Building::findOrFail($id);
+        if ($m->rooms()->exists()) {
+            $this->addError('row', 'ລຶບ Building ບໍ່ໄດ້ — ຍັງມີ Room ຢູ່ພາຍໃນ.');
+
+            return;
+        }
+        $m->delete();
+        if ($this->selectedBuildingId === $id) {
+            $this->selectedBuildingId = Building::where('location_id', $this->selectedLocationId)->orderBy('name')->value('id');
+        }
+    }
+
+    public function toggleRoom(int $id): void
+    {
+        $m = Room::findOrFail($id);
+        abort_unless(auth()->user()->can('rooms.'.($m->is_active ? 'deactivate' : 'activate')), 403);
+        $m->update(['is_active' => ! $m->is_active, 'updated_by' => auth()->id()]);
+    }
+
+    public function deleteRoom(int $id): void
+    {
+        abort_unless(auth()->user()->can('rooms.delete'), 403);
+        Room::findOrFail($id)->delete();
+    }
+
+    protected function resetForm(string $type): void
+    {
+        $this->type = $type;
+        $this->editingId = null;
+        $this->parentId = null;
+        $this->name = '';
+        $this->name_en = '';
+        $this->address = '';
+        $this->code = '';
+        $this->btype = 'other';
+        $this->function = '';
+        $this->description = '';
+        $this->is_active = true;
+        $this->resetValidation();
+    }
+
+    protected function uniqueSlug(string $base, string $table): string
+    {
+        $slug = Str::slug($base) ?: 'item';
+        $original = $slug;
+        $i = 2;
+        while (DB::table($table)->where('slug', $slug)->exists()) {
+            $slug = $original.'-'.$i++;
+        }
+
+        return $slug;
+    }
+
+    public function render(): View
+    {
+        $locations = Location::withCount('buildings')->orderBy('name')->get();
+        $buildings = $this->selectedLocationId
+            ? Building::where('location_id', $this->selectedLocationId)->withCount('rooms')->orderBy('name')->get()
+            : collect();
+        $rooms = $this->selectedBuildingId
+            ? Room::where('building_id', $this->selectedBuildingId)->orderBy('name')->get()
+            : collect();
+
+        return view('livewire.settings.facilities', [
+            'locations' => $locations,
+            'buildings' => $buildings,
+            'rooms' => $rooms,
+            'selectedLocation' => $this->selectedLocationId ? $locations->firstWhere('id', $this->selectedLocationId) : null,
+            'selectedBuilding' => $this->selectedBuildingId ? $buildings->firstWhere('id', $this->selectedBuildingId) : null,
+        ]);
+    }
+}

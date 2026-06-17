@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\Unit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -67,15 +68,22 @@ class Organization extends Component
     public function save(): void
     {
         $menu = $this->type === 'unit' ? 'units' : 'departments';
-        $action = $this->editingId ? 'edit' : 'create';
-        abort_unless(auth()->user()->can("{$menu}.{$action}"), 403);
+        abort_unless(auth()->user()->can("{$menu}.".($this->editingId ? 'edit' : 'create')), 403);
 
-        $data = $this->validate([
-            'name' => ['required', 'string', 'max:256'],
+        $nameRule = $this->type === 'unit'
+            ? Rule::unique('units', 'name')->whereNull('deleted_at')->ignore($this->editingId)
+            : Rule::unique('departments', 'name')->where('unit_id', $this->unitId)->whereNull('deleted_at')->ignore($this->editingId);
+
+        $rules = [
+            'name' => ['required', 'string', 'max:256', $nameRule],
             'name_en' => ['nullable', 'string', 'max:256'],
             'description' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['boolean'],
-        ]);
+        ];
+        if ($this->type === 'department') {
+            $rules['unitId'] = ['required', 'integer', 'exists:units,id'];
+        }
+        $data = $this->validate($rules, [], ['name' => 'ຊື່', 'unitId' => 'ໜ່ວຍງານ']);
 
         $uid = auth()->id();
         $payload = [
@@ -90,25 +98,59 @@ class Organization extends Component
             if ($this->editingId) {
                 Unit::findOrFail($this->editingId)->update($payload);
             } else {
-                $payload['slug'] = $this->uniqueSlug($data['name'], 'units', null);
+                $payload['slug'] = $this->uniqueSlug($data['name'], 'units');
                 $payload['created_by'] = $uid;
                 $this->selectedUnitId = Unit::create($payload)->id;
             }
         } else {
-            $this->validate(['unitId' => ['required', 'integer', 'exists:units,id']]);
             $payload['unit_id'] = $this->unitId;
             if ($this->editingId) {
                 Department::findOrFail($this->editingId)->update($payload);
             } else {
-                $payload['slug'] = $this->uniqueSlug($data['name'], 'departments', null);
+                $payload['slug'] = $this->uniqueSlug($data['name'], 'departments');
                 $payload['created_by'] = $uid;
                 Department::create($payload);
             }
-            $this->selectedUnitId = $this->unitId;   // jump to the (possibly new) parent unit
+            $this->selectedUnitId = $this->unitId;
         }
 
         $this->showModal = false;
         $this->dispatch('saved');
+    }
+
+    public function toggleUnit(int $id): void
+    {
+        $unit = Unit::findOrFail($id);
+        abort_unless(auth()->user()->can('units.'.($unit->is_active ? 'deactivate' : 'activate')), 403);
+        $unit->update(['is_active' => ! $unit->is_active, 'updated_by' => auth()->id()]);
+    }
+
+    public function deleteUnit(int $id): void
+    {
+        abort_unless(auth()->user()->can('units.delete'), 403);
+        $unit = Unit::findOrFail($id);
+        if ($unit->departments()->exists()) {
+            $this->addError('row', 'ລຶບ Unit ບໍ່ໄດ້ — ຍັງມີ Department ຢູ່ພາຍໃນ.');
+
+            return;
+        }
+        $unit->delete();
+        if ($this->selectedUnitId === $id) {
+            $this->selectedUnitId = Unit::orderBy('name')->value('id');
+        }
+    }
+
+    public function toggleDepartment(int $id): void
+    {
+        $dept = Department::findOrFail($id);
+        abort_unless(auth()->user()->can('departments.'.($dept->is_active ? 'deactivate' : 'activate')), 403);
+        $dept->update(['is_active' => ! $dept->is_active, 'updated_by' => auth()->id()]);
+    }
+
+    public function deleteDepartment(int $id): void
+    {
+        abort_unless(auth()->user()->can('departments.delete'), 403);
+        Department::findOrFail($id)->delete();
     }
 
     protected function resetForm(string $type): void
@@ -136,16 +178,12 @@ class Organization extends Component
         $this->showModal = true;
     }
 
-    protected function uniqueSlug(string $base, string $table, ?int $ignoreId): string
+    protected function uniqueSlug(string $base, string $table): string
     {
         $slug = Str::slug($base) ?: 'item';
         $original = $slug;
         $i = 2;
-        while (
-            DB::table($table)->where('slug', $slug)
-                ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
-                ->exists()
-        ) {
+        while (DB::table($table)->where('slug', $slug)->exists()) {
             $slug = $original.'-'.$i++;
         }
 

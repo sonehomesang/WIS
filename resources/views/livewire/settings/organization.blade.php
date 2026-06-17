@@ -1,14 +1,21 @@
+@php
+    $svgEdit = 'm16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z';
+    $svgPower = 'M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9';
+    $svgTrash = 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16';
+@endphp
+
 <div class="py-6 sm:py-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-        <div class="flex items-center justify-between">
-            <div>
+        <div class="flex items-start justify-between">
+            <div class="space-y-2">
                 <h2 class="text-xl font-semibold text-gray-800">Organization</h2>
-                <p class="text-sm text-gray-500">Unit → Department · ກົດ Unit ເພື່ອເບິ່ງ Departments</p>
+                @include('settings._org-tabs')
             </div>
-            <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)"
-                 x-show="show" style="display:none"
+            <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
                  class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-1">ບັນທຶກແລ້ວ ✓</div>
         </div>
+
+        @error('row')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror
 
         <div class="flex flex-col md:flex-row gap-4 items-start">
             {{-- Units --}}
@@ -22,17 +29,17 @@
                 <ul>
                     @forelse ($units as $unit)
                         <li wire:key="unit-{{ $unit->id }}" class="flex items-center justify-between px-2 py-1 border-b border-gray-100 {{ $selectedUnitId === $unit->id ? 'bg-sky-50' : 'hover:bg-gray-50' }}">
-                            <button wire:click="selectUnit({{ $unit->id }})" class="flex-1 text-left px-2 py-2 min-h-[40px] text-sm {{ $selectedUnitId === $unit->id ? 'text-sky-700 font-medium' : 'text-gray-700' }}">
+                            <button wire:click="selectUnit({{ $unit->id }})" class="flex-1 text-left px-2 py-2 min-h-[40px] text-sm {{ $selectedUnitId === $unit->id ? 'text-sky-700 font-medium' : 'text-gray-700' }} {{ $unit->is_active ? '' : 'opacity-50' }}">
                                 {{ $unit->name }}
                                 @unless ($unit->is_active)<span class="text-xs text-gray-400">(inactive)</span>@endunless
                             </button>
-                            <span class="flex items-center gap-2 pr-2">
-                                <span class="text-xs text-gray-400">{{ $unit->departments_count }}</span>
-                                @can('units.edit')
-                                    <button wire:click="editUnit({{ $unit->id }})" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Edit unit">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
-                                    </button>
-                                @endcan
+                            <span class="flex items-center gap-0.5 pr-1">
+                                <span class="text-xs text-gray-400 mr-1">{{ $unit->departments_count }}</span>
+                                @canany(['units.activate', 'units.deactivate'])
+                                    <button wire:click="toggleUnit({{ $unit->id }})" class="p-1 {{ $unit->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $unit->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>
+                                @endcanany
+                                @can('units.edit')<button wire:click="editUnit({{ $unit->id }})" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
+                                @can('units.delete')<button wire:click="deleteUnit({{ $unit->id }})" wire:confirm="ລຶບ Unit ນີ້? (soft delete — ກູ້ຄືນໄດ້)" class="text-gray-400 hover:text-red-600 p-1" aria-label="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
                             </span>
                         </li>
                     @empty
@@ -52,14 +59,14 @@
                 <ul>
                     @forelse ($departments as $d)
                         <li wire:key="dept-{{ $d->id }}" class="flex items-center justify-between px-4 py-2 border-b border-gray-100 min-h-[44px]">
-                            <span class="text-sm text-gray-700">{{ $d->name }}@if ($d->description)<span class="text-xs text-gray-400"> · {{ $d->description }}</span>@endif</span>
-                            <span class="flex items-center gap-3">
+                            <span class="text-sm text-gray-700 {{ $d->is_active ? '' : 'opacity-50' }}">{{ $d->name }}@if ($d->description)<span class="text-xs text-gray-400"> · {{ $d->description }}</span>@endif</span>
+                            <span class="flex items-center gap-1">
                                 <span class="text-xs px-2 py-0.5 rounded {{ $d->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $d->is_active ? 'active' : 'inactive' }}</span>
-                                @can('departments.edit')
-                                    <button wire:click="editDepartment({{ $d->id }})" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Edit department">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
-                                    </button>
-                                @endcan
+                                @canany(['departments.activate', 'departments.deactivate'])
+                                    <button wire:click="toggleDepartment({{ $d->id }})" class="p-1 {{ $d->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $d->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>
+                                @endcanany
+                                @can('departments.edit')<button wire:click="editDepartment({{ $d->id }})" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
+                                @can('departments.delete')<button wire:click="deleteDepartment({{ $d->id }})" wire:confirm="ລຶບ Department ນີ້?" class="text-gray-400 hover:text-red-600 p-1" aria-label="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
                             </span>
                         </li>
                     @empty
@@ -85,9 +92,7 @@
                         <div>
                             <label class="block text-sm text-gray-600 mb-1">ໜ່ວຍງານ (Org Unit) <span class="text-red-500">*</span></label>
                             <select wire:model="unitId" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
-                                @foreach ($units as $u)
-                                    <option value="{{ $u->id }}">{{ $u->name }}</option>
-                                @endforeach
+                                @foreach ($units as $u)<option value="{{ $u->id }}">{{ $u->name }}</option>@endforeach
                             </select>
                             <p class="text-xs text-gray-400 mt-1">1 Org Unit ມີໄດ້ຫຼາຍ Department · department ຢູ່ໃຕ້ Org Unit</p>
                             @error('unitId')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
