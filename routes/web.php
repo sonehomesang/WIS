@@ -37,4 +37,8 @@ Route::get('settings/uom', \App\Livewire\Settings\Uom::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.uom');
 
+Route::get('settings/suppliers', \App\Livewire\Settings\Suppliers::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.suppliers');
+
 require __DIR__.'/auth.php';
