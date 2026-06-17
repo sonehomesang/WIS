@@ -44,12 +44,15 @@
             <div class="w-full md:flex-1 bg-white border border-gray-100 rounded-lg overflow-hidden">
                 <div class="flex items-center justify-between px-3 py-2.5 border-b border-gray-100">
                     <span class="font-medium text-sm text-gray-700">Buildings @if ($selectedLocation)— {{ $selectedLocation->name }}@endif</span>
-                    @can('buildings.create')<button wire:click="newBuilding" @disabled(! $selectedLocationId) class="text-xs text-white bg-sky-600 rounded-md px-2 py-1 min-h-[32px] hover:bg-sky-700 disabled:opacity-40">+ Add</button>@endcan
+                    <span class="flex items-center gap-2">
+                        @canany(['buildings.create', 'buildings.edit'])<button wire:click="openTypesManager" class="text-xs text-gray-500 hover:text-gray-700" title="Manage building types">⚙ Types</button>@endcanany
+                        @can('buildings.create')<button wire:click="newBuilding" @disabled(! $selectedLocationId) class="text-xs text-white bg-sky-600 rounded-md px-2 py-1 min-h-[32px] hover:bg-sky-700 disabled:opacity-40">+ Add</button>@endcan
+                    </span>
                 </div>
                 <ul class="text-sm">
                     @forelse ($buildings as $b)
                         <li wire:key="bld-{{ $b->id }}" class="flex items-center justify-between border-b border-gray-100 {{ $selectedBuildingId === $b->id ? 'bg-sky-50' : 'hover:bg-gray-50' }}">
-                            <button wire:click="selectBuilding({{ $b->id }})" class="flex-1 text-left px-3 py-2 min-h-[40px] {{ $selectedBuildingId === $b->id ? 'text-sky-700 font-medium' : 'text-gray-700' }} {{ $b->is_active ? '' : 'opacity-50' }}">{{ $b->name }} <span class="text-xs text-gray-400">@if($b->code)· {{ $b->code }} @endif· {{ $b->type }}</span></button>
+                            <button wire:click="selectBuilding({{ $b->id }})" class="flex-1 text-left px-3 py-2 min-h-[40px] {{ $selectedBuildingId === $b->id ? 'text-sky-700 font-medium' : 'text-gray-700' }} {{ $b->is_active ? '' : 'opacity-50' }}">{{ $b->name }} <span class="text-xs text-gray-400">@if($b->code)· {{ $b->code }} @endif· {{ $b->buildingType?->name ?? '—' }}</span></button>
                             <span class="flex items-center gap-0.5 pr-1"><span class="text-xs text-gray-400 mr-0.5">{{ $b->rooms_count }}</span>
                                 @canany(['buildings.activate', 'buildings.deactivate'])<button wire:click="toggleBuilding({{ $b->id }})" class="p-1 {{ $b->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $b->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany
                                 @can('buildings.edit')<button wire:click="editBuilding({{ $b->id }})" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
@@ -57,7 +60,7 @@
                             </span>
                         </li>
                     @empty
-                        <li class="px-3 py-6 text-center text-gray-400 text-sm">@if ($selectedLocationId)ຍັງບໍ່ມີ building@else ເລືອກ location @endif</li>
+                        <li class="px-3 py-6 text-center text-gray-400 text-sm">@if ($selectedLocationId) ຍັງບໍ່ມີ building @else ເລືອກ location @endif</li>
                     @endforelse
                 </ul>
             </div>
@@ -79,7 +82,7 @@
                             </span>
                         </li>
                     @empty
-                        <li class="px-3 py-6 text-center text-gray-400 text-sm">@if ($selectedBuildingId)ຍັງບໍ່ມີ room@else ເລືອກ building @endif</li>
+                        <li class="px-3 py-6 text-center text-gray-400 text-sm">@if ($selectedBuildingId) ຍັງບໍ່ມີ room @else ເລືອກ building @endif</li>
                     @endforelse
                 </ul>
             </div>
@@ -138,14 +141,12 @@
                             <input type="text" wire:model="code" class="w-full rounded-md border-gray-300 text-sm" />
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">Type</label>
-                            <select wire:model="btype" class="w-full rounded-md border-gray-300 text-sm">
-                                <option value="office">office</option>
-                                <option value="warehouse">warehouse</option>
-                                <option value="workshop">workshop</option>
-                                <option value="powerhouse">powerhouse</option>
-                                <option value="other">other</option>
+                            <label class="block text-sm text-gray-600 mb-1">Type <span class="text-red-500">*</span></label>
+                            <select wire:model="buildingTypeId" class="w-full rounded-md border-gray-300 text-sm">
+                                <option value="">—</option>
+                                @foreach ($buildingTypes as $bt)<option value="{{ $bt->id }}">{{ $bt->name }}</option>@endforeach
                             </select>
+                            @error('buildingTypeId')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                         </div>
                     </div>
                 @else
@@ -163,6 +164,37 @@
                     <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
                     <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
                 </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Building types manager --}}
+    @if ($showTypesModal)
+        <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="types-modal">
+            <div class="bg-white w-full md:max-w-sm rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-800">Building types</h3>
+                    <button wire:click="$set('showTypesModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+                </div>
+                @error('typeRow')<div class="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1">{{ $message }}</div>@enderror
+                <div class="flex gap-2">
+                    <input type="text" wire:model="typeName" placeholder="{{ $typeEditingId ? 'ແກ້ຊື່ type' : 'ຊື່ type ໃໝ່' }}" class="flex-1 rounded-md border-gray-300 text-sm" />
+                    <button wire:click="saveType" class="text-sm text-white bg-sky-600 rounded-md px-3 min-h-[40px] hover:bg-sky-700">{{ $typeEditingId ? 'Update' : 'Add' }}</button>
+                </div>
+                @error('typeName')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                <ul class="text-sm border-t border-gray-100">
+                    @foreach ($allTypes as $t)
+                        <li wire:key="bt-{{ $t->id }}" class="flex items-center justify-between py-2 border-b border-gray-100">
+                            <span class="{{ $t->is_active ? 'text-gray-700' : 'text-gray-400' }}">{{ $t->name }}@unless ($t->is_active) (off)@endunless</span>
+                            <span class="flex items-center gap-1">
+                                @canany(['buildings.activate', 'buildings.deactivate'])<button wire:click="toggleType({{ $t->id }})" class="p-1 {{ $t->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $t->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany
+                                @can('buildings.edit')<button wire:click="editType({{ $t->id }})" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
+                                @can('buildings.delete')<button wire:click="deleteType({{ $t->id }})" wire:confirm="ລຶບ type ນີ້?" class="text-gray-400 hover:text-red-600 p-1" aria-label="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
+                <div class="flex justify-end pt-1"><button wire:click="$set('showTypesModal', false)" class="text-sm border border-gray-300 rounded-md px-4 py-2 min-h-[40px]">ປິດ</button></div>
             </div>
         </div>
     @endif

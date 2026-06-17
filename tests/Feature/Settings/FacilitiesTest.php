@@ -21,10 +21,11 @@ test('super admin can build location -> building -> room', function () {
     $loc = Location::where('name', 'NT2 Site')->first();
     expect($loc)->not->toBeNull();
 
-    $c->call('newBuilding')->set('name', 'Warehouse A')->set('btype', 'warehouse')->call('save')->assertHasNoErrors();
+    $warehouseTypeId = \App\Models\BuildingType::where('slug', 'warehouse')->value('id');
+    $c->call('newBuilding')->set('name', 'Warehouse A')->set('buildingTypeId', $warehouseTypeId)->call('save')->assertHasNoErrors();
     $building = Building::where('name', 'Warehouse A')->first();
     expect($building->location_id)->toBe($loc->id);
-    expect($building->type)->toBe('warehouse');
+    expect($building->building_type_id)->toBe($warehouseTypeId);
 
     $c->call('newRoom')->set('name', 'Storage 1')->set('function', 'storage')->call('save')->assertHasNoErrors();
     $room = Room::where('name', 'Storage 1')->first();
@@ -34,4 +35,16 @@ test('super admin can build location -> building -> room', function () {
 test('non-permitted user cannot open facilities', function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => false]));
     Livewire::test(Facilities::class)->assertForbidden();
+});
+
+test('super admin can add a building type', function () {
+    $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+
+    Livewire::test(Facilities::class)
+        ->call('openTypesManager')
+        ->set('typeName', 'Substation')
+        ->call('saveType')
+        ->assertHasNoErrors();
+
+    expect(\App\Models\BuildingType::where('name', 'Substation')->exists())->toBeTrue();
 });

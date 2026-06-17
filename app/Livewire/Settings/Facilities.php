@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Building;
+use App\Models\BuildingType;
 use App\Models\Location;
 use App\Models\Room;
 use Illuminate\Support\Facades\DB;
@@ -28,8 +29,13 @@ class Facilities extends Component
     public string $name_en = '';
     public string $address = '';
     public string $code = '';
-    public string $btype = 'other';
+    public ?int $buildingTypeId = null;
     public string $function = '';
+
+    // Building-types manager
+    public bool $showTypesModal = false;
+    public string $typeName = '';
+    public ?int $typeEditingId = null;
     public string $description = '';
     public bool $is_active = true;
 
@@ -79,6 +85,7 @@ class Facilities extends Component
         }
         $this->resetForm('building');
         $this->parentId = $this->selectedLocationId;
+        $this->buildingTypeId = BuildingType::where('is_active', true)->orderBy('name')->value('id');
         $this->showModal = true;
     }
 
@@ -91,7 +98,7 @@ class Facilities extends Component
         $this->name = $m->name;
         $this->name_en = $m->name_en ?? '';
         $this->code = $m->code ?? '';
-        $this->btype = $m->type;
+        $this->buildingTypeId = $m->building_type_id;
         $this->description = $m->description ?? '';
         $this->is_active = (bool) $m->is_active;
         $this->showModal = true;
@@ -146,7 +153,7 @@ class Facilities extends Component
         } elseif ($this->type === 'building') {
             $rules['parentId'] = ['required', 'exists:locations,id'];
             $rules['code'] = ['nullable', 'string', 'max:64'];
-            $rules['btype'] = ['required', 'in:office,warehouse,workshop,powerhouse,other'];
+            $rules['buildingTypeId'] = ['required', 'exists:building_types,id'];
         } else {
             $rules['parentId'] = ['required', 'exists:buildings,id'];
             $rules['function'] = ['nullable', 'string', 'max:256'];
@@ -175,7 +182,7 @@ class Facilities extends Component
         } elseif ($this->type === 'building') {
             $base['location_id'] = $this->parentId;
             $base['code'] = $this->code ?: null;
-            $base['type'] = $this->btype;
+            $base['building_type_id'] = $this->buildingTypeId;
             if ($this->editingId) {
                 Building::findOrFail($this->editingId)->update($base);
             } else {
@@ -261,6 +268,64 @@ class Facilities extends Component
         Room::findOrFail($id)->delete();
     }
 
+    // ── Building-types manager ────────────────────────────────
+    public function openTypesManager(): void
+    {
+        abort_unless(auth()->user()->canAny(['buildings.create', 'buildings.edit']), 403);
+        $this->typeEditingId = null;
+        $this->typeName = '';
+        $this->resetValidation();
+        $this->showTypesModal = true;
+    }
+
+    public function editType(int $id): void
+    {
+        $t = BuildingType::findOrFail($id);
+        $this->typeEditingId = $t->id;
+        $this->typeName = $t->name;
+        $this->resetValidation();
+    }
+
+    public function saveType(): void
+    {
+        abort_unless(auth()->user()->can('buildings.'.($this->typeEditingId ? 'edit' : 'create')), 403);
+        $this->validate([
+            'typeName' => ['required', 'string', 'max:128', Rule::unique('building_types', 'name')->whereNull('deleted_at')->ignore($this->typeEditingId)],
+        ], [], ['typeName' => 'ຊື່ type']);
+
+        if ($this->typeEditingId) {
+            BuildingType::findOrFail($this->typeEditingId)->update(['name' => $this->typeName, 'updated_by' => auth()->id()]);
+        } else {
+            BuildingType::create([
+                'slug' => $this->uniqueSlug($this->typeName, 'building_types'),
+                'name' => $this->typeName,
+                'is_active' => true,
+                'created_by' => auth()->id(),
+            ]);
+        }
+        $this->typeEditingId = null;
+        $this->typeName = '';
+    }
+
+    public function toggleType(int $id): void
+    {
+        abort_unless(auth()->user()->canAny(['buildings.activate', 'buildings.deactivate']), 403);
+        $t = BuildingType::findOrFail($id);
+        $t->update(['is_active' => ! $t->is_active]);
+    }
+
+    public function deleteType(int $id): void
+    {
+        abort_unless(auth()->user()->can('buildings.delete'), 403);
+        $t = BuildingType::findOrFail($id);
+        if ($t->buildings()->exists()) {
+            $this->addError('typeRow', 'ລຶບ type ບໍ່ໄດ້ — ມີ building ໃຊ້ຢູ່.');
+
+            return;
+        }
+        $t->delete();
+    }
+
     protected function resetForm(string $type): void
     {
         $this->type = $type;
@@ -270,7 +335,7 @@ class Facilities extends Component
         $this->name_en = '';
         $this->address = '';
         $this->code = '';
-        $this->btype = 'other';
+        $this->buildingTypeId = null;
         $this->function = '';
         $this->description = '';
         $this->is_active = true;
@@ -293,7 +358,7 @@ class Facilities extends Component
     {
         $locations = Location::withCount('buildings')->orderBy('name')->get();
         $buildings = $this->selectedLocationId
-            ? Building::where('location_id', $this->selectedLocationId)->withCount('rooms')->orderBy('name')->get()
+            ? Building::where('location_id', $this->selectedLocationId)->with('buildingType')->withCount('rooms')->orderBy('name')->get()
             : collect();
         $rooms = $this->selectedBuildingId
             ? Room::where('building_id', $this->selectedBuildingId)->orderBy('name')->get()
@@ -305,6 +370,8 @@ class Facilities extends Component
             'rooms' => $rooms,
             'selectedLocation' => $this->selectedLocationId ? $locations->firstWhere('id', $this->selectedLocationId) : null,
             'selectedBuilding' => $this->selectedBuildingId ? $buildings->firstWhere('id', $this->selectedBuildingId) : null,
+            'buildingTypes' => BuildingType::where('is_active', true)->orderBy('name')->get(),
+            'allTypes' => BuildingType::orderBy('name')->get(),
         ]);
     }
 }

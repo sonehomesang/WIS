@@ -70,7 +70,7 @@
                             </span>
                         </li>
                     @empty
-                        <li class="px-4 py-6 text-sm text-gray-400 text-center">@if ($selectedUnitId)ຍັງບໍ່ມີ department — ກົດ + Add@else ເລືອກ unit ກ່ອນ @endif</li>
+                        <li class="px-4 py-6 text-sm text-gray-400 text-center">@if ($selectedUnitId) ຍັງບໍ່ມີ department — ກົດ + Add @else ເລືອກ unit ກ່ອນ @endif</li>
                     @endforelse
                 </ul>
             </div>
