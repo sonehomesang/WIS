@@ -8,6 +8,10 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+Route::get('inventory', \App\Livewire\Inventory\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('inventory');
+
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');

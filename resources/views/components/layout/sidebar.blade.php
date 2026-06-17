@@ -4,7 +4,7 @@
     $nav = [
         ['menu' => 'dashboard', 'label' => 'Dashboard', 'route' => route('dashboard'), 'always' => true,
             'icon' => 'M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.5a.75.75 0 00.75.75h4.5a.75.75 0 00.75-.75V15a.75.75 0 01.75-.75h3a.75.75 0 01.75.75v5.25c0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75V9.75M8.25 21h8.25'],
-        ['menu' => 'inventory', 'label' => 'WH Inventories', 'route' => '#',
+        ['menu' => 'inventory', 'label' => 'WH Inventories', 'route' => route('inventory'),
             'icon' => 'M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9'],
         ['menu' => 'borrow', 'label' => 'Borrowing Material/Tools', 'route' => '#',
             'icon' => 'M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5'],
@@ -54,7 +54,7 @@
         <nav class="px-2 py-4 space-y-1">
             @foreach ($nav as $item)
                 @if (($item['always'] ?? false) || $u->can($item['menu'].'.view'))
-                    @php $active = $item['menu'] === 'dashboard' && request()->routeIs('dashboard'); @endphp
+                    @php $active = $item['route'] !== '#' && request()->routeIs($item['menu']); @endphp
                     <a href="{{ $item['route'] }}" @if($item['route'] !== '#') wire:navigate @endif
                        class="{{ $linkBase }} {{ $active ? $linkActive : $linkIdle }}">
                         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon'] }}" /></svg>
