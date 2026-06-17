@@ -12,4 +12,9 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
+// Settings hub — consolidates users/roles/org/uom/suppliers/audit/reports/notifications
+Route::view('settings', 'settings.index')
+    ->middleware(['auth', 'verified'])
+    ->name('settings');
+
 require __DIR__.'/auth.php';
