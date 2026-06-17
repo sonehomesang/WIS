@@ -9,6 +9,7 @@
 
 <div class="py-6 sm:py-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+        @include('settings._tabs')
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <h2 class="text-xl font-semibold text-gray-800">Users</h2>
