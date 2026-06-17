@@ -25,4 +25,8 @@ Route::get('settings/users', \App\Livewire\Settings\Users::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.users');
 
+Route::get('settings/roles', \App\Livewire\Settings\RolesPermissions::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.roles');
+
 require __DIR__.'/auth.php';
