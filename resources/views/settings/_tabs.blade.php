@@ -5,7 +5,7 @@
         ['label' => 'Users', 'perm' => 'users.view', 'route' => 'settings.users'],
         ['label' => 'Roles & permissions', 'perm' => 'roles.view', 'route' => 'settings.roles'],
         ['label' => 'Organization', 'perm' => 'units.view', 'route' => 'settings.organization', 'match' => ['settings.organization', 'settings.facilities']],
-        ['label' => 'Units of measure', 'perm' => 'units.view'],
+        ['label' => 'Units of measure', 'perm' => 'units.view', 'route' => 'settings.uom'],
         ['label' => 'Suppliers', 'perm' => 'supplier.view'],
         ['label' => 'Audit log', 'perm' => 'audit.view'],
         ['label' => 'Reports', 'perm' => 'reports.view'],

@@ -33,4 +33,8 @@ Route::get('settings/facilities', \App\Livewire\Settings\Facilities::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.facilities');
 
+Route::get('settings/uom', \App\Livewire\Settings\Uom::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.uom');
+
 require __DIR__.'/auth.php';
