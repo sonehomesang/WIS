@@ -17,4 +17,8 @@ Route::view('settings', 'settings.index')
     ->middleware(['auth', 'verified'])
     ->name('settings');
 
+Route::get('settings/organization', \App\Livewire\Settings\Organization::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.organization');
+
 require __DIR__.'/auth.php';
