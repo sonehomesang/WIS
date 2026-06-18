@@ -12,6 +12,18 @@ Route::get('inventory', \App\Livewire\Inventory\Index::class)
     ->middleware(['auth', 'verified'])
     ->name('inventory');
 
+Route::get('borrow', \App\Livewire\Borrow\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('borrow');
+
+Route::get('borrow/create', \App\Livewire\Borrow\Create::class)
+    ->middleware(['auth', 'verified'])
+    ->name('borrow.create');
+
+Route::get('borrow/{record}', \App\Livewire\Borrow\Show::class)
+    ->middleware(['auth', 'verified'])
+    ->name('borrow.show');
+
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
