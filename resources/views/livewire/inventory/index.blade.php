@@ -27,6 +27,7 @@
                     <option value="low-stock">low-stock</option>
                 </select>
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ຊື່/category/brand…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
+                @can('inventory.create')<button wire:click="openImport" class="text-sm text-sky-700 border border-sky-300 bg-white rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">↥ Import CSV</button>@endcan
                 @can('inventory.create')<button wire:click="newItem" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">+ Add</button>@endcan
             </div>
         </div>
@@ -169,6 +170,50 @@
                 <div class="flex justify-end gap-2 pt-2">
                     <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
                     <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($showImport)
+        <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="inv-import-modal">
+            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-800">Import inventory ຈາກ CSV</h3>
+                    <button wire:click="$set('showImport', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+                </div>
+
+                <div class="text-xs text-gray-500 leading-relaxed bg-gray-50 rounded-md p-3">
+                    Header ທີ່ຮອງຮັບ: <code class="text-gray-700">name*, description, category, brand, model, serial_number, quantity, min_quantity, unit, shelf_label, status, slug</code><br>
+                    location/building/room = ປ່ອຍວ່າງ (NULL) · row ບໍ່ມີ name → ຂ້າມ · slug ຊ້ຳ → ຂ້າມ
+                </div>
+
+                <div>
+                    <input type="file" wire:model="csvFile" accept=".csv,.txt" class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-sky-50 file:text-sky-700 file:min-h-[40px]" />
+                    <div wire:loading wire:target="csvFile" class="text-xs text-gray-400 mt-1">ກຳລັງອັບໂຫລດ…</div>
+                    @error('csvFile')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                </div>
+
+                @if ($importResult)
+                    <div class="text-sm rounded-md border border-green-200 bg-green-50 p-3 space-y-1">
+                        <div class="text-green-800 font-medium">✓ ນຳເຂົ້າ {{ $importResult['imported'] }} ລາຍການ · ຂ້າມ {{ $importResult['skipped'] }}</div>
+                        @if (count($importResult['errors']))
+                            <details class="text-xs text-gray-600">
+                                <summary class="cursor-pointer">ລາຍລະອຽດ {{ count($importResult['errors']) }} ຂໍ້ຄວາມ</summary>
+                                <ul class="mt-1 list-disc list-inside max-h-40 overflow-y-auto">
+                                    @foreach (array_slice($importResult['errors'], 0, 100) as $e)<li>{{ $e }}</li>@endforeach
+                                </ul>
+                            </details>
+                        @endif
+                    </div>
+                @endif
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button wire:click="$set('showImport', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                    <button wire:click="importCsv" wire:loading.attr="disabled" wire:target="importCsv" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">
+                        <span wire:loading.remove wire:target="importCsv">ນຳເຂົ້າ</span>
+                        <span wire:loading wire:target="importCsv">ກຳລັງນຳເຂົ້າ…</span>
+                    </button>
                 </div>
             </div>
         </div>

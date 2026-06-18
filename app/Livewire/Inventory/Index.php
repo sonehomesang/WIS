@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Inventory;
 
+use App\Imports\InventoryCsvImporter;
 use App\Models\Building;
 use App\Models\InventoryItem;
 use App\Models\InventoryItemPhoto;
@@ -68,6 +69,14 @@ class Index extends Component
 
     /** @var array<int, array{id:int, url:string}> ຮູບທີ່ມີຢູ່ແລ້ວ (ຕອນ edit). */
     public array $existingPhotos = [];
+
+    // ── CSV import ──
+    public bool $showImport = false;
+
+    public $csvFile = null;
+
+    /** @var array{imported:int, skipped:int, errors:array<int,string>}|array{} */
+    public array $importResult = [];
 
     public function mount(): void
     {
@@ -201,6 +210,36 @@ class Index extends Component
         Storage::disk('public')->delete($photo->path);
         $photo->delete();
         $this->existingPhotos = array_values(array_filter($this->existingPhotos, fn ($p) => $p['id'] !== $photoId));
+    }
+
+    public function openImport(): void
+    {
+        abort_unless(auth()->user()->can('inventory.create'), 403);
+        $this->reset(['csvFile', 'importResult']);
+        $this->resetValidation();
+        $this->showImport = true;
+    }
+
+    public function importCsv(): void
+    {
+        abort_unless(auth()->user()->can('inventory.create'), 403);
+
+        $this->validate(
+            ['csvFile' => ['required', 'file', 'max:25600']],
+            [],
+            ['csvFile' => 'ໄຟລ໌ CSV']
+        );
+
+        $ext = strtolower($this->csvFile->getClientOriginalExtension());
+        if (! in_array($ext, ['csv', 'txt'], true)) {
+            $this->addError('csvFile', 'ຮັບສະເພາະ .csv ຫຼື .txt');
+
+            return;
+        }
+
+        $this->importResult = (new InventoryCsvImporter)->import($this->csvFile->getRealPath(), auth()->id());
+        $this->csvFile = null;
+        $this->resetPage();
     }
 
     public function toggle(int $id): void
