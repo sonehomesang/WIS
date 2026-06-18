@@ -4,41 +4,70 @@ namespace App\Livewire\Inventory;
 
 use App\Models\Building;
 use App\Models\InventoryItem;
+use App\Models\InventoryItemPhoto;
 use App\Models\Location;
 use App\Models\Room;
 use App\Models\Uom;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class Index extends Component
 {
-    use WithPagination;
+    use WithFileUploads, WithPagination;
+
+    public const MAX_PHOTOS = 6;
 
     public string $search = '';
+
     public string $statusFilter = '';
 
     public bool $showModal = false;
+
     public ?int $editingId = null;
+
     public string $name = '';
+
     public string $description = '';
+
     public string $category = '';
+
     public string $brand = '';
+
     public string $model = '';
+
     public string $serial_number = '';
+
     public int $quantity = 0;
+
     public int $min_quantity = 0;
+
     public string $unit = '';
+
     public ?int $location_id = null;
+
     public ?int $building_id = null;
+
     public ?int $room_id = null;
+
     public string $shelf_label = '';
+
     public string $status = 'available';
+
     public bool $is_active = true;
+
+    /** @var array<int, TemporaryUploadedFile> */
+    public array $newPhotos = [];
+
+    /** @var array<int, array{id:int, url:string}> ຮູບທີ່ມີຢູ່ແລ້ວ (ຕອນ edit). */
+    public array $existingPhotos = [];
 
     public function mount(): void
     {
@@ -86,8 +115,15 @@ class Index extends Component
         $this->shelf_label = $m->shelf_label ?? '';
         $this->status = $m->status;
         $this->is_active = (bool) $m->is_active;
+        $this->newPhotos = [];
+        $this->loadPhotos($m);
         $this->resetValidation();
         $this->showModal = true;
+    }
+
+    protected function loadPhotos(InventoryItem $m): void
+    {
+        $this->existingPhotos = $m->photos->map(fn ($p) => ['id' => $p->id, 'url' => $p->url])->all();
     }
 
     public function save(): void
@@ -110,23 +146,61 @@ class Index extends Component
             'shelf_label' => ['nullable', 'string', 'max:64'],
             'status' => ['required', 'in:available,borrowed,maintenance,low-stock'],
             'is_active' => ['boolean'],
-        ], [], ['name' => 'ຊື່']);
+            'newPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
+            'newPhotos.*' => ['image', 'max:4096'],
+        ], [], ['name' => 'ຊື່', 'newPhotos.*' => 'ຮູບ']);
+
+        if (count($this->existingPhotos) + count($this->newPhotos) > self::MAX_PHOTOS) {
+            $this->addError('newPhotos', 'ຮູບໄດ້ສູງສຸດ '.self::MAX_PHOTOS.' ໃບຕໍ່ item.');
+
+            return;
+        }
 
         $uid = auth()->id();
-        $payload = collect($data)->map(fn ($v) => $v === '' ? null : $v)->toArray();
+        $payload = collect($data)->except('newPhotos')->map(fn ($v) => $v === '' ? null : $v)->toArray();
         $payload['is_active'] = $this->is_active;
         $payload['updated_by'] = $uid;
 
         if ($this->editingId) {
-            InventoryItem::findOrFail($this->editingId)->update($payload);
+            $item = InventoryItem::findOrFail($this->editingId);
+            $item->update($payload);
         } else {
             $payload['slug'] = $this->uniqueSlug($data['name']);
             $payload['created_by'] = $uid;
-            InventoryItem::create($payload);
+            $item = InventoryItem::create($payload);
         }
+
+        $this->storePhotos($item);
 
         $this->showModal = false;
         $this->dispatch('saved');
+    }
+
+    /** ເກັບຮູບໃໝ່ໄປ storage/app/public/inventory/{id}/ + ສ້າງ record. */
+    protected function storePhotos(InventoryItem $item): void
+    {
+        if (empty($this->newPhotos)) {
+            return;
+        }
+
+        $start = (int) $item->photos()->max('sort_order');
+        foreach (array_values($this->newPhotos) as $i => $photo) {
+            $path = $photo->store('inventory/'.$item->id, 'public');
+            $item->photos()->create(['path' => $path, 'sort_order' => $start + $i + 1]);
+        }
+        $this->newPhotos = [];
+    }
+
+    public function removePhoto(int $photoId): void
+    {
+        abort_unless(auth()->user()->can('inventory.edit'), 403);
+        $photo = InventoryItemPhoto::find($photoId);
+        if (! $photo) {
+            return;
+        }
+        Storage::disk('public')->delete($photo->path);
+        $photo->delete();
+        $this->existingPhotos = array_values(array_filter($this->existingPhotos, fn ($p) => $p['id'] !== $photoId));
     }
 
     public function toggle(int $id): void
@@ -160,6 +234,8 @@ class Index extends Component
         $this->shelf_label = '';
         $this->status = 'available';
         $this->is_active = true;
+        $this->newPhotos = [];
+        $this->existingPhotos = [];
         $this->resetValidation();
     }
 
@@ -177,7 +253,7 @@ class Index extends Component
 
     public function render(): View
     {
-        $items = InventoryItem::with(['location', 'building', 'room'])
+        $items = InventoryItem::with(['location', 'building', 'room', 'primaryPhoto'])
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$this->search}%")
                 ->orWhere('category', 'like', "%{$this->search}%")
                 ->orWhere('brand', 'like', "%{$this->search}%")

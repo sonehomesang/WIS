@@ -50,8 +50,15 @@
                     @forelse ($items as $it)
                         <tr wire:key="inv-{{ $it->id }}" class="border-t border-gray-100">
                             <td class="px-4 py-2">
-                                <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
-                                <div class="text-xs text-gray-400">{{ collect([$it->category, $it->brand, $it->model])->filter()->implode(' · ') ?: '—' }}</div>
+                                <div class="flex items-center gap-2">
+                                    @if ($photo = $it->primaryPhoto->first())
+                                        <img src="{{ $photo->url }}" alt="" class="w-9 h-9 rounded object-cover border border-gray-200 shrink-0" />
+                                    @endif
+                                    <div>
+                                        <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
+                                        <div class="text-xs text-gray-400">{{ collect([$it->category, $it->brand, $it->model])->filter()->implode(' · ') ?: '—' }}</div>
+                                    </div>
+                                </div>
                             </td>
                             <td class="px-4 py-2 text-gray-600">{{ $it->quantity }}@if ($it->unit) {{ $it->unit }}@endif</td>
                             <td class="px-4 py-2 text-gray-600 text-xs">{{ collect([$it->location?->name, $it->building?->name, $it->room?->name, $it->shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
@@ -74,7 +81,12 @@
             @forelse ($items as $it)
                 <div wire:key="m-{{ $it->id }}" class="bg-white border border-gray-100 rounded-lg p-3">
                     <div class="flex items-center justify-between">
-                        <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
+                        <div class="flex items-center gap-2">
+                            @if ($photo = $it->primaryPhoto->first())
+                                <img src="{{ $photo->url }}" alt="" class="w-8 h-8 rounded object-cover border border-gray-200 shrink-0" />
+                            @endif
+                            <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
+                        </div>
                         <span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>
                     </div>
                     <div class="text-xs text-gray-500 mt-1">Qty {{ $it->quantity }} {{ $it->unit }} · {{ collect([$it->location?->name, $it->building?->name])->filter()->implode(' / ') ?: '—' }}</div>
@@ -120,6 +132,38 @@
                     <div><label class="block text-sm text-gray-600 mb-1">Shelf</label><input type="text" wire:model="shelf_label" placeholder="A-3-2" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     <div><label class="block text-sm text-gray-600 mb-1">Status</label><select wire:model="status" class="w-full rounded-md border-gray-300 text-sm"><option value="available">available</option><option value="borrowed">borrowed</option><option value="maintenance">maintenance</option><option value="low-stock">low-stock</option></select></div>
                     <div class="md:col-span-2"><label class="block text-sm text-gray-600 mb-1">ລາຍລະອຽດ</label><textarea wire:model="description" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm text-gray-600 mb-1">ຮູບ (ສູງສຸດ {{ \App\Livewire\Inventory\Index::MAX_PHOTOS }} ໃບ · ≤4MB/ໃບ)</label>
+                        @if (count($existingPhotos))
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                @foreach ($existingPhotos as $p)
+                                    <div wire:key="ep-{{ $p['id'] }}" class="relative">
+                                        <img src="{{ $p['url'] }}" alt="" class="w-20 h-20 rounded-md object-cover border border-gray-200" />
+                                        <button type="button" wire:click="removePhoto({{ $p['id'] }})" wire:confirm="ລຶບຮູບນີ້?" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs leading-none flex items-center justify-center" aria-label="ລຶບຮູບ">×</button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                        @if (count($newPhotos))
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                @foreach ($newPhotos as $i => $ph)
+                                    <div wire:key="np-{{ $i }}">
+                                        @if ($ph->isPreviewable())
+                                            <img src="{{ $ph->temporaryUrl() }}" alt="" class="w-20 h-20 rounded-md object-cover border border-sky-300" />
+                                        @else
+                                            <div class="w-20 h-20 rounded-md border border-red-300 bg-red-50 text-red-500 text-[10px] flex items-center justify-center text-center px-1">ບໍ່ແມ່ນຮູບ</div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                        <input type="file" wire:model="newPhotos" multiple accept="image/*" class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-sky-50 file:text-sky-700 file:min-h-[40px]" />
+                        <div wire:loading wire:target="newPhotos" class="text-xs text-gray-400 mt-1">ກຳລັງອັບໂຫລດ…</div>
+                        @error('newPhotos.*')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        @error('newPhotos')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+
                     <label class="flex items-center gap-2 text-sm text-gray-700 md:col-span-2"><input type="checkbox" wire:model="is_active" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" /> Active</label>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
