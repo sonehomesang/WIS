@@ -21,24 +21,33 @@
 
             <!-- Main column (shifted right of the sidebar on desktop) -->
             <div class="md:pl-60">
-                <!-- Mobile top bar with hamburger -->
-                <div x-data class="md:hidden flex items-center gap-2 bg-white shadow px-4 h-14">
-                    <button @click="$dispatch('open-sidebar')" class="p-2 min-h-[44px] min-w-[44px] text-gray-600 hover:text-gray-900" aria-label="Open menu">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-                    </button>
-                    <span class="font-semibold text-gray-800">WIS</span>
-                </div>
+                @php
+                    // Page title ໄດນາມິກ ຕາມ route ປັດຈຸບັນ (ແທນ logo). Fallback = headline ຂອງ route name.
+                    $routeName = request()->route()?->getName();
+                    $titleMap = [
+                        'dashboard' => 'Dashboard',
+                        'inventory' => 'WH Inventories',
+                        'settings' => 'Settings',
+                        'profile' => 'Profile',
+                    ];
+                    $pageTitle = $titleMap[$routeName]
+                        ?? \Illuminate\Support\Str::of($routeName ?? config('app.name'))->afterLast('.')->headline();
+                @endphp
 
-                <livewire:layout.navigation />
-
-                <!-- Page Heading -->
-                @if (isset($header))
-                    <header class="bg-white shadow">
-                        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                            {{ $header }}
+                <!-- Global app header: title (left) + user menu (right) — ທຸກໜ້າ -->
+                <header class="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
+                    <div class="px-4 sm:px-6 lg:px-8">
+                        <div class="h-16 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <button x-data @click="$dispatch('open-sidebar')" class="md:hidden p-2 -ml-2 min-h-[44px] min-w-[44px] text-gray-600 hover:text-gray-900" aria-label="Open menu">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                                </button>
+                                <h1 class="text-lg font-semibold text-gray-800 truncate">{{ $pageTitle }}</h1>
+                            </div>
+                            <livewire:layout.navigation />
                         </div>
-                    </header>
-                @endif
+                    </div>
+                </header>
 
                 <!-- Page Content -->
                 <main>

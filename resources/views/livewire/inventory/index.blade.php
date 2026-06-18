@@ -11,8 +11,8 @@
     };
 @endphp
 
-<div class="py-6 sm:py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4"
+<div class="pb-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
          x-data="{ colsOpen: false, cols: $persist({ materialNo: true, brand: false, category: false, qty: true, location: true, status: true }).as('wh_inv_cols') }">
         @php
             $columns = [
@@ -24,12 +24,8 @@
                 'status' => 'Status',
             ];
         @endphp
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-                <h2 class="text-xl font-semibold text-gray-800">WH Inventories</h2>
-                <p class="text-sm text-gray-500">ເຄື່ອງມືພາຍໃນສາງ · {{ $items->total() }} ລາຍການ</p>
-            </div>
-            <div class="flex items-center gap-2">
+        <div class="sticky top-16 z-20 bg-gray-100 flex flex-col gap-2 py-3 sm:py-0 sm:h-[52px] sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <div class="flex flex-wrap items-center gap-2">
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ Material No./ຊື່/description…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
                 <select wire:model.live="prefixFilter" class="rounded-md border-gray-300 text-sm" title="ໝວດຕາມ Material No.">
                     <option value="">ທຸກໝວດ (Material No.)</option>
@@ -44,6 +40,9 @@
                     <option value="maintenance">maintenance</option>
                     <option value="low-stock">low-stock</option>
                 </select>
+                <span class="text-xs text-gray-400 whitespace-nowrap">{{ number_format($items->total()) }} ລາຍການ</span>
+            </div>
+            <div class="flex items-center gap-2">
                 <div class="relative hidden md:block" x-on:click.outside="colsOpen = false">
                     <button type="button" x-on:click="colsOpen = !colsOpen" class="text-sm text-gray-700 border border-gray-300 bg-white rounded-md px-3 py-2 min-h-[40px] hover:bg-gray-50 whitespace-nowrap">⚙ Columns</button>
                     <div x-show="colsOpen" x-cloak x-transition class="absolute right-0 z-20 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg p-2 space-y-1">
@@ -61,12 +60,12 @@
         </div>
 
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
-             class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-1">ບັນທຶກແລ້ວ ✓</div>
+             class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
         {{-- Desktop table --}}
-        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-hidden">
+        <div class="hidden md:block bg-white border border-gray-100 rounded-lg">
             <table class="w-full text-sm">
-                <thead class="bg-gray-100 text-gray-700 border-b border-gray-200">
+                <thead class="sticky top-[116px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
                         <th class="text-left font-semibold px-4 py-2.5">Item</th>
                         <th x-show="cols.materialNo" x-cloak class="text-left font-semibold px-4 py-2.5">Material No.</th>
@@ -80,8 +79,8 @@
                 </thead>
                 <tbody>
                     @forelse ($items as $it)
-                        <tr wire:key="inv-{{ $it->id }}" class="border-t border-gray-100">
-                            <td class="px-4 py-2">
+                        <tr wire:key="inv-{{ $it->id }}" class="border-t border-gray-200">
+                            <td class="px-4 py-2.5">
                                 <div class="flex items-center gap-2">
                                     @if ($photo = $it->primaryPhoto->first())
                                         <img src="{{ $photo->url }}" alt="" class="w-9 h-9 rounded object-cover border border-gray-200 shrink-0" />
@@ -89,13 +88,13 @@
                                     <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
                                 </div>
                             </td>
-                            <td x-show="cols.materialNo" x-cloak class="px-4 py-2 font-mono text-xs text-gray-500">{{ $it->slug }}</td>
-                            <td x-show="cols.brand" x-cloak class="px-4 py-2 text-xs text-gray-600">{{ $it->brand ?: '—' }}</td>
-                            <td x-show="cols.category" x-cloak class="px-4 py-2 text-xs text-gray-600">{{ $it->category ?: '—' }}</td>
-                            <td x-show="cols.qty" x-cloak class="px-4 py-2 text-gray-600">{{ $it->quantity }}@if ($it->unit) {{ $it->unit }}@endif</td>
-                            <td x-show="cols.location" x-cloak class="px-4 py-2 text-gray-600 text-xs">{{ collect([$it->location?->name, $it->building?->name, $it->room?->name, $it->shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
-                            <td x-show="cols.status" x-cloak class="px-4 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span></td>
-                            <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
+                            <td x-show="cols.materialNo" x-cloak class="px-4 py-2.5 font-mono text-xs text-gray-500">{{ $it->slug }}</td>
+                            <td x-show="cols.brand" x-cloak class="px-4 py-2.5 text-xs text-gray-600">{{ $it->brand ?: '—' }}</td>
+                            <td x-show="cols.category" x-cloak class="px-4 py-2.5 text-xs text-gray-600">{{ $it->category ?: '—' }}</td>
+                            <td x-show="cols.qty" x-cloak class="px-4 py-2.5 text-gray-600">{{ $it->quantity }}@if ($it->unit) {{ $it->unit }}@endif</td>
+                            <td x-show="cols.location" x-cloak class="px-4 py-2.5 text-gray-600 text-xs">{{ collect([$it->location?->name, $it->building?->name, $it->room?->name, $it->shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
+                            <td x-show="cols.status" x-cloak class="px-4 py-2.5"><span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span></td>
+                            <td class="px-4 py-2.5 text-right whitespace-nowrap text-gray-500">
                                 @canany(['inventory.activate', 'inventory.deactivate'])<button wire:click="toggle({{ $it->id }})" class="p-1 {{ $it->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $it->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany
                                 @can('inventory.edit')<button wire:click="editItem({{ $it->id }})" class="p-1 hover:text-gray-800" aria-label="Edit"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
                                 @can('inventory.delete')<button wire:click="delete({{ $it->id }})" wire:confirm="ລຶບ item ນີ້?" class="p-1 hover:text-red-600" aria-label="Delete"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
@@ -133,7 +132,7 @@
             @endforelse
         </div>
 
-        <div>{{ $items->links() }}</div>
+        <div class="mt-4">{{ $items->links() }}</div>
     </div>
 
     @if ($showModal)
@@ -199,8 +198,8 @@
                     <label class="flex items-center gap-2 text-sm text-gray-700 md:col-span-2"><input type="checkbox" wire:model="is_active" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" /> Active</label>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
+                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2.5min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2.5min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
                 </div>
             </div>
         </div>
@@ -240,8 +239,8 @@
                 @endif
 
                 <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showImport', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
-                    <button wire:click="importCsv" wire:loading.attr="disabled" wire:target="importCsv" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">
+                    <button wire:click="$set('showImport', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2.5min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                    <button wire:click="importCsv" wire:loading.attr="disabled" wire:target="importCsv" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2.5min-h-[40px] hover:bg-sky-700 disabled:opacity-50">
                         <span wire:loading.remove wire:target="importCsv">ນຳເຂົ້າ</span>
                         <span wire:loading wire:target="importCsv">ກຳລັງນຳເຂົ້າ…</span>
                     </button>
