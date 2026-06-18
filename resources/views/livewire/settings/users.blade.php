@@ -7,12 +7,11 @@
     };
 @endphp
 
-<div class="py-6 sm:py-12">
+<div class="pb-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         @include('settings._tabs')
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-                <h2 class="text-xl font-semibold text-gray-800">Users</h2>
                 <p class="text-sm text-gray-500">ຈັດການຜູ້ໃຊ້ · ກຳນົດ role + ໜ່ວຍງານ · approve / lock</p>
             </div>
             <div class="flex items-center gap-2">

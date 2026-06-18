@@ -1,9 +1,8 @@
-<div class="py-6 sm:py-12">
+<div class="pb-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         @include('settings._tabs')
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-xl font-semibold text-gray-800">Roles & permissions</h2>
                 <p class="text-sm text-gray-500">21 menus × 6 actions + scope · ແກ້ໄດ້ໂດຍ super_admin</p>
             </div>
             <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"

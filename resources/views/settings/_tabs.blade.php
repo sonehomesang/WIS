@@ -14,7 +14,7 @@
     ];
 @endphp
 
-<div class="flex flex-wrap items-center gap-1 border-b border-gray-200 pb-2">
+<div class="sticky top-16 z-20 bg-gray-100 flex flex-wrap items-center gap-1 border-b border-gray-200 pt-3 pb-2">
     <a href="{{ route('settings') }}" wire:navigate class="px-2.5 py-1.5 rounded-md text-sm text-gray-500 hover:bg-gray-100" title="ໜ້າລວມ Settings">⌂</a>
     @foreach ($sections as $s)
         @can($s['perm'])

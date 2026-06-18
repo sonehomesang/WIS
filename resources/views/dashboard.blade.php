@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-6 sm:py-12">
+    <div class="py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             {{-- Welcome card --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">

@@ -28,6 +28,14 @@
                         'dashboard' => 'Dashboard',
                         'inventory' => 'WH Inventories',
                         'settings' => 'Settings',
+                        'settings.users' => 'Users',
+                        'settings.roles' => 'Roles & permissions',
+                        'settings.organization' => 'Organization',
+                        'settings.facilities' => 'Organization',
+                        'settings.uom' => 'Units of measure',
+                        'settings.suppliers' => 'Suppliers',
+                        'settings.suppliers.show' => 'Supplier detail',
+                        'settings.system' => 'System',
                         'profile' => 'Profile',
                     ];
                     $pageTitle = $titleMap[$routeName]

@@ -10,7 +10,7 @@
     $fmt = fn ($r) => $r === null ? 'global' : rtrim(rtrim(number_format($r, 2), '0'), '.').'%';
 @endphp
 
-<div class="py-6 sm:py-12">
+<div class="pb-6">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         <a href="{{ route('settings.suppliers') }}" wire:navigate class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg> Suppliers

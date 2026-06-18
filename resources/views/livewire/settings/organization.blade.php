@@ -4,12 +4,11 @@
     $svgTrash = 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16';
 @endphp
 
-<div class="py-6 sm:py-12">
+<div class="pb-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         @include('settings._tabs')
         <div class="flex items-start justify-between">
             <div class="space-y-2">
-                <h2 class="text-xl font-semibold text-gray-800">Organization</h2>
                 @include('settings._org-tabs')
             </div>
             <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
