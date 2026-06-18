@@ -30,6 +30,8 @@ class Index extends Component
 
     public string $statusFilter = '';
 
+    public string $prefixFilter = '';
+
     public bool $showModal = false;
 
     public ?int $editingId = null;
@@ -84,6 +86,16 @@ class Index extends Component
     }
 
     public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPrefixFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter(): void
     {
         $this->resetPage();
     }
@@ -293,16 +305,20 @@ class Index extends Component
     public function render(): View
     {
         $items = InventoryItem::with(['location', 'building', 'room', 'primaryPhoto'])
-            ->when($this->search, fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$this->search}%")
+            ->when($this->search, fn ($q) => $q->where(fn ($w) => $w->where('slug', 'like', "%{$this->search}%")
+                ->orWhere('name', 'like', "%{$this->search}%")
+                ->orWhere('description', 'like', "%{$this->search}%")
                 ->orWhere('category', 'like', "%{$this->search}%")
                 ->orWhere('brand', 'like', "%{$this->search}%")
                 ->orWhere('serial_number', 'like', "%{$this->search}%")))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
+            ->when($this->prefixFilter, fn ($q) => $q->where('slug', 'like', $this->prefixFilter.'%'))
             ->orderBy('name')
             ->paginate(15);
 
         return view('livewire.inventory.index', [
             'items' => $items,
+            'prefixCounts' => InventoryItem::prefixCounts(),
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'formBuildings' => $this->location_id ? Building::where('location_id', $this->location_id)->where('is_active', true)->orderBy('name')->get() : collect(),

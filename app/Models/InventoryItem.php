@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 class InventoryItem extends Model
 {
@@ -48,5 +49,18 @@ class InventoryItem extends Model
     public function primaryPhoto(): HasMany
     {
         return $this->photos()->limit(1);
+    }
+
+    /** ໂຕເລກ Material No. (slug) — ນັບຕາມໝວດ (prefix N ໂຕໜ້າ). Dashboard ໃຊ້ຕໍ່ໄດ້.
+     *
+     * @return Collection<int, object{prefix:string, total:int}>
+     */
+    public static function prefixCounts(int $len = 2): Collection
+    {
+        return static::query()
+            ->selectRaw('SUBSTR(slug, 1, '.(int) $len.') as prefix, COUNT(*) as total')
+            ->groupBy('prefix')
+            ->orderByDesc('total')
+            ->get();
     }
 }

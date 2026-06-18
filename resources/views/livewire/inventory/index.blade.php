@@ -19,6 +19,12 @@
                 <p class="text-sm text-gray-500">ເຄື່ອງມືພາຍໃນສາງ · {{ $items->total() }} ລາຍການ</p>
             </div>
             <div class="flex items-center gap-2">
+                <select wire:model.live="prefixFilter" class="rounded-md border-gray-300 text-sm" title="ໝວດຕາມ Material No.">
+                    <option value="">ທຸກໝວດ (Material No.)</option>
+                    @foreach ($prefixCounts as $pc)
+                        <option value="{{ $pc->prefix }}">{{ $pc->prefix }}xxxxxx ({{ number_format($pc->total) }})</option>
+                    @endforeach
+                </select>
                 <select wire:model.live="statusFilter" class="rounded-md border-gray-300 text-sm">
                     <option value="">ທຸກ status</option>
                     <option value="available">available</option>
@@ -26,7 +32,7 @@
                     <option value="maintenance">maintenance</option>
                     <option value="low-stock">low-stock</option>
                 </select>
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ຊື່/category/brand…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
+                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ Material No./ຊື່/description…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
                 @can('inventory.create')<button wire:click="openImport" class="text-sm text-sky-700 border border-sky-300 bg-white rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">↥ Import CSV</button>@endcan
                 @can('inventory.create')<button wire:click="newItem" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">+ Add</button>@endcan
             </div>
@@ -57,7 +63,7 @@
                                     @endif
                                     <div>
                                         <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
-                                        <div class="text-xs text-gray-400">{{ collect([$it->category, $it->brand, $it->model])->filter()->implode(' · ') ?: '—' }}</div>
+                                        <div class="text-xs text-gray-400"><span class="font-mono text-gray-500">{{ $it->slug }}</span>@if ($it->brand || $it->model) · {{ collect([$it->brand, $it->model])->filter()->implode(' · ') }}@endif</div>
                                     </div>
                                 </div>
                             </td>
@@ -90,7 +96,7 @@
                         </div>
                         <span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>
                     </div>
-                    <div class="text-xs text-gray-500 mt-1">Qty {{ $it->quantity }} {{ $it->unit }} · {{ collect([$it->location?->name, $it->building?->name])->filter()->implode(' / ') ?: '—' }}</div>
+                    <div class="text-xs text-gray-500 mt-1"><span class="font-mono text-gray-400">{{ $it->slug }}</span> · Qty {{ $it->quantity }} {{ $it->unit }} · {{ collect([$it->location?->name, $it->building?->name])->filter()->implode(' / ') ?: '—' }}</div>
                     <div class="flex gap-2 mt-2">
                         @canany(['inventory.activate', 'inventory.deactivate'])<button wire:click="toggle({{ $it->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">{{ $it->is_active ? 'Disable' : 'Enable' }}</button>@endcanany
                         @can('inventory.edit')<button wire:click="editItem({{ $it->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Edit</button>@endcan
