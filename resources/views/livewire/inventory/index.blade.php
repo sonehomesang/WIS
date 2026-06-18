@@ -12,13 +12,25 @@
 @endphp
 
 <div class="py-6 sm:py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4"
+         x-data="{ colsOpen: false, cols: $persist({ materialNo: true, brand: false, category: false, qty: true, location: true, status: true }).as('wh_inv_cols') }">
+        @php
+            $columns = [
+                'materialNo' => 'Material No.',
+                'brand' => 'Brand',
+                'category' => 'Category',
+                'qty' => 'Qty',
+                'location' => 'Location',
+                'status' => 'Status',
+            ];
+        @endphp
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <h2 class="text-xl font-semibold text-gray-800">WH Inventories</h2>
                 <p class="text-sm text-gray-500">ເຄື່ອງມືພາຍໃນສາງ · {{ $items->total() }} ລາຍການ</p>
             </div>
             <div class="flex items-center gap-2">
+                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ Material No./ຊື່/description…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
                 <select wire:model.live="prefixFilter" class="rounded-md border-gray-300 text-sm" title="ໝວດຕາມ Material No.">
                     <option value="">ທຸກໝວດ (Material No.)</option>
                     @foreach ($prefixCounts as $pc)
@@ -32,7 +44,17 @@
                     <option value="maintenance">maintenance</option>
                     <option value="low-stock">low-stock</option>
                 </select>
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ Material No./ຊື່/description…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
+                <div class="relative hidden md:block" x-on:click.outside="colsOpen = false">
+                    <button type="button" x-on:click="colsOpen = !colsOpen" class="text-sm text-gray-700 border border-gray-300 bg-white rounded-md px-3 py-2 min-h-[40px] hover:bg-gray-50 whitespace-nowrap">⚙ Columns</button>
+                    <div x-show="colsOpen" x-cloak x-transition class="absolute right-0 z-20 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg p-2 space-y-1">
+                        @foreach ($columns as $key => $label)
+                            <label class="flex items-center gap-2 text-sm text-gray-700 px-2 py-1 rounded hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" x-model="cols.{{ $key }}" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" />
+                                {{ $label }}
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
                 @can('inventory.create')<button wire:click="openImport" class="text-sm text-sky-700 border border-sky-300 bg-white rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">↥ Import CSV</button>@endcan
                 @can('inventory.create')<button wire:click="newItem" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">+ Add</button>@endcan
             </div>
@@ -44,13 +66,16 @@
         {{-- Desktop table --}}
         <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-hidden">
             <table class="w-full text-sm">
-                <thead class="bg-gray-50 text-gray-500">
+                <thead class="bg-gray-100 text-gray-700 border-b border-gray-200">
                     <tr>
-                        <th class="text-left font-medium px-4 py-2">Item</th>
-                        <th class="text-left font-medium px-4 py-2">Qty</th>
-                        <th class="text-left font-medium px-4 py-2">Location</th>
-                        <th class="text-left font-medium px-4 py-2">Status</th>
-                        <th class="px-4 py-2"></th>
+                        <th class="text-left font-semibold px-4 py-2.5">Item</th>
+                        <th x-show="cols.materialNo" x-cloak class="text-left font-semibold px-4 py-2.5">Material No.</th>
+                        <th x-show="cols.brand" x-cloak class="text-left font-semibold px-4 py-2.5">Brand</th>
+                        <th x-show="cols.category" x-cloak class="text-left font-semibold px-4 py-2.5">Category</th>
+                        <th x-show="cols.qty" x-cloak class="text-left font-semibold px-4 py-2.5">Qty</th>
+                        <th x-show="cols.location" x-cloak class="text-left font-semibold px-4 py-2.5">Location</th>
+                        <th x-show="cols.status" x-cloak class="text-left font-semibold px-4 py-2.5">Status</th>
+                        <th class="px-4 py-2.5"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,15 +86,15 @@
                                     @if ($photo = $it->primaryPhoto->first())
                                         <img src="{{ $photo->url }}" alt="" class="w-9 h-9 rounded object-cover border border-gray-200 shrink-0" />
                                     @endif
-                                    <div>
-                                        <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
-                                        <div class="text-xs text-gray-400"><span class="font-mono text-gray-500">{{ $it->slug }}</span>@if ($it->brand || $it->model) · {{ collect([$it->brand, $it->model])->filter()->implode(' · ') }}@endif</div>
-                                    </div>
+                                    <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
                                 </div>
                             </td>
-                            <td class="px-4 py-2 text-gray-600">{{ $it->quantity }}@if ($it->unit) {{ $it->unit }}@endif</td>
-                            <td class="px-4 py-2 text-gray-600 text-xs">{{ collect([$it->location?->name, $it->building?->name, $it->room?->name, $it->shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
-                            <td class="px-4 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span></td>
+                            <td x-show="cols.materialNo" x-cloak class="px-4 py-2 font-mono text-xs text-gray-500">{{ $it->slug }}</td>
+                            <td x-show="cols.brand" x-cloak class="px-4 py-2 text-xs text-gray-600">{{ $it->brand ?: '—' }}</td>
+                            <td x-show="cols.category" x-cloak class="px-4 py-2 text-xs text-gray-600">{{ $it->category ?: '—' }}</td>
+                            <td x-show="cols.qty" x-cloak class="px-4 py-2 text-gray-600">{{ $it->quantity }}@if ($it->unit) {{ $it->unit }}@endif</td>
+                            <td x-show="cols.location" x-cloak class="px-4 py-2 text-gray-600 text-xs">{{ collect([$it->location?->name, $it->building?->name, $it->room?->name, $it->shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
+                            <td x-show="cols.status" x-cloak class="px-4 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span></td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
                                 @canany(['inventory.activate', 'inventory.deactivate'])<button wire:click="toggle({{ $it->id }})" class="p-1 {{ $it->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $it->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany
                                 @can('inventory.edit')<button wire:click="editItem({{ $it->id }})" class="p-1 hover:text-gray-800" aria-label="Edit"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
@@ -77,7 +102,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">ບໍ່ມີ item</td></tr>
+                        <tr><td colspan="8" class="px-4 py-6 text-center text-gray-400">ບໍ່ມີ item</td></tr>
                     @endforelse
                 </tbody>
             </table>
