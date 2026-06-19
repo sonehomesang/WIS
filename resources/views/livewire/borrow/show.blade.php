@@ -21,13 +21,17 @@
         <div class="flex items-center justify-between">
             <div><h2 class="text-xl font-bold text-gray-800">Borrowing Record Details</h2>
                 <div class="text-sm text-gray-400"><span class="font-mono">{{ $record->request_number }}</span> · <span class="text-xs px-2 py-0.5 rounded-full {{ $badge($st) }}">{{ strtoupper($st) }}</span></div></div>
-            <a href="{{ route('borrow') }}" wire:navigate class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</a>
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="exportJpg('borrow-detail', 'borrow-{{ $record->request_number }}.jpg')" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">🖼 JPG</button>
+                <a href="{{ route('borrow.pdf', $record) }}" target="_blank" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
+                <a href="{{ route('borrow') }}" wire:navigate class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</a>
+            </div>
         </div>
 
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror
 
-        <div class="bg-white rounded-lg border border-gray-100 p-6 grid md:grid-cols-2 gap-x-10 gap-y-8 text-sm">
+        <div id="borrow-detail" class="bg-white rounded-lg border border-gray-100 p-6 grid md:grid-cols-2 gap-x-10 gap-y-8 text-sm">
             {{-- ① USER INFORMATION --}}
             <div>
                 <div class="text-xs font-bold text-indigo-600 tracking-wide mb-3">1. USER INFORMATION</div>

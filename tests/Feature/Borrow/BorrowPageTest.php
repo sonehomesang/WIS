@@ -17,6 +17,17 @@ test('borrow create page renders', function () {
     $this->get(route('borrow.create'))->assertOk()->assertSee('ສາຍອະນຸມັດ');
 });
 
+test('borrow pdf export downloads a PDF', function () {
+    $r = app(BorrowService::class)->createDraft([
+        'borrow_type' => 'new_inventory', 'borrow_date' => now()->toDateString(),
+        'period_days' => 5, 'items' => [['item_name' => 'Drill', 'qty' => 1]],
+    ], auth()->user());
+
+    $res = $this->get(route('borrow.pdf', $r));
+    $res->assertOk();
+    expect($res->headers->get('content-type'))->toContain('application/pdf');
+});
+
 test('borrow show page renders a record with timeline', function () {
     $r = app(BorrowService::class)->createDraft([
         'borrow_type' => 'new_inventory', 'purpose' => 'x', 'borrow_date' => now()->toDateString(),

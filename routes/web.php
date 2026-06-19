@@ -1,5 +1,18 @@
 <?php
 
+use App\Livewire\Borrow\Create;
+use App\Livewire\Borrow\Show;
+use App\Livewire\Inventory\Index;
+use App\Livewire\Settings\Facilities;
+use App\Livewire\Settings\Organization;
+use App\Livewire\Settings\RolesPermissions;
+use App\Livewire\Settings\SupplierDetail;
+use App\Livewire\Settings\Suppliers;
+use App\Livewire\Settings\System;
+use App\Livewire\Settings\Uom;
+use App\Livewire\Settings\Users;
+use App\Models\BorrowRecord;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
@@ -8,19 +21,27 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::get('inventory', \App\Livewire\Inventory\Index::class)
+Route::get('inventory', Index::class)
     ->middleware(['auth', 'verified'])
     ->name('inventory');
 
-Route::get('borrow', \App\Livewire\Borrow\Index::class)
+Route::get('borrow', App\Livewire\Borrow\Index::class)
     ->middleware(['auth', 'verified'])
     ->name('borrow');
 
-Route::get('borrow/create', \App\Livewire\Borrow\Create::class)
+Route::get('borrow/create', Create::class)
     ->middleware(['auth', 'verified'])
     ->name('borrow.create');
 
-Route::get('borrow/{record}', \App\Livewire\Borrow\Show::class)
+Route::get('borrow/{record}/pdf', function (BorrowRecord $record) {
+    abort_unless(auth()->user()->can('borrow.view'), 403);
+    $record->load(['items.inventoryItem.primaryPhoto', 'items.photos', 'unit', 'department']);
+
+    return Pdf::loadView('borrow.pdf', ['record' => $record])
+        ->download("borrow-{$record->request_number}.pdf");
+})->middleware(['auth', 'verified'])->name('borrow.pdf');
+
+Route::get('borrow/{record}', Show::class)
     ->middleware(['auth', 'verified'])
     ->name('borrow.show');
 
@@ -33,35 +54,35 @@ Route::view('settings', 'settings.index')
     ->middleware(['auth', 'verified'])
     ->name('settings');
 
-Route::get('settings/organization', \App\Livewire\Settings\Organization::class)
+Route::get('settings/organization', Organization::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.organization');
 
-Route::get('settings/users', \App\Livewire\Settings\Users::class)
+Route::get('settings/users', Users::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.users');
 
-Route::get('settings/roles', \App\Livewire\Settings\RolesPermissions::class)
+Route::get('settings/roles', RolesPermissions::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.roles');
 
-Route::get('settings/facilities', \App\Livewire\Settings\Facilities::class)
+Route::get('settings/facilities', Facilities::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.facilities');
 
-Route::get('settings/uom', \App\Livewire\Settings\Uom::class)
+Route::get('settings/uom', Uom::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.uom');
 
-Route::get('settings/suppliers', \App\Livewire\Settings\Suppliers::class)
+Route::get('settings/suppliers', Suppliers::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.suppliers');
 
-Route::get('settings/suppliers/{supplier}', \App\Livewire\Settings\SupplierDetail::class)
+Route::get('settings/suppliers/{supplier}', SupplierDetail::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.suppliers.show');
 
-Route::get('settings/system', \App\Livewire\Settings\System::class)
+Route::get('settings/system', System::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.system');
 
