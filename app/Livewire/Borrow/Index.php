@@ -53,7 +53,7 @@ class Index extends Component
     protected function scopedQuery()
     {
         $u = auth()->user();
-        $q = BorrowRecord::query()->with(['items.inventoryItem.primaryPhoto', 'unit']);
+        $q = BorrowRecord::query()->with(['items.inventoryItem.primaryPhoto', 'items.photos', 'unit']);
 
         if (! ($u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']))) {
             $email = mb_strtolower($u->email);

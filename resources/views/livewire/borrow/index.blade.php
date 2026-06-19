@@ -50,6 +50,7 @@
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-200">
                     <tr>
+                        <th class="text-left font-semibold px-4 py-3">ໄອດີ <span class="text-gray-400">(BR No.)</span></th>
                         <th class="text-left font-semibold px-4 py-3">ຜູ້ຢືມ <span class="text-gray-400">(Borrower)</span></th>
                         <th class="text-left font-semibold px-4 py-3">ເຄື່ອງທີ່ຢືມ <span class="text-gray-400">(Items)</span></th>
                         <th class="text-left font-semibold px-4 py-3">ລະຫັດ <span class="text-gray-400">(Material ID)</span></th>
@@ -60,8 +61,10 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($records as $r)
-                        @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->inventoryItem?->primaryPhoto?->first(); $d = $r->days_left; @endphp
+                        @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->photos->first() ?? $first?->inventoryItem?->primaryPhoto?->first(); $d = $r->days_left; @endphp
                         <tr wire:key="br-{{ $r->id }}" class="hover:bg-gray-50">
+                            {{-- BR No. --}}
+                            <td class="px-4 py-3 align-top"><a href="{{ route('borrow.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
                             {{-- borrower --}}
                             <td class="px-4 py-3 align-top"><div class="font-semibold text-gray-800">{{ $r->borrower_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->borrower_email }}</div></td>
                             {{-- items --}}
@@ -95,7 +98,7 @@
                             <td class="px-4 py-3 align-top"><a href="{{ route('borrow.show', $r) }}" wire:navigate class="text-xs text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 inline-block">View Details</a></td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">ຍັງບໍ່ມີຄຳຂໍຢືມ</td></tr>
+                        <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">ຍັງບໍ່ມີຄຳຂໍຢືມ</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -104,12 +107,12 @@
         {{-- Mobile cards --}}
         <div class="md:hidden space-y-2">
             @forelse ($records as $r)
-                @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->inventoryItem?->primaryPhoto?->first(); @endphp
+                @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->photos->first() ?? $first?->inventoryItem?->primaryPhoto?->first(); @endphp
                 <a href="{{ route('borrow.show', $r) }}" wire:navigate wire:key="mbr-{{ $r->id }}" class="block bg-white border border-gray-100 rounded-lg p-3">
                     <div class="flex items-start justify-between gap-2">
                         <div class="flex gap-2 min-w-0">
                             @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />@endif
-                            <div class="min-w-0"><div class="font-semibold text-gray-800">{{ $r->borrower_name }}</div><div class="text-xs text-gray-500 truncate">{{ $first?->item_name }} · Qty {{ $r->items->sum('qty') }}</div></div>
+                            <div class="min-w-0"><div class="font-mono text-xs text-indigo-600">{{ $r->request_number }}</div><div class="font-semibold text-gray-800">{{ $r->borrower_name }}</div><div class="text-xs text-gray-500 truncate">{{ $first?->item_name }} · Qty {{ $r->items->sum('qty') }}</div></div>
                         </div>
                         <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $cls }} shrink-0">{{ $lbl }}</span>
                     </div>

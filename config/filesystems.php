@@ -41,7 +41,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            'url' => '/storage', // relative — ໂຫລດຮູບໄດ້ທຸກ host/port (dev 127.0.0.1:8000, prod domain)
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
