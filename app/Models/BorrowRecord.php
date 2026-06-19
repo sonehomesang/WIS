@@ -21,6 +21,9 @@ class BorrowRecord extends Model
         'approved_at' => 'datetime',
         'taken_at' => 'datetime',
         'returned_at' => 'datetime',
+        'extension_proposed_date' => 'date',
+        'extension_requested_at' => 'datetime',
+        'extension_decided_at' => 'datetime',
     ];
 
     public function items(): HasMany

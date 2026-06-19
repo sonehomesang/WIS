@@ -116,6 +116,9 @@ class BorrowService
                 'approve' => $this->doApprove($r, $steps, $actor),
                 'confirmTake' => $this->doConfirmTake($r, $actor),
                 'confirmReturn' => $this->doConfirmReturn($r, $actor, $opts),
+                'requestExtension' => $this->doRequestExtension($r, $actor, $opts),
+                'approveExtension' => $this->doDecideExtension($r, $actor, true),
+                'rejectExtension' => $this->doDecideExtension($r, $actor, false),
                 'cancel', 'reject' => $this->doCancel($r, $opts),
                 default => throw ValidationException::withMessages(['action' => "Unknown action: {$action}"]),
             };
@@ -194,6 +197,29 @@ class BorrowService
         $r->actual_return_date = Carbon::today()->toDateString();
         $r->warehouse_staff_user_id = $actor->id;
         $r->warehouse_staff_name = $actor->display_name ?? $actor->email;
+    }
+
+    private function doRequestExtension(BorrowRecord $r, $actor, array $opts): void
+    {
+        $this->assert(in_array($r->status, ['active', 'overdue'], true), 'ຂໍຂະຫຍາຍໄດ້ສະເພาະ active/overdue.');
+        $this->assert($r->extension_status !== 'pending', 'ມີຄຳຂໍຂະຫຍາຍຄ້າງຢູ່ແລ້ວ.');
+        $this->assert(! empty($opts['proposed_date']), 'ຕ້ອງໃສ່ວັນທີສົ່ງໃໝ່.');
+        $r->extension_status = 'pending';
+        $r->extension_reason = $opts['reason'] ?? null;
+        $r->extension_proposed_date = $opts['proposed_date'];
+        $r->extension_requested_by = $actor->id;
+        $r->extension_requested_at = now();
+    }
+
+    private function doDecideExtension(BorrowRecord $r, $actor, bool $approve): void
+    {
+        $this->assert($r->extension_status === 'pending', 'ບໍ່ມີຄຳຂໍຂະຫຍາຍຄ້າງ.');
+        $r->extension_status = $approve ? 'approved' : 'rejected';
+        $r->extension_decided_by = $actor->id;
+        $r->extension_decided_at = now();
+        if ($approve && $r->extension_proposed_date) {
+            $r->planned_return_date = $r->extension_proposed_date->toDateString();
+        }
     }
 
     private function doCancel(BorrowRecord $r, array $opts): void

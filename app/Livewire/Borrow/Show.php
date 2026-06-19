@@ -26,6 +26,12 @@ class Show extends Component
 
     public bool $showReturn = false;
 
+    public bool $showExtension = false;
+
+    public string $extReason = '';
+
+    public string $extProposedDate = '';
+
     /** @var array<int,string> [borrow_item_id => condition] */
     public array $takeCondition = [];
 
@@ -79,6 +85,31 @@ class Show extends Component
     {
         $this->act('cancel', ['reason' => $this->cancelReason]);
         $this->showCancel = false;
+    }
+
+    // ── extension ──
+    public function openExtension(): void
+    {
+        $this->reset(['extReason', 'extProposedDate']);
+        $this->extProposedDate = $this->record->planned_return_date?->copy()->addDays(7)->toDateString() ?? '';
+        $this->showExtension = true;
+    }
+
+    public function requestExtension(): void
+    {
+        if ($this->act('requestExtension', ['reason' => $this->extReason, 'proposed_date' => $this->extProposedDate])) {
+            $this->showExtension = false;
+        }
+    }
+
+    public function approveExtension(): void
+    {
+        $this->act('approveExtension');
+    }
+
+    public function rejectExtension(): void
+    {
+        $this->act('rejectExtension');
     }
 
     // ── confirmTake (ມອບເຄື່ອງ) — ຮູບ condition ບັງຄັບ ──

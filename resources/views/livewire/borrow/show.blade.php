@@ -89,7 +89,27 @@
                 {{-- ⑥ TIME EXTENSION REQUEST --}}
                 <div>
                     <div class="text-xs font-bold text-indigo-600 tracking-wide mb-3">6. TIME EXTENSION REQUEST</div>
-                    <div class="bg-gray-50 rounded-lg p-3 text-center text-gray-400 text-xs">No extension requested <span class="text-gray-300">(feature ຄ້າງ)</span></div>
+                    @if ($record->extension_status === 'pending')
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1 text-xs">
+                            <div class="font-medium text-amber-800">⏳ ຂໍຂະຫຍາຍ → {{ $record->extension_proposed_date?->format('M d, Y') }}</div>
+                            @if ($record->extension_reason)<div class="text-gray-600">{{ $record->extension_reason }}</div>@endif
+                            @if (in_array($record->status, ['active', 'overdue']))
+                                <div class="flex gap-2 pt-1">
+                                    <button wire:click="approveExtension" class="text-white bg-emerald-600 rounded px-2 py-1">Approve</button>
+                                    <button wire:click="rejectExtension" class="text-white bg-red-600 rounded px-2 py-1">Reject</button>
+                                </div>
+                            @endif
+                        </div>
+                    @elseif ($record->extension_status === 'approved')
+                        <div class="bg-emerald-50 rounded-lg p-3 text-xs text-emerald-700">✓ ຂະຫຍາຍແລ້ວ → {{ $record->extension_proposed_date?->format('M d, Y') }}</div>
+                    @elseif ($record->extension_status === 'rejected')
+                        <div class="bg-gray-50 rounded-lg p-3 text-xs text-gray-500">✗ ປະຕິເສດການຂະຫຍາຍ</div>
+                    @else
+                        <div class="bg-gray-50 rounded-lg p-3 text-center text-gray-400 text-xs">
+                            No extension requested
+                            @if (in_array($record->status, ['active', 'overdue']))<div class="mt-2"><button wire:click="openExtension" class="text-indigo-600 border border-indigo-200 rounded px-2 py-1">ຂໍຂະຫຍາຍເວລາ</button></div>@endif
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -203,6 +223,19 @@
                         <button wire:click="$set('showReturn', false)" class="border border-gray-300 rounded px-4 py-2 text-sm">ປິດ</button>
                         <button wire:click="confirmReturn" wire:loading.attr="disabled" wire:target="confirmReturn,returnPhotos" class="bg-sky-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ຢືนยันຮັບคืน</button>
                     </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- extension request modal --}}
+        @if ($showExtension)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
+                    <h3 class="font-medium text-gray-800">ຂໍຂະຫຍາຍເວລາ</h3>
+                    @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    <div><label class="block text-sm text-gray-600 mb-1">ວັນທີສົ່ງໃໝ່</label><input type="date" wire:model="extProposedDate" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                    <div><label class="block text-sm text-gray-600 mb-1">ເຫດຜົນ</label><textarea wire:model="extReason" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
+                    <div class="flex justify-end gap-2"><button wire:click="$set('showExtension', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="requestExtension" class="bg-indigo-600 text-white rounded px-3 py-1.5 text-sm">ສົ່ງຄຳຂໍ</button></div>
                 </div>
             </div>
         @endif

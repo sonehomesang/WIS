@@ -90,6 +90,48 @@ test('confirmTake decrements inventory, confirmReturn increments back', function
     expect($inv->refresh()->quantity)->toBe(10);
 });
 
+function activeRecord(): BorrowRecord
+{
+    $svc = test()->svc;
+    $a = test()->actor;
+    $r = draft(['requires_acknowledge' => false]);
+    $svc->transition($r, 'submit', $a);
+    $svc->transition($r->refresh(), 'approve', $a);
+    $svc->transition($r->refresh(), 'confirmTake', $a);
+
+    return $r->refresh();
+}
+
+test('extension: request → pending, approve → planned_return_date updated', function () {
+    $r = activeRecord();
+    $newDate = now()->addDays(20)->toDateString();
+
+    $this->svc->transition($r, 'requestExtension', $this->actor, ['reason' => 'need more time', 'proposed_date' => $newDate]);
+    expect($r->refresh()->extension_status)->toBe('pending');
+
+    $this->svc->transition($r->refresh(), 'approveExtension', $this->actor);
+    $r->refresh();
+    expect($r->extension_status)->toBe('approved');
+    expect($r->planned_return_date->toDateString())->toBe($newDate);
+});
+
+test('extension: reject keeps planned_return_date', function () {
+    $r = activeRecord();
+    $orig = $r->planned_return_date->toDateString();
+
+    $this->svc->transition($r, 'requestExtension', $this->actor, ['proposed_date' => now()->addDays(20)->toDateString()]);
+    $this->svc->transition($r->refresh(), 'rejectExtension', $this->actor);
+    $r->refresh();
+    expect($r->extension_status)->toBe('rejected');
+    expect($r->planned_return_date->toDateString())->toBe($orig);
+});
+
+test('extension: cannot approve when none pending', function () {
+    $r = activeRecord();
+    expect(fn () => $this->svc->transition($r, 'approveExtension', $this->actor))
+        ->toThrow(ValidationException::class);
+});
+
 test('cancel from draft sets cancelled', function () {
     $r = draft();
     $this->svc->transition($r, 'cancel', $this->actor, ['reason' => 'no need']);
