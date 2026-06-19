@@ -1,66 +1,101 @@
 @php
-    $statusBadge = fn ($s) => match ($s) {
-        'draft' => 'bg-gray-100 text-gray-700',
-        'acknowledged' => 'bg-blue-100 text-blue-700',
-        'approved' => 'bg-sky-100 text-sky-700',
-        'active' => 'bg-emerald-100 text-emerald-700',
-        'overdue' => 'bg-red-100 text-red-700',
-        'returned' => 'bg-gray-200 text-gray-700',
-        'cancelled' => 'bg-gray-100 text-gray-500',
-        default => 'bg-gray-100 text-gray-600',
+    $statusMeta = fn ($s) => match ($s) {
+        'draft' => ['DRAFT', 'bg-gray-100 text-gray-600'],
+        'acknowledged' => ['PENDING ACK', 'bg-blue-100 text-blue-700'],
+        'approved' => ['APPROVED', 'bg-sky-100 text-sky-700'],
+        'active' => ['IN USES', 'bg-indigo-100 text-indigo-700'],
+        'overdue' => ['OVERDUE', 'bg-red-100 text-red-700'],
+        'returned' => ['RETURNED', 'bg-emerald-100 text-emerald-700'],
+        'cancelled' => ['CANCELLED', 'bg-gray-100 text-gray-400'],
+        default => [strtoupper($s), 'bg-gray-100 text-gray-600'],
+    };
+    $typeLabel = fn ($t) => match ($t) {
+        'new_inventory' => 'Inventory', 'tools_equipment' => 'Tools/Equip',
+        'deposited_tools' => 'Deposited', 'others' => 'Others', default => $t,
     };
 @endphp
 
 <div class="pb-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- toolbar (sticky ໃຕ້ global header) --}}
-        <div class="sticky top-16 z-20 bg-gray-100 flex flex-col gap-2 py-3 sm:py-0 sm:h-[52px] sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div class="sticky top-16 z-20 bg-gray-100 flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <div class="flex flex-wrap items-center gap-2">
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ BR No./ຊື່ຜູ້ຢືມ…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
+                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ BR/ຊື່ຜູ້ຢືມ…" class="rounded-md border-gray-300 shadow-sm text-sm" />
                 <select wire:model.live="statusFilter" class="rounded-md border-gray-300 text-sm">
-                    <option value="">ທຸກ status</option>
-                    <option value="draft">draft</option>
-                    <option value="acknowledged">acknowledged</option>
-                    <option value="approved">approved</option>
-                    <option value="active">active</option>
-                    <option value="overdue">overdue</option>
-                    <option value="returned">returned</option>
-                    <option value="cancelled">cancelled</option>
+                    <option value="">All Statuses</option>
+                    <option value="draft">draft</option><option value="acknowledged">acknowledged</option>
+                    <option value="approved">approved</option><option value="active">active (in use)</option>
+                    <option value="overdue">overdue</option><option value="returned">returned</option><option value="cancelled">cancelled</option>
                 </select>
-                <span class="text-xs text-gray-400 whitespace-nowrap">{{ number_format($records->total()) }} ລາຍການ</span>
+                <select wire:model.live="typeFilter" class="rounded-md border-gray-300 text-sm">
+                    <option value="">All Types</option>
+                    <option value="new_inventory">Inventory</option><option value="tools_equipment">Tools/Equip</option>
+                    <option value="deposited_tools">Deposited</option><option value="others">Others</option>
+                </select>
+                <input type="date" wire:model.live="fromDate" class="rounded-md border-gray-300 text-sm" title="ຈาກວັນທີ" />
+                <input type="date" wire:model.live="toDate" class="rounded-md border-gray-300 text-sm" title="ຫາວັນທີ" />
             </div>
             <div class="flex items-center gap-2">
-                @can('borrow.create')<a href="{{ route('borrow.create') }}" wire:navigate class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] inline-flex items-center hover:bg-sky-700 whitespace-nowrap">+ ສ້າງຄຳຂໍຢືມ</a>@endcan
+                <button wire:click="runDailyCheck" class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-amber-100 whitespace-nowrap">⏰ Run Daily Check</button>
+                @can('borrow.create')<a href="{{ route('borrow.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-3 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ Borrow Request</a>@endcan
             </div>
         </div>
+
+        <p class="text-sm text-gray-500 mb-2">Monitor active loans and return schedules. · {{ number_format($records->total()) }} records</p>
+
+        @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-2">{{ session('ok') }}</div>@endif
 
         {{-- Desktop table --}}
         <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-hidden">
             <table class="w-full text-sm">
-                <thead class="bg-gray-100 text-gray-700 border-b border-gray-200">
+                <thead class="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-200">
                     <tr>
-                        <th class="text-left font-semibold px-4 py-2.5">BR No.</th>
-                        <th class="text-left font-semibold px-4 py-2.5">ຜູ້ຢືມ</th>
-                        <th class="text-left font-semibold px-4 py-2.5">ລາຍການ</th>
-                        <th class="text-left font-semibold px-4 py-2.5">ວັນທີຢືມ</th>
-                        <th class="text-left font-semibold px-4 py-2.5">ມື້</th>
-                        <th class="text-left font-semibold px-4 py-2.5">Status</th>
-                        <th class="px-4 py-2.5"></th>
+                        <th class="text-left font-semibold px-4 py-3">ຜູ້ຢືມ <span class="text-gray-400">(Borrower)</span></th>
+                        <th class="text-left font-semibold px-4 py-3">ເຄື່ອງທີ່ຢືມ <span class="text-gray-400">(Items)</span></th>
+                        <th class="text-left font-semibold px-4 py-3">ລະຫັດ <span class="text-gray-400">(Material ID)</span></th>
+                        <th class="text-left font-semibold px-4 py-3">ວັນທີ <span class="text-gray-400">(Date)</span></th>
+                        <th class="text-left font-semibold px-4 py-3">ສະຖานะ <span class="text-gray-400">(Status)</span></th>
+                        <th class="text-left font-semibold px-4 py-3">ລາຍລະອຽດ <span class="text-gray-400">(Actions)</span></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-gray-100">
                     @forelse ($records as $r)
-                        <tr wire:key="br-{{ $r->id }}" class="border-t border-gray-200 hover:bg-gray-50">
-                            <td class="px-4 py-2.5 font-mono text-gray-600">{{ $r->request_number }}</td>
-                            <td class="px-4 py-2.5"><div class="text-gray-800">{{ $r->borrower_name }}</div><div class="text-xs text-gray-400">{{ $r->borrower_email }}</div></td>
-                            <td class="px-4 py-2.5 text-gray-600 text-xs">{{ $r->items->take(3)->pluck('item_name')->implode(', ') }}@if ($r->items->count() > 3) +{{ $r->items->count() - 3 }}@endif</td>
-                            <td class="px-4 py-2.5 text-gray-600">{{ $r->borrow_date?->toDateString() }}</td>
-                            <td class="px-4 py-2.5 text-gray-600">{{ $r->period_days }}</td>
-                            <td class="px-4 py-2.5"><span class="text-xs px-2 py-0.5 rounded {{ $statusBadge($r->display_status) }}">{{ $r->display_status }}</span></td>
-                            <td class="px-4 py-2.5 text-right"><a href="{{ route('borrow.show', $r) }}" wire:navigate class="text-sky-600 hover:text-sky-800 text-xs">ເບິ່ງ →</a></td>
+                        @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->inventoryItem?->primaryPhoto?->first(); $d = $r->days_left; @endphp
+                        <tr wire:key="br-{{ $r->id }}" class="hover:bg-gray-50">
+                            {{-- borrower --}}
+                            <td class="px-4 py-3 align-top"><div class="font-semibold text-gray-800">{{ $r->borrower_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->borrower_email }}</div></td>
+                            {{-- items --}}
+                            <td class="px-4 py-3 align-top">
+                                <div class="flex gap-2">
+                                    @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
+                                    @else<div class="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-xs">📦</div>@endif
+                                    <div class="min-w-0">
+                                        <div class="font-medium text-gray-800 truncate max-w-xs">{{ $first?->item_name ?? '—' }}@if ($r->items->count() > 1) <span class="text-gray-400 text-xs">+{{ $r->items->count() - 1 }}</span>@endif</div>
+                                        <div class="text-xs text-gray-400">Qty: {{ $r->items->sum('qty') }}@if ($r->purpose) · {{ Str::limit($r->purpose, 30) }}@endif</div>
+                                    </div>
+                                </div>
+                            </td>
+                            {{-- material id chips --}}
+                            <td class="px-4 py-3 align-top">
+                                @foreach ($r->items->take(2) as $bi)
+                                    @if ($bi->inventoryItem)<span class="inline-block text-xs font-mono bg-gray-100 text-gray-600 rounded px-1.5 py-0.5 mb-0.5">{{ $bi->inventoryItem->slug }}</span>@endif
+                                @endforeach
+                            </td>
+                            {{-- date --}}
+                            <td class="px-4 py-3 align-top text-xs">
+                                <div class="text-gray-700 font-medium">{{ $r->borrow_date?->format('M d, Y') }}</div>
+                                <div class="text-gray-400 mt-1">RETURN: {{ $r->planned_return_date?->format('M d, Y') }}</div>
+                            </td>
+                            {{-- status --}}
+                            <td class="px-4 py-3 align-top">
+                                <span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span>
+                                @if ($d !== null)<div class="text-xs mt-1 {{ $d < 0 ? 'text-red-600' : 'text-gray-400' }}">{{ $d < 0 ? 'Overdue '.abs($d).'d' : 'In '.$d.'d' }}</div>@endif
+                            </td>
+                            {{-- actions --}}
+                            <td class="px-4 py-3 align-top"><a href="{{ route('borrow.show', $r) }}" wire:navigate class="text-xs text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 inline-block">View Details</a></td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີຄຳຂໍຢືມ</td></tr>
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">ຍັງບໍ່ມີຄຳຂໍຢືມ</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -69,13 +104,16 @@
         {{-- Mobile cards --}}
         <div class="md:hidden space-y-2">
             @forelse ($records as $r)
+                @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->inventoryItem?->primaryPhoto?->first(); @endphp
                 <a href="{{ route('borrow.show', $r) }}" wire:navigate wire:key="mbr-{{ $r->id }}" class="block bg-white border border-gray-100 rounded-lg p-3">
-                    <div class="flex items-center justify-between">
-                        <span class="font-mono text-sm text-gray-700">{{ $r->request_number }}</span>
-                        <span class="text-xs px-2 py-0.5 rounded {{ $statusBadge($r->display_status) }}">{{ $r->display_status }}</span>
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex gap-2 min-w-0">
+                            @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />@endif
+                            <div class="min-w-0"><div class="font-semibold text-gray-800">{{ $r->borrower_name }}</div><div class="text-xs text-gray-500 truncate">{{ $first?->item_name }} · Qty {{ $r->items->sum('qty') }}</div></div>
+                        </div>
+                        <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $cls }} shrink-0">{{ $lbl }}</span>
                     </div>
-                    <div class="text-sm text-gray-700 mt-1">{{ $r->borrower_name }}</div>
-                    <div class="text-xs text-gray-500 mt-1">{{ $r->items->take(2)->pluck('item_name')->implode(', ') }} · {{ $r->borrow_date?->toDateString() }} · {{ $r->period_days }} ມື້</div>
+                    <div class="text-xs text-gray-400 mt-1">{{ $r->borrow_date?->format('M d, Y') }} → {{ $r->planned_return_date?->format('M d, Y') }}</div>
                 </a>
             @empty
                 <div class="text-center text-gray-400 py-6">ຍັງບໍ່ມີຄຳຂໍຢືມ</div>

@@ -27,9 +27,9 @@
                     $titleMap = [
                         'dashboard' => 'Dashboard',
                         'inventory' => 'WH Inventories',
-                        'borrow' => 'Borrowing Material/Tools',
-                        'borrow.create' => 'ສ້າງຄຳຂໍຢືມ',
-                        'borrow.show' => 'ລາຍລະອຽດການຍືມ',
+                        'borrow' => 'Borrowing & Tracking',
+                        'borrow.create' => 'New Borrow Request',
+                        'borrow.show' => 'Borrowing Record Details',
                         'settings' => 'Settings',
                         'settings.users' => 'Users',
                         'settings.roles' => 'Roles & permissions',

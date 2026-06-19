@@ -18,6 +18,12 @@ class Index extends Component
 
     public string $statusFilter = '';
 
+    public string $typeFilter = '';
+
+    public string $fromDate = '';
+
+    public string $toDate = '';
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('borrow.view'), 403);
@@ -33,11 +39,21 @@ class Index extends Component
         $this->resetPage();
     }
 
+    /** Daily check — ນັບ overdue (active ກາຍກຳນົດ). Reminder ຈິງ = Phase 6.10. */
+    public function runDailyCheck(): void
+    {
+        $overdue = BorrowRecord::where('status', 'active')
+            ->whereDate('planned_return_date', '<', Carbon::today())->count();
+        session()->flash('ok', $overdue > 0
+            ? "⏰ ພົບ {$overdue} ລາຍການເກີນກຳນົດ (reminder ຈะ wire ຕอน 6.10)"
+            : '✓ ບໍ່ມີລາຍການເກີນກຳນົດ');
+    }
+
     /** Visibility: admin/warehouse see all; ຄົນອື່ນ ເຫັນຂອງຕົນ/ທີ່ assign ໃຫ້. */
     protected function scopedQuery()
     {
         $u = auth()->user();
-        $q = BorrowRecord::query()->with('items');
+        $q = BorrowRecord::query()->with(['items.inventoryItem.primaryPhoto', 'unit']);
 
         if (! ($u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']))) {
             $email = mb_strtolower($u->email);
@@ -58,6 +74,9 @@ class Index extends Component
                 fn ($q) => $q->where('status', 'active')->whereDate('planned_return_date', '<', Carbon::today()))
             ->when($this->statusFilter && $this->statusFilter !== 'overdue',
                 fn ($q) => $q->where('status', $this->statusFilter))
+            ->when($this->typeFilter, fn ($q) => $q->where('borrow_type', $this->typeFilter))
+            ->when($this->fromDate, fn ($q) => $q->whereDate('borrow_date', '>=', $this->fromDate))
+            ->when($this->toDate, fn ($q) => $q->whereDate('borrow_date', '<=', $this->toDate))
             ->orderByDesc('id')
             ->paginate(15);
 

@@ -10,7 +10,7 @@ beforeEach(function () {
 });
 
 test('borrow index renders', function () {
-    $this->get(route('borrow'))->assertOk()->assertSee('ສ້າງຄຳຂໍຢືມ')->assertSee('Borrowing Material/Tools');
+    $this->get(route('borrow'))->assertOk()->assertSee('Borrow Request')->assertSee('Borrowing & Tracking');
 });
 
 test('borrow create page renders', function () {
