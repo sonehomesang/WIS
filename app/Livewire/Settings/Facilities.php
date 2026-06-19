@@ -17,26 +17,39 @@ use Livewire\Component;
 class Facilities extends Component
 {
     public ?int $selectedLocationId = null;
+
     public ?int $selectedBuildingId = null;
 
     // Modal + form
     public bool $showModal = false;
+
     public string $type = 'location';   // location | building | room
+
     public ?int $editingId = null;
+
     public ?int $parentId = null;       // location_id (building) | building_id (room)
 
     public string $name = '';
+
     public string $name_en = '';
+
     public string $address = '';
+
     public string $code = '';
+
     public ?int $buildingTypeId = null;
+
     public string $function = '';
 
     // Building-types manager
     public bool $showTypesModal = false;
+
     public string $typeName = '';
+
     public ?int $typeEditingId = null;
+
     public string $description = '';
+
     public bool $is_active = true;
 
     public function mount(): void

@@ -18,13 +18,21 @@ class Users extends Component
 
     // Modal + form
     public bool $showModal = false;
+
     public ?int $editingId = null;
+
     public string $display_name = '';
+
     public string $email = '';
+
     public string $password = '';
+
     public string $role = '';
+
     public ?int $unit_id = null;
+
     public ?int $department_id = null;
+
     public string $status = 'active';
 
     public function mount(): void

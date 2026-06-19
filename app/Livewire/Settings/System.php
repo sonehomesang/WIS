@@ -11,6 +11,7 @@ use Livewire\Component;
 class System extends Component
 {
     public $vat_rate = 10;
+
     public bool $vat_enabled = true;
 
     public function mount(): void

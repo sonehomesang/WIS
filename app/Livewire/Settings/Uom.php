@@ -16,9 +16,13 @@ class Uom extends Component
     public string $search = '';
 
     public bool $showModal = false;
+
     public ?int $editingId = null;
+
     public string $name = '';
+
     public string $name_en = '';
+
     public bool $is_active = true;
 
     public function mount(): void

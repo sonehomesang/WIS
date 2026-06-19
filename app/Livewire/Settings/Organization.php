@@ -18,14 +18,20 @@ class Organization extends Component
 
     // Modal state
     public bool $showModal = false;
+
     public string $type = 'unit';          // 'unit' | 'department'
+
     public ?int $editingId = null;
 
     // Form fields
     public string $name = '';
+
     public string $name_en = '';
+
     public string $description = '';
+
     public bool $is_active = true;
+
     public ?int $unitId = null;            // parent Org Unit (department form)
 
     public function mount(): void

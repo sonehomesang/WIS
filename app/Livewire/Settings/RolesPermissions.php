@@ -22,8 +22,11 @@ class RolesPermissions extends Component
     public array $actions = ['view', 'create', 'edit', 'delete', 'activate', 'deactivate'];
 
     public ?int $selectedRoleId = null;
+
     public string $selectedRoleName = '';
+
     public array $grants = [];   // [menu][action] => bool
+
     public array $scope = ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all'];
 
     public function mount(): void

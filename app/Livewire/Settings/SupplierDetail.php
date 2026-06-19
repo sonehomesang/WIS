@@ -13,13 +13,21 @@ class SupplierDetail extends Component
     public Supplier $supplier;
 
     public bool $showModal = false;
+
     public ?int $editingId = null;
+
     public string $contract_number = '';
+
     public ?string $sign_date = null;
+
     public ?string $effective_date = null;
+
     public ?string $expiry_date = null;
+
     public ?string $renewal_date = null;
+
     public string $status = 'draft';
+
     public string $notes = '';
 
     public function mount(Supplier $supplier): void

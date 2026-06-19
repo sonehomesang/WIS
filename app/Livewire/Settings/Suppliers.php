@@ -3,7 +3,6 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Supplier;
-use App\Models\SupplierVatChange;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -17,20 +16,35 @@ class Suppliers extends Component
     public string $search = '';
 
     public bool $showModal = false;
+
     public ?int $editingId = null;
+
     public string $name = '';
+
     public string $name_en = '';
+
     public string $contact_person = '';
+
     public string $contact_phone = '';
+
     public string $contact_email = '';
+
     public string $address = '';
+
     public string $tax_id = '';
+
     public string $payment_terms = '';
+
     public string $default_currency = 'LAK';
+
     public string $notes = '';
+
     public bool $is_active = true;
+
     public $vat_rate = null;               // null = use global
+
     public ?float $originalVatRate = null;
+
     public string $vat_reason = '';
 
     public function mount(): void
