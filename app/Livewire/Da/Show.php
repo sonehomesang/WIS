@@ -3,6 +3,7 @@
 namespace App\Livewire\Da;
 
 use App\Models\DiscrepancyAdvice;
+use App\Models\OutwardsGoodsAdvice;
 use App\Services\DiscrepancyService;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -169,6 +170,7 @@ class Show extends Component
             'canAct' => $this->canAct(),
             'deletable' => $this->canDelete(),
             'decisionOptions' => self::DECISIONS,
+            'linkedOgas' => OutwardsGoodsAdvice::where('source_da_id', $this->record->id)->orderByDesc('id')->get(['id', 'oga_number', 'status']),
         ]);
     }
 }

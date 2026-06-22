@@ -114,6 +114,27 @@ Route::get('da/{record}', App\Livewire\Da\Show::class)
     ->middleware(['auth', 'verified'])
     ->name('da.show');
 
+// ── OGA (Outwards Goods Advice) — Phase 6.8c ──
+Route::get('oga', App\Livewire\Oga\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('oga');
+
+Route::get('oga/create', App\Livewire\Oga\Create::class)
+    ->middleware(['auth', 'verified'])
+    ->name('oga.create');
+
+Route::get('oga/{record}/pdf', function (App\Models\OutwardsGoodsAdvice $record) {
+    abort_unless(auth()->user()->can('oga.view'), 403);
+    $record->load(['items', 'photos', 'supplier', 'history']);
+
+    return Pdf::loadView('oga.pdf', ['record' => $record])
+        ->download("oga-{$record->oga_number}.pdf");
+})->middleware(['auth', 'verified'])->name('oga.pdf');
+
+Route::get('oga/{record}', App\Livewire\Oga\Show::class)
+    ->middleware(['auth', 'verified'])
+    ->name('oga.show');
+
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');

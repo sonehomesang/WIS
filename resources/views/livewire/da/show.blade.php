@@ -94,6 +94,17 @@
                 </table>
             @endif
 
+            @if ($linkedOgas->count())
+                <div class="border border-sky-200 bg-sky-50/50 rounded-md p-3">
+                    <div class="font-semibold text-gray-700 mb-1">🚚 OGA ທີ່ສ້າງຈาก DA ນີ້</div>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach ($linkedOgas as $o)
+                            <a href="{{ route('oga.show', $o->id) }}" wire:navigate class="font-mono text-xs text-sky-700 border border-sky-200 bg-white rounded px-2 py-1 hover:bg-sky-100">{{ $o->oga_number }} <span class="text-gray-400">({{ $o->status }})</span></a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             @if ($record->history->count())
                 <div><div class="font-semibold text-gray-700 mb-1">ປະຫວັດ / History</div>
                     <ol class="text-xs text-gray-500 space-y-0.5">@foreach ($record->history as $h)<li><span class="font-mono text-gray-700">{{ $h->status }}</span> · {{ $h->user_name }} · {{ $h->created_at?->format('d/m/Y H:i') }}@if ($h->comment) — {{ $h->comment }}@endif</li>@endforeach</ol>
@@ -115,6 +126,8 @@
                 <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">ຍົກເລີກ</button>
             @elseif ($record->status === 'pending_approval')
                 @if ($canAct)<button wire:click="$set('showApprove', true)" class="text-white bg-emerald-600 rounded px-3 py-1.5">ອະນຸมัด</button><button wire:click="$set('showReject', true)" class="text-amber-700 border border-amber-200 bg-amber-50 rounded px-3 py-1.5">ສົ່ງกลับ</button>@endif
+            @elseif ($record->status === 'resolved' && $record->next_step === 'oga' && $editable)
+                <a href="{{ route('oga.create', ['da' => $record->id]) }}" wire:navigate class="inline-flex items-center gap-1 text-white bg-sky-600 rounded px-3 py-1.5 hover:bg-sky-700">🚚 ສ້າງ OGA ຈาก DA</a>
             @else
                 <span class="text-gray-400">— ບໍ່ມີ action ({{ $record->status }})</span>
             @endif
