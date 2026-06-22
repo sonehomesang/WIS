@@ -1,0 +1,194 @@
+<?php
+
+namespace App\Livewire\Request;
+
+use App\Models\MaterialRequest;
+use App\Services\RequestService;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+
+#[Layout('layouts.app')]
+class Show extends Component
+{
+    public MaterialRequest $record;
+
+    public bool $showCancel = false;
+
+    public string $cancelReason = '';
+
+    public bool $showReject = false;
+
+    public string $rejectReason = '';
+
+    public bool $showDispatch = false;
+
+    public string $deliveryMethod = 'supplier_delivery';
+
+    public string $plannedDeliveryDate = '';
+
+    public bool $showReceive = false;
+
+    public bool $rcInvoice = false;
+
+    public bool $rcDeliveryNote = false;
+
+    public bool $rcSpecMatch = false;
+
+    public bool $showClose = false;
+
+    public string $invoiceNumber = '';
+
+    public string $sapReference = '';
+
+    public bool $showDelete = false;
+
+    public string $deleteReason = '';
+
+    public function mount(MaterialRequest $record): void
+    {
+        abort_unless(auth()->user()->can('request.view'), 403);
+        $this->record = $record;
+    }
+
+    protected function act(string $action, array $opts = []): bool
+    {
+        try {
+            app(RequestService::class)->transition($this->record, $action, auth()->user(), $opts);
+            $this->record->refresh();
+            session()->flash('ok', "✓ {$action} ສຳເລັດ");
+
+            return true;
+        } catch (ValidationException $e) {
+            $this->addError('action', $e->validator->errors()->first());
+
+            return false;
+        }
+    }
+
+    protected function canEdit(): bool
+    {
+        $u = auth()->user();
+
+        return $u->is_super_admin || $u->can('request.edit');
+    }
+
+    protected function canApprove(): bool
+    {
+        $u = auth()->user();
+
+        return $this->canEdit() || $u->can('request.activate') || $this->record->approver_user_id === $u->id;
+    }
+
+    protected function isRequester(): bool
+    {
+        return auth()->id() === $this->record->requester_user_id;
+    }
+
+    public function submit(): void
+    {
+        $this->act('submit');
+    }
+
+    public function approve(): void
+    {
+        $this->act('approve');
+    }
+
+    public function validateRequest(): void
+    {
+        $this->act('validate');
+    }
+
+    public function cancel(): void
+    {
+        $this->act('cancel', ['reason' => $this->cancelReason]);
+        $this->showCancel = false;
+    }
+
+    public function reject(): void
+    {
+        if ($this->act('reject', ['reason' => $this->rejectReason])) {
+            $this->reset(['showReject', 'rejectReason']);
+        }
+    }
+
+    public function openDispatch(): void
+    {
+        $this->reset(['deliveryMethod', 'plannedDeliveryDate']);
+        $this->deliveryMethod = 'supplier_delivery';
+        $this->resetErrorBag();
+        $this->showDispatch = true;
+    }
+
+    public function doDispatch(): void
+    {
+        if ($this->act('dispatch', ['delivery_method' => $this->deliveryMethod, 'planned_delivery_date' => $this->plannedDeliveryDate ?: null])) {
+            $this->reset(['showDispatch', 'deliveryMethod', 'plannedDeliveryDate']);
+        }
+    }
+
+    public function confirmReceipt(): void
+    {
+        if ($this->act('confirmReceipt', [
+            'invoice_received' => $this->rcInvoice,
+            'delivery_note_received' => $this->rcDeliveryNote,
+            'spec_match' => $this->rcSpecMatch,
+        ])) {
+            $this->reset(['showReceive', 'rcInvoice', 'rcDeliveryNote', 'rcSpecMatch']);
+        }
+    }
+
+    public function close(): void
+    {
+        $this->validate([
+            'invoiceNumber' => ['required', 'string', 'max:128'],
+            'sapReference' => ['required', 'string', 'max:128'],
+        ]);
+        if ($this->act('close', ['invoice_number' => $this->invoiceNumber, 'sap_reference' => $this->sapReference])) {
+            $this->reset(['showClose', 'invoiceNumber', 'sapReference']);
+        }
+    }
+
+    // ── soft delete ──
+    protected function canDelete(): bool
+    {
+        return $this->canEdit() && in_array($this->record->status, ['draft', 'cancelled', 'rejected', 'completed'], true);
+    }
+
+    public function openDelete(): void
+    {
+        abort_unless($this->canDelete(), 403);
+        $this->reset(['deleteReason']);
+        $this->resetErrorBag();
+        $this->showDelete = true;
+    }
+
+    public function deleteRecord()
+    {
+        abort_unless($this->canDelete(), 403);
+        $this->validate(['deleteReason' => ['required', 'string', 'max:500']]);
+        $u = auth()->user();
+        $this->record->forceFill(['deleted_reason' => $this->deleteReason, 'deleted_by' => $u->id])->save();
+        $this->record->history()->create([
+            'action' => 'delete', 'status' => $this->record->status, 'user_id' => $u->id,
+            'user_name' => $u->display_name ?? $u->email, 'comment' => $this->deleteReason, 'created_at' => now(),
+        ]);
+        $this->record->delete();
+        session()->flash('ok', '✓ ລຶບ (ຍ້າຍໄປ deleted log)');
+
+        return $this->redirect(route('request'), navigate: true);
+    }
+
+    public function render(): View
+    {
+        return view('livewire.request.show', [
+            'record' => $this->record->load(['items.photos', 'history', 'supplier', 'unit', 'department', 'requester']),
+            'editable' => $this->canEdit(),
+            'canApprove' => $this->canApprove(),
+            'isRequester' => $this->isRequester(),
+            'deletable' => $this->canDelete(),
+        ]);
+    }
+}

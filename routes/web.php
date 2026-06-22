@@ -72,6 +72,27 @@ Route::get('catalog', App\Livewire\Catalog\Index::class)
     ->middleware(['auth', 'verified'])
     ->name('catalog');
 
+// ── Request Material (ໃບເບີກວັດສະດຸ) — Phase 6.7b ──
+Route::get('request', App\Livewire\Request\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('request');
+
+Route::get('request/create', App\Livewire\Request\Create::class)
+    ->middleware(['auth', 'verified'])
+    ->name('request.create');
+
+Route::get('request/{record}/pdf', function (App\Models\MaterialRequest $record) {
+    abort_unless(auth()->user()->can('request.view'), 403);
+    $record->load(['items', 'supplier', 'unit', 'department', 'history']);
+
+    return Pdf::loadView('request.pdf', ['record' => $record])
+        ->download("request-{$record->request_number}.pdf");
+})->middleware(['auth', 'verified'])->name('request.pdf');
+
+Route::get('request/{record}', App\Livewire\Request\Show::class)
+    ->middleware(['auth', 'verified'])
+    ->name('request.show');
+
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
