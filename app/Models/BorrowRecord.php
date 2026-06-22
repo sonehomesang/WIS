@@ -21,6 +21,7 @@ class BorrowRecord extends Model
         'approved_at' => 'datetime',
         'taken_at' => 'datetime',
         'returned_at' => 'datetime',
+        'borrower_return_date' => 'date',
         'extension_proposed_date' => 'date',
         'extension_requested_at' => 'datetime',
         'extension_decided_at' => 'datetime',
@@ -34,6 +35,11 @@ class BorrowRecord extends Model
     public function history(): HasMany
     {
         return $this->hasMany(BorrowHistory::class, 'record_id')->orderBy('id');
+    }
+
+    public function borrower(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'borrower_user_id');
     }
 
     public function unit(): BelongsTo

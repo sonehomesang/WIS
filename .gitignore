@@ -25,3 +25,7 @@ Thumbs.db
 
 # Design draft mockups (not source)
 /resources/drafts/
+
+# Reference app export (Google AI Studio v1 — compare only, not WH source)
+/docs/version-01/
+/docs/example.html

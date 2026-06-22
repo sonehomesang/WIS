@@ -22,6 +22,7 @@
             <div><h2 class="text-xl font-bold text-gray-800">Borrowing Record Details</h2>
                 <div class="text-sm text-gray-400"><span class="font-mono">{{ $record->request_number }}</span> · <span class="text-xs px-2 py-0.5 rounded-full {{ $badge($st) }}">{{ strtoupper($st) }}</span></div></div>
             <div class="flex items-center gap-3">
+                @if ($editable)<button type="button" wire:click="openEdit" class="text-sm text-white bg-amber-600 rounded-md px-3 py-1.5 hover:bg-amber-700">✏️ ແກ້ໄຂ</button>@endif
                 <button type="button" onclick="exportJpg('borrow-detail', 'borrow-{{ $record->request_number }}.jpg')" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">🖼 JPG</button>
                 <a href="{{ route('borrow.pdf', $record) }}" target="_blank" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
                 <a href="{{ route('borrow') }}" wire:navigate class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</a>
@@ -31,123 +32,145 @@
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror
 
-        <div id="borrow-detail" class="bg-white rounded-lg border border-gray-100 p-6 grid md:grid-cols-2 gap-x-10 gap-y-8 text-sm">
-            {{-- ① USER INFORMATION --}}
+        @php
+            $dt = fn ($d) => $d?->format('d/m/Y H:i') ?? '—';
+            $d1 = fn ($d) => $d?->format('d/m/Y') ?? '—';
+            $statusLao = match ($st) {
+                'draft' => 'Draft (ຮ່າງ)', 'acknowledged' => 'Acknowledged (ລໍ approve)', 'approved' => 'Approved (ລໍຮັບເຄື່ອງ)',
+                'active' => 'Active (ກຳລັງນຳໃຊ້)', 'overdue' => 'Overdue (ເກີນກຳນົດ)', 'returned' => 'Returned (ສົ່ງคืนແລ້ວ)',
+                'cancelled' => 'Cancelled (ຍົກເລີກ)', default => $st,
+            };
+            $rqty = $record->items->sum(fn ($i) => $i->return_qty ?? 0);
+            $rcond = $record->items->pluck('condition_on_return')->filter()->implode(' · ') ?: '—';
+            $rets = $record->items->flatMap(fn ($i) => $i->photos->where('kind', 'return'));
+            // auto-signature: ຊື່ + ເວລາກົດດຳເນີນການ
+            $admName = $record->warehouse_staff_name ?? $record->approver_name;
+            $admAt = $record->returned_at ?? $record->taken_at ?? $record->approved_at;
+        @endphp
+        <div id="borrow-detail" class="bg-white border border-black p-6 text-sm space-y-6">
+            <div class="text-center bg-gray-200 border border-black p-3 font-bold text-lg uppercase tracking-wide">ບັນທຶກລາຍລະອຽດ ການຢືມເຄື່ອງ (Borrowing Record Details)</div>
+
+            {{-- ① ຂໍ້ມູນພື້ນຖານ --}}
+            <table class="w-full text-sm" style="border-collapse:collapse">
+                @php $bd = 'border border-black px-2 py-1.5'; $lbl = $bd.' bg-gray-50 font-bold align-top'; @endphp
+                <tr>
+                    <td class="{{ $lbl }}" style="width:20%">ໃບຢືມເລກທີ / REQ No.</td><td class="{{ $bd }} font-bold text-indigo-700" style="width:30%">{{ $record->request_number }}</td>
+                    <td class="{{ $lbl }}" style="width:20%">ປະເພດຢືມ / Type</td><td class="{{ $bd }}" style="width:30%">{{ $typeLabel }}</td>
+                </tr>
+                <tr>
+                    <td class="{{ $lbl }}">ຜູ້ຢືມ / Borrower</td><td class="{{ $bd }}">{{ $record->borrower_name }}</td>
+                    <td class="{{ $lbl }}">ເບີໂທ / WhatsApp</td><td class="{{ $bd }}">{{ $record->borrower?->phone_number ?? '—' }}</td>
+                </tr>
+                <tr>
+                    <td class="{{ $lbl }}">ໜ່ວຍງານ / Unit</td><td class="{{ $bd }}">{{ $record->unit?->name ?? '—' }}</td>
+                    <td class="{{ $lbl }}">ພະແນກ / Department</td><td class="{{ $bd }}">{{ $record->department?->name ?? '—' }}</td>
+                </tr>
+                <tr>
+                    <td class="{{ $lbl }}">ຢືມວັນທີ / Borrow Date</td><td class="{{ $bd }}">{{ $d1($record->borrow_date) }}</td>
+                    <td class="{{ $lbl }}">ຈຸດປະສົງ / Purpose</td><td class="{{ $bd }}">{{ $record->purpose ?? '—' }}</td>
+                </tr>
+                <tr>
+                    <td class="{{ $lbl }}">ກຳນົດວັນທີສົ່ງ / Due</td><td class="{{ $bd }}">{{ $d1($record->planned_return_date) }} <span class="text-gray-500">({{ $record->period_days }} ມື້)</span></td>
+                    <td class="{{ $lbl }}">ສະຖานะ / Status</td><td class="{{ $bd }} font-bold {{ $st === 'overdue' ? 'text-red-600' : ($st === 'returned' ? 'text-gray-600' : 'text-emerald-600') }}">{{ $statusLao }}</td>
+                </tr>
+            </table>
+
+            {{-- ② ລາຍການເຄື່ອງ --}}
             <div>
-                <div class="text-xs font-bold text-indigo-600 tracking-wide mb-3">1. USER INFORMATION</div>
-                <div class="grid grid-cols-2 gap-y-3 gap-x-4">
-                    <div><div class="text-xs text-gray-400">NAME</div><div class="text-gray-800">{{ $record->borrower_name }}</div></div>
-                    <div><div class="text-xs text-gray-400">EMAIL</div><div class="text-gray-800">{{ $record->borrower_email }}</div></div>
-                    <div><div class="text-xs text-gray-400">UNIT</div><div class="text-gray-800">{{ $record->unit?->name ?? '—' }}</div></div>
-                    <div><div class="text-xs text-gray-400">DEPARTMENT</div><div class="text-gray-800">{{ $record->department?->name ?? '—' }}</div></div>
+                <div class="font-bold mb-2">ລາຍການເຄື່ອງທີ່ຢືມ (Borrowed Items)</div>
+                <table class="w-full text-sm text-center" style="border-collapse:collapse">
+                    <thead class="bg-gray-100 font-bold">
+                        <tr>
+                            <th class="{{ $bd }}" style="width:5%">#</th>
+                            <th class="{{ $bd }}" style="width:16%">ລະຫັດເຄື່ອງ<br><span class="text-[10px] font-normal">Item ID</span></th>
+                            <th class="{{ $bd }} text-left">ລາຍລະອຽດອຸປະກອນ<br><span class="text-[10px] font-normal">Description</span></th>
+                            <th class="{{ $bd }}" style="width:18%">ຮູບພາບ<br><span class="text-[10px] font-normal">Photo</span></th>
+                            <th class="{{ $bd }}" style="width:9%">ຈຳນວນ<br><span class="text-[10px] font-normal">Qty</span></th>
+                            <th class="{{ $bd }}" style="width:9%">ໜ່ວຍ<br><span class="text-[10px] font-normal">Unit</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($record->items as $it)
+                            @php $photo = $it->inventoryItem?->primaryPhoto?->first(); $take = $it->photos->where('kind', 'take'); @endphp
+                            <tr>
+                                <td class="{{ $bd }} align-top">{{ $loop->iteration }}</td>
+                                <td class="{{ $bd }} align-top font-mono">{{ $it->inventoryItem?->slug ?? '—' }}</td>
+                                <td class="{{ $bd }} align-top text-left">{{ $it->item_name }}</td>
+                                <td class="{{ $bd }} align-top"><div class="flex gap-1 justify-center flex-wrap">@if ($photo)<img src="{{ $photo->url }}" alt="" class="w-10 h-10 object-cover border border-gray-300" />@endif @foreach ($take as $p)<img src="{{ $p->url }}" alt="" class="w-10 h-10 object-cover border border-gray-300" />@endforeach</div></td>
+                                <td class="{{ $bd }} align-top font-bold">{{ $it->qty }}</td>
+                                <td class="{{ $bd }} align-top">{{ $it->inventoryItem?->unit ?? '—' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- ③ ການອະນຸມັດ & ຮັບເຄື່ອງ --}}
+            <div>
+                <div class="font-bold mb-2">ການຢັ້ງຢືນ ການອະນຸມັດ ແລະ ຮັບເຄື່ອງ (Approvals &amp; Pickup)</div>
+                <table class="w-full text-sm" style="border-collapse:collapse">
+                    <tr>
+                        <td class="{{ $lbl }}" style="width:20%">ຜູ້ອະນຸມັດ / Manager</td><td class="{{ $bd }}" style="width:30%">{{ $record->acknowledge_name ?? ($record->requires_acknowledge ? 'ລໍຖ້າ' : '—') }}</td>
+                        <td class="{{ $lbl }}" style="width:20%">ສາງອະນຸມັດ / WH Admin</td><td class="{{ $bd }}" style="width:30%">{{ $record->approver_name ?? '—' }} @if ($record->approved_at)<span class="text-gray-500 text-xs">· {{ $dt($record->approved_at) }}</span>@endif</td>
+                    </tr>
+                    <tr>
+                        <td class="{{ $lbl }}">ຜູ້ຢືມຮັບເຄື່ອງແລ້ວ / User Took</td>
+                        <td class="{{ $bd }}" colspan="3">@if ($record->taken_at)<span class="text-emerald-600 font-bold">✓ ຮັບເຄື່ອງແລ້ວ</span> <span class="text-gray-500 text-xs">· {{ $dt($record->taken_at) }} · {{ $record->warehouse_staff_name }}</span>@else <span class="text-gray-400">ລໍຖ້າ</span>@endif</td>
+                    </tr>
+                </table>
+            </div>
+
+            {{-- ④ ການຕໍ່ເວລາ --}}
+            <div>
+                <div class="font-bold mb-2">ການຕໍ່ເວລາ (Time Extension)</div>
+                <table class="w-full text-sm" style="border-collapse:collapse">
+                    <tr>
+                        <td class="{{ $lbl }}" style="width:20%">ສະຖานະຂໍຕໍ່ເວລາ</td>
+                        <td class="{{ $bd }}" style="width:30%">@php $em = ['pending' => ['Pending', 'text-amber-600'], 'approved' => ['Approved', 'text-emerald-600'], 'rejected' => ['Rejected', 'text-red-600'], 'none' => ['—', 'text-gray-400']]; [$et, $ec] = $em[$record->extension_status] ?? ['—', '']; @endphp<span class="font-bold {{ $ec }}">{{ $et }}</span></td>
+                        <td class="{{ $lbl }}" style="width:20%">ວັນທີຂໍຕໍ່ໄປຫາ</td><td class="{{ $bd }}" style="width:30%">{{ $d1($record->extension_proposed_date) }}</td>
+                    </tr>
+                    <tr><td class="{{ $lbl }}">ເຫດຜົນຂໍຕໍ່ເວລາ</td><td class="{{ $bd }} italic text-gray-700" colspan="3">{{ $record->extension_reason ?? '—' }}</td></tr>
+                </table>
+            </div>
+
+            {{-- ⑤ ລາຍລະອຽດການສົ່ງຄືນ --}}
+            <div>
+                <div class="text-center bg-gray-200 border border-black p-2 font-bold mb-3">ລາຍລະອຽດການສົ່ງຄືນ (Return Details)</div>
+                <table class="w-full text-sm" style="border-collapse:collapse">
+                    <tr>
+                        <td class="{{ $lbl }}" style="width:25%">ສະຖานະສາງຮັບຄືນ / WH Return</td>
+                        <td class="{{ $bd }}" style="width:25%">@if ($record->returned_at)<span class="text-emerald-600 font-bold">✓ ຮັບຄືນແລ້ວ</span> <span class="text-gray-500 text-xs">{{ $dt($record->returned_at) }}</span>@else<span class="text-amber-600 font-bold">ລໍຖ້າຮັບເຄື່ອງ</span>@endif</td>
+                        <td class="{{ $lbl }}" style="width:25%">ຈຳນວນທີ່ສົ່ງຄືນ / Return Qty</td><td class="{{ $bd }} font-bold" style="width:25%">{{ $record->returned_at ? $rqty : '—' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="{{ $lbl }}">ສະພາບເຄື່ອງ / Condition</td><td class="{{ $bd }}">{{ $rcond }}</td>
+                        <td class="{{ $lbl }}">ໝາຍເຫດສົ່ງຄືນ / Return Remarks</td><td class="{{ $bd }} text-gray-700">{{ $record->return_remarks ?? '—' }}</td>
+                    </tr>
+                    <tr><td class="{{ $lbl }}">ໝາຍເຫດຈາກສາງ / Admin Notes</td><td class="{{ $bd }} text-gray-700" colspan="3">{{ $record->admin_notes ?? '—' }}</td></tr>
+                    <tr>
+                        <td class="{{ $lbl }}">ຮູບພາບຕອນສົ່ງຄືນ / Return Photos</td>
+                        <td class="{{ $bd }}" colspan="3">@if ($rets->count())<div class="flex gap-2 flex-wrap">@foreach ($rets as $p)<img src="{{ $p->url }}" alt="" class="w-16 h-16 object-cover border border-gray-300" />@endforeach</div>@else <span class="text-gray-400">—</span>@endif</td>
+                    </tr>
+                </table>
+            </div>
+
+            {{-- ລາຍເຊັນ (auto: ຊື່ + ວັນທີ ເວລາ ກົດດຳເນີນການ) --}}
+            <div class="grid grid-cols-2 gap-8 pt-4">
+                <div class="text-center">
+                    <div class="font-bold mb-10">ລາຍເຊັນ ຜູ້ຢືມ (Borrower)</div>
+                    <div class="border-b border-black w-48 mx-auto mb-1"></div>
+                    <div class="font-medium text-gray-700">{{ $record->borrower_name }}</div>
+                    <div class="text-xs text-gray-400">{{ $dt($record->created_at) }}</div>
+                </div>
+                <div class="text-center">
+                    <div class="font-bold mb-10">ລາຍເຊັນ ທີມສາງ / Admin</div>
+                    <div class="border-b border-black w-48 mx-auto mb-1"></div>
+                    <div class="font-medium text-gray-700">{{ $admName ?? '—' }}</div>
+                    <div class="text-xs text-gray-400">{{ $admAt ? $dt($admAt) : '' }}</div>
                 </div>
             </div>
 
-            {{-- ③ PURPOSES & APPROVAL --}}
-            <div>
-                <div class="text-xs font-bold text-indigo-600 tracking-wide mb-3">3. PURPOSES & APPROVAL</div>
-                <div class="grid grid-cols-2 gap-y-3 gap-x-4">
-                    <div class="col-span-2"><div class="text-xs text-gray-400">BORROWING TYPE</div><div class="text-gray-800">{{ $typeLabel }}</div></div>
-                    @if ($record->purpose)<div class="col-span-2"><div class="text-xs text-gray-400">PURPOSE</div><div class="text-gray-800">{{ $record->purpose }}</div></div>@endif
-                    <div><div class="text-xs text-gray-400">BORROW DATE</div><div class="text-gray-800">{{ $record->borrow_date?->format('M d, Y') }}</div></div>
-                    <div><div class="text-xs text-gray-400">PLANNED RETURN</div><div class="text-gray-800">{{ $record->planned_return_date?->format('M d, Y') }}</div></div>
-                    <div><div class="text-xs text-gray-400">MANAGER ACKNOWLEDGE</div><div class="text-gray-800">{{ $record->acknowledge_name ?? ($record->requires_acknowledge ? 'ລໍຖ້າ' : '—') }}</div></div>
-                    <div><div class="text-xs text-gray-400">WH APPROVER</div><div class="text-gray-800">{{ $record->approver_name ?? '—' }}</div></div>
-                </div>
-            </div>
-
-            {{-- ② MATERIAL INFORMATION --}}
-            <div>
-                <div class="text-xs font-bold text-indigo-600 tracking-wide mb-3">2. MATERIAL INFORMATION</div>
-                <div class="space-y-3">
-                    @foreach ($record->items as $it)
-                        @php $photo = $it->inventoryItem?->primaryPhoto?->first(); $take = $it->photos->where('kind', 'take'); @endphp
-                        <div class="border border-gray-200 rounded-lg p-3">
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><div class="text-xs text-gray-400">MATERIAL ID</div><div class="font-mono text-gray-800">{{ $it->inventoryItem?->slug ?? '—' }}</div></div>
-                                <div><div class="text-xs text-gray-400">QUANTITY</div><div class="text-gray-800">{{ $it->qty }}</div></div>
-                            </div>
-                            <div class="mt-2"><div class="text-xs text-gray-400">DESCRIPTION</div><div class="text-gray-700">{{ $it->item_name }}</div></div>
-                            @if ($photo || $take->count())
-                                <div class="mt-3 bg-indigo-50/40 rounded-lg p-2">
-                                    <div class="text-xs font-semibold text-indigo-600 mb-1">📦 BORROWING PHOTOS</div>
-                                    <div class="flex gap-1.5 flex-wrap">
-                                        @if ($photo)<img src="{{ $photo->url }}" alt="" class="w-14 h-14 rounded-lg object-cover border border-gray-200" />@endif
-                                        @foreach ($take as $p)<img src="{{ $p->url }}" alt="" class="w-14 h-14 rounded-lg object-cover border border-gray-200" />@endforeach
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <div class="space-y-8">
-                {{-- ⑤ FOLLOW UP / TRACKING --}}
-                <div>
-                    <div class="text-xs font-bold text-indigo-600 tracking-wide mb-3">5. FOLLOW UP / TRACKING</div>
-                    <div><div class="text-xs text-gray-400">OVERDUE DAYS</div><div class="font-semibold {{ $od > 0 ? 'text-red-600' : 'text-gray-800' }}">{{ $od }} Days</div></div>
-                    <div class="mt-2"><div class="text-xs text-gray-400">REMINDING MESSAGE</div><div class="text-gray-500 italic text-xs leading-relaxed">{{ $reminding }}</div></div>
-                </div>
-
-                {{-- ⑥ TIME EXTENSION REQUEST --}}
-                <div>
-                    <div class="text-xs font-bold text-indigo-600 tracking-wide mb-3">6. TIME EXTENSION REQUEST</div>
-                    @if ($record->extension_status === 'pending')
-                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1 text-xs">
-                            <div class="font-medium text-amber-800">⏳ ຂໍຂະຫຍາຍ → {{ $record->extension_proposed_date?->format('M d, Y') }}</div>
-                            @if ($record->extension_reason)<div class="text-gray-600">{{ $record->extension_reason }}</div>@endif
-                            @if (in_array($record->status, ['active', 'overdue']))
-                                <div class="flex gap-2 pt-1">
-                                    <button wire:click="approveExtension" class="text-white bg-emerald-600 rounded px-2 py-1">Approve</button>
-                                    <button wire:click="rejectExtension" class="text-white bg-red-600 rounded px-2 py-1">Reject</button>
-                                </div>
-                            @endif
-                        </div>
-                    @elseif ($record->extension_status === 'approved')
-                        <div class="bg-emerald-50 rounded-lg p-3 text-xs text-emerald-700">✓ ຂະຫຍາຍແລ້ວ → {{ $record->extension_proposed_date?->format('M d, Y') }}</div>
-                    @elseif ($record->extension_status === 'rejected')
-                        <div class="bg-gray-50 rounded-lg p-3 text-xs text-gray-500">✗ ປະຕິເສດການຂະຫຍາຍ</div>
-                    @else
-                        <div class="bg-gray-50 rounded-lg p-3 text-center text-gray-400 text-xs">
-                            No extension requested
-                            @if (in_array($record->status, ['active', 'overdue']))<div class="mt-2"><button wire:click="openExtension" class="text-indigo-600 border border-indigo-200 rounded px-2 py-1">ຂໍຂະຫຍາຍເວລາ</button></div>@endif
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            {{-- ④ TAKING CONFIRMATION --}}
-            <div>
-                <div class="text-xs font-bold text-indigo-600 tracking-wide mb-3">4. TAKING CONFIRMATION</div>
-                <div class="bg-gray-50 rounded-lg p-3"><div class="text-xs text-gray-400">STATUS</div><div class="font-semibold {{ $record->taken_at ? 'text-emerald-600' : 'text-gray-500' }}">{{ $record->taken_at ? 'Confirmed' : 'Pending' }}</div>
-                    @if ($record->taken_at)<div class="text-xs text-gray-400 mt-1">{{ $record->taken_at?->format('M d, Y H:i') }} · {{ $record->warehouse_staff_name }}</div>@endif</div>
-            </div>
-
-            {{-- ⑦ RETURNING AND CLOSURE --}}
-            <div>
-                <div class="text-xs font-bold text-indigo-600 tracking-wide mb-3">7. RETURNING AND CLOSURE</div>
-                @if ($record->returned_at)
-                    @php $rqty = $record->items->sum(fn ($i) => $i->return_qty ?? 0); $cond = $record->items->pluck('condition_on_return')->filter()->implode(' · ') ?: 'Good'; @endphp
-                    <div class="bg-emerald-50 rounded-lg p-3 space-y-2">
-                        <div class="grid grid-cols-2 gap-2 text-xs">
-                            <div><div class="text-gray-400">FINAL RETURN DATE</div><div class="text-emerald-800 font-medium">{{ $record->returned_at?->format('M d, Y H:i') }}</div></div>
-                            <div><div class="text-gray-400">RETURN QTY</div><div class="text-emerald-800 font-medium">{{ $rqty }}</div></div>
-                            <div class="col-span-2"><div class="text-gray-400">CONDITION</div><div class="text-emerald-800 font-medium">{{ $cond }}</div></div>
-                        </div>
-                        <div class="border-t border-emerald-200 pt-2">
-                            <div class="text-center text-xs font-semibold text-emerald-700 mb-1">CONDITION COMPARISON (BEFORE vs AFTER)</div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><div class="text-[10px] text-center text-gray-500 mb-1">BEFORE (BORROWED)</div><div class="flex gap-1 justify-center flex-wrap">@foreach ($record->items as $it)@foreach ($it->photos->where('kind', 'take') as $p)<img src="{{ $p->url }}" alt="" class="w-12 h-12 rounded object-cover border" />@endforeach @endforeach</div></div>
-                                <div><div class="text-[10px] text-center text-gray-500 mb-1">AFTER (RETURNED)</div><div class="flex gap-1 justify-center flex-wrap">@php $any = false; @endphp @foreach ($record->items as $it)@foreach ($it->photos->where('kind', 'return') as $p)<img src="{{ $p->url }}" alt="" class="w-12 h-12 rounded object-cover border" />@php $any = true; @endphp @endforeach @endforeach @if (! $any)<span class="text-xs text-gray-400">No photos</span>@endif</div></div>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <div class="bg-gray-50 rounded-lg p-3 text-center text-gray-400 text-xs">ຍັງບໍ່ໄດ້ສົ່ງคืน</div>
-                @endif
-                @if ($record->cancel_reason)<div class="text-red-600 text-xs mt-2">ເຫດຍົກເລີກ: {{ $record->cancel_reason }}</div>@endif
-            </div>
+            @if ($record->cancel_reason)<div class="text-red-600 text-xs">ເຫດຍົກເລີກ: {{ $record->cancel_reason }}</div>@endif
         </div>
 
         {{-- actions --}}
@@ -240,6 +263,61 @@
                     <div><label class="block text-sm text-gray-600 mb-1">ວັນທີສົ່ງໃໝ່</label><input type="date" wire:model="extProposedDate" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     <div><label class="block text-sm text-gray-600 mb-1">ເຫດຜົນ</label><textarea wire:model="extReason" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
                     <div class="flex justify-end gap-2"><button wire:click="$set('showExtension', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="requestExtension" class="bg-indigo-600 text-white rounded px-3 py-1.5 text-sm">ສົ່ງຄຳຂໍ</button></div>
+                </div>
+            </div>
+        @endif
+
+        {{-- admin edit modal --}}
+        @if ($showEdit)
+            <div class="fixed inset-0 z-50 flex items-start md:items-center justify-center bg-black/40 md:p-4 overflow-y-auto">
+                <div class="bg-white w-full md:max-w-2xl rounded-lg p-5 space-y-4 my-4 max-h-[92vh] overflow-y-auto">
+                    <h3 class="text-lg font-medium text-gray-800">✏️ ແກ້ໄຂ (Admin) — {{ $record->request_number }}</h3>
+
+                    <div class="grid sm:grid-cols-2 gap-3 text-sm">
+                        <div><label class="block text-gray-600 mb-1">ຜູ້ຢືມ *</label><input wire:model="ef.borrower_name" class="w-full rounded-md border-gray-300 text-sm" />@error('ef.borrower_name')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
+                        <div><label class="block text-gray-600 mb-1">ຈຸດປະສົງ</label><input wire:model="ef.purpose" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">ຢືມວັນທີ</label><input type="date" wire:model="ef.borrow_date" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">ກຳນົດສົ່ງ</label><input type="date" wire:model="ef.planned_return_date" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">ໄລຍະ (ມື້)</label><input type="number" wire:model="ef.period_days" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">ວັນທີຜູ້ຢືມແຈ້ງສົ່ງ</label><input type="date" wire:model="ef.borrower_return_date" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">Approver</label><input wire:model="ef.approver_name" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">Manager (ack)</label><input wire:model="ef.acknowledge_name" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                        <div class="sm:col-span-2"><label class="block text-gray-600 mb-1">ໝາຍເຫດສົ່ງຄືນ (Return remarks)</label><textarea wire:model="ef.return_remarks" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
+                        <div class="sm:col-span-2"><label class="block text-gray-600 mb-1">ໝາຍເຫດຈາກສາງ (Admin notes)</label><textarea wire:model="ef.admin_notes" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
+                    </div>
+
+                    <div class="border-t pt-3 space-y-3">
+                        <div class="font-medium text-sm text-gray-700">ລາຍການ + ຮູບ</div>
+                        @foreach ($record->items as $it)
+                            <div class="border border-gray-200 rounded-md p-3 space-y-2">
+                                <div class="grid grid-cols-12 gap-2 text-sm">
+                                    <input wire:model="ei.{{ $it->id }}.item_name" class="col-span-6 rounded-md border-gray-300 text-sm" placeholder="ຊື່ລາຍການ" />
+                                    <input type="number" wire:model="ei.{{ $it->id }}.qty" class="col-span-3 rounded-md border-gray-300 text-sm" placeholder="ຈຳນວນ" />
+                                    <input type="number" wire:model="ei.{{ $it->id }}.return_qty" class="col-span-3 rounded-md border-gray-300 text-sm" placeholder="ຄືນ" />
+                                </div>
+                                @if ($it->photos->count())
+                                    <div class="flex gap-1 flex-wrap">
+                                        @foreach ($it->photos as $p)
+                                            <div class="relative" wire:key="ep-{{ $p->id }}">
+                                                <img src="{{ $p->url }}" alt="" class="w-12 h-12 object-cover border border-gray-300 rounded" />
+                                                <span class="absolute -bottom-1 left-0 right-0 text-center text-[8px] bg-gray-700 text-white">{{ $p->kind }}</span>
+                                                <button wire:click="removePhoto({{ $p->id }})" wire:confirm="ລຶບຮູບນີ້?" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-600 text-white rounded-full text-[10px] leading-none">×</button>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <div><label class="text-gray-500">+ ຮູບ take</label><input type="file" wire:model="ep.take.{{ $it->id }}" multiple accept="image/*" class="block w-full text-xs" /></div>
+                                    <div><label class="text-gray-500">+ ຮູບ return</label><input type="file" wire:model="ep.return.{{ $it->id }}" multiple accept="image/*" class="block w-full text-xs" /></div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="flex justify-end gap-2 border-t pt-3">
+                        <button wire:click="$set('showEdit', false)" class="border border-gray-300 rounded px-4 py-2 text-sm">ຍົກເລີກ</button>
+                        <button wire:click="saveEdit" wire:loading.attr="disabled" wire:target="saveEdit,ep" class="bg-amber-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ບັນທຶກ</button>
+                    </div>
                 </div>
             </div>
         @endif
