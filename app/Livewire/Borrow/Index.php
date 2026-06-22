@@ -24,9 +24,42 @@ class Index extends Component
 
     public string $toDate = '';
 
+    /** ສະແດງ Deleted Log (onlyTrashed) ແທນລາຍການปົກກะຕิ. */
+    public bool $showDeleted = false;
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('borrow.view'), 403);
+    }
+
+    protected function canManageDeleted(): bool
+    {
+        $u = auth()->user();
+
+        return $u->is_super_admin || $u->can('borrow.edit');
+    }
+
+    public function toggleDeleted(): void
+    {
+        abort_unless($this->canManageDeleted(), 403);
+        $this->showDeleted = ! $this->showDeleted;
+        $this->resetPage();
+    }
+
+    public function restore(int $id): void
+    {
+        abort_unless($this->canManageDeleted(), 403);
+        $r = BorrowRecord::onlyTrashed()->find($id);
+        if ($r) {
+            $u = auth()->user();
+            $r->restore();
+            $r->forceFill(['deleted_reason' => null, 'deleted_by' => null])->save();
+            $r->history()->create([
+                'action' => 'restore', 'status' => $r->status, 'user_id' => $u->id,
+                'user_name' => $u->display_name ?? $u->email, 'comment' => 'restore', 'created_at' => now(),
+            ]);
+            session()->flash('ok', '✓ ກູ້คืนລາຍການ '.$r->request_number);
+        }
     }
 
     public function updatingSearch(): void
@@ -55,6 +88,10 @@ class Index extends Component
         $u = auth()->user();
         $q = BorrowRecord::query()->with(['items.inventoryItem.primaryPhoto', 'items.photos', 'unit']);
 
+        if ($this->showDeleted && $this->canManageDeleted()) {
+            $q->onlyTrashed();
+        }
+
         if (! ($u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']))) {
             $email = mb_strtolower($u->email);
             $q->where(fn ($w) => $w->where('borrower_user_id', $u->id)
@@ -80,6 +117,9 @@ class Index extends Component
             ->orderByDesc('id')
             ->paginate(15);
 
-        return view('livewire.borrow.index', ['records' => $items]);
+        return view('livewire.borrow.index', [
+            'records' => $items,
+            'canManageDeleted' => $this->canManageDeleted(),
+        ]);
     }
 }

@@ -115,6 +115,7 @@ class BorrowService
                 'acknowledge' => $this->doAcknowledge($r, $steps, $actor),
                 'approve' => $this->doApprove($r, $steps, $actor),
                 'confirmTake' => $this->doConfirmTake($r, $actor),
+                'requestReturn' => $this->doRequestReturn($r, $opts),
                 'confirmReturn' => $this->doConfirmReturn($r, $actor, $opts),
                 'requestExtension' => $this->doRequestExtension($r, $actor, $opts),
                 'approveExtension' => $this->doDecideExtension($r, $actor, true),
@@ -178,6 +179,18 @@ class BorrowService
         $r->warehouse_staff_name = $actor->display_name ?? $actor->email;
     }
 
+    // step 1: borrower ແຈ້ງສົ່ງຄືນ (status ຄ້າງ active ຈนกว่า warehouse ຢືນຢັນ)
+    private function doRequestReturn(BorrowRecord $r, array $opts): void
+    {
+        $this->assert(in_array($r->status, ['active', 'overdue'], true), 'ແຈ້ງສົ່ງຄືນໄດ້ຕอนໃຊ້ງານຢູ່ເທົ່ານັ້ນ.');
+        $this->assert(! $r->borrower_return_ack, 'ໄດ້ແຈ້ງສົ່ງຄືນແລ້ວ.');
+        $r->borrower_return_ack = true;
+        $r->borrower_return_date = $opts['return_date'] ?? Carbon::today()->toDateString();
+        if (! empty($opts['remarks'])) {
+            $r->return_remarks = $opts['remarks'];
+        }
+    }
+
     private function doConfirmReturn(BorrowRecord $r, $actor, array $opts): void
     {
         $this->assert(in_array($r->status, ['active', 'overdue'], true), 'confirmReturn ໄດ້ສະເພาະ active.');
@@ -195,6 +208,8 @@ class BorrowService
         $r->status = 'returned';
         $r->returned_at = now();
         $r->actual_return_date = Carbon::today()->toDateString();
+        $r->borrower_return_ack = true;
+        $r->wh_return_ack = true;
         $r->warehouse_staff_user_id = $actor->id;
         $r->warehouse_staff_name = $actor->display_name ?? $actor->email;
     }

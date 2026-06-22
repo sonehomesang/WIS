@@ -187,9 +187,21 @@
                 <button wire:click="openTake" class="text-white bg-emerald-600 rounded px-3 py-1.5">ມອບເຄື່ອງ (confirmTake)</button>
                 <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">ຍົກເລີກ</button>
             @elseif (in_array($record->status, ['active', 'overdue']))
-                <button wire:click="openReturn" class="text-white bg-sky-600 rounded px-3 py-1.5">ຮັບคืน (confirmReturn)</button>
+                {{-- step 1: ຜູ້ຢືມ ແຈ້ງສົ່ງຄືນ --}}
+                @if (! $record->borrower_return_ack)
+                    @if ($isBorrower || $editable)<button wire:click="openRequestReturn" class="text-white bg-amber-600 rounded px-3 py-1.5">📩 ແຈ້ງສົ່ງຄືນ</button>@endif
+                @else
+                    <span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded px-2 py-1">📩 ຜູ້ຢືມແຈ້ງສົ່ງຄືນແລ້ວ{{ $record->borrower_return_date ? ' ('.$record->borrower_return_date->format('d/m/Y').')' : '' }} — ລໍ Warehouse ຢืนยัน</span>
+                @endif
+                {{-- step 2: Warehouse ຢືນຢັນຮັບຄືນ --}}
+                @if ($editable)<button wire:click="openReturn" class="text-white bg-sky-600 rounded px-3 py-1.5">✅ ຢືນຢັນຮັບຄືນ (confirmReturn)</button>@endif
             @else
                 <span class="text-gray-400">— ບໍ່ມີ action ({{ $record->status }})</span>
+            @endif
+
+            @if ($deletable)
+                <span class="ml-auto"></span>
+                <button wire:click="openDelete" class="text-red-600 border border-red-200 rounded px-3 py-1.5 hover:bg-red-50">🗑 ລຶບ</button>
             @endif
         </div>
 
@@ -263,6 +275,33 @@
                     <div><label class="block text-sm text-gray-600 mb-1">ວັນທີສົ່ງໃໝ່</label><input type="date" wire:model="extProposedDate" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     <div><label class="block text-sm text-gray-600 mb-1">ເຫດຜົນ</label><textarea wire:model="extReason" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
                     <div class="flex justify-end gap-2"><button wire:click="$set('showExtension', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="requestExtension" class="bg-indigo-600 text-white rounded px-3 py-1.5 text-sm">ສົ່ງຄຳຂໍ</button></div>
+                </div>
+            </div>
+        @endif
+
+        {{-- borrower ແຈ້ງສົ່ງຄືນ (step 1) modal --}}
+        @if ($showRequestReturn)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
+                    <h3 class="font-medium text-gray-800">📩 ແຈ້ງສົ່ງຄືນ</h3>
+                    <p class="text-xs text-gray-500">ແຈ້ງວ່າຈະສົ່ງเครื່ອງคืน — Warehouse ຈะຢืนยันຮັບคืນ ແລະ ກວດສະພາบອีกครั้ง.</p>
+                    @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    <div><label class="block text-sm text-gray-600 mb-1">ວັນທີສົ່ງຄືນ</label><input type="date" wire:model="rrDate" class="w-full rounded-md border-gray-300 text-sm" />@error('rrDate')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
+                    <div><label class="block text-sm text-gray-600 mb-1">ໝາຍເຫດ (optional)</label><textarea wire:model="rrRemarks" rows="2" placeholder="ເຊັ່ນ: ສົ່ງບໍ່ຄົບ, ສະພາบ…" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
+                    <div class="flex justify-end gap-2"><button wire:click="$set('showRequestReturn', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="requestReturn" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยันແຈ້ງສົ່ງຄືນ</button></div>
+                </div>
+            </div>
+        @endif
+
+        {{-- delete (soft) modal --}}
+        @if ($showDelete)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
+                    <h3 class="font-medium text-red-700">🗑 ລຶບລາຍການຢືມ</h3>
+                    <p class="text-xs text-gray-500">ລາຍການຈะຖูກຍ້າຍໄປ Deleted Log (ສามารถກູ້คืນໄດ້). ກະລุนาໃສ່ເຫດผົน.</p>
+                    <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດผົนການລຶບ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                    @error('deleteReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm disabled:opacity-50">ຢืนยันລຶບ</button></div>
                 </div>
             </div>
         @endif

@@ -5,6 +5,7 @@ namespace App\Livewire\Borrow;
 use App\Models\BorrowItemPhoto;
 use App\Models\BorrowRecord;
 use App\Services\BorrowService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -46,6 +47,18 @@ class Show extends Component
     public array $takePhotos = [];
 
     public array $returnPhotos = [];
+
+    // ── borrower ແຈ້ງສົ່ງຄືນ (return step 1) ──
+    public bool $showRequestReturn = false;
+
+    public string $rrDate = '';
+
+    public string $rrRemarks = '';
+
+    // ── delete (soft) ──
+    public bool $showDelete = false;
+
+    public string $deleteReason = '';
 
     // ── admin edit ──
     public bool $showEdit = false;
@@ -172,6 +185,63 @@ class Show extends Component
         if ($this->act('confirmReturn', ['return_qty' => $qtyMap])) {
             $this->reset(['showReturn', 'returnCondition', 'returnPhotos', 'returnQty']);
         }
+    }
+
+    // ── borrower ແຈ້ງສົ່ງຄືນ (step 1: ຍັງບໍ່ປ່ຽນ status, ລໍ warehouse ຢືນຢັນ) ──
+    public function openRequestReturn(): void
+    {
+        $this->reset(['rrDate', 'rrRemarks']);
+        $this->rrDate = Carbon::today()->toDateString();
+        $this->resetErrorBag();
+        $this->showRequestReturn = true;
+    }
+
+    public function requestReturn(): void
+    {
+        $this->validate([
+            'rrDate' => ['required', 'date'],
+            'rrRemarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        if ($this->act('requestReturn', ['return_date' => $this->rrDate, 'remarks' => $this->rrRemarks])) {
+            $this->reset(['showRequestReturn', 'rrDate', 'rrRemarks']);
+        }
+    }
+
+    // ── soft delete (admin/borrow.edit; ສະເພาະ draft/cancelled/rejected/returned) ──
+    protected function canDelete(): bool
+    {
+        return $this->canEdit()
+            && in_array($this->record->status, ['draft', 'cancelled', 'rejected', 'returned'], true);
+    }
+
+    public function openDelete(): void
+    {
+        abort_unless($this->canDelete(), 403);
+        $this->reset(['deleteReason']);
+        $this->resetErrorBag();
+        $this->showDelete = true;
+    }
+
+    public function deleteRecord()
+    {
+        abort_unless($this->canDelete(), 403);
+        $this->validate(['deleteReason' => ['required', 'string', 'max:500']]);
+
+        $u = auth()->user();
+        $this->record->forceFill([
+            'deleted_reason' => $this->deleteReason,
+            'deleted_by' => $u->id,
+        ])->save();
+        $this->record->history()->create([
+            'action' => 'delete', 'status' => $this->record->status, 'user_id' => $u->id,
+            'user_name' => $u->display_name ?? $u->email, 'comment' => $this->deleteReason, 'created_at' => now(),
+        ]);
+        $this->record->delete();
+
+        session()->flash('ok', '✓ ລຶບ (ຍ້າຍໄປ deleted log)');
+
+        return $this->redirect(route('borrow'), navigate: true);
     }
 
     /** ບັງຄັບ ≥1 ຮູບ ຕໍ່ລາຍການ (WORKFLOWS §2.7). */
@@ -301,6 +371,8 @@ class Show extends Component
             'record' => $this->record->load(['items.inventoryItem.primaryPhoto', 'items.photos', 'history', 'unit', 'department', 'borrower']),
             'steps' => $steps,
             'editable' => $this->canEdit(),
+            'deletable' => $this->canDelete(),
+            'isBorrower' => auth()->id() === $this->record->borrower_user_id,
         ]);
     }
 }

@@ -37,6 +37,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <button wire:click="runDailyCheck" class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-amber-100 whitespace-nowrap">⏰ Run Daily Check</button>
+                @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-3 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບคืນລາຍการปົกกะติ' : 'Deleted Log' }}</button>@endif
                 @can('borrow.create')<a href="{{ route('borrow.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-3 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ Borrow Request</a>@endcan
             </div>
         </div>
@@ -95,7 +96,14 @@
                                 @if ($d !== null)<div class="text-xs mt-1 {{ $d < 0 ? 'text-red-600' : 'text-gray-400' }}">{{ $d < 0 ? 'Overdue '.abs($d).'d' : 'In '.$d.'d' }}</div>@endif
                             </td>
                             {{-- actions --}}
-                            <td class="px-4 py-3 align-top"><a href="{{ route('borrow.show', $r) }}" wire:navigate class="text-xs text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 inline-block">View Details</a></td>
+                            <td class="px-4 py-3 align-top">
+                                @if ($showDeleted)
+                                    <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืນລາຍการนี้?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50 inline-block">↩ ກູ້คืน</button>
+                                    @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif
+                                @else
+                                    <a href="{{ route('borrow.show', $r) }}" wire:navigate class="text-xs text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 inline-block">View Details</a>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">ຍັງບໍ່ມີຄຳຂໍຢືມ</td></tr>
@@ -107,8 +115,8 @@
         {{-- Mobile cards --}}
         <div class="md:hidden space-y-2">
             @forelse ($records as $r)
-                @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->photos->first() ?? $first?->inventoryItem?->primaryPhoto?->first(); @endphp
-                <a href="{{ route('borrow.show', $r) }}" wire:navigate wire:key="mbr-{{ $r->id }}" class="block bg-white border border-gray-100 rounded-lg p-3">
+                @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->photos->first() ?? $first?->inventoryItem?->primaryPhoto?->first(); $tag = $showDeleted ? 'div' : 'a'; @endphp
+                <{{ $tag }} @if (! $showDeleted) href="{{ route('borrow.show', $r) }}" wire:navigate @endif wire:key="mbr-{{ $r->id }}" class="block bg-white border border-gray-100 rounded-lg p-3">
                     <div class="flex items-start justify-between gap-2">
                         <div class="flex gap-2 min-w-0">
                             @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />@endif
@@ -117,7 +125,13 @@
                         <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $cls }} shrink-0">{{ $lbl }}</span>
                     </div>
                     <div class="text-xs text-gray-400 mt-1">{{ $r->borrow_date?->format('M d, Y') }} → {{ $r->planned_return_date?->format('M d, Y') }}</div>
-                </a>
+                    @if ($showDeleted)
+                        <div class="flex items-center justify-between gap-2 mt-2">
+                            @if ($r->deleted_reason)<span class="text-xs text-gray-400 truncate">{{ $r->deleted_reason }}</span>@else<span></span>@endif
+                            <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืນລາຍการนี้?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50 shrink-0">↩ ກູ້คืน</button>
+                        </div>
+                    @endif
+                </{{ $tag }}>
             @empty
                 <div class="text-center text-gray-400 py-6">ຍັງບໍ່ມີຄຳຂໍຢືມ</div>
             @endforelse

@@ -5,14 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 class BorrowRecord extends Model
 {
+    use SoftDeletes;
+
     protected $guarded = ['id'];
 
     protected $casts = [
         'requires_acknowledge' => 'boolean',
+        'borrower_return_ack' => 'boolean',
+        'wh_return_ack' => 'boolean',
         'period_days' => 'integer',
         'borrow_date' => 'date',
         'planned_return_date' => 'date',
