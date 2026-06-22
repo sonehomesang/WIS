@@ -67,6 +67,11 @@ Route::get('deposit/{record}', App\Livewire\Deposit\Show::class)
     ->middleware(['auth', 'verified'])
     ->name('deposit.show');
 
+// ── Shops Material (catalog ສິນຄ້າ supplier) — Phase 6.7a ──
+Route::get('catalog', App\Livewire\Catalog\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('catalog');
+
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');

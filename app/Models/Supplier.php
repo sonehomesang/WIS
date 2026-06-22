@@ -11,7 +11,7 @@ class Supplier extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'slug', 'name', 'name_en', 'contact_person', 'contact_phone', 'contact_email',
+        'wis_id', 'slug', 'name', 'name_en', 'contact_person', 'contact_phone', 'contact_email',
         'address', 'tax_id', 'payment_terms', 'default_currency', 'vat_rate', 'notes',
         'is_active', 'created_by', 'updated_by',
     ];
@@ -26,6 +26,11 @@ class Supplier extends Model
     public function vatChanges(): HasMany
     {
         return $this->hasMany(SupplierVatChange::class)->orderByDesc('changed_at');
+    }
+
+    public function materials(): HasMany
+    {
+        return $this->hasMany(Material::class);
     }
 
     /**

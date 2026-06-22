@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Material;
+use App\Observers\MaterialObserver;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,5 +24,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // super_admin ມີສິດເໜືອທຸກຢ່າງ (ເໜືອ admin ທົ່ວໄປ) — bypass ທຸກ permission check.
         Gate::before(fn ($user, $ability) => $user->is_super_admin ? true : null);
+
+        Material::observe(MaterialObserver::class);
     }
 }
