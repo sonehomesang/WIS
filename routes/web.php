@@ -93,6 +93,27 @@ Route::get('request/{record}', App\Livewire\Request\Show::class)
     ->middleware(['auth', 'verified'])
     ->name('request.show');
 
+// ── DA Claims (Discrepancy Advice) — Phase 6.8b ──
+Route::get('da', App\Livewire\Da\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('da');
+
+Route::get('da/create', App\Livewire\Da\Create::class)
+    ->middleware(['auth', 'verified'])
+    ->name('da.create');
+
+Route::get('da/{record}/pdf', function (App\Models\DiscrepancyAdvice $record) {
+    abort_unless(auth()->user()->can('da.view'), 403);
+    $record->load(['items', 'photos', 'supplier', 'history']);
+
+    return Pdf::loadView('da.pdf', ['record' => $record])
+        ->download("da-{$record->da_number}.pdf");
+})->middleware(['auth', 'verified'])->name('da.pdf');
+
+Route::get('da/{record}', App\Livewire\Da\Show::class)
+    ->middleware(['auth', 'verified'])
+    ->name('da.show');
+
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
