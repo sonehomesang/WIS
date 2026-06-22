@@ -10,11 +10,17 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class Users extends Component
 {
+    use WithPagination;
+
     public string $search = '';
+
+    /** A-Z group filter (ໂຕອັກສອນຂຶ້ນໜ້າ display_name); ວ່າງ = ທັງໝົດ. */
+    public string $letter = '';
 
     // Modal + form
     public bool $showModal = false;
@@ -43,6 +49,18 @@ class Users extends Component
     public function updatedUnitId(): void
     {
         $this->department_id = null;   // reset department when unit changes
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    /** ເລືອກ/ຍົກເລີກ ໂຕອັກສອນ A-Z (ກົດຊ້ຳ = ລ້າງ). */
+    public function setLetter(string $l): void
+    {
+        $this->letter = ($this->letter === $l) ? '' : $l;
+        $this->resetPage();
     }
 
     public function newUser(): void
@@ -139,11 +157,13 @@ class Users extends Component
                 $q->where(fn ($w) => $w->where('display_name', 'like', "%{$this->search}%")
                     ->orWhere('email', 'like', "%{$this->search}%"));
             })
+            ->when($this->letter, fn ($q) => $q->where('display_name', 'like', "{$this->letter}%"))
             ->orderBy('display_name')
-            ->get();
+            ->paginate(10);
 
         return view('livewire.settings.users', [
             'users' => $users,
+            'letters' => range('A', 'Z'),
             'roles' => Role::orderBy('name')->pluck('name'),
             'units' => Unit::where('is_active', true)->orderBy('name')->get(),
             'formDepartments' => $this->unit_id

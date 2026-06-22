@@ -67,8 +67,8 @@
             <table class="w-full text-sm">
                 <thead class="sticky top-[116px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
-                        <th class="text-left font-semibold px-4 py-2.5">Item</th>
                         <th x-show="cols.materialNo" x-cloak class="text-left font-semibold px-4 py-2.5">Material No.</th>
+                        <th class="text-left font-semibold px-4 py-2.5">Item</th>
                         <th x-show="cols.brand" x-cloak class="text-left font-semibold px-4 py-2.5">Brand</th>
                         <th x-show="cols.category" x-cloak class="text-left font-semibold px-4 py-2.5">Category</th>
                         <th x-show="cols.qty" x-cloak class="text-left font-semibold px-4 py-2.5">Qty</th>
@@ -80,6 +80,7 @@
                 <tbody>
                     @forelse ($items as $it)
                         <tr wire:key="inv-{{ $it->id }}" class="border-t border-gray-200">
+                            <td x-show="cols.materialNo" x-cloak class="px-4 py-2.5 font-mono text-xs text-gray-500">{{ $it->slug }}</td>
                             <td class="px-4 py-2.5">
                                 <div class="flex items-center gap-2">
                                     @if ($photo = $it->primaryPhoto->first())
@@ -88,7 +89,6 @@
                                     <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
                                 </div>
                             </td>
-                            <td x-show="cols.materialNo" x-cloak class="px-4 py-2.5 font-mono text-xs text-gray-500">{{ $it->slug }}</td>
                             <td x-show="cols.brand" x-cloak class="px-4 py-2.5 text-xs text-gray-600">{{ $it->brand ?: '—' }}</td>
                             <td x-show="cols.category" x-cloak class="px-4 py-2.5 text-xs text-gray-600">{{ $it->category ?: '—' }}</td>
                             <td x-show="cols.qty" x-cloak class="px-4 py-2.5 text-gray-600">{{ $it->quantity }}@if ($it->unit) {{ $it->unit }}@endif</td>

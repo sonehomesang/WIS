@@ -43,6 +43,18 @@
                     ];
                     $pageTitle = $titleMap[$routeName]
                         ?? \Illuminate\Support\Str::of($routeName ?? config('app.name'))->afterLast('.')->headline();
+
+                    // ຄຳອະທິບາຍສັ້ນຂອງແຕ່ລະໜ້າ — ສະແດງຕໍ່ກັບ title (ແທນທີ່ຈະຢູ່ໃນ toolbar).
+                    $subtitleMap = [
+                        'inventory' => 'ສາງເຄື່ອງ & ວັດສະດຸ · ຄົ້ນຫາ / ນຳເຂົ້າ',
+                        'borrow' => 'Monitor active loans and return schedules',
+                        'settings.users' => 'ຈັດການຜູ້ໃຊ້ · role + ໜ່ວຍງານ · approve / lock',
+                        'settings.roles' => '21 menus × 6 actions + scope · ແກ້ໄດ້ໂດຍ super_admin',
+                        'settings.uom' => 'ໜ່ວຍວັດ (pcs · kg · m …) · ໃຊ້ໃນ Inventory / Materials',
+                        'settings.suppliers' => 'ຮ້ານຄ້າ supplier · ໃຊ້ໃນ Materials / supplier users',
+                        'settings.system' => 'ຄ່າລະບົບ — VAT (letterhead ຄ່ອຍເພີ່ມ)',
+                    ];
+                    $pageSubtitle = $subtitleMap[$routeName] ?? null;
                 @endphp
 
                 <!-- Global app header: title (left) + user menu (right) — ທຸກໜ້າ -->
@@ -53,7 +65,11 @@
                                 <button x-data @click="$dispatch('open-sidebar')" class="md:hidden p-2 -ml-2 min-h-[44px] min-w-[44px] text-gray-600 hover:text-gray-900" aria-label="Open menu">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                                 </button>
-                                <h1 class="text-lg font-semibold text-gray-800 truncate">{{ $pageTitle }}</h1>
+                                <h1 class="text-lg font-semibold text-gray-800 truncate shrink-0">{{ $pageTitle }}</h1>
+                                @if ($pageSubtitle)
+                                    <span class="text-gray-300 hidden lg:inline">·</span>
+                                    <span class="text-sm text-gray-400 truncate hidden lg:inline">{{ $pageSubtitle }}</span>
+                                @endif
                             </div>
                             <livewire:layout.navigation />
                         </div>

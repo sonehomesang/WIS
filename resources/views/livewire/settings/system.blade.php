@@ -1,13 +1,8 @@
 <div class="pb-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         @include('settings._tabs')
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm text-gray-500">ຄ່າລະບົບ — VAT (letterhead ຄ່ອຍເພີ່ມ)</p>
-            </div>
-            <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
-                 class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-1">ບັນທຶກແລ້ວ ✓</div>
-        </div>
+        <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
+             class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
         <div class="bg-white border border-gray-100 rounded-lg p-5 md:max-w-md space-y-4">
             <div>

@@ -7,10 +7,7 @@
 <div class="pb-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         @include('settings._tabs')
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-                <p class="text-sm text-gray-500">ຮ້ານຄ້າ supplier · ໃຊ້ໃນ Materials / supplier users</p>
-            </div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
             <div class="flex items-center gap-2">
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ຊື່/ຜູ້ຕິດຕໍ່…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
                 @can('supplier.create')<button wire:click="newItem" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">+ Create</button>@endcan

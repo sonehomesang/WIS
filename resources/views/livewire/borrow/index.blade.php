@@ -18,31 +18,31 @@
 <div class="pb-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- toolbar (sticky ໃຕ້ global header) --}}
-        <div class="sticky top-16 z-20 bg-gray-100 flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-            <div class="flex flex-wrap items-center gap-2">
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ BR/ຊື່ຜູ້ຢືມ…" class="rounded-md border-gray-300 shadow-sm text-sm" />
-                <select wire:model.live="statusFilter" class="rounded-md border-gray-300 text-sm">
+        <div class="sticky top-16 z-20 bg-gray-100 flex flex-col gap-2 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3 lg:flex-nowrap">
+            <div class="flex flex-wrap items-center gap-2 min-w-0">
+                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ BR/ຊື່ຜູ້ຢືມ…" class="w-40 rounded-md border-gray-300 shadow-sm text-sm" />
+                <select wire:model.live="statusFilter" class="w-32 rounded-md border-gray-300 text-sm">
                     <option value="">All Statuses</option>
                     <option value="draft">draft</option><option value="acknowledged">acknowledged</option>
                     <option value="approved">approved</option><option value="active">active (in use)</option>
                     <option value="overdue">overdue</option><option value="returned">returned</option><option value="cancelled">cancelled</option>
                 </select>
-                <select wire:model.live="typeFilter" class="rounded-md border-gray-300 text-sm">
+                <select wire:model.live="typeFilter" class="w-28 rounded-md border-gray-300 text-sm">
                     <option value="">All Types</option>
                     <option value="new_inventory">Inventory</option><option value="tools_equipment">Tools/Equip</option>
                     <option value="deposited_tools">Deposited</option><option value="others">Others</option>
                 </select>
-                <input type="date" wire:model.live="fromDate" class="rounded-md border-gray-300 text-sm" title="ຈาກວັນທີ" />
-                <input type="date" wire:model.live="toDate" class="rounded-md border-gray-300 text-sm" title="ຫາວັນທີ" />
+                <input type="date" wire:model.live="fromDate" class="w-36 rounded-md border-gray-300 text-sm" title="ຈาກວັນທີ" />
+                <input type="date" wire:model.live="toDate" class="w-36 rounded-md border-gray-300 text-sm" title="ຫາວັນທີ" />
             </div>
-            <div class="flex items-center gap-2">
-                <button wire:click="runDailyCheck" class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-amber-100 whitespace-nowrap">⏰ Run Daily Check</button>
-                @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-3 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບคืນລາຍการปົกกะติ' : 'Deleted Log' }}</button>@endif
-                @can('borrow.create')<a href="{{ route('borrow.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-3 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ Borrow Request</a>@endcan
+            <div class="flex items-center gap-2 shrink-0">
+                <button wire:click="runDailyCheck" class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-2 min-h-[40px] hover:bg-amber-100 whitespace-nowrap" title="ກວດລາຍການເກີນກຳນົດ">⏰ Daily Check</button>
+                @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບคืນລາຍการปົกกะติ' : 'Deleted Log' }}</button>@endif
+                @can('borrow.create')<a href="{{ route('borrow.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ Borrow Request</a>@endcan
             </div>
         </div>
 
-        <p class="text-sm text-gray-500 mb-2">Monitor active loans and return schedules. · {{ number_format($records->total()) }} records</p>
+        <p class="text-sm text-gray-500 mb-2">{{ number_format($records->total()) }} records</p>
 
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-2">{{ session('ok') }}</div>@endif
 

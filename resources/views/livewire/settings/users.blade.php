@@ -8,13 +8,21 @@
 @endphp
 
 <div class="pb-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @include('settings._tabs')
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-                <p class="text-sm text-gray-500">ຈັດການຜູ້ໃຊ້ · ກຳນົດ role + ໜ່ວຍງານ · approve / lock</p>
+
+        {{-- toolbar (freeze ໃຕ້ tabs): subtitle · A-Z filter · search/create --}}
+        <div class="sticky top-[116px] z-20 bg-gray-100 flex flex-col gap-2 py-2 sm:py-0 sm:h-[52px] sm:flex-row sm:items-center sm:gap-3 border-b border-gray-200">
+            {{-- A-Z group filter --}}
+            <div class="flex-1 min-w-0 overflow-x-auto">
+                <div class="flex items-center gap-0.5">
+                    <button wire:click="setLetter('')" class="px-2 py-0.5 text-xs rounded whitespace-nowrap {{ $letter === '' ? 'bg-sky-600 text-white' : 'text-gray-500 hover:bg-gray-200' }}">ທັງໝົດ</button>
+                    @foreach ($letters as $L)
+                        <button wire:click="setLetter('{{ $L }}')" class="w-6 py-0.5 text-xs rounded shrink-0 {{ $letter === $L ? 'bg-sky-600 text-white' : 'text-gray-500 hover:bg-gray-200' }}">{{ $L }}</button>
+                    @endforeach
+                </div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 shrink-0">
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ຊື່/email…"
                        class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
                 @can('users.create')
@@ -24,18 +32,18 @@
         </div>
 
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
-             class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-1">ບັນທຶກແລ້ວ ✓</div>
+             class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
         {{-- Desktop table --}}
-        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-hidden">
+        <div class="hidden md:block bg-white border border-gray-100 rounded-lg mt-3">
             <table class="w-full text-sm">
-                <thead class="bg-gray-50 text-gray-500">
+                <thead class="sticky top-[168px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
-                        <th class="text-left font-medium px-4 py-2">User</th>
-                        <th class="text-left font-medium px-4 py-2">Role</th>
-                        <th class="text-left font-medium px-4 py-2">Unit / Dept</th>
-                        <th class="text-left font-medium px-4 py-2">Status</th>
-                        <th class="px-4 py-2"></th>
+                        <th class="text-left font-semibold px-4 py-2.5">User</th>
+                        <th class="text-left font-semibold px-4 py-2.5">Role</th>
+                        <th class="text-left font-semibold px-4 py-2.5">Unit / Dept</th>
+                        <th class="text-left font-semibold px-4 py-2.5">Status</th>
+                        <th class="px-4 py-2.5"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -76,7 +84,7 @@
         </div>
 
         {{-- Mobile cards --}}
-        <div class="md:hidden space-y-2">
+        <div class="md:hidden space-y-2 mt-3">
             @forelse ($users as $user)
                 <div wire:key="m-{{ $user->id }}" class="bg-white border border-gray-100 rounded-lg p-3">
                     <div class="flex items-center justify-between">
@@ -95,6 +103,8 @@
                 <div class="text-center text-gray-400 py-6">ບໍ່ມີຜູ້ໃຊ້</div>
             @endforelse
         </div>
+
+        <div class="mt-4">{{ $users->links() }}</div>
     </div>
 
     {{-- Create / Edit modal --}}
