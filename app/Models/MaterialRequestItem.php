@@ -15,6 +15,7 @@ class MaterialRequestItem extends Model
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
+        'shop_prices' => 'array',
         'supplier_quantity' => 'integer',
         'receiver_confirmed' => 'boolean',
         'sort_order' => 'integer',

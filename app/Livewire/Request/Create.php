@@ -78,10 +78,25 @@ class Create extends Component
         $this->items = array_values($this->items);
     }
 
+    /** ສະຫຼັບ item ໄປໃຊ້ supplier ອື່ນ (ຈาก price comparison). */
+    public function useOffer(int $i, int $materialId): void
+    {
+        $m = Material::find($materialId);
+        if (! $m || ! isset($this->items[$i])) {
+            return;
+        }
+        $this->items[$i]['material_id'] = $m->id;
+        $this->items[$i]['material_nbr'] = $m->material_nbr ?? '';
+        $this->items[$i]['description'] = $m->description;
+        $this->items[$i]['unit'] = $m->unit ?? '';
+        $this->items[$i]['unit_price'] = $m->unit_price !== null ? (string) $m->unit_price : '0';
+    }
+
     public function save(bool $submit = false): void
     {
         abort_unless(auth()->user()->can('request.create'), 403);
 
+        $fields = app(RequestService::class)->fieldConfig();
         $rules = [
             'purpose' => ['required', 'string', 'max:1000'],
             'currency' => ['required', 'in:LAK,THB,USD'],
@@ -91,7 +106,8 @@ class Create extends Component
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
         ];
-        if ($submit) {
+        // approver ບັງຄັບຕอนสົ່ງ ສະເພาะ ຖ້າ admin ເປີດ field ໄວ້
+        if ($submit && $fields['approver']) {
             $rules['approver_user_id'] = ['required', 'exists:users,id'];
         }
         $this->validate($rules, [], ['purpose' => 'ຈຸດປະສົງ', 'approver_user_id' => 'Approver']);
@@ -129,11 +145,25 @@ class Create extends Component
 
         $total = collect($this->items)->sum(fn ($it) => (float) ($it['unit_price'] ?? 0) * (int) ($it['quantity'] ?? 0));
 
+        // price comparison ຕໍ່ item ທີ່ມາจาก catalog (supplier ອື່ນ ຂາຍສິນຄ້າດຽວກັນ)
+        $svc = app(RequestService::class);
+        $comparisons = [];
+        foreach ($this->items as $i => $it) {
+            if (! empty($it['material_id']) && ($m = Material::find($it['material_id']))) {
+                $offers = $svc->comparePrices($m);
+                if ($offers) {
+                    $comparisons[$i] = $offers;
+                }
+            }
+        }
+
         return view('livewire.request.create', [
             'matResults' => $results,
             'suppliers' => Supplier::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'users' => User::orderBy('display_name')->get(['id', 'display_name', 'email']),
             'liveTotal' => $total,
+            'fields' => $svc->fieldConfig(),
+            'comparisons' => $comparisons,
         ]);
     }
 }

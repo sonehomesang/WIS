@@ -27,6 +27,45 @@ use Illuminate\Validation\ValidationException;
  */
 class RequestService
 {
+    /** Optional fields ໃນ Request form — admin ເປີດ/ປິດ ຜ່ານ Settings › System. */
+    public const FIELD_KEYS = ['supplier', 'currency', 'rooms', 'functions', 'approver', 'request_type', 'wo_e_form'];
+
+    /** @return array<string,bool> field => enabled (default ເປີດໝົດ). */
+    public function fieldConfig(): array
+    {
+        $saved = Setting::get('request', [])['fields'] ?? [];
+        $cfg = [];
+        foreach (self::FIELD_KEYS as $k) {
+            $cfg[$k] = (bool) ($saved[$k] ?? true);
+        }
+
+        return $cfg;
+    }
+
+    /**
+     * ປຽບທຽບລາຄາ supplier ອື່ນໆ ສຳລັບສິນຄ້າດຽວກັນ (ຈັບคู่ ດ້ວຍ material_nbr ກ່ອນ, ບໍ່ມີ → description).
+     * Groundwork ສຳລັບ multi-supplier — ຄืน [] ຖ້າມີ supplier ດຽວ.
+     *
+     * @return array<int,array{material_id:int,supplier_id:?int,supplier_name:string,unit_price:float,currency:string}>
+     */
+    public function comparePrices(Material $m): array
+    {
+        $q = Material::query()->with('supplier')->where('is_active', true)->where('id', '!=', $m->id);
+        if ($m->material_nbr) {
+            $q->where('material_nbr', $m->material_nbr);
+        } else {
+            $q->where('description', $m->description);
+        }
+
+        return $q->limit(10)->get()->map(fn ($o) => [
+            'material_id' => $o->id,
+            'supplier_id' => $o->supplier_id,
+            'supplier_name' => $o->supplier?->name ?? '—',
+            'unit_price' => (float) $o->unit_price,
+            'currency' => $o->currency ?? 'THB',
+        ])->all();
+    }
+
     public function nextNumber(int $year): string
     {
         $prefix = "MR{$year}-";
@@ -84,6 +123,7 @@ class RequestService
                     'quantity' => max(1, (int) ($it['quantity'] ?? 1)),
                     'unit_price' => isset($it['unit_price']) && $it['unit_price'] !== '' ? (float) $it['unit_price'] : (float) ($mat?->unit_price ?? 0),
                     'currency' => $it['currency'] ?? $mat?->currency ?? ($data['currency'] ?? 'THB'),
+                    'shop_prices' => $mat ? ($this->comparePrices($mat) ?: null) : null,
                     'sort_order' => $i,
                 ]);
             }

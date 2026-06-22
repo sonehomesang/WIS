@@ -10,16 +10,21 @@
                 <textarea wire:model="purpose" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                 @error('purpose')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
+            @if ($fields['request_type'])
             <div>
                 <label class="block text-gray-600 mb-1">ປະເພດ (Type)</label>
                 <select wire:model="request_type" class="w-full rounded-md border-gray-300 text-sm">
                     <option value="">—</option><option value="CM">CM</option><option value="eForm">eForm</option><option value="project">Project</option>
                 </select>
             </div>
+            @endif
+            @if ($fields['wo_e_form'])
             <div>
                 <label class="block text-gray-600 mb-1">WO / eForm / Project</label>
                 <input type="text" wire:model="wo_e_form" class="w-full rounded-md border-gray-300 text-sm" />
             </div>
+            @endif
+            @if ($fields['supplier'])
             <div>
                 <label class="block text-gray-600 mb-1">Supplier</label>
                 <select wire:model.live="assigned_supplier_id" class="w-full rounded-md border-gray-300 text-sm">
@@ -27,20 +32,28 @@
                     @foreach ($suppliers as $s)<option value="{{ $s->id }}">{{ $s->name }}</option>@endforeach
                 </select>
             </div>
+            @endif
+            @if ($fields['currency'])
             <div>
                 <label class="block text-gray-600 mb-1">ສະກຸນເງິນ</label>
                 <select wire:model="currency" class="w-full rounded-md border-gray-300 text-sm">
                     <option value="THB">THB (ບາດ)</option><option value="LAK">LAK (ກີບ)</option><option value="USD">USD</option>
                 </select>
             </div>
+            @endif
+            @if ($fields['rooms'])
             <div>
                 <label class="block text-gray-600 mb-1">ຫ້ອງ (Rooms)</label>
                 <input type="text" wire:model="rooms" class="w-full rounded-md border-gray-300 text-sm" />
             </div>
+            @endif
+            @if ($fields['functions'])
             <div>
                 <label class="block text-gray-600 mb-1">Functions</label>
                 <input type="text" wire:model="functions" class="w-full rounded-md border-gray-300 text-sm" />
             </div>
+            @endif
+            @if ($fields['approver'])
             <div>
                 <label class="block text-gray-600 mb-1">Approver <span class="text-red-500">*</span> <span class="text-xs text-gray-400">(ບັງຄັບຕอนสົ່ງ)</span></label>
                 <select wire:model="approver_user_id" class="w-full rounded-md border-gray-300 text-sm">
@@ -49,6 +62,7 @@
                 </select>
                 @error('approver_user_id')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
+            @endif
             <div class="md:col-span-2">
                 <label class="block text-gray-600 mb-1">ໝາຍເຫດ</label>
                 <textarea wire:model="remark" rows="1" class="w-full rounded-md border-gray-300 text-sm"></textarea>
@@ -97,6 +111,18 @@
                                     <td class="py-1.5 text-right text-gray-700">{{ number_format((float) ($row['unit_price'] ?? 0) * (int) ($row['quantity'] ?? 0), 2) }}</td>
                                     <td class="py-1.5 text-center"><button wire:click="removeItem({{ $i }})" type="button" class="text-gray-400 hover:text-red-600">✕</button></td>
                                 </tr>
+                                @if (! empty($comparisons[$i]))
+                                    <tr wire:key="cmp-{{ $i }}"><td colspan="6" class="pb-2">
+                                        <div class="text-xs bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+                                            <span class="text-amber-700 font-medium">ປຽບທຽບ supplier ອື່ນ:</span>
+                                            @foreach ($comparisons[$i] as $o)
+                                                <button wire:click="useOffer({{ $i }}, {{ $o['material_id'] }})" type="button" class="inline-flex items-center gap-1 ml-1 rounded border border-amber-300 bg-white px-2 py-0.5 hover:bg-amber-100">
+                                                    {{ $o['supplier_name'] }}: <span class="font-medium">{{ number_format($o['unit_price'], 2) }}</span> {{ $o['currency'] }}
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                    </td></tr>
+                                @endif
                             @endforeach
                         </tbody>
                         <tfoot>

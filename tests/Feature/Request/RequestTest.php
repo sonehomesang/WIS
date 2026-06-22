@@ -147,3 +147,41 @@ test('non-permitted user cannot open request index', function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => false]));
     Livewire::test(Index::class)->assertForbidden();
 });
+
+test('approver is optional when admin disables the field', function () {
+    Setting::put('request', ['fields' => ['supplier' => true, 'currency' => true, 'rooms' => true, 'functions' => true, 'approver' => false, 'request_type' => true, 'wo_e_form' => true]], 1);
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+
+    Livewire::test(\App\Livewire\Request\Create::class)
+        ->set('purpose', 'no approver needed')
+        ->call('addFreeItem')
+        ->set('items.0.description', 'Wire')
+        ->set('items.0.quantity', 2)
+        ->set('items.0.unit_price', 3)
+        ->call('save', true)   // submit without approver
+        ->assertHasNoErrors();
+
+    expect(\App\Models\MaterialRequest::where('purpose', 'no approver needed')->where('status', 'submitted')->exists())->toBeTrue();
+});
+
+test('price comparison captures other suppliers selling the same material_nbr', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+
+    $s1 = \App\Models\Supplier::create(['slug' => 's1-'.uniqid(), 'name' => 'SupplierOne', 'is_active' => true]);
+    $s2 = \App\Models\Supplier::create(['slug' => 's2-'.uniqid(), 'name' => 'SupplierTwo', 'is_active' => true]);
+    $m1 = \App\Models\Material::create(['supplier_id' => $s1->id, 'material_nbr' => 'X-100', 'category' => 'C', 'description' => 'Pump', 'unit_price' => 500, 'currency' => 'THB']);
+    \App\Models\Material::create(['supplier_id' => $s2->id, 'material_nbr' => 'X-100', 'category' => 'C', 'description' => 'Pump', 'unit_price' => 450, 'currency' => 'THB']);
+
+    $r = app(RequestService::class)->createDraft([
+        'purpose' => 'pump', 'currency' => 'THB', 'approver_user_id' => $admin->id,
+        'items' => [['material_id' => $m1->id, 'description' => 'Pump', 'quantity' => 1, 'unit_price' => 500]],
+    ], $admin);
+
+    $item = $r->items->first();
+    expect($item->shop_prices)->toBeArray();
+    expect($item->shop_prices)->toHaveCount(1);
+    expect($item->shop_prices[0]['supplier_name'])->toBe('SupplierTwo');
+    expect((float) $item->shop_prices[0]['unit_price'])->toBe(450.0);
+});

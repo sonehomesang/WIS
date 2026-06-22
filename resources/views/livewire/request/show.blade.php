@@ -59,7 +59,9 @@
                         @foreach ($record->items as $idx => $it)
                             <tr>
                                 <td class="{{ $bd }}">{{ $idx + 1 }}</td>
-                                <td class="{{ $bd }}">{{ $it->description }}@if ($it->material_nbr)<span class="text-xs text-gray-400"> · {{ $it->material_nbr }}</span>@endif</td>
+                                <td class="{{ $bd }}">{{ $it->description }}@if ($it->material_nbr)<span class="text-xs text-gray-400"> · {{ $it->material_nbr }}</span>@endif
+                                    @if (! empty($it->shop_prices))<div class="text-xs text-gray-400 mt-0.5">ປຽບທຽບ: @foreach ($it->shop_prices as $o){{ $o['supplier_name'] }} {{ number_format($o['unit_price'], 2) }}@if (! $loop->last) · @endif @endforeach</div>@endif
+                                </td>
                                 <td class="{{ $bd }} text-center">{{ $it->unit ?? '—' }}</td>
                                 <td class="{{ $bd }} text-center">{{ $it->quantity }}</td>
                                 <td class="{{ $bd }} text-right">{{ number_format($it->unit_price, 2) }}</td>
