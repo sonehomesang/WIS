@@ -30,6 +30,9 @@
                         'borrow' => 'Borrowing & Tracking',
                         'borrow.create' => 'New Borrow Request',
                         'borrow.show' => 'Borrowing Record Details',
+                        'deposit' => 'Deposit Material/Equipment',
+                        'deposit.create' => 'New Deposit Request',
+                        'deposit.show' => 'Deposit Record Details',
                         'settings' => 'Settings',
                         'settings.users' => 'Users',
                         'settings.roles' => 'Roles & permissions',
@@ -48,6 +51,7 @@
                     $subtitleMap = [
                         'inventory' => 'ສາງເຄື່ອງ & ວັດສະດຸ · ຄົ້ນຫາ / ນຳເຂົ້າ',
                         'borrow' => 'Monitor active loans and return schedules',
+                        'deposit' => 'ຮັບຝາກ-ເກັບຮັກສາ-ສົ່ງคืน ເຄື່ອງຂອງ',
                         'settings.users' => 'ຈັດການຜູ້ໃຊ້ · role + ໜ່ວຍງານ · approve / lock',
                         'settings.roles' => '21 menus × 6 actions + scope · ແກ້ໄດ້ໂດຍ super_admin',
                         'settings.uom' => 'ໜ່ວຍວັດ (pcs · kg · m …) · ໃຊ້ໃນ Inventory / Materials',

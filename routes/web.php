@@ -12,6 +12,7 @@ use App\Livewire\Settings\System;
 use App\Livewire\Settings\Uom;
 use App\Livewire\Settings\Users;
 use App\Models\BorrowRecord;
+use App\Models\DepositRecord;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +45,27 @@ Route::get('borrow/{record}/pdf', function (BorrowRecord $record) {
 Route::get('borrow/{record}', Show::class)
     ->middleware(['auth', 'verified'])
     ->name('borrow.show');
+
+// ── Deposit (ການຝາກເຄື່ອງ) — Phase 6.8a ──
+Route::get('deposit', App\Livewire\Deposit\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('deposit');
+
+Route::get('deposit/create', App\Livewire\Deposit\Create::class)
+    ->middleware(['auth', 'verified'])
+    ->name('deposit.create');
+
+Route::get('deposit/{record}/pdf', function (DepositRecord $record) {
+    abort_unless(auth()->user()->can('deposit.view'), 403);
+    $record->load(['items.photos', 'unit', 'department', 'history']);
+
+    return Pdf::loadView('deposit.pdf', ['record' => $record])
+        ->download("deposit-{$record->request_number}.pdf");
+})->middleware(['auth', 'verified'])->name('deposit.pdf');
+
+Route::get('deposit/{record}', App\Livewire\Deposit\Show::class)
+    ->middleware(['auth', 'verified'])
+    ->name('deposit.show');
 
 Route::view('profile', 'profile')
     ->middleware(['auth'])
