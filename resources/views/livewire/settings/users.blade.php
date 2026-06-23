@@ -135,7 +135,7 @@
                     </div>
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">Role <span class="text-red-500">*</span></label>
-                        <select wire:model="role" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
+                        <select wire:model.live="role" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
                             <option value="">— ເລືອກ —</option>
                             @foreach ($roles as $r)<option value="{{ $r }}">{{ $r }}</option>@endforeach
                         </select>
@@ -163,6 +163,16 @@
                             @foreach ($formDepartments as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach
                         </select>
                     </div>
+                    @if ($role === 'supplier')
+                        <div class="md:col-span-2">
+                            <label class="block text-sm text-gray-600 mb-1">Supplier <span class="text-red-500">*</span> <span class="text-xs text-gray-400">(ຜູກ user ກັບ supplier — portal scope)</span></label>
+                            <select wire:model="supplier_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
+                                <option value="">— ເລືອກ supplier —</option>
+                                @foreach ($suppliers as $s)<option value="{{ $s->id }}">{{ $s->name }}</option>@endforeach
+                            </select>
+                            @error('supplier_id')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    @endif
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>

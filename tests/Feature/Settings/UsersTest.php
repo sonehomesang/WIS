@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Settings\Users;
+use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Livewire\Livewire;
@@ -60,4 +61,43 @@ test('non-permitted user cannot open users', function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => false]));
 
     Livewire::test(Users::class)->assertForbidden();
+});
+
+test('creating a supplier-role user requires and stores supplier_id', function () {
+    $this->actingAs(adminUser());
+    $sup = Supplier::create(['slug' => 'sp-'.uniqid(), 'name' => 'PortalCo', 'is_active' => true]);
+
+    // missing supplier_id → error
+    Livewire::test(Users::class)
+        ->call('newUser')
+        ->set('display_name', 'Sup User')->set('email', 'sup@nt2.la')->set('password', 'password123')
+        ->set('role', 'supplier')->set('status', 'active')
+        ->call('save')
+        ->assertHasErrors(['supplier_id']);
+
+    // with supplier_id → ok + persisted
+    Livewire::test(Users::class)
+        ->call('newUser')
+        ->set('display_name', 'Sup User')->set('email', 'sup@nt2.la')->set('password', 'password123')
+        ->set('role', 'supplier')->set('supplier_id', $sup->id)->set('status', 'active')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $u = User::where('email', 'sup@nt2.la')->first();
+    expect($u->supplier_id)->toBe($sup->id);
+    expect($u->hasRole('supplier'))->toBeTrue();
+});
+
+test('non-supplier role clears supplier_id', function () {
+    $this->actingAs(adminUser());
+    $sup = Supplier::create(['slug' => 'sp-'.uniqid(), 'name' => 'X', 'is_active' => true]);
+    $u = User::factory()->create(['supplier_id' => $sup->id]);
+
+    Livewire::test(Users::class)
+        ->call('editUser', $u->id)
+        ->set('role', 'warehouse_staff')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($u->refresh()->supplier_id)->toBeNull();
 });

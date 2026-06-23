@@ -4,6 +4,7 @@ namespace App\Livewire\Settings;
 
 use App\Models\Department;
 use App\Models\Role;
+use App\Models\Supplier;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Validation\Rule;
@@ -38,6 +39,9 @@ class Users extends Component
     public ?int $unit_id = null;
 
     public ?int $department_id = null;
+
+    /** ສຳລັບ role=supplier — ຜູກ user ກັບ supplier (ໃຊ້ scope catalog/request/oga ຂອງ portal). */
+    public ?int $supplier_id = null;
 
     public string $status = 'active';
 
@@ -79,6 +83,7 @@ class Users extends Component
         $this->role = $user->roles->first()?->name ?? '';
         $this->unit_id = $user->unit_id;
         $this->department_id = $user->department_id;
+        $this->supplier_id = $user->supplier_id;
         $this->status = $user->status;
         $this->resetValidation();
         $this->showModal = true;
@@ -95,14 +100,17 @@ class Users extends Component
             'role' => ['required', 'exists:roles,name'],
             'unit_id' => ['nullable', 'exists:units,id'],
             'department_id' => ['nullable', 'exists:departments,id'],
+            'supplier_id' => [$this->role === 'supplier' ? 'required' : 'nullable', 'exists:suppliers,id'],
             'status' => ['required', 'in:active,pending,locked'],
-        ]);
+        ], [], ['supplier_id' => 'Supplier']);
 
         $attrs = [
             'display_name' => $data['display_name'],
             'email' => $data['email'],
             'unit_id' => $data['unit_id'] ?: null,
             'department_id' => $data['department_id'] ?: null,
+            // supplier_id ສະເພาະ role=supplier; role ອື່ນ → null (ກັນ scope ຄ້າງ)
+            'supplier_id' => $this->role === 'supplier' ? ($data['supplier_id'] ?: null) : null,
             'status' => $data['status'],
         ];
 
@@ -146,6 +154,7 @@ class Users extends Component
         $this->role = '';
         $this->unit_id = null;
         $this->department_id = null;
+        $this->supplier_id = null;
         $this->status = 'active';
         $this->resetValidation();
     }
@@ -166,6 +175,7 @@ class Users extends Component
             'letters' => range('A', 'Z'),
             'roles' => Role::orderBy('name')->pluck('name'),
             'units' => Unit::where('is_active', true)->orderBy('name')->get(),
+            'suppliers' => Supplier::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'formDepartments' => $this->unit_id
                 ? Department::where('unit_id', $this->unit_id)->where('is_active', true)->orderBy('name')->get()
                 : collect(),
