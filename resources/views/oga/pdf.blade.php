@@ -36,8 +36,7 @@
     </style>
 </head>
 <body>
-    <h2>ໃບສົ່ງເຄື່ອງອອກ / OUTWARDS GOODS ADVICE</h2>
-    <div class="sub">NAM THEUN 2 — WAREHOUSE INFORMATION SYSTEM @if ($record->source_da_number) · from {{ $record->source_da_number }}@endif</div>
+    @include('pdf._letterhead', ['docTitle' => 'ໃບສົ່ງເຄື່ອງອອກ / OUTWARDS GOODS ADVICE', 'docSub' => $record->source_da_number ? 'from '.$record->source_da_number : null])
 
     <table class="fields">
         <tr><td class="lbl">OGA No.</td><td style="width:30%">{{ $record->oga_number }}</td><td class="lbl">ວັນທີ</td><td>{{ $fmt($record->date) }}</td></tr>
@@ -66,5 +65,7 @@
             <td>Delivered/Completed<div class="sigbox"></div><div class="muted">{{ $record->completed_by_name }} · {{ $fmt($record->completed_at) }}</div></td>
         </tr>
     </table>
+
+    @include('pdf._footer')
 </body>
 </html>

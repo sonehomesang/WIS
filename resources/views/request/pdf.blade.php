@@ -25,8 +25,7 @@
     </style>
 </head>
 <body>
-    <h2>ໃບເບີກວັດສະດຸ / MATERIAL REQUEST</h2>
-    <div class="sub">NAM THEUN 2 — WAREHOUSE INFORMATION SYSTEM</div>
+    @include('pdf._letterhead', ['docTitle' => 'ໃບເບີກວັດສະດຸ / MATERIAL REQUEST'])
 
     <table class="fields">
         <tr><td class="lbl">ໃບເບີກເລກທີ່</td><td style="width:32%">{{ $record->request_number }}</td><td class="lbl">ສະຖานะ</td><td>{{ strtoupper($record->status) }}</td></tr>
@@ -61,5 +60,7 @@
             <td>ທີມສາງ<div class="sigbox"></div><div class="muted">{{ $record->warehouse_staff_name ?? '' }} · {{ $fmt($record->validated_at) }}</div></td>
         </tr>
     </table>
+
+    @include('pdf._footer')
 </body>
 </html>

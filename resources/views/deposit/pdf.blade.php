@@ -37,8 +37,7 @@
     </style>
 </head>
 <body>
-    <h2>ໃບຝາກເຄື່ອງ / DEPOSIT RECORD</h2>
-    <div class="sub">NAM THEUN 2 — WAREHOUSE INFORMATION SYSTEM · {{ $record->request_type === 'pre_request' ? 'Pre-request' : 'Walk-in' }}</div>
+    @include('pdf._letterhead', ['docTitle' => 'ໃບຝາກເຄື່ອງ / DEPOSIT RECORD', 'docSub' => $record->request_type === 'pre_request' ? 'Pre-request' : 'Walk-in'])
 
     <table class="fields">
         <tr>
@@ -85,5 +84,7 @@
             <td>ລາຍເຊັນ ທີມສາງ<div class="sigbox"></div><div class="muted">{{ $record->warehouse_staff_name ?? '' }}</div></td>
         </tr>
     </table>
+
+    @include('pdf._footer')
 </body>
 </html>

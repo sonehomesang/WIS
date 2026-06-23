@@ -40,7 +40,7 @@
     </style>
 </head>
 <body>
-    <h2>ບັນທຶກລາຍລະອຽດ ການຢືມເຄື່ອງ</h2>
+    @include('pdf._letterhead', ['docTitle' => 'ບັນທຶກລາຍລະອຽດ ການຢືມເຄື່ອງ / BORROW RECORD'])
 
     <table class="fields">
         <tr>
@@ -84,5 +84,7 @@
             <td>ລາຍເຊັນ ທີມສາງ / ຜູ້ເບີກ<div class="sigbox"></div><div class="muted">{{ $record->warehouse_staff_name ?? '' }}</div></td>
         </tr>
     </table>
+
+    @include('pdf._footer')
 </body>
 </html>

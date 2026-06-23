@@ -37,8 +37,7 @@
     </style>
 </head>
 <body>
-    <h2>ໃບແຈ້ງຄວາມຜິດ / DISCREPANCY ADVICE</h2>
-    <div class="sub">NAM THEUN 2 — WAREHOUSE INFORMATION SYSTEM</div>
+    @include('pdf._letterhead', ['docTitle' => 'ໃບແຈ້ງຄວາມຜິດ / DISCREPANCY ADVICE'])
 
     <table class="fields">
         <tr><td class="lbl">DA No.</td><td style="width:30%">{{ $record->da_number }}</td><td class="lbl">ວັນທີ</td><td>{{ $fmt($record->date) }}</td></tr>
@@ -84,5 +83,7 @@
             <td>Leader<div class="sigbox"></div><div class="muted">{{ $record->approved_by_name }} · {{ $fmt($record->approved_at) }}</div></td>
         </tr>
     </table>
+
+    @include('pdf._footer')
 </body>
 </html>

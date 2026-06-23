@@ -43,5 +43,43 @@
                 <div class="pt-1"><button wire:click="saveRequestFields" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 min-h-[40px] hover:bg-sky-700">Save fields</button></div>
             @endcan
         </div>
+
+        {{-- Letterhead (PDF exports) --}}
+        <div class="bg-white border border-gray-100 rounded-lg p-5 md:max-w-lg space-y-3">
+            <div>
+                <h3 class="font-medium text-gray-800">Letterhead (PDF)</h3>
+                <p class="text-xs text-gray-500">logo + ຂໍ້ມູນບໍລິສັດ ສຳລັບ header/footer ຂອງ PDF (Borrow/Deposit/Request/DA/OGA).</p>
+            </div>
+
+            <div class="flex items-center gap-3">
+                @if ($lhLogoPath)
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($lhLogoPath) }}" alt="logo" class="w-16 h-16 object-contain border border-gray-200 rounded" />
+                    @can('settings.edit')<button wire:click="removeLogo" wire:confirm="ລຶບ logo?" class="text-xs text-red-600 hover:underline">ລຶບ logo</button>@endcan
+                @else
+                    <div class="w-16 h-16 border border-dashed border-gray-300 rounded flex items-center justify-center text-gray-300 text-xs">no logo</div>
+                @endif
+                <div class="flex-1">
+                    <label class="block text-xs text-gray-500 mb-1">ອັບໂຫລດ logo (PNG/JPG ≤2MB)</label>
+                    <input type="file" wire:model="lhLogo" accept="image/png,image/jpeg" class="block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-2 file:rounded file:border-0 file:bg-sky-50 file:text-sky-700" />
+                    <div wire:loading wire:target="lhLogo" class="text-xs text-gray-400">ກຳລັງອັບ…</div>
+                    @error('lhLogo')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    @if ($lhLogo)<div class="mt-1"><img src="{{ $lhLogo->temporaryUrl() }}" class="w-12 h-12 object-contain border border-sky-200 rounded" /></div>@endif
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <div><label class="block text-xs text-gray-500 mb-1">ຊື່ບໍລິສັດ (ລາວ)</label><input type="text" wire:model="lhCompanyLo" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div><label class="block text-xs text-gray-500 mb-1">Company name (EN)</label><input type="text" wire:model="lhCompanyEn" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div><label class="block text-xs text-gray-500 mb-1">ທີ່ຢູ່ ແຖວ 1</label><input type="text" wire:model="lhAddress1" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div><label class="block text-xs text-gray-500 mb-1">ທີ່ຢູ່ ແຖວ 2</label><input type="text" wire:model="lhAddress2" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div><label class="block text-xs text-gray-500 mb-1">ເບີໂທ</label><input type="text" wire:model="lhPhone" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div><label class="block text-xs text-gray-500 mb-1">Email</label><input type="text" wire:model="lhEmail" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-1">Footer note</label><input type="text" wire:model="lhFooter" class="w-full rounded-md border-gray-300 text-sm" /></div>
+            </div>
+
+            @can('settings.edit')
+                <div class="pt-1"><button wire:click="saveLetterhead" wire:loading.attr="disabled" wire:target="saveLetterhead,lhLogo" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">Save letterhead</button></div>
+            @endcan
+        </div>
     </div>
 </div>

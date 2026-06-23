@@ -4,19 +4,42 @@ namespace App\Livewire\Settings;
 
 use App\Models\Setting;
 use App\Services\RequestService;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 class System extends Component
 {
+    use WithFileUploads;
+
     public $vat_rate = 10;
 
     public bool $vat_enabled = true;
 
     /** @var array<string,bool> Request form fields ເປີດ/ປິດ */
     public array $reqFields = [];
+
+    // ── Letterhead (PDF) ──
+    public string $lhCompanyLo = '';
+
+    public string $lhCompanyEn = '';
+
+    public string $lhAddress1 = '';
+
+    public string $lhAddress2 = '';
+
+    public string $lhPhone = '';
+
+    public string $lhEmail = '';
+
+    public string $lhFooter = '';
+
+    public ?string $lhLogoPath = null;
+
+    public $lhLogo;   // upload
 
     public function mount(): void
     {
@@ -28,6 +51,63 @@ class System extends Component
         $saved = Setting::get('request', [])['fields'] ?? [];
         foreach (RequestService::FIELD_KEYS as $k) {
             $this->reqFields[$k] = (bool) ($saved[$k] ?? true);
+        }
+
+        $lh = Setting::get('letterhead', []);
+        $this->lhCompanyLo = $lh['company_name'] ?? '';
+        $this->lhCompanyEn = $lh['company_name_en'] ?? '';
+        $this->lhAddress1 = $lh['address1'] ?? '';
+        $this->lhAddress2 = $lh['address2'] ?? '';
+        $this->lhPhone = $lh['phone'] ?? '';
+        $this->lhEmail = $lh['email'] ?? '';
+        $this->lhFooter = $lh['footer_note'] ?? '';
+        $this->lhLogoPath = $lh['logo_path'] ?? null;
+    }
+
+    public function saveLetterhead(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $this->validate([
+            'lhCompanyLo' => ['nullable', 'string', 'max:256'],
+            'lhCompanyEn' => ['nullable', 'string', 'max:256'],
+            'lhAddress1' => ['nullable', 'string', 'max:256'],
+            'lhAddress2' => ['nullable', 'string', 'max:256'],
+            'lhPhone' => ['nullable', 'string', 'max:128'],
+            'lhEmail' => ['nullable', 'string', 'max:128'],
+            'lhFooter' => ['nullable', 'string', 'max:256'],
+            'lhLogo' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
+        ]);
+
+        if ($this->lhLogo) {
+            if ($this->lhLogoPath) {
+                Storage::disk('public')->delete($this->lhLogoPath);
+            }
+            $this->lhLogoPath = $this->lhLogo->store('letterhead', 'public');
+            $this->lhLogo = null;
+        }
+
+        Setting::put('letterhead', [
+            'company_name' => $this->lhCompanyLo ?: null,
+            'company_name_en' => $this->lhCompanyEn ?: null,
+            'address1' => $this->lhAddress1 ?: null,
+            'address2' => $this->lhAddress2 ?: null,
+            'phone' => $this->lhPhone ?: null,
+            'email' => $this->lhEmail ?: null,
+            'footer_note' => $this->lhFooter ?: null,
+            'logo_path' => $this->lhLogoPath,
+        ], auth()->id());
+        $this->dispatch('saved');
+    }
+
+    public function removeLogo(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        if ($this->lhLogoPath) {
+            Storage::disk('public')->delete($this->lhLogoPath);
+            $this->lhLogoPath = null;
+            $lh = Setting::get('letterhead', []);
+            $lh['logo_path'] = null;
+            Setting::put('letterhead', $lh, auth()->id());
         }
     }
 
