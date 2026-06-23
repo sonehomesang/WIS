@@ -80,7 +80,8 @@ class RolePermissionSeeder extends Seeder
     {
         $superAdmin = $this->allMenus('allTrue');
 
-        $admin = $this->allMenus('adminPerm');
+        // admin = Full CRUD (ລວມ delete) ທຸກໂມດູລ; ຍົກເວັ້ນ roles (RBAC ແກ້ໄດ້ສະເພาะ super_admin)
+        $admin = $this->allMenus('allTrue');
         $admin['roles'] = 'viewOnly';
 
         $warehouse = $this->allMenus('viewOnly');
