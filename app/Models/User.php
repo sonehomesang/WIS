@@ -36,7 +36,17 @@ class User extends Authenticatable
         'auth_provider',
         'is_pre_created',
         'is_super_admin',
+        'dashboard_prefs',
     ];
+
+    /** Default dashboard widget visibility (all on). */
+    public const DASHBOARD_DEFAULTS = ['kpi' => true, 'queue' => true, 'activity' => true, 'charts' => true];
+
+    /** Resolved dashboard prefs merged over defaults. */
+    public function dashboardPrefs(): array
+    {
+        return array_merge(self::DASHBOARD_DEFAULTS, $this->dashboard_prefs ?? []);
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -61,6 +71,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_pre_created' => 'boolean',
             'is_super_admin' => 'boolean',
+            'dashboard_prefs' => 'array',
         ];
     }
 
