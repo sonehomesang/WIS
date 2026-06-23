@@ -149,8 +149,11 @@ class Index extends Component
             'newPhotos.*' => ['image', 'max:5120'],
         ], [], ['supplier_id' => 'Supplier', 'category' => 'ປະເພດ', 'description' => 'ລາຍລະອຽດ']);
 
+        // supplier-scoped user ບໍ່ໃຫ້ ກຳນົດ/ປ່ຽນ supplier ໄປ supplier ອື່ນ (ບັງຄັບເປັນຂອງຕົນ)
+        $supplierId = $this->isSupplierScoped() ? auth()->user()->supplier_id : $data['supplier_id'];
+
         $attrs = [
-            'supplier_id' => $data['supplier_id'],
+            'supplier_id' => $supplierId,
             'material_nbr' => $data['material_nbr'] ?: null,
             'category' => $data['category'],
             'description' => $data['description'],

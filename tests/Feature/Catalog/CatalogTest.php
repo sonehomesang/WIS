@@ -107,6 +107,26 @@ test('supplier role sees only own materials', function () {
         ->assertDontSee('OTHER-ITEM');
 });
 
+test('supplier-scoped user cannot reassign material to another supplier', function () {
+    $own = aCatalogSupplier('Own');
+    $other = aCatalogSupplier('Other');
+    $sup = User::factory()->create(['is_super_admin' => false, 'supplier_id' => $own->id]);
+    $sup->assignRole('supplier');
+    $this->actingAs($sup);
+
+    Livewire::test(Index::class)
+        ->call('newItem')
+        ->set('supplier_id', $other->id)   // try to assign to someone else
+        ->set('category', 'X')
+        ->set('description', 'Sneaky item')
+        ->set('currency', 'THB')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $m = Material::where('description', 'Sneaky item')->first();
+    expect($m->supplier_id)->toBe($own->id);   // forced back to own supplier
+});
+
 test('viewer without create permission cannot open create', function () {
     $viewer = User::factory()->create(['is_super_admin' => false]);
     $viewer->givePermissionTo('catalog.view');
