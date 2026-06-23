@@ -164,11 +164,12 @@ class RequestService
     {
         $svc = app(NotificationService::class);
         $link = route('request.show', $r);
+        $n = $r->request_number;
         match ($action) {
-            'submit' => $svc->notify($r->approver_user_id, 'info', "ໃບເບີກ {$r->request_number} ລໍ approve", "ຈาก {$r->requester_name}", $link),
-            'approve' => $svc->notify($r->requester_user_id, 'success', "ໃບເບີກ {$r->request_number} ຖูก approve ແລ້ວ", null, $link),
-            'reject' => $svc->notify($r->requester_user_id, 'warning', "ໃບເບີກ {$r->request_number} ຖูก reject", $r->reject_reason, $link),
-            'close' => $svc->notify($r->requester_user_id, 'success', "ໃບເບີກ {$r->request_number} ສຳເລັດ", $r->invoice_number ? "invoice {$r->invoice_number}" : null, $link),
+            'submit' => $svc->notifyTemplate($r->approver_user_id, 'info', 'request.submit', ['number' => $n, 'requester' => $r->requester_name], $link),
+            'approve' => $svc->notifyTemplate($r->requester_user_id, 'success', 'request.approve', ['number' => $n], $link),
+            'reject' => $svc->notifyTemplate($r->requester_user_id, 'warning', 'request.reject', ['number' => $n, 'reason' => $r->reject_reason ?? ''], $link),
+            'close' => $svc->notifyTemplate($r->requester_user_id, 'success', 'request.close', ['number' => $n, 'invoice' => $r->invoice_number ? "invoice {$r->invoice_number}" : ''], $link),
             default => null,
         };
     }

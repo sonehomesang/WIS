@@ -7,9 +7,9 @@
         ['label' => 'Organization', 'perm' => 'units.view', 'route' => 'settings.organization', 'match' => ['settings.organization', 'settings.facilities']],
         ['label' => 'Units of measure', 'perm' => 'units.view', 'route' => 'settings.uom'],
         ['label' => 'Suppliers', 'perm' => 'supplier.view', 'route' => 'settings.suppliers'],
-        ['label' => 'Audit log', 'perm' => 'audit.view'],
-        ['label' => 'Reports', 'perm' => 'reports.view'],
-        ['label' => 'Notifications', 'perm' => 'settings.view'],
+        ['label' => 'Audit log', 'perm' => 'audit.view', 'route' => 'settings.audit'],
+        ['label' => 'Reports', 'perm' => 'reports.view', 'route' => 'settings.reports'],
+        ['label' => 'Notifications', 'perm' => 'settings.view', 'route' => 'settings.notifications'],
         ['label' => 'System', 'perm' => 'settings.view', 'route' => 'settings.system'],
     ];
 @endphp

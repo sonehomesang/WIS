@@ -19,6 +19,20 @@ class System extends Component
 
     public bool $vat_enabled = true;
 
+    // ── General / App ──
+    public string $appName = '';
+
+    public ?int $defaultBorrowDays = 7;
+
+    // ── Currency ──
+    public string $curPrimary = 'THB';
+
+    public string $curSecondary = 'LAK';
+
+    public $exchangeRate = 0;
+
+    public bool $curSecondaryEnabled = true;
+
     /** @var array<string,bool> Request form fields ເປີດ/ປິດ */
     public array $reqFields = [];
 
@@ -53,6 +67,16 @@ class System extends Component
             $this->reqFields[$k] = (bool) ($saved[$k] ?? true);
         }
 
+        $gen = Setting::get('general', []);
+        $this->appName = $gen['app_name'] ?? 'WH — Warehouse';
+        $this->defaultBorrowDays = (int) ($gen['default_borrow_days'] ?? 7);
+
+        $cur = Setting::get('currency', []);
+        $this->curPrimary = $cur['primary'] ?? 'THB';
+        $this->curSecondary = $cur['secondary'] ?? 'LAK';
+        $this->exchangeRate = $cur['exchange_rate'] ?? 0;
+        $this->curSecondaryEnabled = (bool) ($cur['secondary_enabled'] ?? true);
+
         $lh = Setting::get('letterhead', []);
         $this->lhCompanyLo = $lh['company_name'] ?? '';
         $this->lhCompanyEn = $lh['company_name_en'] ?? '';
@@ -62,6 +86,39 @@ class System extends Component
         $this->lhEmail = $lh['email'] ?? '';
         $this->lhFooter = $lh['footer_note'] ?? '';
         $this->lhLogoPath = $lh['logo_path'] ?? null;
+    }
+
+    public function saveGeneral(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $this->validate([
+            'appName' => ['required', 'string', 'max:128'],
+            'defaultBorrowDays' => ['required', 'integer', 'min:1', 'max:365'],
+        ], [], ['appName' => 'App name', 'defaultBorrowDays' => 'default borrow days']);
+
+        Setting::put('general', [
+            'app_name' => $this->appName,
+            'default_borrow_days' => (int) $this->defaultBorrowDays,
+        ], auth()->id());
+        $this->dispatch('saved');
+    }
+
+    public function saveCurrency(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $this->validate([
+            'curPrimary' => ['required', 'string', 'max:8'],
+            'curSecondary' => ['required', 'string', 'max:8'],
+            'exchangeRate' => ['required', 'numeric', 'min:0'],
+        ], [], ['exchangeRate' => 'exchange rate']);
+
+        Setting::put('currency', [
+            'primary' => strtoupper($this->curPrimary),
+            'secondary' => strtoupper($this->curSecondary),
+            'exchange_rate' => (float) $this->exchangeRate,
+            'secondary_enabled' => $this->curSecondaryEnabled,
+        ], auth()->id());
+        $this->dispatch('saved');
     }
 
     public function saveLetterhead(): void

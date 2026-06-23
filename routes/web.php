@@ -3,8 +3,12 @@
 use App\Livewire\Borrow\Create;
 use App\Livewire\Borrow\Show;
 use App\Livewire\Inventory\Index;
+use App\Livewire\Settings\Audit;
 use App\Livewire\Settings\Facilities;
+use App\Livewire\Settings\Notifications;
+use App\Livewire\Settings\NotificationLog;
 use App\Livewire\Settings\Organization;
+use App\Livewire\Settings\Reports;
 use App\Livewire\Settings\RolesPermissions;
 use App\Livewire\Settings\SupplierDetail;
 use App\Livewire\Settings\Suppliers;
@@ -196,5 +200,21 @@ Route::get('settings/suppliers/{supplier}', SupplierDetail::class)
 Route::get('settings/system', System::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.system');
+
+Route::get('settings/notifications', Notifications::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.notifications');
+
+Route::get('settings/notification-log', NotificationLog::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.notification-log');
+
+Route::get('settings/audit', Audit::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.audit');
+
+Route::get('settings/reports', Reports::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.reports');
 
 require __DIR__.'/auth.php';

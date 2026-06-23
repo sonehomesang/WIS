@@ -4,6 +4,46 @@
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
              class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
+        {{-- General / App --}}
+        <div class="bg-white border border-gray-100 rounded-lg p-5 md:max-w-md space-y-3">
+            <div>
+                <h3 class="font-medium text-gray-800">⚙️ ທົ່ວໄປ (General)</h3>
+                <p class="text-xs text-gray-500">ຄ່າພື້ນຖານ ຂອງແອັບ.</p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">ຊື່ແອັບ</label>
+                <input type="text" wire:model="appName" class="w-full rounded-md border-gray-300 text-sm" />
+                @error('appName')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">ໄລຍະຢືມ ເລີ່ມຕົ້ນ (ມື້)</label>
+                <input type="number" min="1" max="365" wire:model="defaultBorrowDays" class="w-32 rounded-md border-gray-300 text-sm" />
+                @error('defaultBorrowDays')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+            </div>
+            @can('settings.edit')<div class="pt-1"><button wire:click="saveGeneral" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 hover:bg-sky-700">Save</button></div>@endcan
+        </div>
+
+        {{-- Currency --}}
+        <div class="bg-white border border-gray-100 rounded-lg p-5 md:max-w-md space-y-3">
+            <div>
+                <h3 class="font-medium text-gray-800">💱 ສະກຸນເງິນ (Currency)</h3>
+                <p class="text-xs text-gray-500">ສະກຸນຫຼັກ THB (ໄທ) + ສະກຸນຮອງ LAK (ກີບ) + ອັດຕາແລກປ່ຽນ.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div><label class="block text-xs text-gray-500 mb-1">ສະກຸນຫຼັກ</label><input type="text" wire:model="curPrimary" maxlength="8" class="w-full rounded-md border-gray-300 text-sm uppercase" /></div>
+                <div><label class="block text-xs text-gray-500 mb-1">ສະກຸນຮອງ</label><input type="text" wire:model="curSecondary" maxlength="8" class="w-full rounded-md border-gray-300 text-sm uppercase" /></div>
+            </div>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" wire:model="curSecondaryEnabled" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" /> ສະແດງ ສະກຸນຮອງ
+            </label>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">ອັດຕາແລກປ່ຽນ (1 {{ strtoupper($curPrimary ?: 'THB') }} = ? {{ strtoupper($curSecondary ?: 'LAK') }})</label>
+                <input type="number" step="0.01" min="0" wire:model="exchangeRate" class="w-40 rounded-md border-gray-300 text-sm" />
+                @error('exchangeRate')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+            </div>
+            @can('settings.edit')<div class="pt-1"><button wire:click="saveCurrency" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 hover:bg-sky-700">Save</button></div>@endcan
+        </div>
+
         <div class="bg-white border border-gray-100 rounded-lg p-5 md:max-w-md space-y-4">
             <div>
                 <h3 class="font-medium text-gray-800">VAT (global)</h3>

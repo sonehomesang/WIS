@@ -54,6 +54,10 @@
                         'settings.uom' => 'Units of measure',
                         'settings.suppliers' => 'Suppliers',
                         'settings.suppliers.show' => 'Supplier detail',
+                        'settings.notifications' => 'Notifications',
+                        'settings.notification-log' => 'Notification log',
+                        'settings.audit' => 'Audit log',
+                        'settings.reports' => 'Reports',
                         'settings.system' => 'System',
                         'profile' => 'Profile',
                     ];
@@ -74,7 +78,11 @@
                         'settings.roles' => '21 menus × 6 actions + scope · ແກ້ໄດ້ໂດຍ super_admin',
                         'settings.uom' => 'ໜ່ວຍວັດ (pcs · kg · m …) · ໃຊ້ໃນ Inventory / Materials',
                         'settings.suppliers' => 'ຮ້ານຄ້າ supplier · ໃຊ້ໃນ Materials / supplier users',
-                        'settings.system' => 'ຄ່າລະບົບ — VAT (letterhead ຄ່ອຍເພີ່ມ)',
+                        'settings.notifications' => 'feature flags + ແມ່ແບບ ຂໍ້ຄວາມ',
+                        'settings.notification-log' => 'log ການແຈ້ງເຕືອນ ທັງໝົด + export',
+                        'settings.audit' => 'ບັນທຶກການກະທຳ ທຸກ module + export',
+                        'settings.reports' => 'ສະຫຼຸບ ຕາມ module + ຊ່ວງວັນທີ + export',
+                        'settings.system' => 'General · currency · VAT · letterhead',
                     ];
                     $pageSubtitle = $subtitleMap[$routeName] ?? null;
                 @endphp
