@@ -135,6 +135,27 @@ Route::get('oga/{record}', App\Livewire\Oga\Show::class)
     ->middleware(['auth', 'verified'])
     ->name('oga.show');
 
+// ── Expo Info (mini-CRM) — Phase 6.9 ──
+Route::get('expo', App\Livewire\Expo\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('expo');
+
+Route::get('expo/create', App\Livewire\Expo\Create::class)
+    ->middleware(['auth', 'verified'])
+    ->name('expo.create');
+
+Route::get('expo/{record}/pdf', function (App\Models\ExpoEvent $record) {
+    abort_unless(auth()->user()->can('expo.view'), 403);
+    $record->load(['attendees', 'companies.contacts', 'companies.files']);
+
+    return Pdf::loadView('expo.pdf', ['record' => $record])
+        ->download("expo-{$record->expo_number}.pdf");
+})->middleware(['auth', 'verified'])->name('expo.pdf');
+
+Route::get('expo/{record}', App\Livewire\Expo\Show::class)
+    ->middleware(['auth', 'verified'])
+    ->name('expo.show');
+
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');

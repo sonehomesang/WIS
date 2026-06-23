@@ -43,6 +43,9 @@
                         'oga' => 'OGA',
                         'oga.create' => 'New Outwards Goods Advice',
                         'oga.show' => 'Outwards Goods Advice Details',
+                        'expo' => 'Expo Info',
+                        'expo.create' => 'New Expo Event',
+                        'expo.show' => 'Expo Event Details',
                         'settings' => 'Settings',
                         'settings.users' => 'Users',
                         'settings.roles' => 'Roles & permissions',
@@ -66,6 +69,7 @@
                         'request' => 'ເບີກວັດສະດຸ · approve → validate → dispatch → ຮັບ',
                         'da' => 'ແຈ້ງເຄື່ອງ supplier ສົ່ງຜິດ/ເສຍ · 3 ພາກ',
                         'oga' => 'ໃບສົ່ງເຄື່ອງອອກ · dispatch → delivered',
+                        'expo' => 'ບັນທຶກການໄປ expo · ບໍລິສັດ/ຜູ້ຕິດຕໍ່ · report',
                         'settings.users' => 'ຈັດການຜູ້ໃຊ້ · role + ໜ່ວຍງານ · approve / lock',
                         'settings.roles' => '21 menus × 6 actions + scope · ແກ້ໄດ້ໂດຍ super_admin',
                         'settings.uom' => 'ໜ່ວຍວັດ (pcs · kg · m …) · ໃຊ້ໃນ Inventory / Materials',
@@ -90,7 +94,9 @@
                                 @endif
                             </div>
                             <div class="flex items-center gap-1">
-                                @auth<livewire:notifications.bell />@endauth
+                                @auth
+                                    <livewire:notifications.bell />
+                                @endauth
                                 <livewire:layout.navigation />
                             </div>
                         </div>
