@@ -89,7 +89,10 @@
                                     <span class="text-sm text-gray-400 truncate hidden lg:inline">{{ $pageSubtitle }}</span>
                                 @endif
                             </div>
-                            <livewire:layout.navigation />
+                            <div class="flex items-center gap-1">
+                                @auth<livewire:notifications.bell />@endauth
+                                <livewire:layout.navigation />
+                            </div>
                         </div>
                     </div>
                 </header>

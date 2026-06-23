@@ -153,9 +153,24 @@ class RequestService
             $r->updated_by = $actor->id;
             $r->save();
             $this->recordHistory($r, $action, $actor, $opts['comment'] ?? null);
+            $this->notify($r, $action);
 
             return $r->refresh();
         });
+    }
+
+    /** In-app notifications ຕอน transition ສຳຄັນ (Phase 6.10). */
+    private function notify(MaterialRequest $r, string $action): void
+    {
+        $svc = app(NotificationService::class);
+        $link = route('request.show', $r);
+        match ($action) {
+            'submit' => $svc->notify($r->approver_user_id, 'info', "ໃບເບີກ {$r->request_number} ລໍ approve", "ຈาก {$r->requester_name}", $link),
+            'approve' => $svc->notify($r->requester_user_id, 'success', "ໃບເບີກ {$r->request_number} ຖูก approve ແລ້ວ", null, $link),
+            'reject' => $svc->notify($r->requester_user_id, 'warning', "ໃບເບີກ {$r->request_number} ຖูก reject", $r->reject_reason, $link),
+            'close' => $svc->notify($r->requester_user_id, 'success', "ໃບເບີກ {$r->request_number} ສຳເລັດ", $r->invoice_number ? "invoice {$r->invoice_number}" : null, $link),
+            default => null,
+        };
     }
 
     private function doSubmit(MaterialRequest $r): void
