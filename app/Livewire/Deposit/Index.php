@@ -96,6 +96,24 @@ class Index extends Component
         return view('livewire.deposit.index', [
             'records' => $items,
             'canManageDeleted' => $this->canManageDeleted(),
+            'chips' => $this->statusChips(),
         ]);
+    }
+
+    protected function statusChips(): array
+    {
+        $counts = $this->scopedQuery()->selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
+        $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
+
+        return [
+            $chip('', 'ທັງໝົด', $counts->sum()),
+            $chip('submitted', 'ລໍຮັບ', $counts['submitted'] ?? 0, true),
+            $chip('accepted', 'ຮັບແລ້ວ', $counts['accepted'] ?? 0),
+            $chip('stored', 'ເກັບໄວ້', $counts['stored'] ?? 0),
+            $chip('needs_fix', 'ຕ້ອງแก้', $counts['needs_fix'] ?? 0, true),
+            $chip('claimed', 'ເອົາคืนแล้ว', $counts['claimed'] ?? 0),
+            $chip('draft', 'draft', $counts['draft'] ?? 0),
+            $chip('cancelled', 'ຍົກເລີກ', $counts['cancelled'] ?? 0),
+        ];
     }
 }

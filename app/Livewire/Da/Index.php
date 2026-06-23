@@ -93,6 +93,23 @@ class Index extends Component
         return view('livewire.da.index', [
             'records' => $items,
             'canManageDeleted' => $this->canManageDeleted(),
+            'chips' => $this->statusChips(),
         ]);
+    }
+
+    protected function statusChips(): array
+    {
+        $counts = $this->scopedQuery()->selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
+        $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
+
+        return [
+            $chip('', 'ທັງໝົด', $counts->sum()),
+            $chip('submitted', 'submitted', $counts['submitted'] ?? 0, true),
+            $chip('purchasing_review', 'purchasing', $counts['purchasing_review'] ?? 0, true),
+            $chip('pending_approval', 'ລໍ approve', $counts['pending_approval'] ?? 0, true),
+            $chip('resolved', 'resolved', $counts['resolved'] ?? 0),
+            $chip('draft', 'draft', $counts['draft'] ?? 0),
+            $chip('cancelled', 'ຍົກເລີກ', $counts['cancelled'] ?? 0),
+        ];
     }
 }

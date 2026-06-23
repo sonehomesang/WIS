@@ -120,6 +120,26 @@ class Index extends Component
         return view('livewire.borrow.index', [
             'records' => $items,
             'canManageDeleted' => $this->canManageDeleted(),
+            'chips' => $this->statusChips(),
         ]);
+    }
+
+    /** Sub-dashboard: ນັບ ຕໍ່ສະຖานะ (visibility scope, ບໍ່ນັບ deleted). */
+    protected function statusChips(): array
+    {
+        $base = $this->scopedQuery();
+        $counts = (clone $base)->selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
+        $overdue = (clone $base)->where('status', 'active')->whereDate('planned_return_date', '<', Carbon::today())->count();
+        $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
+
+        return [
+            $chip('', 'ທັງໝົด', $counts->sum()),
+            $chip('active', 'ໃຊ້ຢູ່', $counts['active'] ?? 0),
+            $chip('overdue', 'ເກີນກຳນົດ', $overdue, true),
+            $chip('returned', 'ສົ່ງคืน', $counts['returned'] ?? 0),
+            $chip('approved', 'ອະນຸมัด', $counts['approved'] ?? 0),
+            $chip('draft', 'draft', $counts['draft'] ?? 0),
+            $chip('cancelled', 'ຍົກເລີກ', $counts['cancelled'] ?? 0),
+        ];
     }
 }

@@ -80,6 +80,11 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
     protected function isSupplierScoped(): bool
     {
         $u = auth()->user();
@@ -253,8 +258,16 @@ class Index extends Component
             ->orderByDesc('id')
             ->paginate(12);
 
+        $total = $this->scopedQuery()->count();
+        $inactive = $this->scopedQuery()->where('is_active', false)->count();
+
         return view('livewire.catalog.index', [
             'materials' => $items,
+            'chips' => [
+                ['key' => '', 'label' => 'ທັງໝົด', 'count' => $total, 'alert' => false],
+                ['key' => 'active', 'label' => 'active', 'count' => $total - $inactive, 'alert' => false],
+                ['key' => 'inactive', 'label' => 'inactive', 'count' => $inactive, 'alert' => false],
+            ],
             'suppliers' => Supplier::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'categories' => $this->scopedQuery()->distinct()->orderBy('category')->pluck('category')->filter()->values(),
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(),

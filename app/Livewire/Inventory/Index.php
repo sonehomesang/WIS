@@ -316,8 +316,18 @@ class Index extends Component
             ->orderBy('name')
             ->paginate(15);
 
+        $sc = InventoryItem::selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
+        $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
+
         return view('livewire.inventory.index', [
             'items' => $items,
+            'chips' => [
+                $chip('', 'ທັງໝົด', $sc->sum()),
+                $chip('available', 'available', $sc['available'] ?? 0),
+                $chip('borrowed', 'borrowed', $sc['borrowed'] ?? 0),
+                $chip('low-stock', 'low-stock', $sc['low-stock'] ?? 0, true),
+                $chip('maintenance', 'maintenance', $sc['maintenance'] ?? 0),
+            ],
             'prefixCounts' => InventoryItem::prefixCounts(),
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),

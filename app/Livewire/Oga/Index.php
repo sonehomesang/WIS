@@ -94,6 +94,22 @@ class Index extends Component
         return view('livewire.oga.index', [
             'records' => $items,
             'canManageDeleted' => $this->canManageDeleted(),
+            'chips' => $this->statusChips(),
         ]);
+    }
+
+    protected function statusChips(): array
+    {
+        $counts = $this->scopedQuery()->selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
+        $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
+
+        return [
+            $chip('', 'ທັງໝົด', $counts->sum()),
+            $chip('dispatched', 'ກຳລັງສົ່ງ', $counts['dispatched'] ?? 0, true),
+            $chip('delivered', 'ສົ່ງເຖິງ', $counts['delivered'] ?? 0),
+            $chip('returned', 'ສົ່ງกลับ', $counts['returned'] ?? 0),
+            $chip('draft', 'draft', $counts['draft'] ?? 0),
+            $chip('cancelled', 'ຍົກເລີກ', $counts['cancelled'] ?? 0),
+        ];
     }
 }

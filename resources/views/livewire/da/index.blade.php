@@ -27,6 +27,8 @@
             </div>
         </div>
 
+        @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter])
+
         <p class="text-sm text-gray-500 mb-2">{{ number_format($records->total()) }} records</p>
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-2">{{ session('ok') }}</div>@endif
 
