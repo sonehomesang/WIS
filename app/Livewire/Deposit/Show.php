@@ -75,11 +75,35 @@ class Show extends Component
     public function mount(DepositRecord $record): void
     {
         abort_unless(auth()->user()->can('deposit.view'), 403);
+        abort_unless($this->isStaff() || $record->owner_user_id === auth()->id(), 403);
         $this->record = $record;
+    }
+
+    protected function isStaff(): bool
+    {
+        $u = auth()->user();
+
+        return $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']);
+    }
+
+    /** Server-side authorization per transition (owner submits/cancels; warehouse handles the rest). */
+    protected function authorizeAction(string $action): void
+    {
+        if ($this->isStaff()) {
+            return;
+        }
+        $isOwner = $this->record->owner_user_id === auth()->id();
+        $ok = match ($action) {
+            'submit', 'cancel' => $isOwner,
+            default => false,   // accept / confirmStored / confirmFixed / flagIssue / confirmClaim = warehouse only
+        };
+        abort_unless($ok, 403);
     }
 
     protected function act(string $action, array $opts = []): bool
     {
+        $this->authorizeAction($action);
+
         try {
             app(DepositService::class)->transition($this->record, $action, auth()->user(), $opts);
             $this->record->refresh();

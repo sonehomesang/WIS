@@ -59,8 +59,21 @@ class Show extends Component
         $this->record = $record;
     }
 
+    /** Server-side authorization: warehouse runs submit/start/cancel; purchasing/leader run the decisions. */
+    protected function authorizeAction(string $action): void
+    {
+        $ok = match ($action) {
+            'submit', 'purchasingStart', 'cancel' => $this->canEdit(),
+            'purchasingDecide', 'approve', 'reject' => $this->canAct(),
+            default => false,
+        };
+        abort_unless($ok, 403);
+    }
+
     protected function act(string $action, array $opts = []): bool
     {
+        $this->authorizeAction($action);
+
         try {
             app(DiscrepancyService::class)->transition($this->record, $action, auth()->user(), $opts);
             $this->record->refresh();

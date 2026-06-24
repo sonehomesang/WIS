@@ -116,6 +116,7 @@ test('viewer without edit cannot delete', function () {
 
     $viewer = User::factory()->create(['is_super_admin' => false]);
     $viewer->givePermissionTo('borrow.view');
+    $r->forceFill(['borrower_user_id' => $viewer->id])->save();  // a party (can view own) but no edit right
     $this->actingAs($viewer);
 
     Livewire::test(Show::class, ['record' => $r->refresh()])->call('openDelete')->assertForbidden();

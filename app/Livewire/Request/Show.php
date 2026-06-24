@@ -49,11 +49,52 @@ class Show extends Component
     public function mount(MaterialRequest $record): void
     {
         abort_unless(auth()->user()->can('request.view'), 403);
+        abort_unless($this->canSee($record), 403);
         $this->record = $record;
+    }
+
+    protected function isStaff(): bool
+    {
+        $u = auth()->user();
+
+        return $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']);
+    }
+
+    protected function isAssignedSupplier(): bool
+    {
+        $u = auth()->user();
+
+        return $u->hasRole('supplier') && $u->supplier_id && $this->record->assigned_supplier_id === $u->supplier_id;
+    }
+
+    protected function canSee(MaterialRequest $r): bool
+    {
+        $u = auth()->user();
+
+        return $this->isStaff() || $r->requester_user_id === $u->id || $r->approver_user_id === $u->id
+            || ($u->hasRole('supplier') && $u->supplier_id && $r->assigned_supplier_id === $u->supplier_id);
+    }
+
+    /** Server-side authorization per transition. */
+    protected function authorizeAction(string $action): void
+    {
+        abort_unless($this->canSee($this->record), 403);
+        if ($this->isStaff()) {
+            return;
+        }
+        $ok = match ($action) {
+            'submit', 'cancel', 'confirmReceipt' => $this->isRequester(),
+            'approve', 'reject' => $this->canApprove(),
+            'validate', 'dispatch' => $this->isAssignedSupplier(),
+            default => false,   // close = staff only
+        };
+        abort_unless($ok, 403);
     }
 
     protected function act(string $action, array $opts = []): bool
     {
+        $this->authorizeAction($action);
+
         try {
             app(RequestService::class)->transition($this->record, $action, auth()->user(), $opts);
             $this->record->refresh();

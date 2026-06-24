@@ -48,11 +48,19 @@ class Show extends Component
     public function mount(OutwardsGoodsAdvice $record): void
     {
         abort_unless(auth()->user()->can('oga.view'), 403);
+        $u = auth()->user();
+        // suppliers may only open OGAs dispatched to their own supplier
+        if ($u->hasRole('supplier') && ! $u->is_super_admin && ! $u->hasAnyRole(['admin', 'warehouse_staff'])) {
+            abort_unless($u->supplier_id && $record->supplier_id === $u->supplier_id, 403);
+        }
         $this->record = $record;
     }
 
     protected function act(string $action, array $opts = []): bool
     {
+        // OGA is warehouse-only: every transition requires edit rights.
+        abort_unless($this->canEdit(), 403);
+
         try {
             app(OgaService::class)->transition($this->record, $action, auth()->user(), $opts);
             $this->record->refresh();

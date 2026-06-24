@@ -75,11 +75,55 @@ class Show extends Component
     public function mount(BorrowRecord $record): void
     {
         abort_unless(auth()->user()->can('borrow.view'), 403);
+        abort_unless($this->canSee($record), 403);
         $this->record = $record;
+    }
+
+    protected function isStaff(): bool
+    {
+        $u = auth()->user();
+
+        return $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']);
+    }
+
+    /** Non-staff may only open a record they are a party to (mirrors Index scope). */
+    protected function canSee(BorrowRecord $r): bool
+    {
+        if ($this->isStaff()) {
+            return true;
+        }
+        $u = auth()->user();
+        $email = mb_strtolower($u->email);
+
+        return $r->borrower_user_id === $u->id || $r->approver_email === $email || $r->acknowledge_email === $email;
+    }
+
+    /** Server-side authorization for each workflow transition (not just button visibility). */
+    protected function authorizeAction(string $action): void
+    {
+        abort_unless($this->canSee($this->record), 403);
+        if ($this->isStaff()) {
+            return;   // staff/admin may run any step
+        }
+        $u = auth()->user();
+        $email = mb_strtolower($u->email);
+        $isApprover = $this->record->approver_email === $email || $u->can('borrow.activate');
+        $isAck = $this->record->acknowledge_email === $email;
+        $isOwner = $this->record->borrower_user_id === $u->id;
+        $ok = match ($action) {
+            'confirmTake', 'confirmReturn' => false,                                  // warehouse only
+            'approve', 'approveExtension', 'rejectExtension' => $isApprover,
+            'acknowledge' => $isAck,
+            'submit', 'requestExtension', 'requestReturn', 'cancel' => $isOwner || $isApprover || $isAck,
+            default => false,
+        };
+        abort_unless($ok, 403);
     }
 
     protected function act(string $action, array $opts = []): bool
     {
+        $this->authorizeAction($action);
+
         try {
             app(BorrowService::class)->transition($this->record, $action, auth()->user(), $opts);
             $this->record->refresh();
