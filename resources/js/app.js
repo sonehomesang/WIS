@@ -28,9 +28,9 @@ document.addEventListener('alpine:init', () => {
             const Chart = await loadChart();
             if (data?.pie?.labels?.length) {
                 this.pieChart = new Chart(this.$refs.pie, {
-                    type: 'pie',
-                    data: { labels: data.pie.labels, datasets: [{ data: data.pie.data, backgroundColor: CHART_PALETTE }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } },
+                    type: 'doughnut',
+                    data: { labels: data.pie.labels, datasets: [{ data: data.pie.data, backgroundColor: CHART_PALETTE, borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 11 } } } } },
                 });
             }
             if (data?.bar?.labels?.length) {

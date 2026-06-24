@@ -23,8 +23,9 @@ test('dashboard renders role-scoped summary cards for admin', function () {
 
     Livewire::test(Dashboard::class)
         ->assertOk()
-        ->assertSee('ການຢືມ (Borrow)')
-        ->assertSee('Shops Material');
+        ->assertSee('ການຢືມ active')
+        ->assertSee('ການແຈ້ງເຕືອນ')   // notifications KPI always present
+        ->assertSee('DA & OGA');        // bottom panel
 });
 
 test('dashboard loads for a plain requester (own-scoped, no errors)', function () {

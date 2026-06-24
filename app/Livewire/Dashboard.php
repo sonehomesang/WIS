@@ -5,9 +5,8 @@ namespace App\Livewire;
 use App\Models\BorrowRecord;
 use App\Models\DepositRecord;
 use App\Models\DiscrepancyAdvice;
-use App\Models\InventoryItem;
-use App\Models\Material;
 use App\Models\MaterialRequest;
+use App\Models\Notification;
 use App\Models\OutwardsGoodsAdvice;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -48,19 +47,19 @@ class Dashboard extends Component
         return $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']);
     }
 
-    /** @return array<int,array> summary KPI cards (gated by *.view permission). */
-    protected function cards(): array
+    /** @return array<int,array> the 4 hero KPI tiles (icon-square style), gated by permission. */
+    protected function heroKpis(): array
     {
         $u = auth()->user();
         $staff = $this->isStaff();
-        $cards = [];
+        $k = [];
 
         if ($u->can('borrow.view')) {
             $q = BorrowRecord::query()->when(! $staff, fn ($w) => $w->where('borrower_user_id', $u->id));
             $active = (clone $q)->whereIn('status', ['active', 'overdue'])->count();
             $overdue = (clone $q)->where('status', 'active')->whereDate('planned_return_date', '<', Carbon::today())->count();
-            $cards[] = ['label' => 'ການຢືມ (Borrow)', 'route' => 'borrow', 'tone' => 'indigo',
-                'big' => $active, 'big_label' => 'ກຳລັງໃຊ້', 'sub' => $overdue > 0 ? "⏰ ເກີນກຳນົດ {$overdue}" : 'ບໍ່ມີເກີນກຳນົດ', 'alert' => $overdue > 0];
+            $k[] = ['key' => 'borrow', 'label' => 'ການຢືມ active', 'value' => $active, 'route' => 'borrow',
+                'tone' => $overdue > 0 ? 'red' : 'sky', 'hint' => $overdue > 0 ? "⏰ ເກີນກຳນົດ {$overdue}" : 'ບໍ່ມີເກີນກຳນົດ'];
         }
 
         if ($u->can('request.view')) {
@@ -71,52 +70,49 @@ class Dashboard extends Component
                 $q->where('requester_user_id', $u->id);
             }
             $open = (clone $q)->whereNotIn('status', ['completed', 'rejected', 'cancelled'])->count();
-            $pending = (clone $q)->where('status', 'submitted')->count();
-            $cards[] = ['label' => 'ໃບເບີກ (Request)', 'route' => 'request', 'tone' => 'sky',
-                'big' => $open, 'big_label' => 'ກຳລັງดำเนิน', 'sub' => $pending > 0 ? "ລໍ approve {$pending}" : '—', 'alert' => false];
+            $k[] = ['key' => 'request', 'label' => 'ໃບເບີກ ເປີດຢູ່', 'value' => $open, 'route' => 'request',
+                'tone' => 'violet', 'hint' => 'submitted → received'];
         }
 
         if ($u->can('deposit.view')) {
             $q = DepositRecord::query()->when(! $staff, fn ($w) => $w->where('owner_user_id', $u->id));
             $stored = (clone $q)->where('status', 'stored')->count();
             $needsFix = (clone $q)->where('status', 'needs_fix')->count();
-            $cards[] = ['label' => 'ການຝາກ (Deposit)', 'route' => 'deposit', 'tone' => 'emerald',
-                'big' => $stored, 'big_label' => 'ເກັບໄວ້', 'sub' => $needsFix > 0 ? "⚠ ຕ້ອງແກ້ {$needsFix}" : '—', 'alert' => $needsFix > 0];
+            $k[] = ['key' => 'deposit', 'label' => 'ການຝາກເຄື່ອງ', 'value' => $stored, 'route' => 'deposit',
+                'tone' => $needsFix > 0 ? 'amber' : 'emerald', 'hint' => $needsFix > 0 ? "⚠ ຕ້ອງແກ້ {$needsFix}" : 'submitted → stored'];
         }
 
-        if ($u->can('da.view')) {
-            $open = DiscrepancyAdvice::whereNotIn('status', ['resolved', 'cancelled'])->count();
-            $cards[] = ['label' => 'DA Claims', 'route' => 'da', 'tone' => 'violet',
-                'big' => $open, 'big_label' => 'ຍັງไม่ปิด', 'sub' => '—', 'alert' => $open > 0];
-        }
+        $unread = Notification::where('user_id', $u->id)->whereNull('read_at')->count();
+        $k[] = ['key' => 'bell', 'label' => 'ການແຈ້ງເຕືອນ', 'value' => $unread, 'route' => null,
+            'tone' => $unread > 0 ? 'amber' : 'slate', 'hint' => $unread > 0 ? 'ຍັງບໍ່ໄດ້ອ່ານ' : 'ອ່ານໝົດແລ້ວ'];
 
-        if ($u->can('oga.view')) {
-            $q = OutwardsGoodsAdvice::query();
-            if ($u->hasRole('supplier') && ! $staff) {
-                $q->where('supplier_id', $u->supplier_id);
-            }
-            $transit = (clone $q)->where('status', 'dispatched')->count();
-            $cards[] = ['label' => 'OGA', 'route' => 'oga', 'tone' => 'amber',
-                'big' => $transit, 'big_label' => 'ກຳລັງສົ່ງ', 'sub' => '—', 'alert' => false];
-        }
+        return $k;
+    }
 
-        if ($u->can('inventory.view')) {
-            $total = InventoryItem::count();
-            $low = InventoryItem::whereColumn('quantity', '<=', 'min_quantity')->where('min_quantity', '>', 0)->count();
-            $cards[] = ['label' => 'ສາງເຄື່ອງ (Inventory)', 'route' => 'inventory', 'tone' => 'gray',
-                'big' => $total, 'big_label' => 'ລາຍການ', 'sub' => $low > 0 ? "🔻 ໃກ້ໝົດ {$low}" : '—', 'alert' => $low > 0];
+    /** Combined DA + OGA status counts for the bottom panel. null if no access. */
+    protected function daOga(): ?array
+    {
+        $u = auth()->user();
+        $canDa = $u->can('da.view');
+        $canOga = $u->can('oga.view');
+        if (! $canDa && ! $canOga) {
+            return null;
         }
+        $staff = $this->isStaff();
 
-        if ($u->can('catalog.view')) {
-            $q = Material::query();
-            if ($u->hasRole('supplier') && ! $staff) {
-                $q->where('supplier_id', $u->supplier_id);
-            }
-            $cards[] = ['label' => 'Shops Material', 'route' => 'catalog', 'tone' => 'gray',
-                'big' => (clone $q)->count(), 'big_label' => 'ສິນຄ້າ', 'sub' => (clone $q)->where('is_active', false)->count().' inactive', 'alert' => false];
+        $da = $canDa ? DiscrepancyAdvice::select('status', DB::raw('count(*) as c'))->groupBy('status')->pluck('c', 'status')->all() : [];
+
+        $ogaQ = OutwardsGoodsAdvice::query();
+        if ($u->hasRole('supplier') && ! $staff) {
+            $ogaQ->where('supplier_id', $u->supplier_id);
         }
+        $oga = $canOga ? $ogaQ->select('status', DB::raw('count(*) as c'))->groupBy('status')->pluck('c', 'status')->all() : [];
 
-        return $cards;
+        return [
+            'canDa' => $canDa, 'canOga' => $canOga,
+            'da' => $da, 'oga' => $oga,
+            'daTotal' => array_sum($da), 'ogaTotal' => array_sum($oga),
+        ];
     }
 
     /** @return array<int,array{label:string,count:int,route:string,alert:bool}> role-specific to-do rows (count>0 only). */
@@ -217,7 +213,7 @@ class Dashboard extends Component
 
         usort($items, fn ($a, $b) => ($b['when']?->timestamp ?? 0) <=> ($a['when']?->timestamp ?? 0));
 
-        return array_slice($items, 0, 6);
+        return array_slice($items, 0, 30);
     }
 
     /** Chart data for staff: request-status distribution + 6-month created counts. */
@@ -251,11 +247,12 @@ class Dashboard extends Component
 
         return view('livewire.dashboard', [
             'prefs' => $prefs,
-            'cards' => ($prefs['kpi'] ?? true) ? $this->cards() : [],
+            'kpis' => ($prefs['kpi'] ?? true) ? $this->heroKpis() : [],
             'actionRows' => ($prefs['queue'] ?? true) ? $this->actionRows() : [],
             'activity' => ($prefs['activity'] ?? true) ? $this->recentActivity() : [],
             'showCharts' => $staff && ($prefs['charts'] ?? true),
             'chart' => ($staff && ($prefs['charts'] ?? true)) ? $this->chartData() : null,
+            'daOga' => $this->daOga(),
         ]);
     }
 }
