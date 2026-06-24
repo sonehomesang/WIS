@@ -2,28 +2,56 @@
 
 use App\Livewire\Borrow\Create;
 use App\Livewire\Borrow\Show;
+use App\Livewire\Dashboard;
 use App\Livewire\Inventory\Index;
 use App\Livewire\Settings\Audit;
 use App\Livewire\Settings\Facilities;
-use App\Livewire\Settings\Notifications;
 use App\Livewire\Settings\NotificationLog;
+use App\Livewire\Settings\Notifications;
 use App\Livewire\Settings\Organization;
 use App\Livewire\Settings\Reports;
 use App\Livewire\Settings\RolesPermissions;
-use App\Livewire\Settings\Translations;
 use App\Livewire\Settings\SupplierDetail;
 use App\Livewire\Settings\Suppliers;
 use App\Livewire\Settings\System;
+use App\Livewire\Settings\Translations;
 use App\Livewire\Settings\Uom;
 use App\Livewire\Settings\Users;
 use App\Models\BorrowRecord;
 use App\Models\DepositRecord;
+use App\Models\DiscrepancyAdvice;
+use App\Models\ExpoEvent;
+use App\Models\MaterialRequest;
+use App\Models\OutwardsGoodsAdvice;
+use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
 
-Route::get('dashboard', App\Livewire\Dashboard::class)
+// PWA manifest — dynamic so it reflects the General › app name setting.
+Route::get('manifest.webmanifest', function () {
+    $name = Setting::get('general', [])['app_name'] ?? 'WH — Warehouse';
+
+    return response()->json([
+        'name' => $name,
+        'short_name' => 'WH',
+        'description' => 'Warehouse Information System',
+        'start_url' => '/dashboard',
+        'scope' => '/',
+        'display' => 'standalone',
+        'orientation' => 'portrait-primary',
+        'background_color' => '#f1f5f9',
+        'theme_color' => '#0284c7',
+        'icons' => [
+            ['src' => '/icons/icon-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+            ['src' => '/icons/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+            ['src' => '/icons/maskable-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+        ],
+    ], 200, ['Content-Type' => 'application/manifest+json']);
+})->name('manifest');
+
+Route::get('dashboard', Dashboard::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
@@ -86,7 +114,7 @@ Route::get('request/create', App\Livewire\Request\Create::class)
     ->middleware(['auth', 'verified'])
     ->name('request.create');
 
-Route::get('request/{record}/pdf', function (App\Models\MaterialRequest $record) {
+Route::get('request/{record}/pdf', function (MaterialRequest $record) {
     abort_unless(auth()->user()->can('request.view'), 403);
     $record->load(['items', 'supplier', 'unit', 'department', 'history']);
 
@@ -107,7 +135,7 @@ Route::get('da/create', App\Livewire\Da\Create::class)
     ->middleware(['auth', 'verified'])
     ->name('da.create');
 
-Route::get('da/{record}/pdf', function (App\Models\DiscrepancyAdvice $record) {
+Route::get('da/{record}/pdf', function (DiscrepancyAdvice $record) {
     abort_unless(auth()->user()->can('da.view'), 403);
     $record->load(['items', 'photos', 'supplier', 'history']);
 
@@ -128,7 +156,7 @@ Route::get('oga/create', App\Livewire\Oga\Create::class)
     ->middleware(['auth', 'verified'])
     ->name('oga.create');
 
-Route::get('oga/{record}/pdf', function (App\Models\OutwardsGoodsAdvice $record) {
+Route::get('oga/{record}/pdf', function (OutwardsGoodsAdvice $record) {
     abort_unless(auth()->user()->can('oga.view'), 403);
     $record->load(['items', 'photos', 'supplier', 'history']);
 
@@ -149,7 +177,7 @@ Route::get('expo/create', App\Livewire\Expo\Create::class)
     ->middleware(['auth', 'verified'])
     ->name('expo.create');
 
-Route::get('expo/{record}/pdf', function (App\Models\ExpoEvent $record) {
+Route::get('expo/{record}/pdf', function (ExpoEvent $record) {
     abort_unless(auth()->user()->can('expo.view'), 403);
     $record->load(['attendees', 'companies.contacts', 'companies.files']);
 
