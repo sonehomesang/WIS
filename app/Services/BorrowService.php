@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BorrowRecord;
 use App\Models\InventoryItem;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -127,9 +128,33 @@ class BorrowService
             $r->updated_by = $actor->id;
             $r->save();
             $this->recordHistory($r, $action, $actor, $opts['comment'] ?? null);
+            $this->notify($r, $action);
 
             return $r->refresh();
         });
+    }
+
+    /** In-app notifications ຕอน transition ສຳຄັນ (Phase 6.11). */
+    private function notify(BorrowRecord $r, string $action): void
+    {
+        $svc = app(NotificationService::class);
+        $link = route('borrow.show', $r);
+        match ($action) {
+            'submit' => $this->notifyBorrowApprovers($r, $svc, $link),
+            'approve' => $svc->notifyTemplate($r->borrower_user_id, 'success', 'borrow.approve', ['number' => $r->request_number], $link),
+            default => null,
+        };
+    }
+
+    /** On submit, ping whoever still has to acknowledge/approve (matched by email). */
+    private function notifyBorrowApprovers(BorrowRecord $r, NotificationService $svc, string $link): void
+    {
+        $emails = array_filter([$r->acknowledge_email, $r->approver_email]);
+        if (! $emails) {
+            return;
+        }
+        $ids = User::whereIn('email', $emails)->pluck('id')->all();
+        $svc->notifyUsersTemplate($ids, 'info', 'borrow.submit', ['number' => $r->request_number, 'borrower' => $r->borrower_name], $link);
     }
 
     private function doSubmit(BorrowRecord $r, array $steps): void

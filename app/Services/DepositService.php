@@ -102,9 +102,25 @@ class DepositService
             $r->updated_by = $actor->id;
             $r->save();
             $this->recordHistory($r, $action, $actor, $opts['comment'] ?? null);
+            $this->notify($r, $action);
 
             return $r->refresh();
         });
+    }
+
+    /** In-app notifications ຕอน transition ສຳຄັນ (Phase 6.11). */
+    private function notify(DepositRecord $r, string $action): void
+    {
+        $svc = app(NotificationService::class);
+        $link = route('deposit.show', $r);
+        $vars = ['number' => $r->request_number, 'owner' => $r->owner_name];
+        match ($action) {
+            'submit' => $svc->notifyRoleTemplate('warehouse_staff', 'info', 'deposit.submit', $vars, $link),
+            'accept' => $svc->notifyTemplate($r->owner_user_id, 'info', 'deposit.accept', $vars, $link),
+            'confirmStored', 'confirmFixed' => $svc->notifyTemplate($r->owner_user_id, 'success', 'deposit.stored', $vars, $link),
+            'confirmClaim' => $svc->notifyTemplate($r->owner_user_id, 'success', 'deposit.claim', $vars, $link),
+            default => null,
+        };
     }
 
     private function doSubmit(DepositRecord $r): void

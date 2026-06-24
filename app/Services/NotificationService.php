@@ -21,6 +21,22 @@ class NotificationService
         'request.approve' => ['title' => 'ໃບເບີກ {number} ຖูก approve ແລ້ວ', 'message' => ''],
         'request.reject' => ['title' => 'ໃບເບີກ {number} ຖูก reject', 'message' => '{reason}'],
         'request.close' => ['title' => 'ໃບເບີກ {number} ສຳເລັດ', 'message' => '{invoice}'],
+        // borrow
+        'borrow.submit' => ['title' => 'ການຢືມ {number} ລໍ ດำเนินการ', 'message' => 'ຈาก {borrower}'],
+        'borrow.approve' => ['title' => 'ການຢືມ {number} ຖูก approve — ໄປຮັບເຄື່ອງ', 'message' => ''],
+        'borrow.reminder' => ['title' => 'ການຢືມ {number} ໃກ້/ເກີນ ກຳນົດคืน', 'message' => 'ກຳນົดคืน {date}'],
+        // deposit
+        'deposit.submit' => ['title' => 'ການຝາກ {number} ລໍ ຮັບເຂົ້າ', 'message' => 'ຈาก {owner}'],
+        'deposit.accept' => ['title' => 'ການຝາກ {number} ຖูกຮັບແລ້ວ', 'message' => ''],
+        'deposit.stored' => ['title' => 'ການຝາກ {number} ເກັບเข้า stored', 'message' => ''],
+        'deposit.claim' => ['title' => 'ການຝາກ {number} ຮັບคืนສຳເລັດ', 'message' => ''],
+        // da
+        'da.submit' => ['title' => 'DA {number} ລໍ review', 'message' => 'ຈาก {actor}'],
+        'da.pending' => ['title' => 'DA {number} ລໍ approve (ຫົວໜ້າ)', 'message' => ''],
+        'da.resolved' => ['title' => 'DA {number} resolved', 'message' => ''],
+        // oga
+        'oga.dispatch' => ['title' => 'OGA {number} ສົ່ງออกแล้ว', 'message' => ''],
+        'oga.delivered' => ['title' => 'OGA {number} ส่งถึงแล้ว', 'message' => ''],
     ];
 
     /** Master switch — false short-circuits every notify call. */
@@ -84,5 +100,25 @@ class NotificationService
     {
         $ids = User::role($role)->where('status', 'active')->pluck('id')->all();
         $this->notifyMany($ids, $type, $title, $message, $link);
+    }
+
+    /** Notify every active user in a role, using a stored template. */
+    public function notifyRoleTemplate(string $role, string $type, string $key, array $vars = [], ?string $link = null): void
+    {
+        $t = self::template($key, $vars);
+        if ($t['title'] === '') {
+            return;
+        }
+        $this->notifyRole($role, $type, $t['title'], $t['message'], $link);
+    }
+
+    /** Notify a set of users, using a stored template. */
+    public function notifyUsersTemplate(array $userIds, string $type, string $key, array $vars = [], ?string $link = null): void
+    {
+        $t = self::template($key, $vars);
+        if ($t['title'] === '') {
+            return;
+        }
+        $this->notifyMany($userIds, $type, $t['title'], $t['message'], $link);
     }
 }

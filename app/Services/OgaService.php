@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\DiscrepancyAdvice;
 use App\Models\OutwardsGoodsAdvice;
 use App\Models\Supplier;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -99,9 +100,25 @@ class OgaService
             $r->updated_by = $actor->id;
             $r->save();
             $this->recordHistory($r, $action, $actor, $opts['comment'] ?? null);
+            $this->notify($r, $action);
 
             return $r->refresh();
         });
+    }
+
+    /** In-app notifications ຕอน transition ສຳຄັນ (Phase 6.11). */
+    private function notify(OutwardsGoodsAdvice $r, string $action): void
+    {
+        $svc = app(NotificationService::class);
+        $link = route('oga.show', $r);
+        $vars = ['number' => $r->oga_number];
+        match ($action) {
+            'confirmDispatch' => $r->supplier_id
+                ? $svc->notifyUsersTemplate(User::where('supplier_id', $r->supplier_id)->pluck('id')->all(), 'info', 'oga.dispatch', $vars, $link)
+                : null,
+            'confirmDelivery' => $svc->notifyRoleTemplate('warehouse_staff', 'success', 'oga.delivered', $vars, $link),
+            default => null,
+        };
     }
 
     private function doDispatch(OutwardsGoodsAdvice $r, $actor, array $opts): void

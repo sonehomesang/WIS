@@ -36,7 +36,7 @@
                 <input type="date" wire:model.live="toDate" class="w-36 rounded-md border-gray-300 text-sm" title="ຫາວັນທີ" />
             </div>
             <div class="flex items-center gap-2 shrink-0">
-                <button wire:click="runDailyCheck" class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-2 min-h-[40px] hover:bg-amber-100 whitespace-nowrap" title="ກວດລາຍການເກີນກຳນົດ">⏰ Daily Check</button>
+                @if ($canDailyCheck)<button wire:click="runDailyCheck" wire:loading.attr="disabled" class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-2 min-h-[40px] hover:bg-amber-100 whitespace-nowrap" title="ສົ່ງເຕືອນ ລາຍການ ໃກ້/ເກີນ ກຳນົດ">⏰ Daily Check</button>@endif
                 @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບคืນລາຍการปົกกะติ' : 'Deleted Log' }}</button>@endif
                 @can('borrow.create')<a href="{{ route('borrow.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ Borrow Request</a>@endcan
             </div>

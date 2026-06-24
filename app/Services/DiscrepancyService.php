@@ -92,9 +92,24 @@ class DiscrepancyService
             $r->updated_by = $actor->id;
             $r->save();
             $this->recordHistory($r, $action, $actor, $opts['comment'] ?? null);
+            $this->notify($r, $action, $actor);
 
             return $r->refresh();
         });
+    }
+
+    /** In-app notifications ຕอน transition ສຳຄັນ (Phase 6.11). */
+    private function notify(DiscrepancyAdvice $r, string $action, $actor): void
+    {
+        $svc = app(NotificationService::class);
+        $link = route('da.show', $r);
+        $vars = ['number' => $r->da_number, 'actor' => $actor->display_name ?? $actor->email];
+        match ($action) {
+            'submit' => $svc->notifyRoleTemplate('admin', 'info', 'da.submit', $vars, $link),
+            'purchasingDecide' => $svc->notifyRoleTemplate('approver', 'info', 'da.pending', $vars, $link),
+            'approve' => $svc->notifyRoleTemplate('warehouse_staff', 'success', 'da.resolved', $vars, $link),
+            default => null,
+        };
     }
 
     private function doSubmit(DiscrepancyAdvice $r): void
