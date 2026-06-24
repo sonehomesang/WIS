@@ -7,7 +7,7 @@
 <div class="pb-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         @include('settings._tabs')
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+        <div class="sticky top-16 z-30 bg-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
             <div class="flex items-center gap-2">
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ຊື່/ຜູ້ຕິດຕໍ່…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
                 @can('supplier.create')<button wire:click="newItem" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">+ Create</button>@endcan
@@ -18,9 +18,9 @@
              class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-1">ບັນທຶກແລ້ວ ✓</div>
 
         {{-- Desktop table --}}
-        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-hidden">
+        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-15rem)]">
             <table class="w-full text-sm">
-                <thead class="bg-gray-50 text-gray-500">
+                <thead class="sticky top-0 z-10 bg-gray-50 text-gray-500 shadow-sm">
                     <tr>
                         <th class="text-left font-medium px-4 py-2 w-full">Supplier</th>
                         <th class="text-left font-medium px-4 py-2">Contact</th>

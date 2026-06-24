@@ -12,7 +12,7 @@
         @include('settings._tabs')
 
         {{-- toolbar (freeze ໃຕ້ tabs): subtitle · A-Z filter · search/create --}}
-        <div class="sticky top-[116px] z-20 bg-gray-100 flex flex-col gap-2 py-2 sm:py-0 sm:h-[52px] sm:flex-row sm:items-center sm:gap-3 border-b border-gray-200">
+        <div class="sticky top-16 z-30 bg-gray-100 flex flex-col gap-2 py-2 sm:py-0 sm:h-[52px] sm:flex-row sm:items-center sm:gap-3 border-b border-gray-200">
             {{-- A-Z group filter --}}
             <div class="flex-1 min-w-0 overflow-x-auto">
                 <div class="flex items-center gap-0.5">
@@ -35,9 +35,9 @@
              class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
         {{-- Desktop table --}}
-        <div class="hidden md:block bg-white border border-gray-100 rounded-lg mt-3">
+        <div class="hidden md:block bg-white border border-gray-100 rounded-lg mt-3 overflow-auto max-h-[calc(100vh-15rem)]">
             <table class="w-full text-sm">
-                <thead class="sticky top-[168px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
+                <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
                         <th class="text-left font-semibold px-4 py-2 w-full">User</th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">Role</th>

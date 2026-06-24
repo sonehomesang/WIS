@@ -78,7 +78,7 @@ class Index extends Component
                 ->orWhere('city', 'like', "%{$this->search}%")))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->orderByDesc('start_date')->orderByDesc('id')
-            ->paginate(10);
+            ->paginate(9);
 
         $counts = ExpoEvent::selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
         $chip = fn ($k, $l, $c) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => false];

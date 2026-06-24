@@ -95,7 +95,7 @@ class Index extends Component
                 ->orWhere('purpose', 'like', "%{$this->search}%")))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->orderByDesc('id')
-            ->paginate(10);
+            ->paginate(9);
 
         return view('livewire.request.index', [
             'records' => $items,

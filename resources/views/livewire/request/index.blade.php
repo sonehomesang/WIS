@@ -15,7 +15,10 @@
 
 <div class="pb-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="sticky top-16 z-20 bg-gray-100 flex flex-col gap-2 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3 lg:flex-nowrap">
+        {{-- frozen header group: toolbar + chips freeze together --}}
+        <div class="sticky top-16 z-30 bg-gray-100">
+        {{-- toolbar --}}
+        <div class="flex flex-col gap-2 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3 lg:flex-nowrap">
             <div class="flex flex-wrap items-center gap-2 min-w-0">
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ MR/ຜູ້ເບີກ/ຈຸດປະສົງ…" class="w-52 rounded-md border-gray-300 shadow-sm text-sm" />
                 <select wire:model.live="statusFilter" class="w-36 rounded-md border-gray-300 text-sm">
@@ -31,15 +34,15 @@
             </div>
         </div>
 
-        @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter])
+        @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter, 'trailing' => number_format($records->total()).' records'])
+        </div>{{-- /frozen header group --}}
 
-        <p class="text-sm text-gray-500 mb-2">{{ number_format($records->total()) }} records</p>
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-2">{{ session('ok') }}</div>@endif
 
         {{-- Desktop --}}
-        <div class="hidden md:block bg-white border border-gray-100 rounded-lg">
+        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-15rem)]">
             <table class="w-full text-sm">
-                <thead class="sticky top-[116px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
+                <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ໄອດີ <span class="text-gray-400">(MR No.)</span></th>
                         <th class="text-left font-semibold px-4 py-2">ຜູ້ເບີກ <span class="text-gray-400">(Requester)</span></th>

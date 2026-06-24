@@ -89,7 +89,7 @@ class Index extends Component
                 ->orWhere('source_da_number', 'like', "%{$this->search}%")))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->orderByDesc('id')
-            ->paginate(10);
+            ->paginate(9);
 
         return view('livewire.oga.index', [
             'records' => $items,

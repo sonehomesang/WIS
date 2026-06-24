@@ -24,7 +24,10 @@
                 'status' => 'Status',
             ];
         @endphp
-        <div class="sticky top-16 z-20 bg-gray-100 flex flex-col gap-2 py-3 sm:py-0 sm:h-[52px] sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        {{-- frozen header group: toolbar + chips freeze together --}}
+        <div class="sticky top-16 z-30 bg-gray-100">
+        {{-- toolbar --}}
+        <div class="flex flex-col gap-2 py-3 sm:py-0 sm:h-[52px] sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <div class="flex flex-wrap items-center gap-2">
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ Material No./ຊື່/description…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
                 <select wire:model.live="prefixFilter" class="rounded-md border-gray-300 text-sm" title="ໝວດຕາມ Material No.">
@@ -40,7 +43,6 @@
                     <option value="maintenance">maintenance</option>
                     <option value="low-stock">low-stock</option>
                 </select>
-                <span class="text-xs text-gray-400 whitespace-nowrap">{{ number_format($items->total()) }} ລາຍການ</span>
             </div>
             <div class="flex items-center gap-2">
                 <div class="relative hidden md:block" x-on:click.outside="colsOpen = false">
@@ -59,15 +61,16 @@
             </div>
         </div>
 
+        @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter, 'trailing' => number_format($items->total()).' ລາຍການ'])
+        </div>{{-- /frozen header group --}}
+
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
              class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
-        @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter])
-
         {{-- Desktop table --}}
-        <div class="hidden md:block bg-white border border-gray-100 rounded-lg">
+        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-15rem)]">
             <table class="w-full text-sm">
-                <thead class="sticky top-[116px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
+                <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
                         <th x-show="cols.materialNo" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Material No.</th>
                         <th class="text-left font-semibold px-4 py-2 w-full">Item</th>

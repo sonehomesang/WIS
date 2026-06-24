@@ -168,7 +168,7 @@ class Users extends Component
             })
             ->when($this->letter, fn ($q) => $q->where('display_name', 'like', "{$this->letter}%"))
             ->orderBy('display_name')
-            ->paginate(10);
+            ->paginate(9);
 
         return view('livewire.settings.users', [
             'users' => $users,

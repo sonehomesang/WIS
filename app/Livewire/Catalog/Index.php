@@ -256,7 +256,7 @@ class Index extends Component
             ->when($this->statusFilter === 'active', fn ($q) => $q->where('is_active', true))
             ->when($this->statusFilter === 'inactive', fn ($q) => $q->where('is_active', false))
             ->orderByDesc('id')
-            ->paginate(12);
+            ->paginate(9);
 
         $total = $this->scopedQuery()->count();
         $inactive = $this->scopedQuery()->where('is_active', false)->count();
