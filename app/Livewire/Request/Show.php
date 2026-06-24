@@ -36,6 +36,9 @@ class Show extends Component
 
     public bool $rcSpecMatch = false;
 
+    /** Per-item received qty for the receipt modal: [item_id => qty]. */
+    public array $rcQty = [];
+
     public bool $showClose = false;
 
     public string $invoiceNumber = '';
@@ -170,14 +173,35 @@ class Show extends Component
         }
     }
 
+    public function openReceive(): void
+    {
+        abort_unless($this->canSee($this->record), 403);
+        // prefill each item's input with the remaining (ordered − already received)
+        $this->rcQty = $this->record->items
+            ->mapWithKeys(fn ($it) => [$it->id => max(0, $it->quantity - $it->received_qty)])->all();
+        $this->rcInvoice = $this->rcDeliveryNote = $this->rcSpecMatch = false;
+        $this->showReceive = true;
+    }
+
+    public function receiveAll(): void
+    {
+        $this->rcQty = $this->record->items->mapWithKeys(fn ($it) => [$it->id => $it->quantity])->all();
+    }
+
     public function confirmReceipt(): void
     {
+        // received qty = already-received + entered-this-pass (absolute, clamped in service)
+        $received = [];
+        foreach ($this->record->items as $it) {
+            $received[$it->id] = (int) $it->received_qty + (int) ($this->rcQty[$it->id] ?? 0);
+        }
         if ($this->act('confirmReceipt', [
+            'received' => $received,
             'invoice_received' => $this->rcInvoice,
             'delivery_note_received' => $this->rcDeliveryNote,
             'spec_match' => $this->rcSpecMatch,
         ])) {
-            $this->reset(['showReceive', 'rcInvoice', 'rcDeliveryNote', 'rcSpecMatch']);
+            $this->reset(['showReceive', 'rcInvoice', 'rcDeliveryNote', 'rcSpecMatch', 'rcQty']);
         }
     }
 

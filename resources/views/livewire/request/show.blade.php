@@ -114,7 +114,7 @@
                 @if ($editable)<button wire:click="openDispatch" class="text-white bg-amber-600 rounded px-3 py-1.5">Dispatch</button>@endif
                 <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">ຍົກເລີກ</button>
             @elseif ($record->status === 'dispatched')
-                @if ($editable)<button wire:click="$set('showReceive', true)" class="text-white bg-emerald-600 rounded px-3 py-1.5">ຮັບເຄື່ອງ</button>@endif
+                @if ($editable)<button wire:click="openReceive" class="text-white bg-emerald-600 rounded px-3 py-1.5">ຮັບເຄື່ອງ</button>@endif
             @elseif ($record->status === 'received')
                 @if ($editable)<button wire:click="$set('showClose', true)" class="text-white bg-emerald-700 rounded px-3 py-1.5">ປິດໃບ (invoice + SAP)</button>@endif
             @else
@@ -149,11 +149,28 @@
             </div></div>
         @endif
         @if ($showReceive)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
-                <h3 class="font-medium text-gray-800">ຮັບເຄື່ອງ</h3>
+            <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4"><div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-medium text-gray-800">ຮັບເຄື່ອງ</h3>
+                    <button wire:click="receiveAll" class="text-xs text-emerald-700 border border-emerald-200 rounded-md px-2.5 py-1 hover:bg-emerald-50">✓ ຮັບໝົດ ທຸກລາຍການ</button>
+                </div>
+                <p class="text-xs text-gray-400">ໃສ່ ຈຳນວນທີ່ຮັບ ແຕ່ລະລາຍການ (partial ໄດ້ — ໃບຈะ "received" ເມื่อ ຮັບຄົບ ທຸກລາຍການ).</p>
+                <div class="border border-gray-100 rounded-lg divide-y divide-gray-50">
+                    @foreach ($record->items as $it)
+                        <div class="flex items-center gap-3 px-3 py-2">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm text-gray-800 truncate">{{ $it->description }}</div>
+                                <div class="text-xs text-gray-400">ສັ່ງ {{ $it->quantity }}{{ $it->unit ? ' '.$it->unit : '' }} · ຮັບແລ້ວ {{ $it->received_qty }}</div>
+                            </div>
+                            @php $remain = max(0, $it->quantity - $it->received_qty); @endphp
+                            <input type="number" min="0" max="{{ $remain }}" wire:model="rcQty.{{ $it->id }}" @disabled($remain === 0) class="w-20 rounded-md border-gray-300 text-sm {{ $remain === 0 ? 'bg-gray-100' : '' }}" />
+                        </div>
+                    @endforeach
+                </div>
                 <label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model="rcInvoice" class="rounded border-gray-300 text-sky-600" /> ໄດ້ຮັບ invoice</label>
                 <label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model="rcDeliveryNote" class="rounded border-gray-300 text-sky-600" /> ໄດ້ຮັບ delivery note</label>
                 <label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model="rcSpecMatch" class="rounded border-gray-300 text-sky-600" /> ກົງ spec</label>
+                @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
                 <div class="flex justify-end gap-2"><button wire:click="$set('showReceive', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="confirmReceipt" class="bg-emerald-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยันຮັບ</button></div>
             </div></div>
         @endif

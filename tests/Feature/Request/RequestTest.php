@@ -1,9 +1,12 @@
 <?php
 
+use App\Livewire\Request\Create;
 use App\Livewire\Request\Index;
 use App\Livewire\Request\Show;
+use App\Models\Material;
 use App\Models\MaterialRequest;
 use App\Models\Setting;
+use App\Models\Supplier;
 use App\Models\User;
 use App\Services\RequestService;
 use Database\Seeders\RolePermissionSeeder;
@@ -21,6 +24,35 @@ function aRequestDraft(User $actor, array $over = []): MaterialRequest
         'items' => [['material_id' => null, 'description' => 'Bolt M8', 'unit' => 'pcs', 'quantity' => 10, 'unit_price' => 5]],
     ], $over), $actor);
 }
+
+test('partial receipt keeps dispatched until every item is fully received', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $svc = app(RequestService::class);
+    $r = aRequestDraft($admin, ['items' => [
+        ['material_id' => null, 'description' => 'Bolt M8', 'unit' => 'pcs', 'quantity' => 10, 'unit_price' => 5],
+        ['material_id' => null, 'description' => 'Nut M8', 'unit' => 'pcs', 'quantity' => 4, 'unit_price' => 2],
+    ]]);
+    foreach (['submit', 'approve', 'validate', 'dispatch'] as $a) {
+        $svc->transition($r, $a, $admin);
+    }
+    expect($r->refresh()->status)->toBe('dispatched');
+
+    $items = $r->items()->orderBy('id')->get();
+
+    // partial: first item full (10/10), second item 2/4 → stays dispatched
+    $svc->transition($r, 'confirmReceipt', $admin, ['received' => [$items[0]->id => 10, $items[1]->id => 2]]);
+    $r->refresh();
+    expect($r->status)->toBe('dispatched');
+    expect($r->items()->find($items[1]->id)->received_qty)->toBe(2);
+    expect($r->items()->find($items[0]->id)->receiver_confirmed)->toBeTrue();
+
+    // receive the remainder → fully received
+    $svc->transition($r, 'confirmReceipt', $admin, ['received' => [$items[0]->id => 10, $items[1]->id => 4]]);
+    $r->refresh();
+    expect($r->status)->toBe('received');
+    expect($r->received_at)->not->toBeNull();
+});
 
 test('createDraft makes MR number, computes total, logs history', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
@@ -153,7 +185,7 @@ test('approver is optional when admin disables the field', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $this->actingAs($admin);
 
-    Livewire::test(\App\Livewire\Request\Create::class)
+    Livewire::test(Create::class)
         ->set('purpose', 'no approver needed')
         ->call('addFreeItem')
         ->set('items.0.description', 'Wire')
@@ -162,17 +194,17 @@ test('approver is optional when admin disables the field', function () {
         ->call('save', true)   // submit without approver
         ->assertHasNoErrors();
 
-    expect(\App\Models\MaterialRequest::where('purpose', 'no approver needed')->where('status', 'submitted')->exists())->toBeTrue();
+    expect(MaterialRequest::where('purpose', 'no approver needed')->where('status', 'submitted')->exists())->toBeTrue();
 });
 
 test('price comparison captures other suppliers selling the same material_nbr', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $this->actingAs($admin);
 
-    $s1 = \App\Models\Supplier::create(['slug' => 's1-'.uniqid(), 'name' => 'SupplierOne', 'is_active' => true]);
-    $s2 = \App\Models\Supplier::create(['slug' => 's2-'.uniqid(), 'name' => 'SupplierTwo', 'is_active' => true]);
-    $m1 = \App\Models\Material::create(['supplier_id' => $s1->id, 'material_nbr' => 'X-100', 'category' => 'C', 'description' => 'Pump', 'unit_price' => 500, 'currency' => 'THB']);
-    \App\Models\Material::create(['supplier_id' => $s2->id, 'material_nbr' => 'X-100', 'category' => 'C', 'description' => 'Pump', 'unit_price' => 450, 'currency' => 'THB']);
+    $s1 = Supplier::create(['slug' => 's1-'.uniqid(), 'name' => 'SupplierOne', 'is_active' => true]);
+    $s2 = Supplier::create(['slug' => 's2-'.uniqid(), 'name' => 'SupplierTwo', 'is_active' => true]);
+    $m1 = Material::create(['supplier_id' => $s1->id, 'material_nbr' => 'X-100', 'category' => 'C', 'description' => 'Pump', 'unit_price' => 500, 'currency' => 'THB']);
+    Material::create(['supplier_id' => $s2->id, 'material_nbr' => 'X-100', 'category' => 'C', 'description' => 'Pump', 'unit_price' => 450, 'currency' => 'THB']);
 
     $r = app(RequestService::class)->createDraft([
         'purpose' => 'pump', 'currency' => 'THB', 'approver_user_id' => $admin->id,

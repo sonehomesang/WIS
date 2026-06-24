@@ -221,13 +221,44 @@ class RequestService
     private function doConfirmReceipt(MaterialRequest $r, $actor, array $opts): void
     {
         $this->assert($r->status === 'dispatched', 'ຮັບເຄື່ອງ ໄດ້ສະເພาະ dispatched.');
-        $r->status = 'received';
-        $r->received_at = now();
-        $r->received_by = $actor->id;
-        $r->received_by_name = $actor->display_name ?? $actor->email;
+
+        // Per-item received quantities (absolute). Supports partial receipt:
+        // record stays 'dispatched' until every item is fully received.
+        $received = $opts['received'] ?? null;   // [item_id => qty]
+        if (is_array($received)) {
+            foreach ($r->items as $it) {
+                if (! array_key_exists($it->id, $received)) {
+                    continue;
+                }
+                $qty = max(0, min((int) $it->quantity, (int) $received[$it->id]));
+                $it->received_qty = $qty;
+                $it->receiver_confirmed = $qty >= $it->quantity;
+                $it->save();
+            }
+            $r->load('items');
+        } else {
+            // No per-item map → treat as "receive all" (full).
+            foreach ($r->items as $it) {
+                $it->received_qty = $it->quantity;
+                $it->receiver_confirmed = true;
+                $it->save();
+            }
+            $r->load('items');
+        }
+
+        $fullyReceived = $r->items->every(fn ($it) => $it->received_qty >= $it->quantity);
+
         $r->invoice_received = (bool) ($opts['invoice_received'] ?? false);
         $r->delivery_note_received = (bool) ($opts['delivery_note_received'] ?? false);
         $r->spec_match = (bool) ($opts['spec_match'] ?? false);
+
+        if ($fullyReceived) {
+            $r->status = 'received';
+            $r->received_at = now();
+            $r->received_by = $actor->id;
+            $r->received_by_name = $actor->display_name ?? $actor->email;
+        }
+        // else: partial — stay 'dispatched'; received_qty recorded for next pass.
     }
 
     private function doClose(MaterialRequest $r, $actor, array $opts): void
