@@ -28,7 +28,8 @@ test('pages register the service worker + link the manifest', function () {
     $this->get('/dashboard')->assertOk()
         ->assertSee('manifest.webmanifest', false)
         ->assertSee("navigator.serviceWorker.register('/sw.js')", false)
-        ->assertSee('apple-touch-icon', false);
+        ->assertSee('apple-touch-icon', false)
+        ->assertSee('window.updateApp()', false);   // update-app button by the bell
 });
 
 test('login page is also installable', function () {

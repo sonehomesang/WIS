@@ -1,5 +1,24 @@
 import './bootstrap';
 
+// Force the PWA to the latest version: refresh the service worker, drop every
+// cache, then hard-reload. Wired to the "update app" button by the bell.
+window.updateApp = async () => {
+    try {
+        if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map((r) => r.update().catch(() => {})));
+        }
+        if (window.caches) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+    } catch (e) {
+        console.error('update failed', e);
+    } finally {
+        window.location.reload();
+    }
+};
+
 // Heavy libs (chart.js, jspdf, html-to-image) are loaded on demand so only
 // the dashboard / export actions pay for them — every other page stays light.
 
