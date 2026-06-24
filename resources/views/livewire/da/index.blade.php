@@ -36,26 +36,26 @@
             <table class="w-full text-sm">
                 <thead class="sticky top-[116px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
-                        <th class="text-left font-semibold px-4 py-3">ໄອດີ <span class="text-gray-400">(DA No.)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">PO</th>
-                        <th class="text-left font-semibold px-4 py-3">Supplier</th>
-                        <th class="text-left font-semibold px-4 py-3">ປະເພດຄວາມຜິດ</th>
-                        <th class="text-left font-semibold px-4 py-3">ວັນທີ</th>
-                        <th class="text-left font-semibold px-4 py-3">ສະຖานะ</th>
-                        <th class="text-left font-semibold px-4 py-3">ລາຍລະອຽດ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ໄອດີ <span class="text-gray-400">(DA No.)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">PO</th>
+                        <th class="text-left font-semibold px-4 py-2">Supplier</th>
+                        <th class="text-left font-semibold px-4 py-2 w-full">ປະເພດຄວາມຜິດ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ວັນທີ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖานະ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍລະອຽດ</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($records as $r)
                         @php [$lbl, $cls] = $statusMeta($r->status); @endphp
                         <tr wire:key="da-{{ $r->id }}" class="hover:bg-gray-50">
-                            <td class="px-4 py-3 align-top"><a href="{{ route('da.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->da_number }}</a></td>
-                            <td class="px-4 py-3 align-top text-gray-700">{{ $r->po_number ?? '—' }}</td>
-                            <td class="px-4 py-3 align-top text-xs text-gray-600">{{ $r->supplier_name ?? $r->supplier?->name ?? '—' }}</td>
-                            <td class="px-4 py-3 align-top text-xs text-gray-600">{{ collect($r->discrepancy_types ?? [])->map(fn ($t) => $typeLabel[$t] ?? $t)->implode(', ') ?: '—' }}</td>
-                            <td class="px-4 py-3 align-top text-xs text-gray-500">{{ $r->date?->format('d/m/Y') }}</td>
-                            <td class="px-4 py-3 align-top"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span>@if ($r->next_step === 'oga')<div class="text-xs text-sky-600 mt-1">→ OGA</div>@endif</td>
-                            <td class="px-4 py-3 align-top">
+                            <td class="px-4 py-2 align-top whitespace-nowrap"><a href="{{ route('da.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->da_number }}</a></td>
+                            <td class="px-4 py-2 align-top text-gray-700 whitespace-nowrap">{{ $r->po_number ?? '—' }}</td>
+                            <td class="px-4 py-2 align-top text-xs text-gray-600">{{ $r->supplier_name ?? $r->supplier?->name ?? '—' }}</td>
+                            <td class="px-4 py-2 align-top text-xs text-gray-600 w-full">{{ collect($r->discrepancy_types ?? [])->map(fn ($t) => $typeLabel[$t] ?? $t)->implode(', ') ?: '—' }}</td>
+                            <td class="px-4 py-2 align-top text-xs text-gray-500 whitespace-nowrap">{{ $r->date?->format('d/m/Y') }}</td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span>@if ($r->next_step === 'oga')<div class="text-xs text-sky-600 mt-1">→ OGA</div>@endif</td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืน?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50">↩ ກູ້คืน</button>
                                 @else

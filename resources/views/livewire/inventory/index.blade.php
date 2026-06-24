@@ -69,21 +69,21 @@
             <table class="w-full text-sm">
                 <thead class="sticky top-[116px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
-                        <th x-show="cols.materialNo" x-cloak class="text-left font-semibold px-4 py-2.5">Material No.</th>
-                        <th class="text-left font-semibold px-4 py-2.5">Item</th>
-                        <th x-show="cols.brand" x-cloak class="text-left font-semibold px-4 py-2.5">Brand</th>
-                        <th x-show="cols.category" x-cloak class="text-left font-semibold px-4 py-2.5">Category</th>
-                        <th x-show="cols.qty" x-cloak class="text-left font-semibold px-4 py-2.5">Qty</th>
-                        <th x-show="cols.location" x-cloak class="text-left font-semibold px-4 py-2.5">Location</th>
-                        <th x-show="cols.status" x-cloak class="text-left font-semibold px-4 py-2.5">Status</th>
-                        <th class="px-4 py-2.5"></th>
+                        <th x-show="cols.materialNo" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Material No.</th>
+                        <th class="text-left font-semibold px-4 py-2 w-full">Item</th>
+                        <th x-show="cols.brand" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Brand</th>
+                        <th x-show="cols.category" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Category</th>
+                        <th x-show="cols.qty" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Qty</th>
+                        <th x-show="cols.location" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Location</th>
+                        <th x-show="cols.status" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Status</th>
+                        <th class="px-4 py-2"></th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($items as $it)
                         <tr wire:key="inv-{{ $it->id }}" class="border-t border-gray-200">
-                            <td x-show="cols.materialNo" x-cloak class="px-4 py-2.5 font-mono text-xs text-gray-500">{{ $it->slug }}</td>
-                            <td class="px-4 py-2.5">
+                            <td x-show="cols.materialNo" x-cloak class="px-4 py-2 font-mono text-xs text-gray-500 whitespace-nowrap">{{ $it->slug }}</td>
+                            <td class="px-4 py-2 w-full">
                                 <div class="flex items-center gap-2">
                                     @if ($photo = $it->primaryPhoto->first())
                                         <img src="{{ $photo->url }}" alt="" class="w-9 h-9 rounded object-cover border border-gray-200 shrink-0" />
@@ -91,12 +91,12 @@
                                     <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
                                 </div>
                             </td>
-                            <td x-show="cols.brand" x-cloak class="px-4 py-2.5 text-xs text-gray-600">{{ $it->brand ?: '—' }}</td>
-                            <td x-show="cols.category" x-cloak class="px-4 py-2.5 text-xs text-gray-600">{{ $it->category ?: '—' }}</td>
-                            <td x-show="cols.qty" x-cloak class="px-4 py-2.5 text-gray-600">{{ $it->quantity }}@if ($it->unit) {{ $it->unit }}@endif</td>
-                            <td x-show="cols.location" x-cloak class="px-4 py-2.5 text-gray-600 text-xs">{{ collect([$it->location?->name, $it->building?->name, $it->room?->name, $it->shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
-                            <td x-show="cols.status" x-cloak class="px-4 py-2.5"><span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span></td>
-                            <td class="px-4 py-2.5 text-right whitespace-nowrap text-gray-500">
+                            <td x-show="cols.brand" x-cloak class="px-4 py-2 text-xs text-gray-600 whitespace-nowrap">{{ $it->brand ?: '—' }}</td>
+                            <td x-show="cols.category" x-cloak class="px-4 py-2 text-xs text-gray-600 whitespace-nowrap">{{ $it->category ?: '—' }}</td>
+                            <td x-show="cols.qty" x-cloak class="px-4 py-2 text-gray-600 whitespace-nowrap">{{ $it->quantity }}@if ($it->unit) {{ $it->unit }}@endif</td>
+                            <td x-show="cols.location" x-cloak class="px-4 py-2 text-gray-600 text-xs whitespace-nowrap">{{ collect([$it->location?->name, $it->building?->name, $it->room?->name, $it->shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
+                            <td x-show="cols.status" x-cloak class="px-4 py-2 whitespace-nowrap"><span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span></td>
+                            <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
                                 @canany(['inventory.activate', 'inventory.deactivate'])<button wire:click="toggle({{ $it->id }})" class="p-1 {{ $it->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $it->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany
                                 @can('inventory.edit')<button wire:click="editItem({{ $it->id }})" class="p-1 hover:text-gray-800" aria-label="Edit"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
                                 @can('inventory.delete')<button wire:click="delete({{ $it->id }})" wire:confirm="ລຶບ item ນີ້?" class="p-1 hover:text-red-600" aria-label="Delete"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan

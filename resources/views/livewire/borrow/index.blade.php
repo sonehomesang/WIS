@@ -53,13 +53,13 @@
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-200">
                     <tr>
-                        <th class="text-left font-semibold px-4 py-3">ໄອດີ <span class="text-gray-400">(BR No.)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ຜູ້ຢືມ <span class="text-gray-400">(Borrower)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ເຄື່ອງທີ່ຢືມ <span class="text-gray-400">(Items)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ລະຫັດ <span class="text-gray-400">(Material ID)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ວັນທີ <span class="text-gray-400">(Date)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ສະຖานะ <span class="text-gray-400">(Status)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ລາຍລະອຽດ <span class="text-gray-400">(Actions)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ໄອດີ <span class="text-gray-400">(BR No.)</span></th>
+                        <th class="text-left font-semibold px-4 py-2">ຜູ້ຢືມ <span class="text-gray-400">(Borrower)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 w-full">ເຄື່ອງທີ່ຢືມ <span class="text-gray-400">(Items)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລະຫັດ <span class="text-gray-400">(Material ID)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ວັນທີ <span class="text-gray-400">(Date)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖานะ <span class="text-gray-400">(Status)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍລະອຽດ <span class="text-gray-400">(Actions)</span></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -67,11 +67,11 @@
                         @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->photos->first() ?? $first?->inventoryItem?->primaryPhoto?->first(); $d = $r->days_left; @endphp
                         <tr wire:key="br-{{ $r->id }}" class="hover:bg-gray-50">
                             {{-- BR No. --}}
-                            <td class="px-4 py-3 align-top"><a href="{{ route('borrow.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap"><a href="{{ route('borrow.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
                             {{-- borrower --}}
-                            <td class="px-4 py-3 align-top"><div class="font-semibold text-gray-800">{{ $r->borrower_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->borrower_email }}</div></td>
+                            <td class="px-4 py-2 align-top"><div class="font-semibold text-gray-800">{{ $r->borrower_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->borrower_email }}</div></td>
                             {{-- items --}}
-                            <td class="px-4 py-3 align-top">
+                            <td class="px-4 py-2 align-top w-full">
                                 <div class="flex gap-2">
                                     @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
                                     @else<div class="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-xs">📦</div>@endif
@@ -82,23 +82,23 @@
                                 </div>
                             </td>
                             {{-- material id chips --}}
-                            <td class="px-4 py-3 align-top">
+                            <td class="px-4 py-2 align-top whitespace-nowrap">
                                 @foreach ($r->items->take(2) as $bi)
                                     @if ($bi->inventoryItem)<span class="inline-block text-xs font-mono bg-gray-100 text-gray-600 rounded px-1.5 py-0.5 mb-0.5">{{ $bi->inventoryItem->slug }}</span>@endif
                                 @endforeach
                             </td>
                             {{-- date --}}
-                            <td class="px-4 py-3 align-top text-xs">
+                            <td class="px-4 py-2 align-top text-xs whitespace-nowrap">
                                 <div class="text-gray-700 font-medium">{{ $r->borrow_date?->format('M d, Y') }}</div>
                                 <div class="text-gray-400 mt-1">RETURN: {{ $r->planned_return_date?->format('M d, Y') }}</div>
                             </td>
                             {{-- status --}}
-                            <td class="px-4 py-3 align-top">
+                            <td class="px-4 py-2 align-top whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span>
                                 @if ($d !== null)<div class="text-xs mt-1 {{ $d < 0 ? 'text-red-600' : 'text-gray-400' }}">{{ $d < 0 ? 'Overdue '.abs($d).'d' : 'In '.$d.'d' }}</div>@endif
                             </td>
                             {{-- actions --}}
-                            <td class="px-4 py-3 align-top">
+                            <td class="px-4 py-2 align-top whitespace-nowrap">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืນລາຍการนี้?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50 inline-block">↩ ກູ້คืน</button>
                                     @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif

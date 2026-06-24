@@ -91,7 +91,7 @@ class Index extends Component
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->when($this->typeFilter, fn ($q) => $q->where('request_type', $this->typeFilter))
             ->orderByDesc('id')
-            ->paginate(15);
+            ->paginate(10);
 
         return view('livewire.deposit.index', [
             'records' => $items,

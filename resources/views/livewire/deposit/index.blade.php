@@ -45,22 +45,22 @@
             <table class="w-full text-sm">
                 <thead class="sticky top-[116px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
-                        <th class="text-left font-semibold px-4 py-3">ໄອດີ <span class="text-gray-400">(DP No.)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ເຈົ້າຂອງ <span class="text-gray-400">(Owner)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ເຄື່ອງຝາກ <span class="text-gray-400">(Items)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ບ່ອນເກັບ <span class="text-gray-400">(Storage)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ວັນທີຝາກ <span class="text-gray-400">(Date)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ສະຖานะ <span class="text-gray-400">(Status)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ລາຍລະອຽດ <span class="text-gray-400">(Actions)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ໄອດີ <span class="text-gray-400">(DP No.)</span></th>
+                        <th class="text-left font-semibold px-4 py-2">ເຈົ້າຂອງ <span class="text-gray-400">(Owner)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 w-full">ເຄື່ອງຝາກ <span class="text-gray-400">(Items)</span></th>
+                        <th class="text-left font-semibold px-4 py-2">ບ່ອນເກັບ <span class="text-gray-400">(Storage)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ວັນທີຝາກ <span class="text-gray-400">(Date)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖานะ <span class="text-gray-400">(Status)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍລະອຽດ <span class="text-gray-400">(Actions)</span></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($records as $r)
                         @php [$lbl, $cls] = $statusMeta($r->status); $first = $r->items->first(); $ph = $first?->photos->first(); @endphp
                         <tr wire:key="dp-{{ $r->id }}" class="hover:bg-gray-50">
-                            <td class="px-4 py-3 align-top"><a href="{{ route('deposit.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
-                            <td class="px-4 py-3 align-top"><div class="font-semibold text-gray-800">{{ $r->owner_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->owner_email }}</div></td>
-                            <td class="px-4 py-3 align-top">
+                            <td class="px-4 py-2 align-top whitespace-nowrap"><a href="{{ route('deposit.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
+                            <td class="px-4 py-2 align-top"><div class="font-semibold text-gray-800">{{ $r->owner_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->owner_email }}</div></td>
+                            <td class="px-4 py-2 align-top w-full">
                                 <div class="flex gap-2">
                                     @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
                                     @else<div class="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-xs">📦</div>@endif
@@ -70,13 +70,13 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 align-top text-xs text-gray-600">{{ collect([$r->storage_location, $r->storage_shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
-                            <td class="px-4 py-3 align-top text-xs">
+                            <td class="px-4 py-2 align-top text-xs text-gray-600">{{ collect([$r->storage_location, $r->storage_shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
+                            <td class="px-4 py-2 align-top text-xs whitespace-nowrap">
                                 <div class="text-gray-700 font-medium">{{ $r->deposit_date?->format('M d, Y') }}</div>
                                 <div class="text-gray-400 mt-1">{{ $r->request_type === 'pre_request' ? 'PRE-REQUEST' : 'WALK-IN' }}</div>
                             </td>
-                            <td class="px-4 py-3 align-top"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
-                            <td class="px-4 py-3 align-top">
+                            <td class="px-4 py-2 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืນລາຍการนี้?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50 inline-block">↩ ກູ້คืน</button>
                                     @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif

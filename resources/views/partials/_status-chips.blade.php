@@ -1,6 +1,6 @@
 {{-- Sub-dashboard status chips (ໃຊ້ຮ່ວມທຸກໂມດູລ). ໃສ່: $chips = [['key','label','count','alert'?]], $current --}}
 @if (! empty($chips))
-    <div class="flex flex-wrap items-center gap-1.5 mb-3">
+    <div class="flex flex-wrap items-center gap-1.5 mb-2">
         @foreach ($chips as $c)
             @php $on = ($current ?? '') === $c['key']; $alert = ! empty($c['alert']); @endphp
             <button type="button" wire:click="$set('statusFilter', '{{ $c['key'] }}')"

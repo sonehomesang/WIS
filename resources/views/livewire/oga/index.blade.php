@@ -39,26 +39,26 @@
             <table class="w-full text-sm">
                 <thead class="sticky top-[116px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
-                        <th class="text-left font-semibold px-4 py-3">ໄອດີ <span class="text-gray-400">(OGA No.)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ແຫຼ່ງ</th>
-                        <th class="text-left font-semibold px-4 py-3">ປลายทาง</th>
-                        <th class="text-left font-semibold px-4 py-3">ສິນຄ້າ</th>
-                        <th class="text-left font-semibold px-4 py-3">ວັນທີ</th>
-                        <th class="text-left font-semibold px-4 py-3">ສະຖานะ</th>
-                        <th class="text-left font-semibold px-4 py-3">ລາຍລະອຽດ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ໄອດີ <span class="text-gray-400">(OGA No.)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ແຫຼ່ງ</th>
+                        <th class="text-left font-semibold px-4 py-2">ປลายทาง</th>
+                        <th class="text-left font-semibold px-4 py-2 w-full">ສິນຄ້າ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ວັນທີ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖานะ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍລະອຽດ</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($records as $r)
                         @php [$lbl, $cls] = $statusMeta($r->status); [$slbl, $scls] = $srcMeta($r->source_type); @endphp
                         <tr wire:key="oga-{{ $r->id }}" class="hover:bg-gray-50">
-                            <td class="px-4 py-3 align-top"><a href="{{ route('oga.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->oga_number }}</a></td>
-                            <td class="px-4 py-3 align-top"><span class="text-xs rounded px-2 py-0.5 {{ $scls }}">{{ $slbl }}</span>@if ($r->source_da_number)<div class="text-xs text-gray-400 mt-0.5">{{ $r->source_da_number }}</div>@endif</td>
-                            <td class="px-4 py-3 align-top text-xs text-gray-600">{{ $r->dispatch_to_name ?? $r->supplier?->name ?? '—' }}</td>
-                            <td class="px-4 py-3 align-top text-xs text-gray-600">{{ Str::limit($r->goods_consigned, 40) ?: '—' }}</td>
-                            <td class="px-4 py-3 align-top text-xs text-gray-500">{{ $r->date?->format('d/m/Y') }}<div class="text-gray-400">{{ strtoupper($r->ship_via ?? '') }}</div></td>
-                            <td class="px-4 py-3 align-top"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
-                            <td class="px-4 py-3 align-top">
+                            <td class="px-4 py-2 align-top whitespace-nowrap"><a href="{{ route('oga.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->oga_number }}</a></td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap"><span class="text-xs rounded px-2 py-0.5 {{ $scls }}">{{ $slbl }}</span>@if ($r->source_da_number)<div class="text-xs text-gray-400 mt-0.5">{{ $r->source_da_number }}</div>@endif</td>
+                            <td class="px-4 py-2 align-top text-xs text-gray-600">{{ $r->dispatch_to_name ?? $r->supplier?->name ?? '—' }}</td>
+                            <td class="px-4 py-2 align-top text-xs text-gray-600 w-full">{{ Str::limit($r->goods_consigned, 40) ?: '—' }}</td>
+                            <td class="px-4 py-2 align-top text-xs text-gray-500 whitespace-nowrap">{{ $r->date?->format('d/m/Y') }}<div class="text-gray-400">{{ strtoupper($r->ship_via ?? '') }}</div></td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืน?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50">↩ ກູ້คืน</button>
                                 @else

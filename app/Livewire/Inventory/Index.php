@@ -314,7 +314,7 @@ class Index extends Component
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->when($this->prefixFilter, fn ($q) => $q->where('slug', 'like', $this->prefixFilter.'%'))
             ->orderBy('name')
-            ->paginate(15);
+            ->paginate(10);
 
         $sc = InventoryItem::selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
         $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];

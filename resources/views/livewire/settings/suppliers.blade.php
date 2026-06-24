@@ -22,20 +22,20 @@
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 text-gray-500">
                     <tr>
-                        <th class="text-left font-medium px-4 py-2">Supplier</th>
+                        <th class="text-left font-medium px-4 py-2 w-full">Supplier</th>
                         <th class="text-left font-medium px-4 py-2">Contact</th>
-                        <th class="text-left font-medium px-4 py-2">Currency</th>
-                        <th class="text-left font-medium px-4 py-2">Status</th>
-                        <th class="px-4 py-2"></th>
+                        <th class="text-left font-medium px-4 py-2 whitespace-nowrap">Currency</th>
+                        <th class="text-left font-medium px-4 py-2 whitespace-nowrap">Status</th>
+                        <th class="px-4 py-2 whitespace-nowrap"></th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($items as $s)
                         <tr wire:key="sup-{{ $s->id }}" class="border-t border-gray-100">
-                            <td class="px-4 py-2"><div class="font-medium text-gray-800 {{ $s->is_active ? '' : 'opacity-50' }}">{{ $s->name }}</div>@if ($s->name_en)<div class="text-xs text-gray-400">{{ $s->name_en }}</div>@endif</td>
+                            <td class="px-4 py-2 w-full"><div class="font-medium text-gray-800 {{ $s->is_active ? '' : 'opacity-50' }}">{{ $s->name }}</div>@if ($s->name_en)<div class="text-xs text-gray-400">{{ $s->name_en }}</div>@endif</td>
                             <td class="px-4 py-2 text-gray-600">{{ $s->contact_person ?: '—' }}@if ($s->contact_phone)<div class="text-xs text-gray-400">{{ $s->contact_phone }}</div>@endif</td>
-                            <td class="px-4 py-2 text-gray-600">{{ $s->default_currency }}</td>
-                            <td class="px-4 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $s->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $s->is_active ? 'active' : 'inactive' }}</span></td>
+                            <td class="px-4 py-2 text-gray-600 whitespace-nowrap">{{ $s->default_currency }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap"><span class="text-xs rounded px-2 py-0.5 {{ $s->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $s->is_active ? 'active' : 'inactive' }}</span></td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
                                 <a href="{{ route('settings.suppliers.show', $s->id) }}" wire:navigate class="p-1 hover:text-sky-700 inline-block" title="Contracts / VAT"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></a>
                                 @canany(['supplier.activate', 'supplier.deactivate'])<button wire:click="toggle({{ $s->id }})" class="p-1 {{ $s->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $s->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany

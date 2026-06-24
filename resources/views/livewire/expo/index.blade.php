@@ -29,26 +29,26 @@
             <table class="w-full text-sm">
                 <thead class="sticky top-[116px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
-                        <th class="text-left font-semibold px-4 py-3">ໄອດີ <span class="text-gray-400">(EXP)</span></th>
-                        <th class="text-left font-semibold px-4 py-3">ຊື່ງານ</th>
-                        <th class="text-left font-semibold px-4 py-3">ສະຖານທີ່</th>
-                        <th class="text-left font-semibold px-4 py-3">ວັນທີ</th>
-                        <th class="text-left font-semibold px-4 py-3">ບໍລິສັດ/ຜູ້ໄປ</th>
-                        <th class="text-left font-semibold px-4 py-3">ສະຖานะ</th>
-                        <th class="text-left font-semibold px-4 py-3">ລາຍລະອຽດ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ໄອດີ <span class="text-gray-400">(EXP)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 w-full">ຊື່ງານ</th>
+                        <th class="text-left font-semibold px-4 py-2">ສະຖານທີ່</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ວັນທີ</th>
+                        <th class="text-left font-semibold px-4 py-2">ບໍລິສັດ/ຜູ້ໄປ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖานะ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍລະອຽດ</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($records as $r)
                         @php [$lbl, $cls] = $statusMeta($r->status); @endphp
                         <tr wire:key="exp-{{ $r->id }}" class="hover:bg-gray-50">
-                            <td class="px-4 py-3 align-top"><a href="{{ route('expo.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->expo_number }}</a></td>
-                            <td class="px-4 py-3 align-top"><div class="font-medium text-gray-800">{{ $r->title }}</div><div class="text-xs text-gray-400">{{ Str::limit($r->topic, 40) }}</div></td>
-                            <td class="px-4 py-3 align-top text-xs text-gray-600">{{ collect([$r->city, $r->country])->filter()->implode(', ') ?: '—' }}</td>
-                            <td class="px-4 py-3 align-top text-xs">{{ $r->start_date?->format('d/m/Y') }}@if ($r->end_date)–{{ $r->end_date->format('d/m/Y') }}@endif</td>
-                            <td class="px-4 py-3 align-top text-xs text-gray-600">{{ $r->companies_count }} ບໍລິສັດ · {{ $r->attendees_count }} ຄົน</td>
-                            <td class="px-4 py-3 align-top"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
-                            <td class="px-4 py-3 align-top">
+                            <td class="px-4 py-2 align-top whitespace-nowrap"><a href="{{ route('expo.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->expo_number }}</a></td>
+                            <td class="px-4 py-2 align-top w-full"><div class="font-medium text-gray-800">{{ $r->title }}</div><div class="text-xs text-gray-400">{{ Str::limit($r->topic, 40) }}</div></td>
+                            <td class="px-4 py-2 align-top text-xs text-gray-600">{{ collect([$r->city, $r->country])->filter()->implode(', ') ?: '—' }}</td>
+                            <td class="px-4 py-2 align-top text-xs whitespace-nowrap">{{ $r->start_date?->format('d/m/Y') }}@if ($r->end_date)–{{ $r->end_date->format('d/m/Y') }}@endif</td>
+                            <td class="px-4 py-2 align-top text-xs text-gray-600">{{ $r->companies_count }} ບໍລິສັດ · {{ $r->attendees_count }} ຄົน</td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืน?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50">↩ ກູ້คืน</button>
                                 @else

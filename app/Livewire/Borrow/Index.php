@@ -161,7 +161,7 @@ class Index extends Component
             ->when($this->fromDate, fn ($q) => $q->whereDate('borrow_date', '>=', $this->fromDate))
             ->when($this->toDate, fn ($q) => $q->whereDate('borrow_date', '<=', $this->toDate))
             ->orderByDesc('id')
-            ->paginate(15);
+            ->paginate(10);
 
         return view('livewire.borrow.index', [
             'records' => $items,
