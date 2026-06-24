@@ -3,9 +3,7 @@
 namespace App\Livewire\Borrow;
 
 use App\Models\BorrowRecord;
-use App\Models\Notification;
-use App\Models\Setting;
-use App\Services\NotificationService;
+use App\Services\BorrowReminderService;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -92,40 +90,11 @@ class Index extends Component
     {
         abort_unless($this->isStaff(), 403);
 
-        $tomorrow = Carbon::today()->addDay();
-        $due = BorrowRecord::where('status', 'active')
-            ->whereDate('planned_return_date', '<=', $tomorrow)
-            ->get(['id', 'request_number', 'borrower_user_id', 'planned_return_date']);
+        $r = app(BorrowReminderService::class)->sweep();
 
-        $flags = Setting::get('notifications', ['enabled' => true, 'borrow_reminder' => true]);
-        $reminderOn = NotificationService::enabled() && ($flags['borrow_reminder'] ?? true);
-
-        if (! $reminderOn) {
-            session()->flash('ok', "⏰ ພົບ {$due->count()} ລາຍການ ໃກ້/ເກີນ ກຳນົດ — ການເຕືອນ ປິດຢູ່ (Settings › Notifications)");
-
-            return;
-        }
-
-        $svc = app(NotificationService::class);
-        $sent = 0;
-        foreach ($due as $r) {
-            if (! $r->borrower_user_id) {
-                continue;
-            }
-            $link = route('borrow.show', $r);
-            $already = Notification::where('user_id', $r->borrower_user_id)
-                ->where('link', $link)->whereDate('created_at', Carbon::today())->exists();
-            if ($already) {
-                continue;
-            }
-            $svc->notifyTemplate($r->borrower_user_id, 'warning', 'borrow.reminder', [
-                'number' => $r->request_number,
-                'date' => Carbon::parse($r->planned_return_date)->format('d/m/Y'),
-            ], $link);
-            $sent++;
-        }
-
-        session()->flash('ok', "⏰ ພົບ {$due->count()} ລາຍການ ໃກ້/ເກີນ ກຳນົດ · ສົ່ງເຕືອນ {$sent} ລາຍການ");
+        session()->flash('ok', $r['enabled']
+            ? "⏰ ພົບ {$r['due']} ລາຍການ ໃກ້/ເກີນ ກຳນົດ · ສົ່ງເຕືອນ {$r['sent']} ລາຍການ"
+            : "⏰ ພົບ {$r['due']} ລາຍການ ໃກ້/ເກີນ ກຳນົດ — ການເຕືອນ ປິດຢູ່ (Settings › Notifications)");
     }
 
     /** Visibility: admin/warehouse see all; ຄົນອື່ນ ເຫັນຂອງຕົນ/ທີ່ assign ໃຫ້. */
