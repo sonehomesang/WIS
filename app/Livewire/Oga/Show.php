@@ -45,6 +45,11 @@ class Show extends Component
 
     public string $deleteReason = '';
 
+    // edit draft items
+    public bool $showItems = false;
+
+    public array $oi = [];
+
     public function mount(OutwardsGoodsAdvice $record): void
     {
         abort_unless(auth()->user()->can('oga.view'), 403);
@@ -79,6 +84,40 @@ class Show extends Component
         $u = auth()->user();
 
         return $u->is_super_admin || $u->can('oga.edit');
+    }
+
+    /** Edit line items — draft only. */
+    public function openItems(): void
+    {
+        abort_unless($this->canEdit() && $this->record->status === 'draft', 403);
+        $this->oi = $this->record->items->map(fn ($it) => [
+            'description' => $it->description, 'unit' => $it->unit, 'qty' => $it->qty,
+            'unit_weight_kg' => $it->unit_weight_kg,
+        ])->all();
+        if (empty($this->oi)) {
+            $this->oi = [['description' => '', 'unit' => '', 'qty' => 1, 'unit_weight_kg' => '']];
+        }
+        $this->showItems = true;
+    }
+
+    public function addOiItem(): void
+    {
+        $this->oi[] = ['description' => '', 'unit' => '', 'qty' => 1, 'unit_weight_kg' => ''];
+    }
+
+    public function removeOiItem(int $i): void
+    {
+        unset($this->oi[$i]);
+        $this->oi = array_values($this->oi);
+    }
+
+    public function saveItems(): void
+    {
+        abort_unless($this->canEdit() && $this->record->status === 'draft', 403);
+        app(OgaService::class)->replaceItems($this->record, $this->oi, auth()->user());
+        $this->record->refresh()->load('items');
+        $this->reset(['showItems', 'oi']);
+        session()->flash('ok', '✓ ບັນທຶກ ລາຍການ');
     }
 
     public function openDispatch(): void

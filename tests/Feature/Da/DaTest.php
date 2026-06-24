@@ -22,6 +22,25 @@ function aDaDraft(User $actor): DiscrepancyAdvice
     ], $actor);
 }
 
+test('replaceItems edits draft items, blocked once submitted', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $svc = app(DiscrepancyService::class);
+    $r = aDaDraft($admin);
+
+    $svc->replaceItems($r, [
+        ['stock_code' => 'X1', 'description' => 'New valve', 'qty_ordered' => 5, 'qty_delivered' => 3, 'qty_received' => 3],
+        ['stock_code' => '', 'description' => '', 'qty_ordered' => 0],  // blank → skipped
+    ], $admin);
+    $r->refresh();
+    expect($r->items()->count())->toBe(1);
+    expect($r->items()->first()->description)->toBe('New valve');
+
+    $svc->transition($r, 'submit', $admin);
+    expect(fn () => $svc->replaceItems($r->refresh(), [['description' => 'Y']], $admin))
+        ->toThrow(ValidationException::class);
+});
+
 test('createDraft makes DA number + history', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $this->actingAs($admin);

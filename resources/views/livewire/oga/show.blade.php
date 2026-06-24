@@ -78,6 +78,7 @@
         <div class="bg-white rounded-lg border border-gray-100 px-5 py-3 flex flex-wrap gap-2 text-sm items-center">
             <span class="text-gray-400 mr-1">Actions:</span>
             @if ($record->status === 'draft')
+                @if ($editable)<button wire:click="openItems" class="text-sky-700 border border-sky-200 bg-sky-50 rounded px-3 py-1.5">✏️ ແກ້ ລາຍການ</button>@endif
                 @if ($editable)<button wire:click="openDispatch" class="text-white bg-amber-600 rounded px-3 py-1.5">Dispatch</button>@endif
                 <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">ຍົກເລີກ</button>
             @elseif ($record->status === 'dispatched')
@@ -128,6 +129,24 @@
                 <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດผົน…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                 @error('deleteReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
                 <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยันລຶບ</button></div>
+            </div></div>
+        @endif
+        @if ($showItems)
+            <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4"><div class="bg-white w-full md:max-w-2xl rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <h3 class="font-medium text-gray-800">✏️ ແກ້ ລາຍການ (ฮ่าง)</h3>
+                <div class="space-y-2">
+                    @foreach ($oi as $i => $row)
+                        <div wire:key="oi-{{ $i }}" class="border border-gray-100 rounded-lg p-2 grid grid-cols-12 gap-2 items-start">
+                            <input type="text" wire:model="oi.{{ $i }}.description" placeholder="ລາຍລະອຽດ *" class="col-span-6 rounded-md border-gray-300 text-xs" />
+                            <input type="text" wire:model="oi.{{ $i }}.unit" placeholder="ໜ່ວຍ" class="col-span-2 rounded-md border-gray-300 text-xs" />
+                            <input type="number" min="1" wire:model="oi.{{ $i }}.qty" title="ຈำนวน" class="col-span-1 rounded-md border-gray-300 text-xs" />
+                            <input type="number" step="0.01" min="0" wire:model="oi.{{ $i }}.unit_weight_kg" title="ໜັກ/ໜ່ວຍ (kg)" placeholder="kg" class="col-span-2 rounded-md border-gray-300 text-xs" />
+                            <button wire:click="removeOiItem({{ $i }})" class="col-span-1 text-red-400 hover:text-red-600 text-sm">✕</button>
+                        </div>
+                    @endforeach
+                </div>
+                <button wire:click="addOiItem" class="text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-1.5 hover:bg-sky-50">+ ເພີ່ມ ລາຍການ</button>
+                <div class="flex justify-end gap-2 pt-1"><button wire:click="$set('showItems', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="saveItems" class="bg-sky-600 text-white rounded px-3 py-1.5 text-sm">ບັນທຶກ</button></div>
             </div></div>
         @endif
     </div>

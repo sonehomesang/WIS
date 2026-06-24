@@ -51,12 +51,52 @@ class Show extends Component
 
     public string $deleteReason = '';
 
+    // edit draft items (section A)
+    public bool $showItems = false;
+
+    public array $di = [];
+
     public const DECISIONS = ['part_correct', 'end_user_accept', 'supplier_resend', 'return_supplier', 'do_not_return', 'supplier_refuses', 'po_amended', 'other'];
 
     public function mount(DiscrepancyAdvice $record): void
     {
         abort_unless(auth()->user()->can('da.view'), 403);
         $this->record = $record;
+    }
+
+    /** Edit line items — draft only, warehouse (canEdit). */
+    public function openItems(): void
+    {
+        abort_unless($this->canEdit() && $this->record->status === 'draft', 403);
+        $this->di = $this->record->items->map(fn ($it) => [
+            'stock_code' => $it->stock_code, 'description' => $it->description,
+            'qty_ordered' => $it->qty_ordered, 'qty_delivered' => $it->qty_delivered,
+            'qty_received' => $it->qty_received, 'comments' => $it->comments,
+        ])->all();
+        if (empty($this->di)) {
+            $this->di = [['stock_code' => '', 'description' => '', 'qty_ordered' => 0, 'qty_delivered' => 0, 'qty_received' => 0, 'comments' => '']];
+        }
+        $this->showItems = true;
+    }
+
+    public function addDiItem(): void
+    {
+        $this->di[] = ['stock_code' => '', 'description' => '', 'qty_ordered' => 0, 'qty_delivered' => 0, 'qty_received' => 0, 'comments' => ''];
+    }
+
+    public function removeDiItem(int $i): void
+    {
+        unset($this->di[$i]);
+        $this->di = array_values($this->di);
+    }
+
+    public function saveItems(): void
+    {
+        abort_unless($this->canEdit() && $this->record->status === 'draft', 403);
+        app(DiscrepancyService::class)->replaceItems($this->record, $this->di, auth()->user());
+        $this->record->refresh()->load('items');
+        $this->reset(['showItems', 'di']);
+        session()->flash('ok', '✓ ບັນທຶກ ລາຍການ');
     }
 
     /** Server-side authorization: warehouse runs submit/start/cancel; purchasing/leader run the decisions. */

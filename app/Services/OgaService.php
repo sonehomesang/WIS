@@ -86,6 +86,33 @@ class OgaService
         });
     }
 
+    /** Replace the line items of a DRAFT OGA. */
+    public function replaceItems(OutwardsGoodsAdvice $r, array $items, $actor): void
+    {
+        $this->assert($r->status === 'draft', 'ແກ້ ລາຍການ ໄດ້ສະເພาະ ฮ่าง (draft).');
+        DB::transaction(function () use ($r, $items, $actor) {
+            $r->items()->delete();
+            foreach (array_values($items) as $i => $it) {
+                if (trim($it['description'] ?? '') === '') {
+                    continue;
+                }
+                $qty = max(1, (int) ($it['qty'] ?? 1));
+                $uw = ($it['unit_weight_kg'] ?? null) !== null && $it['unit_weight_kg'] !== '' ? (float) $it['unit_weight_kg'] : null;
+                $r->items()->create([
+                    'description' => $it['description'] ?? '—',
+                    'unit' => $it['unit'] ?? null,
+                    'qty' => $qty,
+                    'unit_weight_kg' => $uw,
+                    'total_weight_kg' => $uw !== null ? $uw * $qty : null,
+                    'sort_order' => $i,
+                ]);
+            }
+            $this->recalcWeight($r);
+            $r->forceFill(['updated_by' => $actor->id])->save();
+            $this->recordHistory($r, 'editItems', $actor);
+        });
+    }
+
     public function transition(OutwardsGoodsAdvice $r, string $action, $actor, array $opts = []): OutwardsGoodsAdvice
     {
         return DB::transaction(function () use ($r, $action, $actor, $opts) {

@@ -76,6 +76,31 @@ class DiscrepancyService
         });
     }
 
+    /** Replace the line items of a DRAFT discrepancy advice. */
+    public function replaceItems(DiscrepancyAdvice $r, array $items, $actor): void
+    {
+        $this->assert($r->status === 'draft', 'ແກ້ ລາຍການ ໄດ້ສະເພาະ ฮ่าง (draft).');
+        DB::transaction(function () use ($r, $items, $actor) {
+            $r->items()->delete();
+            foreach (array_values($items) as $i => $it) {
+                if (trim($it['description'] ?? '') === '') {
+                    continue;
+                }
+                $r->items()->create([
+                    'stock_code' => $it['stock_code'] ?? null,
+                    'description' => $it['description'] ?? '—',
+                    'qty_ordered' => (int) ($it['qty_ordered'] ?? 0),
+                    'qty_delivered' => (int) ($it['qty_delivered'] ?? 0),
+                    'qty_received' => (int) ($it['qty_received'] ?? 0),
+                    'comments' => $it['comments'] ?? null,
+                    'sort_order' => $i,
+                ]);
+            }
+            $r->forceFill(['updated_by' => $actor->id])->save();
+            $this->recordHistory($r, 'editItems', $actor);
+        });
+    }
+
     public function transition(DiscrepancyAdvice $r, string $action, $actor, array $opts = []): DiscrepancyAdvice
     {
         return DB::transaction(function () use ($r, $action, $actor, $opts) {

@@ -22,6 +22,22 @@ function anOgaDraft(User $actor): OutwardsGoodsAdvice
     ], $actor);
 }
 
+test('replaceItems edits draft items + recalcs weight, blocked after dispatch', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $svc = app(OgaService::class);
+    $r = anOgaDraft($admin);
+
+    $svc->replaceItems($r, [['description' => 'Box', 'unit' => 'pcs', 'qty' => 2, 'unit_weight_kg' => 3]], $admin);
+    $r->refresh();
+    expect($r->items()->count())->toBe(1);
+    expect((float) $r->items()->first()->total_weight_kg)->toBe(6.0);
+
+    $svc->transition($r, 'confirmDispatch', $admin, ['driver_name' => 'A', 'truck_plate_number' => 'K1']);
+    expect(fn () => $svc->replaceItems($r->refresh(), [['description' => 'Z', 'qty' => 1]], $admin))
+        ->toThrow(ValidationException::class);
+});
+
 test('createDraft makes OGA number, computes weight, logs history', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $this->actingAs($admin);
