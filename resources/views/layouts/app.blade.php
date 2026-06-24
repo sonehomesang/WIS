@@ -58,6 +58,7 @@
                         'settings.notification-log' => 'Notification log',
                         'settings.audit' => 'Audit log',
                         'settings.reports' => 'Reports',
+                        'settings.translations' => 'ແປ / ຄຳສັບ',
                         'settings.system' => 'System',
                         'profile' => 'Profile',
                     ];
@@ -82,6 +83,7 @@
                         'settings.notification-log' => 'log ການແຈ້ງເຕືອນ ທັງໝົด + export',
                         'settings.audit' => 'ບັນທຶກການກະທຳ ທຸກ module + export',
                         'settings.reports' => 'ສະຫຼຸບ ຕາມ module + ຊ່ວງວັນທີ + export',
+                        'settings.translations' => 'ແກ້ ຄຳສັບ ໃນແອັບ ເອງ (replace + term key)',
                         'settings.system' => 'General · currency · VAT · letterhead',
                     ];
                     $pageSubtitle = $subtitleMap[$routeName] ?? null;

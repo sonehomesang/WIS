@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ReplaceTerms;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -11,7 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Admin wording overrides applied to rendered HTML (Phase 6.11).
+        $middleware->appendToGroup('web', ReplaceTerms::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

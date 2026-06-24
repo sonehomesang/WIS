@@ -10,6 +10,7 @@
         ['label' => 'Audit log', 'perm' => 'audit.view', 'route' => 'settings.audit'],
         ['label' => 'Reports', 'perm' => 'reports.view', 'route' => 'settings.reports'],
         ['label' => 'Notifications', 'perm' => 'settings.view', 'route' => 'settings.notifications'],
+        ['label' => 'ແປ/ຄຳສັບ', 'perm' => 'settings.view', 'route' => 'settings.translations'],
         ['label' => 'System', 'perm' => 'settings.view', 'route' => 'settings.system'],
     ];
 @endphp

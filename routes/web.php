@@ -10,6 +10,7 @@ use App\Livewire\Settings\NotificationLog;
 use App\Livewire\Settings\Organization;
 use App\Livewire\Settings\Reports;
 use App\Livewire\Settings\RolesPermissions;
+use App\Livewire\Settings\Translations;
 use App\Livewire\Settings\SupplierDetail;
 use App\Livewire\Settings\Suppliers;
 use App\Livewire\Settings\System;
@@ -216,5 +217,9 @@ Route::get('settings/audit', Audit::class)
 Route::get('settings/reports', Reports::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.reports');
+
+Route::get('settings/translations', Translations::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.translations');
 
 require __DIR__.'/auth.php';
