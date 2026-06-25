@@ -119,7 +119,7 @@
         </div>
 
         {{-- actions --}}
-        <div class="bg-white rounded-lg border border-gray-100 px-5 py-3 flex flex-wrap gap-2 text-sm items-center">
+        <div class="bg-white rounded-lg border border-gray-100 px-5 py-3 flex flex-wrap gap-2 text-sm items-center sticky bottom-4 z-20 shadow-lg">
             <span class="text-gray-400 mr-1">Actions:</span>
             @if ($record->status === 'draft')
                 @if ($isOwner || $editable)<button wire:click="submit" class="text-white bg-indigo-600 rounded px-3 py-1.5">ສົ່ງຄຳຂໍ</button>@endif
