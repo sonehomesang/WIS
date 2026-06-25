@@ -5,8 +5,9 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 Route::middleware('guest')->group(function () {
-    Volt::route('register', 'pages.auth.register')
-        ->name('register');
+    // Self-registration is disabled — accounts come from the AD/HR sync +
+    // admin (users:import-json). Re-enable only if open signup is wanted.
+    // Volt::route('register', 'pages.auth.register')->name('register');
 
     Volt::route('login', 'pages.auth.login')
         ->name('login');

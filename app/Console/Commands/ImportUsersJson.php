@@ -94,6 +94,7 @@ class ImportUsersJson extends Command
                 'is_pre_created' => true,
                 'is_super_admin' => false, // ບໍ່ auto-grant bypass
                 'password' => bcrypt(Str::random(40)),
+                'email_verified_at' => now(), // vetted AD/HR account — skip the verify wall
             ]);
             $role = mb_strtolower($u['role'] ?? '');
             if ($role !== '' && $roleNames->has($role)) {
