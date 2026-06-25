@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WH — Deployment Guide</title>
+<style>
+  :root { --sky:#0284c7; --ink:#0f172a; --mut:#64748b; --bd:#e2e8f0; --bg:#f8fafc; --code:#0b3b5a; --warn:#b45309; --warnbg:#fffbeb; --ok:#047857; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,'Segoe UI',sans-serif; color:var(--ink); background:var(--bg); line-height:1.6; }
+  .wrap { max-width:880px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+  header { border-bottom:3px solid var(--sky); padding-bottom:1rem; margin-bottom:1.5rem; }
+  header h1 { margin:0; font-size:1.6rem; }
+  header p { margin:.35rem 0 0; color:var(--mut); }
+  header a { color:var(--sky); text-decoration:none; font-weight:600; }
+  h2 { font-size:1.15rem; margin:2rem 0 .6rem; padding-top:.6rem; border-top:1px solid var(--bd); color:var(--ink); }
+  h2 .n { display:inline-flex; width:1.6rem; height:1.6rem; align-items:center; justify-content:center; background:var(--sky); color:#fff; border-radius:6px; font-size:.85rem; margin-right:.5rem; }
+  h3 { font-size:.95rem; margin:1.2rem 0 .4rem; color:var(--mut); }
+  p, li { font-size:.92rem; }
+  code { background:#eef2f6; color:var(--code); padding:.1rem .35rem; border-radius:4px; font-family:'Cascadia Code',Consolas,monospace; font-size:.86em; }
+  pre { background:#0b1220; color:#d6e2f0; padding:.9rem 1rem; border-radius:8px; overflow-x:auto; font-size:.82rem; line-height:1.55; }
+  pre code { background:none; color:inherit; padding:0; }
+  .warn { background:var(--warnbg); border:1px solid #fde68a; border-left:4px solid var(--warn); border-radius:0 8px 8px 0; padding:.7rem 1rem; margin:1rem 0; color:#78350f; font-size:.9rem; }
+  table { width:100%; border-collapse:collapse; margin:.6rem 0; font-size:.88rem; }
+  th,td { border:1px solid var(--bd); padding:.45rem .6rem; text-align:left; }
+  th { background:#eef2f6; font-weight:600; }
+  ul.check { list-style:none; padding-left:0; }
+  ul.check li { padding:.25rem 0 .25rem 1.7rem; position:relative; }
+  ul.check li::before { content:"☐"; position:absolute; left:0; color:var(--sky); font-size:1.05rem; }
+  .ok { color:var(--ok); font-weight:600; }
+  .pill { display:inline-block; background:#e0f2fe; color:#075985; border-radius:999px; padding:.1rem .6rem; font-size:.75rem; font-weight:600; }
+  footer { margin-top:3rem; color:var(--mut); font-size:.8rem; border-top:1px solid var(--bd); padding-top:1rem; }
+  @media print { body{background:#fff;} pre{background:#f1f5f9;color:#0b1220;border:1px solid var(--bd);} }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>WH — Deployment Guide</h1>
+  <p>Warehouse Information System · Laravel 12 + Livewire 3 + MySQL → <a href="https://wh.namtheun2.com">https://wh.namtheun2.com</a></p>
+</header>
+
+<div class="warn"><b>⚠️ ສຳຄັນ:</b> <code>wh_db</code> ມີຂໍ້ມູນຈິງ — ໃຊ້ <code>php artisan migrate</code> (additive) ເທົ່ານັ້ນ. <b>ຫ້າມ <code>migrate:fresh</code></b> ໃນ production. Backup ກ່ອນ migrate ສະເໝີ.</div>
+
+<h2><span class="n">1</span>Server requirements</h2>
+<table>
+  <tr><th>ສິ່ງ</th><th>ລຸ້ນ / ໝາຍເຫດ</th></tr>
+  <tr><td>PHP</td><td><b>8.2+</b> (8.3 ແນະນຳ) · ext: pdo_mysql, mbstring, gd, zip, bcmath, fileinfo, openssl, curl</td></tr>
+  <tr><td>MySQL</td><td>8.0+ · <code>mysqldump</code> + <code>mysql</code> client ໃນ PATH (Backup/Restore)</td></tr>
+  <tr><td>Composer</td><td>2.x</td></tr>
+  <tr><td>Node</td><td>18+ (build assets ເທົ່ານັ້ນ — ບໍ່ run runtime)</td></tr>
+  <tr><td>Web server</td><td>Nginx / Apache → root = <code>public/</code></td></tr>
+  <tr><td>TLS</td><td><b>HTTPS cert ຈຳເປັນ</b> (PWA install + secure cookies)</td></tr>
+</table>
+
+<h2><span class="n">2</span>.env (production)</h2>
+<pre><code>APP_ENV=production
+APP_KEY=                        # php artisan key:generate
+APP_DEBUG=false                 # ⚠️ ຕ້ອງ false
+APP_URL=https://wh.namtheun2.com
+APP_TIMEZONE=Asia/Vientiane
+
+DB_CONNECTION=mysql
+DB_DATABASE=wh_db
+DB_USERNAME=wh_user
+DB_PASSWORD=********
+
+SESSION_DRIVER=database
+SESSION_SECURE_COOKIE=true
+SESSION_DOMAIN=wh.namtheun2.com
+
+QUEUE_CONNECTION=sync           # emails ສົ່ງທັນທີ (ບໍ່ຕ້ອງ worker)
+
+MAIL_MAILER=smtp               # reset-password / verify
+MAIL_HOST=...  MAIL_PORT=587
+MAIL_USERNAME=...  MAIL_PASSWORD=...
+MAIL_FROM_ADDRESS="wh@namtheun2.com"
+
+SUPER_ADMIN_PASSWORD=********   # ປ່ຽນຫຼັງ login ครั้งแรก
+# BACKUP_MYSQLDUMP_BINARY=/usr/bin/mysqldump   # ຖ້າ ບໍ່ຢູ່ PATH</code></pre>
+
+<h2><span class="n">3</span>Deploy steps</h2>
+<pre><code># 1) PHP deps
+composer install --no-dev --optimize-autoloader
+# 2) env + key
+cp .env.example .env   # ແກ້ ຄ່າ ຕาม §2
+php artisan key:generate
+# 3) frontend
+npm ci &amp;&amp; npm run build
+# 4) DB (additive — backup ກ່ອນ ຖ້າມີ data)
+php artisan migrate --force
+# 5) seed RBAC + super_admin
+php artisan db:seed --class=RolePermissionSeeder --force
+php artisan db:seed --class=SuperAdminSeeder --force
+# 6) (DB ໃໝ່) import users + verify
+php artisan users:import-json storage/app/migrate/users.json
+php artisan users:verify-precreated
+# 7) storage symlink
+php artisan storage:link
+# 8) cache
+php artisan config:cache &amp;&amp; php artisan route:cache &amp;&amp; php artisan view:cache
+# 9) perms (Linux)
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache</code></pre>
+
+<h2><span class="n">4</span>Nginx (ຕົວຢ່າງ)</h2>
+<pre><code>server {
+  listen 443 ssl http2;
+  server_name wh.namtheun2.com;
+  root /var/www/wh/public;
+  ssl_certificate     /etc/letsencrypt/live/wh.namtheun2.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/wh.namtheun2.com/privkey.pem;
+  index index.php; charset utf-8; client_max_body_size 30M;
+  location / { try_files $uri $uri/ /index.php?$query_string; }
+  location ~ \.php$ {
+    fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+    include fastcgi_params;
+  }
+  location ~ /\.(?!well-known).* { deny all; }
+}
+server { listen 80; server_name wh.namtheun2.com; return 301 https://$host$request_uri; }</code></pre>
+<p>HTTPS: <code>certbot --nginx -d wh.namtheun2.com</code></p>
+
+<h2><span class="n">5</span>Cron (scheduler)</h2>
+<p>ສຳລັບ <b>borrow reminder ອັດຕะໂນมัด (08:00 Vientiane)</b> — crontab ຂອງ www-data:</p>
+<pre><code>* * * * * cd /var/www/wh &amp;&amp; php artisan schedule:run >> /dev/null 2>&1</code></pre>
+<p>ຖ້າ ໃຊ້ <code>QUEUE_CONNECTION=database</code> → ຕ້ອງ supervisor run <code>php artisan queue:work</code>.</p>
+
+<h2><span class="n">6</span>Backup &amp; restore</h2>
+<ul>
+  <li><b>Manual:</b> Settings › Backup — admin: create/download/delete · super_admin: restore.</li>
+  <li>ໄຟລ໌: <code>storage/app/backups/*.sql.gz</code> (ບໍ່ເปิด public).</li>
+  <li><b>Auto daily</b> (ແນະນຳ): cron <code>mysqldump</code> → off-site.</li>
+  <li><b>Restore:</b> Settings › Backup → ເລືອກ → ພິມ <code>RESTORE</code> (super_admin, ໃນ maintenance).</li>
+</ul>
+
+<h2><span class="n">7</span>Security checklist (ก่อน go-live)</h2>
+<ul class="check">
+  <li><code>APP_DEBUG=false</code> · <code>APP_ENV=production</code></li>
+  <li>HTTPS + <code>SESSION_SECURE_COOKIE=true</code></li>
+  <li><code>APP_KEY</code> set · <code>.env</code> perms 600 · ບໍ່ commit</li>
+  <li>super_admin password ປ່ຽນ ຫຼັງ login</li>
+  <li><span class="ok">✓ code</span> self-registration ປິດ · locked/pending login block · server-side authz · XSS-safe wording</li>
+  <li>backup ทดสอบ download + restore (staging)</li>
+  <li>DB user ສິດ ສະເພาະ wh_db</li>
+</ul>
+
+<h2><span class="n">8</span>Pending — Active Directory <span class="pill">#3</span></h2>
+<p>ปัจจุบัน auth = local (email/password). IT ต้องการ sync ກັບ AD:</p>
+<ul>
+  <li><code>directorytree/ldaprecord-laravel</code> (LDAP bind) <b>ຫຼື</b> Azure AD SSO (SAML/OIDC — ຖ້า M365).</li>
+  <li>84 pre-created users = <b>email-matched → พร้อม</b> bind.</li>
+  <li><b>ຕ້ອງ ຂໍ້ມູນ IT:</b> AD host · base DN · service account · LDAP ຫຼື Azure.</li>
+</ul>
+
+<h2><span class="n">9</span>Verify after deploy</h2>
+<ol>
+  <li><code>https://wh.namtheun2.com/up</code> → 200</li>
+  <li>Login (super_admin) → Dashboard render</li>
+  <li>ເປີດ ແຕ່ລະ menu (Inventory / Borrow / Deposit / Request / DA / OGA / Expo / Settings)</li>
+  <li>PWA: Chrome → Install app (ต้อง HTTPS)</li>
+  <li>Settings › Backup → ສ້າງ 1 backup</li>
+  <li><code>php artisan about</code> → ກວດ env/cache</li>
+</ol>
+
+<h2><span class="n">10</span>Rollback</h2>
+<pre><code>git checkout &lt;prev-tag&gt; &amp;&amp; composer install --no-dev &amp;&amp; npm run build
+php artisan migrate:rollback --step=1     # ຖ້າ migration ໃໝ່ມีปัญหา
+# ຫຼື restore DB ຈาก backup (Settings › Backup)
+php artisan optimize:clear &amp;&amp; php artisan config:cache</code></pre>
+
+<footer>WH Deployment Guide · ສ້າງ ໂດย Claude Code · ປັບປຸງ ຕาม environment ຈິງ ກ່ອນໃຊ້.</footer>
+</div>
+</body>
+</html>
