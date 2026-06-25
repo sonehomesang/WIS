@@ -194,7 +194,11 @@ class BorrowService
         if ($r->borrow_type === 'new_inventory') {
             foreach ($r->items as $it) {
                 if ($it->item_id) {
-                    InventoryItem::whereKey($it->item_id)->decrement('quantity', $it->qty);
+                    $inv = InventoryItem::whereKey($it->item_id)->lockForUpdate()->first();
+                    if ($inv) {
+                        $this->assert($inv->quantity >= $it->qty, "ສະຕັອກ ບໍ່ພໍ ສຳລັບ {$it->item_name} (ມີ {$inv->quantity}, ຕ້ອງการ {$it->qty}).");
+                        $inv->decrement('quantity', $it->qty);
+                    }
                 }
             }
         }

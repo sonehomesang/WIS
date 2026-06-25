@@ -90,6 +90,19 @@ test('confirmTake decrements inventory, confirmReturn increments back', function
     expect($inv->refresh()->quantity)->toBe(10);
 });
 
+test('confirmTake is blocked when stock is insufficient (no negative inventory)', function () {
+    $inv = InventoryItem::create(['slug' => 'pump-y', 'name' => 'Pump Y', 'quantity' => 2]);
+    $r = draft(['items' => [['item_id' => $inv->id, 'item_name' => 'Pump Y', 'qty' => 5]]]);
+    $this->svc->transition($r, 'submit', $this->actor);
+    $this->svc->transition($r->refresh(), 'approve', $this->actor);
+
+    expect(fn () => $this->svc->transition($r->refresh(), 'confirmTake', $this->actor))
+        ->toThrow(ValidationException::class);
+
+    expect($inv->refresh()->quantity)->toBe(2);          // unchanged, not negative
+    expect($r->refresh()->status)->toBe('approved');     // transition rolled back
+});
+
 function activeRecord(): BorrowRecord
 {
     $svc = test()->svc;
