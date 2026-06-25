@@ -38,6 +38,19 @@ class LoginForm extends Form
             ]);
         }
 
+        // locked / not-yet-approved accounts may not enter even with valid creds
+        if (Auth::user()->status !== 'active') {
+            $status = Auth::user()->status;
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'form.email' => $status === 'pending'
+                    ? 'ບັນຊີ ລໍ ການອະນຸมัด — ຕິດຕໍ່ admin.'
+                    : 'ບັນຊີ ຖูกล็อก — ຕິດຕໍ່ admin.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

@@ -92,6 +92,8 @@ class Users extends Component
     public function save(): void
     {
         abort_unless(auth()->user()->can('users.'.($this->editingId ? 'edit' : 'create')), 403);
+        // only a super_admin may grant the super_admin role (it carries every permission)
+        abort_unless(auth()->user()->is_super_admin || $this->role !== 'super_admin', 403);
 
         $data = $this->validate([
             'display_name' => ['required', 'string', 'max:256'],
@@ -173,7 +175,8 @@ class Users extends Component
         return view('livewire.settings.users', [
             'users' => $users,
             'letters' => range('A', 'Z'),
-            'roles' => Role::orderBy('name')->pluck('name'),
+            'roles' => Role::when(! auth()->user()->is_super_admin, fn ($q) => $q->where('name', '!=', 'super_admin'))
+                ->orderBy('name')->pluck('name'),
             'units' => Unit::where('is_active', true)->orderBy('name')->get(),
             'suppliers' => Supplier::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'formDepartments' => $this->unit_id

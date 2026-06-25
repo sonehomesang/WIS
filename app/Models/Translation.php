@@ -41,6 +41,9 @@ class Translation extends Model
                 ->whereNotNull('target')->where('source', '!=', '')
                 ->whereColumn('target', '!=', 'source')   // identity rows = no-op, skip
                 ->pluck('target', 'source')->all();
+            // Strip any HTML from the admin-entered target before it is injected
+            // into rendered pages — prevents stored XSS via the replace middleware.
+            $rows = array_map(fn ($t) => strip_tags((string) $t), $rows);
             // longest source first so phrases win over their sub-words
             uksort($rows, fn ($a, $b) => mb_strlen($b) <=> mb_strlen($a));
 
