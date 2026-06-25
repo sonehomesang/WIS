@@ -61,6 +61,7 @@
                         'settings.audit' => 'Audit log',
                         'settings.reports' => 'Reports',
                         'settings.translations' => 'ແປ / ຄຳສັບ',
+                        'settings.backup' => 'Backup / Restore',
                         'settings.system' => 'System',
                         'profile' => 'Profile',
                     ];
@@ -86,6 +87,7 @@
                         'settings.audit' => 'ບັນທຶກການກະທຳ ທຸກ module + export',
                         'settings.reports' => 'ສະຫຼຸບ ຕາມ module + ຊ່ວງວັນທີ + export',
                         'settings.translations' => 'ແກ້ ຄຳສັບ ໃນແອັບ ເອງ (replace + term key)',
+                        'settings.backup' => 'backup/restore ຖານຂໍ້ມູນ (admin)',
                         'settings.system' => 'General · currency · VAT · letterhead',
                     ];
                     $pageSubtitle = $subtitleMap[$routeName] ?? null;

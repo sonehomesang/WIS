@@ -11,6 +11,7 @@
         ['label' => 'Reports', 'perm' => 'reports.view', 'route' => 'settings.reports'],
         ['label' => 'Notifications', 'perm' => 'settings.view', 'route' => 'settings.notifications'],
         ['label' => 'ແປ/ຄຳສັບ', 'perm' => 'settings.view', 'route' => 'settings.translations'],
+        ['label' => 'Backup', 'perm' => 'settings.view', 'route' => 'settings.backup'],
         ['label' => 'System', 'perm' => 'settings.view', 'route' => 'settings.system'],
     ];
 @endphp

@@ -5,6 +5,7 @@ use App\Livewire\Borrow\Show;
 use App\Livewire\Dashboard;
 use App\Livewire\Inventory\Index;
 use App\Livewire\Settings\Audit;
+use App\Livewire\Settings\Backup;
 use App\Livewire\Settings\Facilities;
 use App\Livewire\Settings\NotificationLog;
 use App\Livewire\Settings\Notifications;
@@ -249,5 +250,9 @@ Route::get('settings/reports', Reports::class)
 Route::get('settings/translations', Translations::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.translations');
+
+Route::get('settings/backup', Backup::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.backup');
 
 require __DIR__.'/auth.php';
