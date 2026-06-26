@@ -26,7 +26,7 @@
                     @foreach ($groups as $g)<option value="{{ $g->group }}">{{ $g->group }} ({{ $g->c }})</option>@endforeach
                 </select>
                 <label class="flex items-center gap-1.5 text-xs text-gray-600"><input type="checkbox" wire:model.live="changedOnly" class="rounded border-gray-300 text-sky-600" /> ສະເພาະ ທີ່ແກ້ແລ້ວ</label>
-                <span class="text-xs text-gray-400">ສະແດງ {{ count($rep) }} (ສູງສຸด {{ \App\Livewire\Settings\Translations::CAP }})</span>
+                <span class="text-xs text-gray-400">ໜ້າ {{ $repPage }}/{{ $repPages }} · ທັງໝົດ {{ $repTotal }} ຄຳ</span>
             </div>
 
             <div class="bg-white border border-gray-100 rounded-lg overflow-x-auto">
@@ -54,6 +54,13 @@
                         @endforelse
                     </tbody>
                 </table>
+                @if ($repPages > 1)
+                    <div class="flex items-center justify-center gap-1 p-2 border-t border-gray-50">
+                        <button wire:click="goRep({{ $repPage - 1 }})" @disabled($repPage <= 1) class="px-2.5 py-1 rounded border border-gray-200 text-gray-600 disabled:opacity-40 hover:bg-gray-50">‹ ກ່ອນ</button>
+                        <span class="px-2 text-xs text-gray-500">ໜ້າ {{ $repPage }} / {{ $repPages }}</span>
+                        <button wire:click="goRep({{ $repPage + 1 }})" @disabled($repPage >= $repPages) class="px-2.5 py-1 rounded border border-gray-200 text-gray-600 disabled:opacity-40 hover:bg-gray-50">ຖັດໄປ ›</button>
+                    </div>
+                @endif
                 @if ($editable)
                     <div class="flex flex-wrap items-center gap-2 p-3 border-t border-gray-50">
                         <button wire:click="addRep" class="text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-1.5 hover:bg-sky-50">+ ເພີ່ມ ຄູ່ຄຳ ເອງ</button>

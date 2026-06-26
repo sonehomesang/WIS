@@ -36,27 +36,27 @@
 
         {{-- Desktop table --}}
         <div class="hidden md:block bg-white border border-gray-100 rounded-lg mt-3 overflow-auto max-h-[calc(100vh-15rem)]">
-            <table class="w-full text-sm">
+            <table class="w-full text-sm table-fixed">
                 <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
-                        <th class="text-left font-semibold px-4 py-2 w-full">User</th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">Role</th>
-                        <th class="text-left font-semibold px-4 py-2">Unit / Dept</th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">Status</th>
-                        <th class="px-4 py-2 whitespace-nowrap"></th>
+                        <th class="text-left font-semibold px-4 py-2">User</th>
+                        <th class="text-left font-semibold px-4 py-2 w-32">Role</th>
+                        <th class="text-left font-semibold px-4 py-2 w-44">Unit / Dept</th>
+                        <th class="text-left font-semibold px-4 py-2 w-28">Status</th>
+                        <th class="px-4 py-2 w-24"></th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($users as $user)
                         <tr wire:key="u-{{ $user->id }}" class="border-t border-gray-100">
-                            <td class="px-4 py-2 w-full">
-                                <div class="font-medium text-gray-800">{{ $user->display_name }}
+                            <td class="px-4 py-2">
+                                <div class="font-medium text-gray-800 truncate">{{ $user->display_name }}
                                     @if ($user->is_super_admin)<span class="text-[10px] text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 ml-1">super</span>@endif
                                 </div>
-                                <div class="text-xs text-gray-400">{{ $user->email }}</div>
+                                <div class="text-xs text-gray-400 truncate">{{ $user->email }}</div>
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap"><span class="text-xs bg-gray-100 text-gray-600 rounded px-2 py-0.5">{{ $user->roles->first()?->name ?? '—' }}</span></td>
-                            <td class="px-4 py-2 text-gray-600">{{ $user->unit?->name ?? '—' }}@if ($user->department) / {{ $user->department->name }}@endif</td>
+                            <td class="px-4 py-2 text-gray-600 truncate" title="{{ $user->unit?->name }}@if ($user->department) / {{ $user->department->name }}@endif">{{ $user->unit?->name ?? '—' }}@if ($user->department) / {{ $user->department->name }}@endif</td>
                             <td class="px-4 py-2 whitespace-nowrap"><span class="text-xs rounded px-2 py-0.5 {{ $badge($user->status) }}">{{ $user->status }}</span></td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
                                 @if ($user->status === 'pending') @can('users.activate')

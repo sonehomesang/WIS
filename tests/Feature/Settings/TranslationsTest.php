@@ -29,6 +29,22 @@ test('longer source wins over shorter (ordering)', function () {
     expect(Translation::applyReplacements('ໃບເບີກ ວັດສະດຸ'))->toBe('BBB');
 });
 
+test('replace list paginates 10 per page', function () {
+    for ($n = 1; $n <= 25; $n++) {
+        Translation::create(['type' => 'replace', 'group' => 'g', 'source' => "s{$n}", 'target' => "t{$n}"]);
+    }
+
+    Livewire::test(TranslationsPage::class)
+        ->assertSet('repTotal', 25)
+        ->assertSet('repPages', 3)
+        ->assertCount('rep', 10)        // page 1
+        ->call('goRep', 3)
+        ->assertSet('repPage', 3)
+        ->assertCount('rep', 5)         // last page remainder
+        ->call('goRep', 99)             // out of range → clamped to last page
+        ->assertSet('repPage', 3);
+});
+
 test('term override resolves with fallback', function () {
     expect(Translation::term('status.draft', 'ຮ່າງ'))->toBe('ຮ່າງ');
     Translation::create(['type' => 'term', 'source' => 'status.draft', 'target' => 'ກຳລັງເຮັດ']);
