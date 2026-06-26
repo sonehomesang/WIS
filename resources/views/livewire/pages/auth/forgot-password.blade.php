@@ -37,25 +37,29 @@ new #[Layout('layouts.guest')] class extends Component
 }; ?>
 
 <div>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
-    </div>
+    <h1 class="text-lg font-semibold text-gray-800">ລືມ ລະຫັດຜ່ານ?</h1>
+    <p class="text-sm text-gray-500 mt-1 mb-5">
+        ປ້ອນ ອີເມວ ຂອງ ທ່ານ — ລະບົບ ຈະ ສົ່ງ ລິ້ງ ຕັ້ງ ລະຫັດຜ່ານ ໃໝ່ ໄປ ໃຫ້.
+    </p>
 
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form wire:submit="sendPasswordResetLink">
+    <form wire:submit="sendPasswordResetLink" class="space-y-4">
         <!-- Email Address -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="email" id="email" class="block mt-1 w-full" type="email" name="email" required autofocus />
+            <label for="email" class="block text-sm font-medium text-gray-600 mb-1">ອີເມວ</label>
+            <x-text-input wire:model="email" id="email" class="block w-full" type="email" name="email" required autofocus placeholder="you@namtheun2.com" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Email Password Reset Link') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" wire:loading.attr="disabled"
+                class="w-full inline-flex items-center justify-center gap-2 h-11 rounded-lg bg-sky-700 text-white text-sm font-semibold hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition disabled:opacity-60">
+            ສົ່ງ ລິ້ງ ຕັ້ງ ລະຫັດຜ່ານ ໃໝ່
+        </button>
     </form>
+
+    <div class="mt-6 text-center">
+        <a href="{{ route('login') }}" wire:navigate class="text-sm text-sky-700 hover:text-sky-900 hover:underline">← ກັບ ໄປ ໜ້າ login</a>
+    </div>
 </div>

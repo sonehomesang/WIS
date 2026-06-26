@@ -28,7 +28,8 @@ use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome');
+// ໜ້າ ທຳອິດ: login ແລ້ວ → dashboard, ຍັງ → ໜ້າ login (ບໍ່ ມີ ໜ້າ welcome ເກົ່າ ແລ້ວ).
+Route::get('/', fn () => redirect()->route(auth()->check() ? 'dashboard' : 'login'))->name('home');
 
 // PWA manifest — dynamic so it reflects the General › app name setting.
 Route::get('manifest.webmanifest', function () {

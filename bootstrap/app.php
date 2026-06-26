@@ -14,6 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Admin wording overrides applied to rendered HTML (Phase 6.11).
         $middleware->appendToGroup('web', ReplaceTerms::class);
+
+        // Trust reverse-proxy headers (X-Forwarded-Proto/Host) so HTTPS is detected
+        // behind cloudflared tunnel / nginx — otherwise asset URLs come out as http://
+        // on an https page and get blocked as mixed content (broken CSS on mobile).
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
