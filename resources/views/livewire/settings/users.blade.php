@@ -163,6 +163,19 @@
                             @foreach ($formDepartments as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach
                         </select>
                     </div>
+                    <div class="md:col-span-2 border-t border-gray-100 pt-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ສິດ ເພີ່ມເຕີມ ສະເພາະ ບຸກຄົນ</label>
+                        <p class="text-xs text-gray-400 mb-2">ໝາຍ ເມນູ ທີ່ ຢາກ ເປີດ ໃຫ້ ຄົນ ນີ້ ເຂົ້າເຖິງ (ເບິ່ງ + ເພີ່ມ + ແກ້) ນອກ ເໜືອ ຈາກ ບົດບາດ.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                            @foreach ($grantableMenus as $key => $label)
+                                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox" value="{{ $key }}" wire:model="extraMenus" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500">
+                                    <span>{{ $label }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+
                     @if ($role === 'supplier')
                         <div class="md:col-span-2">
                             <label class="block text-sm text-gray-600 mb-1">Supplier <span class="text-red-500">*</span> <span class="text-xs text-gray-400">(ຜູກ user ກັບ supplier — portal scope)</span></label>

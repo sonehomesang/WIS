@@ -45,6 +45,29 @@ class Users extends Component
 
     public string $status = 'active';
 
+    /** ສິດ ເພີ່ມເຕີມ ລາຍ ບຸກຄົນ — menu keys ທີ່ ເປີດ ໃຫ້ ໂດຍກົງ (ນອກ ເໜືອ ບົດບາດ). */
+    public array $extraMenus = [];
+
+    /**
+     * ເມນູ ປະຕິບັດການ ທີ່ admin ເປີດ ໃຫ້ ລາຍ ບຸກຄົນ ໄດ້ (ເບິ່ງ+ເພີ່ມ+ແກ້).
+     * ບໍ່ ລວມ ເມນູ admin (users/roles/settings/audit/reports) — ກັນ ການ ຍົກ ສິດ ຕົນເອງ.
+     *
+     * @return array<string,string>
+     */
+    public static function grantableMenus(): array
+    {
+        return [
+            'inventory' => 'WH Inventories',
+            'borrow' => 'Borrowing Material/Tools',
+            'deposit' => 'Deposit Material/Equipment',
+            'request' => 'Request Material',
+            'catalog' => 'Shops Material',
+            'da' => 'DA Claims',
+            'oga' => 'OGA',
+            'expo' => 'Expo Info',
+        ];
+    }
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('users.view'), 403);
@@ -85,6 +108,14 @@ class Users extends Component
         $this->department_id = $user->department_id;
         $this->supplier_id = $user->supplier_id;
         $this->status = $user->status;
+
+        // ໂຫຼດ ສິດ ເພີ່ມເຕີມ ໂດຍກົງ (ບໍ່ ນັບ ສິດ ທີ່ ມາ ຈาก ບົດບາດ)
+        $direct = $user->getDirectPermissions()->pluck('name')->all();
+        $this->extraMenus = array_values(array_filter(
+            array_keys(self::grantableMenus()),
+            fn ($m) => in_array("{$m}.view", $direct, true),
+        ));
+
         $this->resetValidation();
         $this->showModal = true;
     }
@@ -129,6 +160,16 @@ class Users extends Component
 
         $user->syncRoles([$this->role]);
 
+        // ສິດ ເພີ່ມເຕີມ ລາຍ ບຸກຄົນ (ໂດຍກົງ): view+create+edit ຕໍ່ ເມນູ ທີ່ ໝາຍ.
+        // intersect ກັບ grantable → ກັນ ການ ໃຫ້ ສິດ admin (escalation).
+        $directPerms = [];
+        foreach (array_intersect($this->extraMenus, array_keys(self::grantableMenus())) as $m) {
+            foreach (['view', 'create', 'edit'] as $a) {
+                $directPerms[] = "{$m}.{$a}";
+            }
+        }
+        $user->syncPermissions($directPerms);
+
         $this->showModal = false;
         $this->dispatch('saved');
     }
@@ -158,6 +199,7 @@ class Users extends Component
         $this->department_id = null;
         $this->supplier_id = null;
         $this->status = 'active';
+        $this->extraMenus = [];
         $this->resetValidation();
     }
 
@@ -177,6 +219,7 @@ class Users extends Component
             'letters' => range('A', 'Z'),
             'roles' => Role::when(! auth()->user()->is_super_admin, fn ($q) => $q->where('name', '!=', 'super_admin'))
                 ->orderBy('name')->pluck('name'),
+            'grantableMenus' => self::grantableMenus(),
             'units' => Unit::where('is_active', true)->orderBy('name')->get(),
             'suppliers' => Supplier::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'formDepartments' => $this->unit_id

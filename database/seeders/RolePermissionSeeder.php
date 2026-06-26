@@ -107,7 +107,9 @@ class RolePermissionSeeder extends Seeder
         foreach (['borrow', 'deposit', 'request'] as $m) {
             $requester[$m] = 'viewCreateEditDeactivate';
         }
-        foreach (['inventory', 'da', 'oga', 'expo', 'catalog'] as $m) {
+        // ຜູ້ໃຊ້ທົ່ວໄປ ເຫັນ ສະເພาະ: inventory + catalog (Shops). DA/OGA/Expo ເຊື່ອງ
+        // ໂດຍ default — admin ເປີດ ໃຫ້ ລາຍ ບຸກຄົນ ໄດ້ ຜ່ານ ສິດ ໂດຍກົງ (Settings › Users).
+        foreach (['inventory', 'catalog'] as $m) {
             $requester[$m] = 'viewOnly';
         }
         $requester['notifications'] = 'viewOnly';

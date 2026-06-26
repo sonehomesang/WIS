@@ -42,8 +42,8 @@
         {{-- Brand --}}
         <div class="flex items-center justify-between h-16 px-4 border-b border-gray-800">
             <a href="{{ route('dashboard') }}" wire:navigate class="leading-tight">
-                <div class="text-lg font-semibold text-white">WIS</div>
-                <div class="text-[11px] text-gray-400">Warehouse Info System</div>
+                <div class="text-lg font-semibold text-white">WH</div>
+                <div class="text-[11px] text-gray-400">Warehouse · Nam Theun 2</div>
             </a>
             <button @click="open = false" class="md:hidden p-2 min-h-[44px] min-w-[44px] text-gray-400 hover:text-white" aria-label="Close menu">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
