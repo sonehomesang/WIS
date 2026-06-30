@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ReplaceTerms;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Admin wording overrides applied to rendered HTML (Phase 6.11).
         $middleware->appendToGroup('web', ReplaceTerms::class);
+
+        // HTTP security headers on every web response (clickjacking/MIME/HSTS/CSP).
+        $middleware->appendToGroup('web', SecurityHeaders::class);
 
         // Trust reverse-proxy headers (X-Forwarded-Proto/Host) so HTTPS is detected
         // behind cloudflared tunnel / nginx — otherwise asset URLs come out as http://
