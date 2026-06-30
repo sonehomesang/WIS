@@ -7,6 +7,8 @@ use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\Unit;
 use App\Models\User;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -32,9 +34,12 @@ class Users extends Component
 
     public string $email = '';
 
-    public string $password = '';
-
     public string $role = '';
+
+    /** ລິ້ງ ຕັ້ງ ລະຫັດ ທີ່ ສ້າງ ໃໝ່ (ໃຫ້ admin ກ໋ອບປີ້ ສົ່ງ ມື ຖ້າ ອີເມລ ຍັງ ບໍ່ ພ້ອມ). */
+    public string $setPasswordLink = '';
+
+    public string $setLinkEmail = '';
 
     public ?int $unit_id = null;
 
@@ -102,7 +107,6 @@ class Users extends Component
         $this->editingId = $user->id;
         $this->display_name = $user->display_name;
         $this->email = $user->email;
-        $this->password = '';
         $this->role = $user->roles->first()?->name ?? '';
         $this->unit_id = $user->unit_id;
         $this->department_id = $user->department_id;
@@ -129,7 +133,7 @@ class Users extends Component
         $data = $this->validate([
             'display_name' => ['required', 'string', 'max:256'],
             'email' => ['required', 'email', 'max:256', Rule::unique('users', 'email')->ignore($this->editingId)],
-            'password' => $this->editingId ? ['nullable', 'min:8'] : ['required', 'min:8'],
+            // ບໍ່ ມີ ຊ່ອງ password — ຜູ້ໃຊ້ ຕັ້ງ ເອງ ຜ່ານ ລິ້ງ (ບໍ່ ມີ ໃຜ ຮູ້ ລະຫັດ).
             'role' => ['required', 'exists:roles,name'],
             'unit_id' => ['nullable', 'exists:units,id'],
             'department_id' => ['nullable', 'exists:departments,id'],
@@ -147,15 +151,17 @@ class Users extends Component
             'status' => $data['status'],
         ];
 
+        $isNew = ! $this->editingId;
         if ($this->editingId) {
             $user = User::findOrFail($this->editingId);
             $user->fill($attrs);
-            if (filled($this->password)) {
-                $user->password = $this->password;   // 'hashed' cast hashes on save
-            }
             $user->save();
         } else {
-            $user = User::create($attrs + ['password' => $this->password, 'auth_provider' => 'password']);
+            // ລະຫັດ ສຸ່ມ ທີ່ ໃຊ້ login ບໍ່ ໄດ້ — ຜູ້ໃຊ້ ຕັ້ງ ເອງ ຜ່ານ ລິ້ງ.
+            $user = User::create($attrs + [
+                'password' => bcrypt(Str::random(40)),
+                'auth_provider' => 'password',
+            ]);
         }
 
         $user->syncRoles([$this->role]);
@@ -172,6 +178,35 @@ class Users extends Component
 
         $this->showModal = false;
         $this->dispatch('saved');
+
+        // ບັນຊີ ໃໝ່ → ສ້າງ ລິ້ງ ຕັ້ງ ລະຫັດ + ສົ່ງ ອີເມລ (ຖ້າ SMTP ພ້ອມ).
+        if ($isNew && config('features.local_auth')) {
+            $this->issueSetPasswordLink($user);
+        }
+    }
+
+    /** ສ້າງ ລິ້ງ ຕັ້ງ-ລະຫັດ (ໝົດ ອາຍຸ 60 ນາທີ) + ສົ່ງ ອີເມລ; ເກັບ ລິ້ງ ໄວ້ ໃຫ້ admin ກ໋ອບປີ້. */
+    protected function issueSetPasswordLink(User $user): void
+    {
+        $token = Password::createToken($user);
+        $this->setLinkEmail = $user->email;
+        $this->setPasswordLink = route('password.reset', ['token' => $token]).'?email='.urlencode($user->email);
+        // ສົ່ງ notification ດ້ວຍ token ດຽວ ກັນ (ສົ່ງ ຈິງ ຖ້າ MAIL ຕັ້ງ; ບໍ່ ດັ່ງນັ້ນ ລົງ log).
+        $user->sendPasswordResetNotification($token);
+    }
+
+    /** ປຸ່ມ "ສົ່ງ/ກ໋ອບປີ້ ລິ້ງ ຕັ້ງ ລະຫັດ" ຕໍ່ ຜູ້ໃຊ້ (resend). */
+    public function linkFor(int $id): void
+    {
+        abort_unless(auth()->user()->can('users.edit'), 403);
+        abort_unless(config('features.local_auth'), 403);
+        $this->issueSetPasswordLink(User::findOrFail($id));
+    }
+
+    public function closeLink(): void
+    {
+        $this->setPasswordLink = '';
+        $this->setLinkEmail = '';
     }
 
     public function approve(int $id): void
@@ -193,13 +228,14 @@ class Users extends Component
         $this->editingId = null;
         $this->display_name = '';
         $this->email = '';
-        $this->password = '';
         $this->role = '';
         $this->unit_id = null;
         $this->department_id = null;
         $this->supplier_id = null;
         $this->status = 'active';
         $this->extraMenus = [];
+        $this->setPasswordLink = '';
+        $this->setLinkEmail = '';
         $this->resetValidation();
     }
 

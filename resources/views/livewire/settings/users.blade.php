@@ -34,6 +34,24 @@
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
              class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
+        {{-- ລິ້ງ ຕັ້ງ ລະຫັດ (ຫຼັງ ສ້າງ user / ກົດ ປຸ່ມ 🔑) — ກ໋ອບປີ້ ສົ່ງ ມື ໄດ້ ຖ້າ ອີເມລ ຍັງ ບໍ່ ພ້ອມ --}}
+        @if ($setPasswordLink)
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3 text-sm" x-data="{ copied: false }" wire:key="setlink">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="font-medium text-amber-800">ລິ້ງ ຕັ້ງ ລະຫັດ — {{ $setLinkEmail }}</span>
+                    <button wire:click="closeLink" class="text-amber-700 hover:text-amber-900 text-xs">ປິດ ✕</button>
+                </div>
+                <p class="text-xs text-amber-700 mb-2">ໝົດ ອາຍຸ 60 ນາທີ · ສົ່ງ ອີເມລ ແລ້ວ (ຖ້າ SMTP ພ້ອມ) · ຫຼື ກ໋ອບປີ້ ລິ້ງ ນີ້ ສົ່ງ ໃຫ້ ຜູ້ໃຊ້ ໂດຍ ກົງ:</p>
+                <div class="flex gap-2">
+                    <input type="text" readonly value="{{ $setPasswordLink }}" x-ref="lnk" class="flex-1 rounded border-amber-200 text-xs bg-white" onclick="this.select()" />
+                    <button type="button" class="text-xs text-white bg-amber-600 rounded px-3 py-1.5 hover:bg-amber-700 whitespace-nowrap"
+                            @click="navigator.clipboard.writeText($refs.lnk.value); copied=true; setTimeout(()=>copied=false,1500)">
+                        <span x-show="!copied">ກ໋ອບປີ້</span><span x-show="copied" x-cloak>✓ ແລ້ວ</span>
+                    </button>
+                </div>
+            </div>
+        @endif
+
         {{-- Desktop table --}}
         <div class="hidden md:block bg-white border border-gray-100 rounded-lg mt-3 overflow-auto max-h-[calc(100vh-15rem)]">
             <table class="w-full text-sm table-fixed">
@@ -70,6 +88,11 @@
                                     </button>
                                 @endcan
                                 @can('users.edit')
+                                    @if (config('features.local_auth'))
+                                        <button wire:click="linkFor({{ $user->id }})" class="hover:text-sky-600 p-1" aria-label="Set-password link" title="ລິ້ງ ຕັ້ງ ລະຫັດ">
+                                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" /></svg>
+                                        </button>
+                                    @endif
                                     <button wire:click="editUser({{ $user->id }})" class="hover:text-gray-800 p-1" aria-label="Edit" title="Edit">
                                         <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
                                     </button>
@@ -97,6 +120,7 @@
                         @if ($user->status === 'pending') @can('users.activate')<button wire:click="approve({{ $user->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Approve</button>@endcan @endif
                         @can('users.deactivate')<button wire:click="toggleLock({{ $user->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">{{ $user->status === 'locked' ? 'Unlock' : 'Lock' }}</button>@endcan
                         @can('users.edit')<button wire:click="editUser({{ $user->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Edit</button>@endcan
+                        @can('users.edit')@if (config('features.local_auth'))<button wire:click="linkFor({{ $user->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">🔑 ລິ້ງ</button>@endif@endcan
                     </div>
                 </div>
             @empty
@@ -128,10 +152,12 @@
                         <input type="email" wire:model="email" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
                         @error('email')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">Password @if ($editingId)<span class="text-xs text-gray-400">(ວ່າງ = ບໍ່ປ່ຽນ)</span>@else<span class="text-red-500">*</span>@endif</label>
-                        <input type="password" wire:model="password" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
-                        @error('password')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    <div class="md:col-span-2 text-xs text-gray-500 bg-sky-50 border border-sky-100 rounded-md px-3 py-2">
+                        @if ($editingId)
+                            ການ ຕັ້ງ ລະຫັດ ເຮັດ ໂດຍ ຜູ້ໃຊ້ ເອງ ຜ່ານ ລິ້ງ — ກົດ ປຸ່ມ 🔑 ໃນ ຕາຕະລາງ ເພື່ອ ສ້າງ/ສົ່ງ ລິ້ງ ໃໝ່.
+                        @else
+                            ບໍ່ ຕ້ອງ ຕັ້ງ ລະຫັດ — ຫຼັງ ບັນທຶກ, ລະບົບ ຈະ ສ້າງ <b>ລິ້ງ ຕັ້ງ ລະຫັດ</b> (ໝົດ ອາຍຸ 60 ນາທີ) ໃຫ້ ຜູ້ໃຊ້ ຕັ້ງ ເອງ + ສົ່ງ ອີເມລ.
+                        @endif
                     </div>
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">Role <span class="text-red-500">*</span></label>

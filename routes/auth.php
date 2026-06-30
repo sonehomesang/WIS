@@ -12,13 +12,16 @@ Route::middleware('guest')->group(function () {
     Volt::route('login', 'pages.auth.login')
         ->name('login');
 
-    Volt::route('forgot-password', 'pages.auth.forgot-password')
-        ->middleware('throttle:6,1')
-        ->name('password.request');
+    // Local password set/reset — disabled when LDAP/AD takes over (LOCAL_AUTH=false).
+    if (config('features.local_auth')) {
+        Volt::route('forgot-password', 'pages.auth.forgot-password')
+            ->middleware('throttle:6,1')
+            ->name('password.request');
 
-    Volt::route('reset-password/{token}', 'pages.auth.reset-password')
-        ->middleware('throttle:6,1')
-        ->name('password.reset');
+        Volt::route('reset-password/{token}', 'pages.auth.reset-password')
+            ->middleware('throttle:6,1')
+            ->name('password.reset');
+    }
 });
 
 Route::middleware('auth')->group(function () {
