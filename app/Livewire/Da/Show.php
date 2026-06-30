@@ -60,7 +60,13 @@ class Show extends Component
 
     public function mount(DiscrepancyAdvice $record): void
     {
-        abort_unless(auth()->user()->can('da.view'), 403);
+        $u = auth()->user();
+        abort_unless($u->can('da.view'), 403);
+        // ownership scope — mirrors Da\Index (non-privileged see only what they raised)
+        abort_unless(
+            $u->is_super_admin || $u->can('da.edit') || $u->can('da.activate') || $record->raised_by === $u->id,
+            403
+        );
         $this->record = $record;
     }
 

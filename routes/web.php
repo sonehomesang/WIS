@@ -70,7 +70,15 @@ Route::get('borrow/create', Create::class)
     ->name('borrow.create');
 
 Route::get('borrow/{record}/pdf', function (BorrowRecord $record) {
-    abort_unless(auth()->user()->can('borrow.view'), 403);
+    $u = auth()->user();
+    abort_unless($u->can('borrow.view'), 403);
+    // ownership scope — mirrors Borrow\Show::canSee() (ກັນ IDOR: download ຂອງ ຄົນ ອື່ນ)
+    $email = mb_strtolower($u->email);
+    abort_unless(
+        $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff'])
+        || $record->borrower_user_id === $u->id || $record->approver_email === $email || $record->acknowledge_email === $email,
+        403
+    );
     $record->load(['items.inventoryItem.primaryPhoto', 'items.photos', 'unit', 'department']);
 
     return Pdf::loadView('borrow.pdf', ['record' => $record])
@@ -91,7 +99,13 @@ Route::get('deposit/create', App\Livewire\Deposit\Create::class)
     ->name('deposit.create');
 
 Route::get('deposit/{record}/pdf', function (DepositRecord $record) {
-    abort_unless(auth()->user()->can('deposit.view'), 403);
+    $u = auth()->user();
+    abort_unless($u->can('deposit.view'), 403);
+    // ownership scope — mirrors Deposit\Show::mount()
+    abort_unless(
+        $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']) || $record->owner_user_id === $u->id,
+        403
+    );
     $record->load(['items.photos', 'unit', 'department', 'history']);
 
     return Pdf::loadView('deposit.pdf', ['record' => $record])
@@ -117,7 +131,15 @@ Route::get('request/create', App\Livewire\Request\Create::class)
     ->name('request.create');
 
 Route::get('request/{record}/pdf', function (MaterialRequest $record) {
-    abort_unless(auth()->user()->can('request.view'), 403);
+    $u = auth()->user();
+    abort_unless($u->can('request.view'), 403);
+    // ownership scope — mirrors Request\Show::canSee()
+    abort_unless(
+        $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff'])
+        || $record->requester_user_id === $u->id || $record->approver_user_id === $u->id
+        || ($u->hasRole('supplier') && $u->supplier_id && $record->assigned_supplier_id === $u->supplier_id),
+        403
+    );
     $record->load(['items', 'supplier', 'unit', 'department', 'history']);
 
     return Pdf::loadView('request.pdf', ['record' => $record])
@@ -138,7 +160,13 @@ Route::get('da/create', App\Livewire\Da\Create::class)
     ->name('da.create');
 
 Route::get('da/{record}/pdf', function (DiscrepancyAdvice $record) {
-    abort_unless(auth()->user()->can('da.view'), 403);
+    $u = auth()->user();
+    abort_unless($u->can('da.view'), 403);
+    // ownership scope — privileged (warehouse/purchasing/leader) or the raiser only
+    abort_unless(
+        $u->is_super_admin || $u->can('da.edit') || $u->can('da.activate') || $record->raised_by === $u->id,
+        403
+    );
     $record->load(['items', 'photos', 'supplier', 'history']);
 
     return Pdf::loadView('da.pdf', ['record' => $record])
@@ -159,7 +187,12 @@ Route::get('oga/create', App\Livewire\Oga\Create::class)
     ->name('oga.create');
 
 Route::get('oga/{record}/pdf', function (OutwardsGoodsAdvice $record) {
-    abort_unless(auth()->user()->can('oga.view'), 403);
+    $u = auth()->user();
+    abort_unless($u->can('oga.view'), 403);
+    // ownership scope — mirrors Oga\Show::mount() (suppliers limited to their own)
+    if ($u->hasRole('supplier') && ! $u->is_super_admin && ! $u->hasAnyRole(['admin', 'warehouse_staff'])) {
+        abort_unless($u->supplier_id && $record->supplier_id === $u->supplier_id, 403);
+    }
     $record->load(['items', 'photos', 'supplier', 'history']);
 
     return Pdf::loadView('oga.pdf', ['record' => $record])
