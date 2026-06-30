@@ -31,7 +31,10 @@ class BackupService
             ->run([
                 $this->bin('mysqldump'),
                 '-h', $db['host'], '-P', (string) $db['port'], '-u', $db['username'],
-                '--single-transaction', '--no-tablespaces', '--routines', '--skip-lock-tables',
+                // --skip-routines: ແອັບ ບໍ່ ມີ stored function/procedure; ການ dump routines
+                // ສັ່ງ SHOW FUNCTION STATUS ທີ່ ລົ້ມ ໃນ MariaDB ບາງ ເຄື່ອງ (mysql.proc / err 1728).
+                '--single-transaction', '--no-tablespaces', '--skip-routines', '--skip-lock-tables',
+                '--default-character-set=utf8mb4',
                 $db['database'],
             ]);
 
