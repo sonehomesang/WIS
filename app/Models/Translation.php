@@ -105,7 +105,8 @@ class Translation extends Model
             if ($part[0] === '<' && str_ends_with($part, '>')) {
                 $out .= preg_replace_callback(
                     '/\b('.$attrs.')="([^"]*)"/i',
-                    fn ($m) => $m[1].'="'.strtr($m[2], $map).'"',
+                    // encode any " a replacement target might introduce → no attribute breakout
+                    fn ($m) => $m[1].'="'.str_replace('"', '&quot;', strtr($m[2], $map)).'"',
                     $part
                 );
             } else {

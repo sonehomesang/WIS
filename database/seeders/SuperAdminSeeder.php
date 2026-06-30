@@ -15,7 +15,12 @@ class SuperAdminSeeder extends Seeder
 {
     public function run(): void
     {
-        $password = env('SUPER_ADMIN_PASSWORD', 'ChangeMe123!');
+        // ບໍ່ ມີ default ຄາດເດົາ ໄດ້ — ຖ້າ env ບໍ່ ຕັ້ງ → ສ້າງ ລະຫัດ ສຸ່ມ ແລ້ວ ສະແດງ ເທື່ອ ດຽວ.
+        $password = (string) env('SUPER_ADMIN_PASSWORD');
+        if (blank($password)) {
+            $password = Str::password(16);
+            $this->command?->warn("SUPER_ADMIN_PASSWORD not set — generated a random one: {$password}");
+        }
 
         $supers = [
             ['email' => 'khamsone@namtheun2.com', 'display_name' => 'Khamsone (NT2)'],
