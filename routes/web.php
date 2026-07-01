@@ -203,6 +203,11 @@ Route::get('oga/{record}', App\Livewire\Oga\Show::class)
     ->middleware(['auth', 'verified'])
     ->name('oga.show');
 
+// ── Equipment & Tools (ທະບຽນ ເຄື່ອງ + ກວດກາ/ນຳໃຊ້/ບຳລຸງ) ──
+Route::get('equipment', App\Livewire\Equipment\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('equipment');
+
 // ── Expo Info (mini-CRM) — Phase 6.9 ──
 Route::get('expo', App\Livewire\Expo\Index::class)
     ->middleware(['auth', 'verified'])

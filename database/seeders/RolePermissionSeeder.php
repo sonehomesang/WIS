@@ -16,7 +16,7 @@ class RolePermissionSeeder extends Seeder
     /** @var list<string> */
     private array $menus = [
         'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo',
-        'catalog', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
+        'catalog', 'equipment', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
         'users', 'roles', 'settings', 'reports', 'audit', 'notifications',
     ];
 
@@ -85,7 +85,7 @@ class RolePermissionSeeder extends Seeder
         $admin['roles'] = 'viewOnly';
 
         $warehouse = $this->allMenus('viewOnly');
-        foreach (['inventory', 'borrow', 'deposit', 'da', 'oga', 'expo'] as $m) {
+        foreach (['inventory', 'borrow', 'deposit', 'da', 'oga', 'expo', 'equipment'] as $m) {
             $warehouse[$m] = 'adminPerm';
         }
         foreach (['roles', 'settings', 'audit'] as $m) {
@@ -96,7 +96,7 @@ class RolePermissionSeeder extends Seeder
         foreach (['borrow', 'deposit', 'request', 'da'] as $m) {
             $approver[$m] = 'viewCreateActivate';
         }
-        foreach (['users', 'roles', 'settings', 'audit'] as $m) {
+        foreach (['users', 'roles', 'settings', 'audit', 'equipment'] as $m) {
             $approver[$m] = 'allFalse';
         }
 

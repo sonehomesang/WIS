@@ -67,6 +67,7 @@ class Users extends Component
             'deposit' => 'Deposit Material/Equipment',
             'request' => 'Request Material',
             'catalog' => 'Shops Material',
+            'equipment' => 'Equipment & Tools',
             'da' => 'DA Claims',
             'oga' => 'OGA',
             'expo' => 'Expo Info',
