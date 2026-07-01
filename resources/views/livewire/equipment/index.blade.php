@@ -8,7 +8,7 @@
     $statusLabel = ['active' => 'ໃຊ້ງານ', 'repair' => 'ຊ່ອມແປງ', 'retired' => 'ຢຸດໃຊ້'];
 @endphp
 
-<div class="pb-6" x-data="{ tab: 'register' }">
+<div class="pb-6" x-data="{ tab: 'register', bigImg: null }">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
@@ -53,6 +53,7 @@
                             <th class="text-left font-semibold px-3 py-2 w-24">ລະຫັດເຄື່ອງ</th>
                             <th class="text-left font-semibold px-3 py-2 w-28">ທະບຽນຊັບສິນ</th>
                             <th class="text-left font-semibold px-3 py-2">ຊື່ ເຄື່ອງ</th>
+                            <th class="text-left font-semibold px-3 py-2 w-24">ຮູບ</th>
                             <th class="text-left font-semibold px-3 py-2 w-28">ປະເພດ</th>
                             <th class="text-left font-semibold px-3 py-2 w-36">ຍີ່ຫໍ້ / ຮຸ່ນ</th>
                             <th class="text-left font-semibold px-3 py-2 w-28">Serial</th>
@@ -68,6 +69,14 @@
                                 <td class="px-3 py-2 text-gray-500 whitespace-nowrap">{{ $e->asset_code }}</td>
                                 <td class="px-3 py-2 text-gray-600 truncate">{{ $e->fixed_asset_no ?? '—' }}</td>
                                 <td class="px-3 py-2 font-medium text-gray-800 truncate">{{ $e->name }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap">
+                                    @forelse ($e->photos->take(3) as $p)
+                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($p->path) }}" @click="bigImg='{{ \Illuminate\Support\Facades\Storage::url($p->path) }}'"
+                                             class="inline-block w-8 h-8 rounded object-cover border border-gray-200 cursor-pointer hover:ring-2 hover:ring-sky-400 mr-0.5" alt="ຮູບ ເຄື່ອງ" />
+                                    @empty
+                                        <span class="text-gray-300 text-xs">—</span>
+                                    @endforelse
+                                </td>
                                 <td class="px-3 py-2 truncate">{{ $e->category ?? '—' }}</td>
                                 <td class="px-3 py-2 truncate">{{ $e->brand_model ?? '—' }}</td>
                                 <td class="px-3 py-2 text-gray-500 truncate">{{ $e->serial_no ?? '—' }}</td>
@@ -88,7 +97,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="10" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ເຄື່ອງ — ກົດ "+ ເພີ່ມ ເຄື່ອງ"</td></tr>
+                            <tr><td colspan="11" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ເຄື່ອງ — ກົດ "+ ເພີ່ມ ເຄື່ອງ"</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -191,6 +200,33 @@
                         <label class="block text-sm text-gray-600 mb-1">ໝາຍເຫດ</label>
                         <textarea wire:model="notes" rows="2" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"></textarea>
                     </div>
+
+                    {{-- ຮູບ (ສູງສຸດ 3 · ກ້ອງ ຫຼື ແກເລີຣີ) --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm text-gray-600 mb-1">ຮູບ <span class="text-xs text-gray-400">(ສູງສຸດ 3 · 📷 ຖ່າຍ ຫຼື ເລືອກ ຈາກ ແກເລີຣີ · ກົດ ຮູບ ເພື່ອ ເບິ່ງ ໃຫຍ່)</span></label>
+                        @if (count($existingPhotos))
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                @foreach ($existingPhotos as $p)
+                                    <div class="relative">
+                                        <img src="{{ $p['url'] }}" @click="bigImg='{{ $p['url'] }}'" class="w-16 h-16 rounded object-cover border border-gray-200 cursor-pointer" alt="ຮູບ" />
+                                        <button type="button" wire:click="removePhoto({{ $p['id'] }})" wire:confirm="ລຶບ ຮູບ ນີ້?" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs leading-none flex items-center justify-center" aria-label="ລຶບ ຮູບ">×</button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                        @if (count($newPhotos))
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                @foreach ($newPhotos as $ph)
+                                    <img src="{{ $ph->temporaryUrl() }}" class="w-16 h-16 rounded object-cover border border-sky-200" alt="ຮູບ ໃໝ່" />
+                                @endforeach
+                            </div>
+                        @endif
+                        <input type="file" wire:model="newPhotos" multiple accept="image/*"
+                               class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-sky-50 file:text-sky-700 file:min-h-[40px]" />
+                        <div wire:loading wire:target="newPhotos" class="text-xs text-gray-400 mt-1">ກຳລັງ ອັບໂຫຼດ…</div>
+                        @error('newPhotos.*')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        @error('newPhotos')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
@@ -199,4 +235,11 @@
             </div>
         </div>
     @endif
+
+    {{-- Lightbox — ກົດ ຮູບ ເບິ່ງ ໃຫຍ່ --}}
+    <div x-show="bigImg" @click="bigImg=null" @keydown.escape.window="bigImg=null"
+         class="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4" style="display:none">
+        <img :src="bigImg" class="max-w-full max-h-full rounded shadow-lg" alt="ຮູບ ໃຫຍ່" />
+        <button @click="bigImg=null" class="absolute top-4 right-4 text-white text-4xl leading-none" aria-label="ປິດ">&times;</button>
+    </div>
 </div>

@@ -4,6 +4,8 @@ use App\Livewire\Equipment\Index;
 use App\Models\Equipment;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
@@ -66,4 +68,42 @@ test('a super_admin can delete equipment', function () {
     actingAs($admin);
     Livewire::test(Index::class)->call('delete', $e->id);
     expect(Equipment::find($e->id))->toBeNull();   // soft-deleted
+});
+
+test('photos can be attached (up to 3) from an upload', function () {
+    Storage::fake('public');
+    $u = User::factory()->create();
+    $u->syncRoles(['warehouse_staff']);
+
+    actingAs($u);
+    Livewire::test(Index::class)
+        ->call('newItem')
+        ->set('name', 'Welder')
+        ->set('status', 'active')
+        ->set('newPhotos', [UploadedFile::fake()->image('p1.jpg'), UploadedFile::fake()->image('p2.jpg')])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $e = Equipment::first();
+    expect($e->photos)->toHaveCount(2);
+    Storage::disk('public')->assertExists($e->photos->first()->path);
+});
+
+test('more than 3 photos is rejected', function () {
+    Storage::fake('public');
+    $u = User::factory()->create(['is_super_admin' => true]);
+
+    actingAs($u);
+    Livewire::test(Index::class)
+        ->call('newItem')
+        ->set('name', 'X')
+        ->set('status', 'active')
+        ->set('newPhotos', [
+            UploadedFile::fake()->image('a.jpg'), UploadedFile::fake()->image('b.jpg'),
+            UploadedFile::fake()->image('c.jpg'), UploadedFile::fake()->image('d.jpg'),
+        ])
+        ->call('save')
+        ->assertHasErrors('newPhotos');
+
+    expect(Equipment::count())->toBe(0);
 });

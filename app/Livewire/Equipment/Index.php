@@ -3,16 +3,22 @@
 namespace App\Livewire\Equipment;
 
 use App\Models\Equipment;
+use App\Models\EquipmentPhoto;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class Index extends Component
 {
-    use WithPagination;
+    use WithFileUploads, WithPagination;
+
+    /** ຮູບ ສູງສຸດ ຕໍ່ ເຄື່ອງ. */
+    public const MAX_PHOTOS = 3;
 
     public string $search = '';
 
@@ -45,6 +51,12 @@ class Index extends Component
 
     public string $notes = '';
 
+    /** @var array ຮູບ ໃໝ່ ທີ່ ອັບໂຫຼດ (TemporaryUploadedFile) — ຈາກ ກ້ອງ ຫຼື ແກເລີຣີ */
+    public array $newPhotos = [];
+
+    /** @var array<int,array{id:int,url:string}> ຮູບ ທີ່ ບັນທຶກ ແລ້ວ (ຕອນ ແກ້ໄຂ) */
+    public array $existingPhotos = [];
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('equipment.view'), 403);
@@ -75,6 +87,8 @@ class Index extends Component
         $this->status = $e->status;
         $this->purchase_date = $e->purchase_date?->toDateString();
         $this->notes = $e->notes ?? '';
+        $this->existingPhotos = $e->photos->map(fn ($p) => ['id' => $p->id, 'url' => Storage::url($p->path)])->all();
+        $this->newPhotos = [];
         $this->resetValidation();
         $this->showModal = true;
     }
@@ -94,7 +108,15 @@ class Index extends Component
             'status' => ['required', 'in:active,repair,retired'],
             'purchase_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
-        ]);
+            'newPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
+            'newPhotos.*' => ['image', 'max:4096'],
+        ], [], ['newPhotos.*' => 'ຮູບ']);
+
+        if (count($this->existingPhotos) + count($this->newPhotos) > self::MAX_PHOTOS) {
+            $this->addError('newPhotos', 'ຮູບ ໄດ້ ສູງສຸດ '.self::MAX_PHOTOS.' ໃບ ຕໍ່ ເຄື່ອງ.');
+
+            return;
+        }
 
         $attrs = [
             'fixed_asset_no' => $data['fixed_asset_no'] ?: null,
@@ -111,7 +133,8 @@ class Index extends Component
         ];
 
         if ($this->editingId) {
-            Equipment::whereKey($this->editingId)->update($attrs);
+            $e = Equipment::findOrFail($this->editingId);
+            $e->update($attrs);
         } else {
             // ບັນທຶກ ກ່ອນ ເພື່ອ ໄດ້ id → asset_code = EQ-{id ຕື່ມ 0}
             $e = new Equipment($attrs);
@@ -121,8 +144,34 @@ class Index extends Component
             $e->update(['asset_code' => 'EQ-'.str_pad((string) $e->id, 4, '0', STR_PAD_LEFT)]);
         }
 
+        $this->storePhotos($e);
+
         $this->showModal = false;
         $this->dispatch('saved');
+    }
+
+    /** ບັນທຶກ ຮູບ ໃໝ່ (ຈາກ ກ້ອງ/ແກເລີຣີ) ໃສ່ public disk. */
+    protected function storePhotos(Equipment $e): void
+    {
+        if (empty($this->newPhotos)) {
+            return;
+        }
+        $start = (int) $e->photos()->max('sort_order');
+        foreach (array_values($this->newPhotos) as $i => $photo) {
+            $path = $photo->store('equipment/'.$e->id, 'public');
+            $e->photos()->create(['path' => $path, 'sort_order' => $start + $i + 1]);
+        }
+        $this->newPhotos = [];
+    }
+
+    public function removePhoto(int $photoId): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+        if ($p = EquipmentPhoto::find($photoId)) {
+            Storage::disk('public')->delete($p->path);
+            $p->delete();
+        }
+        $this->existingPhotos = array_values(array_filter($this->existingPhotos, fn ($x) => $x['id'] !== $photoId));
     }
 
     public function delete(int $id): void
@@ -144,12 +193,15 @@ class Index extends Component
         $this->status = 'active';
         $this->purchase_date = null;
         $this->notes = '';
+        $this->newPhotos = [];
+        $this->existingPhotos = [];
         $this->resetValidation();
     }
 
     public function render(): View
     {
         $items = Equipment::query()
+            ->with('photos')
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
                 ->where('name', 'like', "%{$this->search}%")
                 ->orWhere('asset_code', 'like', "%{$this->search}%")

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -24,4 +25,9 @@ class Equipment extends Model
     protected $casts = [
         'purchase_date' => 'date',
     ];
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(EquipmentPhoto::class)->orderBy('sort_order');
+    }
 }
