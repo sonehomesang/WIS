@@ -59,7 +59,9 @@
                             <th class="text-left font-semibold px-3 py-2 w-28">Serial</th>
                             <th class="text-left font-semibold px-3 py-2 w-28">ສະຖານທີ່</th>
                             <th class="text-left font-semibold px-3 py-2 w-28">ຜູ້ຮັບຜິດຊອບ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-24">ສະຖານະ</th>
+                            <th class="text-left font-semibold px-3 py-2 w-16">ຈຳນວນ</th>
+                            <th class="text-left font-semibold px-3 py-2 w-20">ຫົວໜ່ວຍ</th>
+                            <th class="text-left font-semibold px-3 py-2 w-44">ສະຖານະ</th>
                             <th class="px-3 py-2 w-20"></th>
                         </tr>
                     </thead>
@@ -82,7 +84,14 @@
                                 <td class="px-3 py-2 text-gray-500 truncate">{{ $e->serial_no ?? '—' }}</td>
                                 <td class="px-3 py-2 truncate">{{ $e->location ?? '—' }}</td>
                                 <td class="px-3 py-2 truncate">{{ $e->responsible_name ?? '—' }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap"><span class="text-xs rounded px-2 py-0.5 {{ $badge($e->status) }}">{{ $statusLabel[$e->status] ?? $e->status }}</span></td>
+                                <td class="px-3 py-2 whitespace-nowrap">{{ $e->quantity }}</td>
+                                <td class="px-3 py-2 truncate">{{ $e->unit?->name ?? '—' }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap">
+                                    @php $bd = $e->statusBreakdown(); @endphp
+                                    @foreach (['active', 'repair', 'retired'] as $s)
+                                        @if ($bd[$s] > 0)<span class="text-xs rounded px-1.5 py-0.5 {{ $badge($s) }} mr-0.5">{{ $bd[$s] }} {{ $statusLabel[$s] }}</span>@endif
+                                    @endforeach
+                                </td>
                                 <td class="px-3 py-2 text-right whitespace-nowrap text-gray-500">
                                     @can('equipment.edit')
                                         <button wire:click="editItem({{ $e->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
@@ -97,7 +106,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="11" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ເຄື່ອງ — ກົດ "+ ເພີ່ມ ເຄື່ອງ"</td></tr>
+                            <tr><td colspan="13" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ເຄື່ອງ — ກົດ "+ ເພີ່ມ ເຄື່ອງ"</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -107,11 +116,16 @@
             <div class="md:hidden space-y-2">
                 @forelse ($items as $e)
                     <div wire:key="m-{{ $e->id }}" class="bg-white border border-gray-100 rounded-lg p-3">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-start justify-between gap-2">
                             <div class="font-medium text-gray-800">{{ $e->name }}</div>
-                            <span class="text-xs rounded px-2 py-0.5 {{ $badge($e->status) }}">{{ $statusLabel[$e->status] ?? $e->status }}</span>
+                            <div class="text-right shrink-0">
+                                @php $bd = $e->statusBreakdown(); @endphp
+                                @foreach (['active', 'repair', 'retired'] as $s)
+                                    @if ($bd[$s] > 0)<span class="text-[11px] rounded px-1.5 py-0.5 {{ $badge($s) }} ml-0.5 whitespace-nowrap">{{ $bd[$s] }} {{ $statusLabel[$s] }}</span>@endif
+                                @endforeach
+                            </div>
                         </div>
-                        <div class="text-xs text-gray-400">{{ $e->asset_code }}@if ($e->fixed_asset_no) · FA: {{ $e->fixed_asset_no }}@endif · {{ $e->category ?? '—' }} · {{ $e->brand_model ?? '—' }}</div>
+                        <div class="text-xs text-gray-400">{{ $e->asset_code }}@if ($e->fixed_asset_no) · FA: {{ $e->fixed_asset_no }}@endif · {{ $e->category ?? '—' }} · {{ $e->quantity }} {{ $e->unit?->name ?? '' }}</div>
                         <div class="text-xs text-gray-600 mt-1">{{ $e->location ?? '—' }} · {{ $e->responsible_name ?? '—' }}</div>
                         <div class="flex gap-2 mt-2">
                             @can('equipment.edit')<button wire:click="editItem({{ $e->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">ແກ້ໄຂ</button>@endcan
@@ -185,12 +199,28 @@
                         <input type="text" wire:model="responsible_name" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-600 mb-1">ສະຖານະ</label>
-                        <select wire:model="status" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
-                            <option value="active">ໃຊ້ງານ</option>
-                            <option value="repair">ຊ່ອມແປງ</option>
-                            <option value="retired">ຢຸດໃຊ້</option>
+                        <label class="block text-sm text-gray-600 mb-1">ຈຳນວນ ລວມ <span class="text-red-500">*</span></label>
+                        <input type="number" min="1" wire:model="quantity" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
+                        @error('quantity')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ຫົວໜ່ວຍ</label>
+                        <select wire:model="unit_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
+                            <option value="">—</option>
+                            @foreach ($units as $u)<option value="{{ $u->id }}">{{ $u->name }}</option>@endforeach
                         </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ຈຳນວນ ຊ່ອມແປງ</label>
+                        <input type="number" min="0" wire:model="qtyRepair" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ຈຳນວນ ຢຸດໃຊ້</label>
+                        <input type="number" min="0" wire:model="qtyRetired" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
+                        @error('qtyRepair')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="md:col-span-2 text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-md px-3 py-2">
+                        ໃຊ້ງານ = ຈຳນວນ ລວມ − ຊ່ອມແປງ − ຢຸດໃຊ້. ເຄື່ອງ ໃໝ່ ປ່ອຍ ຊ່ອມ/ຢຸດ = 0 → <b>ໃຊ້ງານ ໝົດ</b>. ປັບ ຕໍ່ ຕອນ ກວດກາ.
                     </div>
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">ວັນທີ ຊື້/ຮັບ</label>

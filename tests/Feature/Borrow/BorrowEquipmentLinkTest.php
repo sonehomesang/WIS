@@ -15,7 +15,7 @@ beforeEach(function () {
 });
 
 test('choosing option 2 pulls an item from the Equipment register (stores equipment_id)', function () {
-    $eq = Equipment::create(['asset_code' => 'EQ-0001', 'name' => 'Welding machine', 'status' => 'active']);
+    $eq = Equipment::create(['asset_code' => 'EQ-0001', 'name' => 'Welding machine']);
 
     actingAs($this->admin);
     Livewire::test(Create::class)
@@ -26,7 +26,7 @@ test('choosing option 2 pulls an item from the Equipment register (stores equipm
 });
 
 test('BorrowService stores equipment_id on the borrow item', function () {
-    $eq = Equipment::create(['asset_code' => 'EQ-0002', 'name' => 'Forklift', 'status' => 'active']);
+    $eq = Equipment::create(['asset_code' => 'EQ-0002', 'name' => 'Forklift']);
 
     $record = app(BorrowService::class)->createDraft([
         'borrow_type' => 'tools_equipment',

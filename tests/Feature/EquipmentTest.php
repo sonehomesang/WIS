@@ -24,13 +24,49 @@ test('warehouse staff can create equipment and it gets an auto asset code', func
         ->set('name', 'Generator')
         ->set('category', 'Generator')
         ->set('brand_model', 'Cummins C220')
-        ->set('status', 'active')
+        ->set('quantity', 1)
         ->call('save')
         ->assertHasNoErrors();
 
     $e = Equipment::first();
     expect($e->name)->toBe('Generator');
     expect($e->asset_code)->toBe('EQ-'.str_pad((string) $e->id, 4, '0', STR_PAD_LEFT));
+    // new equipment defaults to all active
+    expect($e->statusBreakdown())->toBe(['active' => 1, 'repair' => 0, 'retired' => 0]);
+});
+
+test('status is split by quantity (active = total − repair − retired)', function () {
+    $u = User::factory()->create();
+    $u->syncRoles(['warehouse_staff']);
+
+    actingAs($u);
+    Livewire::test(Index::class)
+        ->call('newItem')
+        ->set('name', 'Drills')
+        ->set('quantity', 10)
+        ->set('qtyRepair', 2)
+        ->set('qtyRetired', 1)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Equipment::first()->statusBreakdown())->toBe(['active' => 7, 'repair' => 2, 'retired' => 1]);
+});
+
+test('repair + retired cannot exceed the total quantity', function () {
+    $u = User::factory()->create();
+    $u->syncRoles(['warehouse_staff']);
+
+    actingAs($u);
+    Livewire::test(Index::class)
+        ->call('newItem')
+        ->set('name', 'Pumps')
+        ->set('quantity', 3)
+        ->set('qtyRepair', 2)
+        ->set('qtyRetired', 2)
+        ->call('save')
+        ->assertHasErrors('qtyRepair');
+
+    expect(Equipment::count())->toBe(0);
 });
 
 test('a requester cannot access the equipment page (hidden menu)', function () {
@@ -46,15 +82,15 @@ test('a requester cannot access the equipment page (hidden menu)', function () {
 test('warehouse staff can edit but cannot delete (delete is admin only)', function () {
     $staff = User::factory()->create();
     $staff->syncRoles(['warehouse_staff']);
-    $e = Equipment::create(['asset_code' => 'EQ-0001', 'name' => 'Drill', 'status' => 'active']);
+    $e = Equipment::create(['asset_code' => 'EQ-0001', 'name' => 'Drill', 'quantity' => 5]);
 
     actingAs($staff);
     Livewire::test(Index::class)
         ->call('editItem', $e->id)
-        ->set('status', 'repair')
+        ->set('qtyRepair', 2)
         ->call('save')
         ->assertHasNoErrors();
-    expect($e->fresh()->status)->toBe('repair');
+    expect($e->fresh()->statusBreakdown())->toBe(['active' => 3, 'repair' => 2, 'retired' => 0]);
 
     // adminPerm excludes delete → warehouse_staff is blocked
     Livewire::test(Index::class)->call('delete', $e->id)->assertForbidden();
@@ -63,7 +99,7 @@ test('warehouse staff can edit but cannot delete (delete is admin only)', functi
 
 test('a super_admin can delete equipment', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
-    $e = Equipment::create(['asset_code' => 'EQ-0002', 'name' => 'Pump', 'status' => 'active']);
+    $e = Equipment::create(['asset_code' => 'EQ-0002', 'name' => 'Pump', 'quantity' => 1]);
 
     actingAs($admin);
     Livewire::test(Index::class)->call('delete', $e->id);
@@ -79,7 +115,7 @@ test('photos can be attached (up to 3) from an upload', function () {
     Livewire::test(Index::class)
         ->call('newItem')
         ->set('name', 'Welder')
-        ->set('status', 'active')
+        ->set('quantity', 1)
         ->set('newPhotos', [UploadedFile::fake()->image('p1.jpg'), UploadedFile::fake()->image('p2.jpg')])
         ->call('save')
         ->assertHasNoErrors();
@@ -97,7 +133,7 @@ test('more than 3 photos is rejected', function () {
     Livewire::test(Index::class)
         ->call('newItem')
         ->set('name', 'X')
-        ->set('status', 'active')
+        ->set('quantity', 1)
         ->set('newPhotos', [
             UploadedFile::fake()->image('a.jpg'), UploadedFile::fake()->image('b.jpg'),
             UploadedFile::fake()->image('c.jpg'), UploadedFile::fake()->image('d.jpg'),

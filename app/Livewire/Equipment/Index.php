@@ -4,6 +4,7 @@ namespace App\Livewire\Equipment;
 
 use App\Models\Equipment;
 use App\Models\EquipmentPhoto;
+use App\Models\Uom;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -45,7 +46,14 @@ class Index extends Component
 
     public string $responsible_name = '';
 
-    public string $status = 'active';
+    // ຈຳນວນ ລວມ + ຫົວໜ່ວຍ + ຈຳນວນ ທີ່ ຊ່ອມ/ຢຸດ (ໃຊ້ງານ = quantity − repair − retired)
+    public int $quantity = 1;
+
+    public ?int $unit_id = null;
+
+    public int $qtyRepair = 0;
+
+    public int $qtyRetired = 0;
 
     public ?string $purchase_date = null;
 
@@ -84,7 +92,11 @@ class Index extends Component
         $this->serial_no = $e->serial_no ?? '';
         $this->location = $e->location ?? '';
         $this->responsible_name = $e->responsible_name ?? '';
-        $this->status = $e->status;
+        $this->quantity = $e->quantity ?: 1;
+        $this->unit_id = $e->unit_id;
+        $b = $e->statusBreakdown();
+        $this->qtyRepair = $b['repair'];
+        $this->qtyRetired = $b['retired'];
         $this->purchase_date = $e->purchase_date?->toDateString();
         $this->notes = $e->notes ?? '';
         $this->existingPhotos = $e->photos->map(fn ($p) => ['id' => $p->id, 'url' => Storage::url($p->path)])->all();
@@ -105,7 +117,10 @@ class Index extends Component
             'serial_no' => ['nullable', 'string', 'max:128'],
             'location' => ['nullable', 'string', 'max:128'],
             'responsible_name' => ['nullable', 'string', 'max:128'],
-            'status' => ['required', 'in:active,repair,retired'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:100000'],
+            'unit_id' => ['nullable', 'exists:uoms,id'],
+            'qtyRepair' => ['integer', 'min:0'],
+            'qtyRetired' => ['integer', 'min:0'],
             'purchase_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'newPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
@@ -118,6 +133,14 @@ class Index extends Component
             return;
         }
 
+        // ໃຊ້ງານ = ຈຳນວນ ລວມ − ຊ່ອມ − ຢຸດ (ຕ້ອງ ບໍ່ ຕິດລົບ)
+        $active = $this->quantity - $this->qtyRepair - $this->qtyRetired;
+        if ($active < 0) {
+            $this->addError('qtyRepair', 'ຊ່ອມແປງ + ຢຸດໃຊ້ ຕ້ອງ ບໍ່ ເກີນ ຈຳນວນ ລວມ.');
+
+            return;
+        }
+
         $attrs = [
             'fixed_asset_no' => $data['fixed_asset_no'] ?: null,
             'name' => $data['name'],
@@ -126,7 +149,9 @@ class Index extends Component
             'serial_no' => $data['serial_no'] ?: null,
             'location' => $data['location'] ?: null,
             'responsible_name' => $data['responsible_name'] ?: null,
-            'status' => $data['status'],
+            'quantity' => $this->quantity,
+            'unit_id' => $data['unit_id'] ?: null,
+            'status_counts' => ['active' => $active, 'repair' => $this->qtyRepair, 'retired' => $this->qtyRetired],
             'purchase_date' => $data['purchase_date'] ?: null,
             'notes' => $data['notes'] ?: null,
             'updated_by' => auth()->id(),
@@ -190,7 +215,10 @@ class Index extends Component
         $this->serial_no = '';
         $this->location = '';
         $this->responsible_name = '';
-        $this->status = 'active';
+        $this->quantity = 1;
+        $this->unit_id = null;
+        $this->qtyRepair = 0;
+        $this->qtyRetired = 0;
         $this->purchase_date = null;
         $this->notes = '';
         $this->newPhotos = [];
@@ -201,18 +229,20 @@ class Index extends Component
     public function render(): View
     {
         $items = Equipment::query()
-            ->with('photos')
+            ->with(['photos', 'unit'])
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
                 ->where('name', 'like', "%{$this->search}%")
                 ->orWhere('asset_code', 'like', "%{$this->search}%")
                 ->orWhere('serial_no', 'like', "%{$this->search}%")))
             ->when($this->categoryFilter, fn ($q) => $q->where('category', $this->categoryFilter))
-            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
+            // ກັ່ນຕອງ ສະຖານະ: ມີ ≥1 ໜ່ວຍ ໃນ ສະຖານະ ນັ້ນ
+            ->when($this->statusFilter, fn ($q) => $q->where('status_counts->'.$this->statusFilter, '>', 0))
             ->orderBy('asset_code')
             ->paginate(10);
 
         return view('livewire.equipment.index', [
             'items' => $items,
+            'units' => Uom::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'categories' => Equipment::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
         ]);
     }
