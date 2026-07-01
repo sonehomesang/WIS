@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Borrow;
 
+use App\Models\Equipment;
 use App\Models\InventoryItem;
 use App\Models\User;
 use App\Services\BorrowService;
@@ -31,10 +32,12 @@ class Create extends Component
 
     public ?int $approver_user_id = null;
 
-    /** @var array<int, array{item_id:?int, item_name:string, qty:int}> */
+    /** @var array<int, array{item_id:?int, equipment_id:?int, item_name:string, qty:int}> */
     public array $items = [];
 
     public string $itemSearch = '';
+
+    public string $equipmentSearch = '';
 
     public function mount(): void
     {
@@ -45,6 +48,8 @@ class Create extends Component
     public function updatedBorrowType(): void
     {
         $this->items = [];
+        $this->itemSearch = '';
+        $this->equipmentSearch = '';
     }
 
     public function addInventoryItem(int $id): void
@@ -64,9 +69,27 @@ class Create extends Component
         $this->itemSearch = '';
     }
 
+    /** ທາງເລືອກ 2: ເລືອກ ເຄື່ອງ ຈາກ ທະບຽນ Equipment (ດຶງ ຂໍ້ມູນ ໄປ ໃຊ້; workflow ຢືມ ຄື ເກົ່າ). */
+    public function addEquipmentItem(int $id): void
+    {
+        $eq = Equipment::find($id);
+        if (! $eq) {
+            return;
+        }
+        foreach ($this->items as $i => $it) {
+            if (($it['equipment_id'] ?? null) === $eq->id) {
+                $this->items[$i]['qty']++;
+
+                return;
+            }
+        }
+        $this->items[] = ['item_id' => null, 'equipment_id' => $eq->id, 'item_name' => $eq->name, 'qty' => 1];
+        $this->equipmentSearch = '';
+    }
+
     public function addFreeItem(): void
     {
-        $this->items[] = ['item_id' => null, 'item_name' => '', 'qty' => 1];
+        $this->items[] = ['item_id' => null, 'equipment_id' => null, 'item_name' => '', 'qty' => 1];
     }
 
     public function removeItem(int $i): void
@@ -132,8 +155,16 @@ class Create extends Component
                 ->limit(8)->get()
             : collect();
 
+        $eqResults = $this->borrow_type === 'tools_equipment' && strlen($this->equipmentSearch) >= 2
+            ? Equipment::where(fn ($q) => $q->where('name', 'like', "%{$this->equipmentSearch}%")
+                ->orWhere('asset_code', 'like', "%{$this->equipmentSearch}%")
+                ->orWhere('fixed_asset_no', 'like', "%{$this->equipmentSearch}%"))
+                ->orderBy('asset_code')->limit(8)->get()
+            : collect();
+
         return view('livewire.borrow.create', [
             'invResults' => $results,
+            'eqResults' => $eqResults,
             'users' => User::orderBy('display_name')->get(['id', 'display_name', 'email']),
             'returnDate' => Carbon::parse($this->borrow_date)->addDays(max(1, $this->period_days))->toDateString(),
         ]);

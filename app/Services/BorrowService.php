@@ -93,6 +93,7 @@ class BorrowService
             foreach (array_values($data['items'] ?? []) as $i => $it) {
                 $record->items()->create([
                     'item_id' => $it['item_id'] ?? null,
+                    'equipment_id' => $it['equipment_id'] ?? null,
                     'item_name' => $it['item_name'],
                     'qty' => max(1, (int) ($it['qty'] ?? 1)),
                     'sort_order' => $i,

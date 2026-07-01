@@ -8,7 +8,7 @@
                 <div class="font-semibold text-sm mb-2">① ປະເພດການຍືມ</div>
                 <div class="space-y-1 text-sm">
                     <label class="flex gap-2"><input type="radio" wire:model.live="borrow_type" value="new_inventory"> ຢືມເຄື່ອງສາງ (ມີໃນ inventory)</label>
-                    <label class="flex gap-2"><input type="radio" wire:model.live="borrow_type" value="tools_equipment"> ເຄື່ອງມື/ອຸປະກອນ (ບໍ່ມີໃນລະບົບ)</label>
+                    <label class="flex gap-2"><input type="radio" wire:model.live="borrow_type" value="tools_equipment"> ເຄື່ອງມື/ອຸປະກອນ (ຈາກ ທະບຽນ ເຄື່ອງ)</label>
                     <label class="flex gap-2"><input type="radio" wire:model.live="borrow_type" value="others"> ອື່ນໆ</label>
                 </div>
                 @if ($borrow_type === 'others')
@@ -42,6 +42,17 @@
                             </div>
                         @endif
                     </div>
+                @elseif ($borrow_type === 'tools_equipment')
+                    <div class="relative">
+                        <input type="text" wire:model.live.debounce.300ms="equipmentSearch" placeholder="ຄົ້ນຫາ ທະບຽນ ເຄື່ອງ (ຊື່/ລະຫັດ/ຊັບສິນ)…" class="w-full rounded-md border-gray-300 text-sm" />
+                        @if ($eqResults->isNotEmpty())
+                            <div class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-y-auto">
+                                @foreach ($eqResults as $eq)
+                                    <button type="button" wire:click="addEquipmentItem({{ $eq->id }})" class="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50">{{ $eq->name }} <span class="font-mono text-xs text-gray-400">{{ $eq->asset_code }}@if ($eq->fixed_asset_no) · {{ $eq->fixed_asset_no }}@endif</span></button>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
                 @else
                     <button type="button" wire:click="addFreeItem" class="text-sm text-sky-600">+ ເພີ່ມແຖວ</button>
                 @endif
@@ -49,7 +60,7 @@
                 <div class="mt-2 border border-gray-200 rounded-md divide-y text-sm">
                     @forelse ($items as $i => $it)
                         <div wire:key="it-{{ $i }}" class="flex items-center gap-2 p-2">
-                            @if ($borrow_type === 'new_inventory')
+                            @if ($borrow_type === 'new_inventory' || $borrow_type === 'tools_equipment')
                                 <span class="flex-1">{{ $it['item_name'] }}</span>
                             @else
                                 <input type="text" wire:model="items.{{ $i }}.item_name" placeholder="ຊື່ເຄື່ອງ" class="flex-1 rounded-md border-gray-300 text-sm" />

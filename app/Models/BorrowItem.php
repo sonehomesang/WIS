@@ -29,6 +29,12 @@ class BorrowItem extends Model
         return $this->belongsTo(InventoryItem::class, 'item_id');
     }
 
+    /** Equipment register — set when borrow_type = tools_equipment (null otherwise). */
+    public function equipment(): BelongsTo
+    {
+        return $this->belongsTo(Equipment::class, 'equipment_id');
+    }
+
     public function photos(): HasMany
     {
         return $this->hasMany(BorrowItemPhoto::class, 'borrow_item_id')->orderBy('sort_order')->orderBy('id');
