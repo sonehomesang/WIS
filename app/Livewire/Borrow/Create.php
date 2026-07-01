@@ -10,10 +10,13 @@ use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 class Create extends Component
 {
+    use WithFileUploads;
+
     public string $borrow_type = 'new_inventory';
 
     public string $purpose = '';
@@ -32,8 +35,11 @@ class Create extends Component
 
     public ?int $approver_user_id = null;
 
-    /** @var array<int, array{item_id:?int, equipment_id:?int, item_name:string, qty:int}> */
+    /** @var array<int, array{item_id:?int, equipment_id:?int, code:string, item_name:string, qty:int}> */
     public array $items = [];
+
+    /** @var array ຮູບ ຕໍ່ ລາຍການ (index-aligned ກັບ; ບໍ່ ບັງຄັບ) — ກ້ອງ/ແກເລີຣີ */
+    public array $itemPhotos = [];
 
     public string $itemSearch = '';
 
@@ -48,6 +54,7 @@ class Create extends Component
     public function updatedBorrowType(): void
     {
         $this->items = [];
+        $this->itemPhotos = [];
         $this->itemSearch = '';
         $this->equipmentSearch = '';
     }
@@ -65,7 +72,8 @@ class Create extends Component
                 return;
             }
         }
-        $this->items[] = ['item_id' => $inv->id, 'item_name' => $inv->name, 'qty' => 1];
+        $this->items[] = ['item_id' => $inv->id, 'equipment_id' => null, 'code' => $inv->slug, 'item_name' => $inv->name, 'qty' => 1];
+        $this->itemPhotos[] = null;
         $this->itemSearch = '';
     }
 
@@ -83,19 +91,22 @@ class Create extends Component
                 return;
             }
         }
-        $this->items[] = ['item_id' => null, 'equipment_id' => $eq->id, 'item_name' => $eq->name, 'qty' => 1];
+        $this->items[] = ['item_id' => null, 'equipment_id' => $eq->id, 'code' => $eq->asset_code, 'item_name' => $eq->name, 'qty' => 1];
+        $this->itemPhotos[] = null;
         $this->equipmentSearch = '';
     }
 
     public function addFreeItem(): void
     {
-        $this->items[] = ['item_id' => null, 'equipment_id' => null, 'item_name' => '', 'qty' => 1];
+        $this->items[] = ['item_id' => null, 'equipment_id' => null, 'code' => '', 'item_name' => '', 'qty' => 1];
+        $this->itemPhotos[] = null;
     }
 
     public function removeItem(int $i): void
     {
-        unset($this->items[$i]);
+        unset($this->items[$i], $this->itemPhotos[$i]);
         $this->items = array_values($this->items);
+        $this->itemPhotos = array_values($this->itemPhotos);
     }
 
     public function save(bool $submit = false): void
@@ -109,6 +120,7 @@ class Create extends Component
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_name' => ['required', 'string', 'max:256'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
+            'itemPhotos.*' => ['nullable', 'image', 'max:4096'],   // ຮູບ ຕໍ່ ລາຍการ (ບໍ່ ບັງຄັບ)
         ];
         if ($this->borrow_type === 'others') {
             $rules['others_detail'] = ['required', 'string', 'max:500'];
@@ -138,6 +150,15 @@ class Create extends Component
             'approver_name' => $approver?->display_name ?? $approver?->email,
             'items' => $this->items,
         ], auth()->user());
+
+        // ຮູບ ຕໍ່ ລາຍการ (ບໍ່ ບັງຄັບ) → borrow_item_photos kind='request'
+        $created = $record->items()->orderBy('sort_order')->get()->values();
+        foreach ($this->itemPhotos as $i => $photo) {
+            if ($photo && isset($created[$i])) {
+                $path = $photo->store('borrow/'.$record->id, 'public');
+                $created[$i]->photos()->create(['kind' => 'request', 'path' => $path, 'sort_order' => 1]);
+            }
+        }
 
         if ($submit) {
             app(BorrowService::class)->transition($record, 'submit', auth()->user());

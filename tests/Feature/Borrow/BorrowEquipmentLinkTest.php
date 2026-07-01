@@ -1,10 +1,13 @@
 <?php
 
 use App\Livewire\Borrow\Create;
+use App\Models\BorrowRecord;
 use App\Models\Equipment;
 use App\Models\User;
 use App\Services\BorrowService;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
@@ -23,6 +26,23 @@ test('choosing option 2 pulls an item from the Equipment register (stores equipm
         ->call('addEquipmentItem', $eq->id)
         ->assertSet('items.0.equipment_id', $eq->id)
         ->assertSet('items.0.item_name', 'Welding machine');
+});
+
+test('an optional per-item photo is stored on create (kind=request)', function () {
+    Storage::fake('public');
+    $eq = Equipment::create(['asset_code' => 'EQ-0009', 'name' => 'Grinder', 'quantity' => 1]);
+
+    actingAs($this->admin);
+    Livewire::test(Create::class)
+        ->set('borrow_type', 'tools_equipment')
+        ->call('addEquipmentItem', $eq->id)
+        ->set('purpose', 'fix pump')
+        ->set('itemPhotos.0', UploadedFile::fake()->image('item.jpg'))
+        ->call('save', false)
+        ->assertHasNoErrors();
+
+    $item = BorrowRecord::first()->items->first();
+    expect($item->photos()->where('kind', 'request')->count())->toBe(1);
 });
 
 test('BorrowService stores equipment_id on the borrow item', function () {
