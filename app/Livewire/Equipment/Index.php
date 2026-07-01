@@ -6,7 +6,7 @@ use App\Models\Equipment;
 use App\Models\EquipmentPhoto;
 use App\Models\Uom;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -31,6 +31,8 @@ class Index extends Component
     public bool $showModal = false;
 
     public ?int $editingId = null;
+
+    public string $asset_code = '';
 
     public string $fixed_asset_no = '';
 
@@ -85,6 +87,7 @@ class Index extends Component
     {
         $e = Equipment::findOrFail($id);
         $this->editingId = $e->id;
+        $this->asset_code = $e->asset_code;
         $this->fixed_asset_no = $e->fixed_asset_no ?? '';
         $this->name = $e->name;
         $this->category = $e->category ?? '';
@@ -110,6 +113,7 @@ class Index extends Component
         abort_unless(auth()->user()->can('equipment.'.($this->editingId ? 'edit' : 'create')), 403);
 
         $data = $this->validate([
+            'asset_code' => ['required', 'string', 'max:32', Rule::unique('equipment', 'asset_code')->ignore($this->editingId)],
             'fixed_asset_no' => ['nullable', 'string', 'max:64'],
             'name' => ['required', 'string', 'max:256'],
             'category' => ['nullable', 'string', 'max:128'],
@@ -142,6 +146,7 @@ class Index extends Component
         }
 
         $attrs = [
+            'asset_code' => $data['asset_code'],
             'fixed_asset_no' => $data['fixed_asset_no'] ?: null,
             'name' => $data['name'],
             'category' => $data['category'] ?: null,
@@ -161,12 +166,7 @@ class Index extends Component
             $e = Equipment::findOrFail($this->editingId);
             $e->update($attrs);
         } else {
-            // ບັນທຶກ ກ່ອນ ເພື່ອ ໄດ້ id → asset_code = EQ-{id ຕື່ມ 0}
-            $e = new Equipment($attrs);
-            $e->asset_code = 'EQ-TMP-'.Str::random(8);
-            $e->created_by = auth()->id();
-            $e->save();
-            $e->update(['asset_code' => 'EQ-'.str_pad((string) $e->id, 4, '0', STR_PAD_LEFT)]);
+            $e = Equipment::create($attrs + ['created_by' => auth()->id()]);
         }
 
         $this->storePhotos($e);
@@ -208,6 +208,7 @@ class Index extends Component
     protected function resetForm(): void
     {
         $this->editingId = null;
+        $this->asset_code = '';
         $this->fixed_asset_no = '';
         $this->name = '';
         $this->category = '';

@@ -51,46 +51,42 @@
                     <thead class="sticky top-0 z-10 bg-gray-50 text-gray-600 text-xs border-b border-gray-200 shadow-sm">
                         <tr>
                             <th class="text-left font-semibold px-3 py-2 w-24">ລະຫັດເຄື່ອງ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-28">ທະບຽນຊັບສິນ</th>
-                            <th class="text-left font-semibold px-3 py-2">ຊື່ ເຄື່ອງ</th>
+                            <th class="text-left font-semibold px-3 py-2 w-24">ທະບຽນຊັບສິນ</th>
+                            <th class="text-left font-semibold px-3 py-2">ຊື່ ເຄື່ອງ / ລາຍລະອຽດ</th>
                             <th class="text-left font-semibold px-3 py-2 w-24">ຮູບ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-28">ປະເພດ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-36">ຍີ່ຫໍ້ / ຮຸ່ນ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-28">Serial</th>
-                            <th class="text-left font-semibold px-3 py-2 w-28">ສະຖານທີ່</th>
-                            <th class="text-left font-semibold px-3 py-2 w-28">ຜູ້ຮັບຜິດຊອບ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-16">ຈຳນວນ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-20">ຫົວໜ່ວຍ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-44">ສະຖານະ</th>
-                            <th class="px-3 py-2 w-20"></th>
+                            <th class="text-left font-semibold px-3 py-2 w-20">ຈຳນວນ</th>
+                            <th class="text-left font-semibold px-3 py-2 w-36">ສະຖານະ</th>
+                            <th class="px-3 py-2 w-14"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
                         @forelse ($items as $e)
                             <tr wire:key="eq-{{ $e->id }}">
-                                <td class="px-3 py-2 text-gray-500 whitespace-nowrap">{{ $e->asset_code }}</td>
+                                <td class="px-3 py-2 text-gray-500 truncate">{{ $e->asset_code }}</td>
                                 <td class="px-3 py-2 text-gray-600 truncate">{{ $e->fixed_asset_no ?? '—' }}</td>
-                                <td class="px-3 py-2 font-medium text-gray-800 truncate">{{ $e->name }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap">
-                                    @forelse ($e->photos->take(3) as $p)
-                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($p->path) }}" @click="bigImg='{{ \Illuminate\Support\Facades\Storage::url($p->path) }}'"
-                                             class="inline-block w-8 h-8 rounded object-cover border border-gray-200 cursor-pointer hover:ring-2 hover:ring-sky-400 mr-0.5" alt="ຮູບ ເຄື່ອງ" />
-                                    @empty
-                                        <span class="text-gray-300 text-xs">—</span>
-                                    @endforelse
+                                <td class="px-3 py-2">
+                                    <div class="font-medium text-gray-800 truncate">{{ $e->name }}</div>
+                                    @php $meta = array_filter([$e->category, $e->brand_model, $e->serial_no, $e->location, $e->responsible_name]); @endphp
+                                    <div class="text-xs text-gray-400 truncate">{{ $meta ? implode(' · ', $meta) : '—' }}</div>
                                 </td>
-                                <td class="px-3 py-2 truncate">{{ $e->category ?? '—' }}</td>
-                                <td class="px-3 py-2 truncate">{{ $e->brand_model ?? '—' }}</td>
-                                <td class="px-3 py-2 text-gray-500 truncate">{{ $e->serial_no ?? '—' }}</td>
-                                <td class="px-3 py-2 truncate">{{ $e->location ?? '—' }}</td>
-                                <td class="px-3 py-2 truncate">{{ $e->responsible_name ?? '—' }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap">{{ $e->quantity }}</td>
-                                <td class="px-3 py-2 truncate">{{ $e->unit?->name ?? '—' }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap">
+                                <td class="px-3 py-2">
+                                    <div class="flex gap-0.5">
+                                        @forelse ($e->photos->take(3) as $p)
+                                            <img src="{{ \Illuminate\Support\Facades\Storage::url($p->path) }}" @click="bigImg='{{ \Illuminate\Support\Facades\Storage::url($p->path) }}'"
+                                                 class="w-8 h-8 rounded object-cover border border-gray-200 cursor-pointer hover:ring-2 hover:ring-sky-400" alt="ຮູບ" />
+                                        @empty
+                                            <span class="text-gray-300 text-xs">—</span>
+                                        @endforelse
+                                    </div>
+                                </td>
+                                <td class="px-3 py-2 whitespace-nowrap">{{ $e->quantity }}<span class="text-xs text-gray-400"> {{ $e->unit?->name }}</span></td>
+                                <td class="px-3 py-2">
                                     @php $bd = $e->statusBreakdown(); @endphp
-                                    @foreach (['active', 'repair', 'retired'] as $s)
-                                        @if ($bd[$s] > 0)<span class="text-xs rounded px-1.5 py-0.5 {{ $badge($s) }} mr-0.5">{{ $bd[$s] }} {{ $statusLabel[$s] }}</span>@endif
-                                    @endforeach
+                                    <div class="flex flex-wrap gap-0.5">
+                                        @foreach (['active', 'repair', 'retired'] as $s)
+                                            @if ($bd[$s] > 0)<span class="text-xs rounded px-1.5 py-0.5 {{ $badge($s) }}">{{ $bd[$s] }} {{ $statusLabel[$s] }}</span>@endif
+                                        @endforeach
+                                    </div>
                                 </td>
                                 <td class="px-3 py-2 text-right whitespace-nowrap text-gray-500">
                                     @can('equipment.edit')
@@ -106,7 +102,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="13" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ເຄື່ອງ — ກົດ "+ ເພີ່ມ ເຄື່ອງ"</td></tr>
+                            <tr><td colspan="7" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ເຄື່ອງ — ກົດ "+ ເພີ່ມ ເຄື່ອງ"</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -169,7 +165,12 @@
                     </button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div class="md:col-span-2">
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ລະຫັດເຄື່ອງ <span class="text-red-500">*</span></label>
+                        <input type="text" wire:model="asset_code" placeholder="ເຊັ່ນ EQ-0001" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
+                        @error('asset_code')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
                         <label class="block text-sm text-gray-600 mb-1">ຊື່ ເຄື່ອງ <span class="text-red-500">*</span></label>
                         <input type="text" wire:model="name" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
                         @error('name')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
