@@ -55,8 +55,8 @@
                             <th class="text-left font-semibold px-3 py-2">ຊື່ ເຄື່ອງ / ລາຍລະອຽດ</th>
                             <th class="text-left font-semibold px-3 py-2 w-28">ຮູບ</th>
                             <th class="text-left font-semibold px-3 py-2 w-16">ຈຳນວນ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-36">ສະຖານະ</th>
-                            <th class="px-3 py-2 w-14"></th>
+                            <th class="text-left font-semibold px-3 py-2 w-32">ສະຖານະ</th>
+                            <th class="px-3 py-2 w-20"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -88,7 +88,7 @@
                                         @endforeach
                                     </div>
                                 </td>
-                                <td class="px-3 py-2 text-right whitespace-nowrap text-gray-500">
+                                <td class="px-3 py-2 pr-5 text-right whitespace-nowrap text-gray-500">
                                     @can('equipment.edit')
                                         <button wire:click="editItem({{ $e->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
                                             <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
