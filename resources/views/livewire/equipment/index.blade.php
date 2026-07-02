@@ -46,15 +46,15 @@
             </div>
 
             {{-- Desktop table --}}
-            <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-16rem)]">
+            <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-x-hidden overflow-y-auto max-h-[calc(100vh-16rem)]">
                 <table class="w-full text-sm table-fixed">
                     <thead class="sticky top-0 z-10 bg-gray-50 text-gray-600 text-xs border-b border-gray-200 shadow-sm">
                         <tr>
                             <th class="text-left font-semibold px-3 py-2 w-24">ລະຫັດເຄື່ອງ</th>
                             <th class="text-left font-semibold px-3 py-2 w-24">ທະບຽນຊັບສິນ</th>
                             <th class="text-left font-semibold px-3 py-2">ຊື່ ເຄື່ອງ / ລາຍລະອຽດ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-24">ຮູບ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-20">ຈຳນວນ</th>
+                            <th class="text-left font-semibold px-3 py-2 w-28">ຮູບ</th>
+                            <th class="text-left font-semibold px-3 py-2 w-16">ຈຳນວນ</th>
                             <th class="text-left font-semibold px-3 py-2 w-36">ສະຖານະ</th>
                             <th class="px-3 py-2 w-14"></th>
                         </tr>
