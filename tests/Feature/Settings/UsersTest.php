@@ -21,9 +21,7 @@ test('super admin can create a user with a role', function () {
     Livewire::test(Users::class)
         ->call('newUser')
         ->set('display_name', 'Somchai V.')
-        ->set('email', 'somchai@nt2.la')
-        ->set('password', 'password123')
-        ->set('role', 'warehouse_staff')
+        ->set('email', 'somchai@nt2.la')->set('role', 'warehouse_staff')
         ->set('status', 'active')
         ->call('save')
         ->assertHasNoErrors();
@@ -41,9 +39,7 @@ test('email must be unique', function () {
     Livewire::test(Users::class)
         ->call('newUser')
         ->set('display_name', 'X')
-        ->set('email', 'dup@nt2.la')
-        ->set('password', 'password123')
-        ->set('role', 'requester')
+        ->set('email', 'dup@nt2.la')->set('role', 'requester')
         ->call('save')
         ->assertHasErrors(['email']);
 });
@@ -70,7 +66,7 @@ test('creating a supplier-role user requires and stores supplier_id', function (
     // missing supplier_id → error
     Livewire::test(Users::class)
         ->call('newUser')
-        ->set('display_name', 'Sup User')->set('email', 'sup@nt2.la')->set('password', 'password123')
+        ->set('display_name', 'Sup User')->set('email', 'sup@nt2.la')
         ->set('role', 'supplier')->set('status', 'active')
         ->call('save')
         ->assertHasErrors(['supplier_id']);
@@ -78,7 +74,7 @@ test('creating a supplier-role user requires and stores supplier_id', function (
     // with supplier_id → ok + persisted
     Livewire::test(Users::class)
         ->call('newUser')
-        ->set('display_name', 'Sup User')->set('email', 'sup@nt2.la')->set('password', 'password123')
+        ->set('display_name', 'Sup User')->set('email', 'sup@nt2.la')
         ->set('role', 'supplier')->set('supplier_id', $sup->id)->set('status', 'active')
         ->call('save')
         ->assertHasNoErrors();

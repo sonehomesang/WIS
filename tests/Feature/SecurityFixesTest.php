@@ -36,7 +36,7 @@ test('a non-super admin cannot grant the super_admin role', function () {
     $this->actingAs($admin);
 
     Livewire::test(Users::class)
-        ->set('display_name', 'X')->set('email', 'x@nt2.test')->set('password', 'password1')
+        ->set('display_name', 'X')->set('email', 'x@nt2.test')
         ->set('role', 'super_admin')->set('status', 'active')
         ->call('save')
         ->assertForbidden();
@@ -48,7 +48,7 @@ test('a super_admin may grant the super_admin role', function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => true]));
 
     Livewire::test(Users::class)
-        ->set('display_name', 'New Super')->set('email', 'sup@nt2.test')->set('password', 'password1')
+        ->set('display_name', 'New Super')->set('email', 'sup@nt2.test')
         ->set('role', 'super_admin')->set('status', 'active')
         ->call('save')
         ->assertHasNoErrors();
