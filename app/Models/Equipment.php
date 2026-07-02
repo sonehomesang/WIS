@@ -43,6 +43,11 @@ class Equipment extends Model
         return $this->hasMany(EquipmentPhoto::class)->orderBy('sort_order');
     }
 
+    public function inspections(): HasMany
+    {
+        return $this->hasMany(EquipmentInspection::class)->latest('inspected_at');
+    }
+
     /** ຈຳນວນ ຕໍ່ ສະຖານະ ພ້ອມ key ຄົບ (default 0). */
     public function statusBreakdown(): array
     {

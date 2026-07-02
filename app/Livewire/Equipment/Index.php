@@ -3,6 +3,7 @@
 namespace App\Livewire\Equipment;
 
 use App\Models\Equipment;
+use App\Models\EquipmentInspection;
 use App\Models\EquipmentPhoto;
 use App\Models\Uom;
 use Illuminate\Support\Facades\Storage;
@@ -66,6 +67,35 @@ class Index extends Component
 
     /** @var array<int,array{id:int,url:string}> ຮູບ ທີ່ ບັນທຶກ ແລ້ວ (ຕອນ ແກ້ໄຂ) */
     public array $existingPhotos = [];
+
+    // ── ແທັບ 2: ການ ກວດກາ (Inspection) ──
+    public bool $showInspectionModal = false;
+
+    public string $insSearch = '';
+
+    public ?int $insEquipmentId = null;
+
+    public string $insEquipmentLabel = '';
+
+    public int $insEquipmentQty = 1;
+
+    public ?string $insDate = null;
+
+    public string $insInspector = '';
+
+    public string $insResult = 'pass';
+
+    public string $insNotes = '';
+
+    public ?string $insNextDue = null;
+
+    public $insPhoto = null;
+
+    public bool $insUpdateStatus = false;
+
+    public int $insRepair = 0;
+
+    public int $insRetired = 0;
 
     public function mount(): void
     {
@@ -205,6 +235,120 @@ class Index extends Component
         Equipment::whereKey($id)->delete();
     }
 
+    // ─────────── ແທັບ 2: ການ ກວດກາ ───────────
+
+    public function newInspection(): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+        $this->reset([
+            'insSearch', 'insEquipmentId', 'insEquipmentLabel', 'insInspector',
+            'insNotes', 'insNextDue', 'insPhoto', 'insUpdateStatus', 'insRepair', 'insRetired',
+        ]);
+        $this->insDate = now()->toDateString();
+        $this->insResult = 'pass';
+        $this->insEquipmentQty = 1;
+        $this->resetValidation();
+        $this->showInspectionModal = true;
+    }
+
+    public function pickInspectionEquipment(int $id): void
+    {
+        $e = Equipment::find($id);
+        if (! $e) {
+            return;
+        }
+        $this->insEquipmentId = $e->id;
+        $this->insEquipmentLabel = $e->asset_code.' · '.$e->name;
+        $this->insEquipmentQty = $e->quantity ?: 1;
+        $b = $e->statusBreakdown();
+        $this->insRepair = $b['repair'];
+        $this->insRetired = $b['retired'];
+        $this->insSearch = '';
+    }
+
+    public function saveInspection(): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+
+        $this->validate([
+            'insEquipmentId' => ['required', 'exists:equipment,id'],
+            'insDate' => ['required', 'date'],
+            'insInspector' => ['nullable', 'string', 'max:128'],
+            'insResult' => ['required', 'in:pass,fail,follow_up'],
+            'insNotes' => ['nullable', 'string', 'max:2000'],
+            'insNextDue' => ['nullable', 'date'],
+            'insPhoto' => ['nullable', 'image', 'max:8192'],
+            'insRepair' => ['integer', 'min:0'],
+            'insRetired' => ['integer', 'min:0'],
+        ]);
+
+        $e = Equipment::findOrFail($this->insEquipmentId);
+
+        // ອັບເດດ ສະຖານະ ຈາກ ຜົນ ກວດກາ (ຖ້າ ເລືອກ)
+        if ($this->insUpdateStatus) {
+            $active = $e->quantity - $this->insRepair - $this->insRetired;
+            if ($active < 0) {
+                $this->addError('insRepair', 'ຊ່ອມແປງ + ຢຸດໃຊ້ ຕ້ອງ ບໍ່ ເກີນ ຈຳນວນ.');
+
+                return;
+            }
+            $e->update(['status_counts' => ['active' => $active, 'repair' => $this->insRepair, 'retired' => $this->insRetired]]);
+        }
+
+        $path = $this->insPhoto ? $this->stampAndStore($this->insPhoto, 'equipment/inspections/'.$e->id) : null;
+
+        $e->inspections()->create([
+            'inspected_at' => $this->insDate,
+            'inspector_name' => $this->insInspector ?: null,
+            'result' => $this->insResult,
+            'notes' => $this->insNotes ?: null,
+            'next_due_date' => $this->insNextDue ?: null,
+            'photo_path' => $path,
+            'created_by' => auth()->id(),
+        ]);
+
+        $this->showInspectionModal = false;
+        $this->dispatch('saved');
+    }
+
+    /** ຝັງ ວັນທີ+ເວລາ (ຕອນ upload) ໃສ່ ຮູບ ດ້ວຍ GD ແລ້ວ ບັນທຶກ; fallback ຖ້າ GD ລົ້ມ. */
+    protected function stampAndStore($photo, string $dir): string
+    {
+        $stamp = now()->timezone('Asia/Vientiane')->format('Y-m-d H:i');
+        try {
+            $img = @imagecreatefromstring(file_get_contents($photo->getRealPath()));
+            if ($img !== false) {
+                $w = imagesx($img);
+                $h = imagesy($img);
+                $tw = imagefontwidth(5) * strlen($stamp);
+                $th = imagefontheight(5);
+                $tmp = imagecreatetruecolor($tw, $th);
+                imagefill($tmp, 0, 0, imagecolorallocate($tmp, 0, 0, 0));
+                imagestring($tmp, 5, 0, 0, $stamp, imagecolorallocate($tmp, 255, 255, 255));
+                $scale = max(2, (int) floor($w / 500));
+                $dw = $tw * $scale;
+                $dh = $th * $scale;
+                $pad = max(4, (int) round($dh * 0.35));
+                $bar = imagecolorallocatealpha($img, 0, 0, 0, 55);
+                imagefilledrectangle($img, 0, $h - $dh - 2 * $pad, $dw + 2 * $pad, $h, $bar);
+                imagecopyresized($img, $tmp, $pad, $h - $dh - $pad, 0, 0, $dw, $dh, $tw, $th);
+                imagedestroy($tmp);
+                ob_start();
+                imagejpeg($img, null, 85);
+                $bytes = ob_get_clean();
+                imagedestroy($img);
+                $path = rtrim($dir, '/').'/'.uniqid('ins_').'.jpg';
+                Storage::disk('public')->put($path, $bytes);
+
+                return $path;
+            }
+        } catch (\Throwable $ex) {
+            // fall through to plain store
+        }
+
+        return $photo->store($dir, 'public');
+    }
+
     protected function resetForm(): void
     {
         $this->editingId = null;
@@ -241,10 +385,18 @@ class Index extends Component
             ->orderBy('asset_code')
             ->paginate(10);
 
+        $insResults = $this->showInspectionModal && strlen($this->insSearch) >= 2
+            ? Equipment::where(fn ($q) => $q->where('name', 'like', "%{$this->insSearch}%")
+                ->orWhere('asset_code', 'like', "%{$this->insSearch}%"))
+                ->orderBy('asset_code')->limit(8)->get()
+            : collect();
+
         return view('livewire.equipment.index', [
             'items' => $items,
             'units' => Uom::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'categories' => Equipment::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
+            'inspections' => EquipmentInspection::with('equipment')->orderByDesc('inspected_at')->orderByDesc('id')->limit(50)->get(),
+            'insResults' => $insResults,
         ]);
     }
 }
