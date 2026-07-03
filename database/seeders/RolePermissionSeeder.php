@@ -9,7 +9,7 @@ use Spatie\Permission\PermissionRegistrar;
 
 /**
  * RBAC seed — source of truth: docs/v2/RBAC_MATRIX.md (from seed_roles.ts).
- * 21 menus × 6 actions = 126 permissions; 7 roles + scope_rules.
+ * 22 menus × 6 actions = 132 permissions; 8 roles + scope_rules.
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -121,6 +121,14 @@ class RolePermissionSeeder extends Seeder
         $supplier['catalog'] = 'viewCreateEdit';
         $supplier['notifications'] = 'viewOnly';
 
+        // department_admin = ບໍລິຫານ Equipment & Tools ຂອງ ພະແນກ ຕົນ ເທົ່ານັ້ນ (ນ້ອຍ ກວ່າ SA).
+        // ສິດ equipment = adminPerm (ບໍ່ ມີ delete); ໂມດູລ ອື່ນ ເບິ່ງ ຢ່າງ ດຽວ. scope = ພະແນກ (ເບິ່ງ scopes()).
+        $deptAdmin = $this->allMenus('allFalse');
+        $deptAdmin['dashboard'] = 'viewOnly';
+        $deptAdmin['inventory'] = 'viewOnly';
+        $deptAdmin['notifications'] = 'viewOnly';
+        $deptAdmin['equipment'] = 'adminPerm';
+
         return [
             'super_admin' => $superAdmin,
             'admin' => $admin,
@@ -129,6 +137,7 @@ class RolePermissionSeeder extends Seeder
             'line_manager' => $lineManager,
             'requester' => $requester,
             'supplier' => $supplier,
+            'department_admin' => $deptAdmin,
         ];
     }
 
@@ -136,13 +145,15 @@ class RolePermissionSeeder extends Seeder
     private function scopes(): array
     {
         return [
-            'super_admin' => ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
-            'admin' => ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
-            'warehouse_staff' => ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
-            'approver' => ['transactionScope' => 'assigned', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
-            'line_manager' => ['transactionScope' => 'assigned', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
-            'requester' => ['transactionScope' => 'own', 'inventoryScope' => 'all', 'catalogScope' => 'all'],
-            'supplier' => ['transactionScope' => 'own_orders', 'inventoryScope' => 'none', 'catalogScope' => 'own_supplier'],
+            'super_admin' => ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
+            'admin' => ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
+            'warehouse_staff' => ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
+            'approver' => ['transactionScope' => 'assigned', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
+            'line_manager' => ['transactionScope' => 'assigned', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
+            'requester' => ['transactionScope' => 'own', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
+            'supplier' => ['transactionScope' => 'own_orders', 'inventoryScope' => 'none', 'catalogScope' => 'own_supplier', 'equipmentScope' => 'none'],
+            // department_admin — ເຫັນ/ຈັດການ ສະເພາະ ເຄື່ອງ ຂອງ ພະແນກ ຕົນ.
+            'department_admin' => ['transactionScope' => 'own', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'department'],
         ];
     }
 }

@@ -104,4 +104,32 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Department::class);
     }
+
+    /**
+     * ຂອບເຂດ ສິດ Equipment ຈາກ role scope_rules — 'all' > 'department' > 'none'.
+     * super_admin ໄດ້ 'all' ສະເໝີ.
+     */
+    public function equipmentScope(): string
+    {
+        if ($this->is_super_admin) {
+            return 'all';
+        }
+        $scopes = $this->roles->pluck('scope_rules')
+            ->map(fn ($r) => $r['equipmentScope'] ?? null)
+            ->filter()
+            ->all();
+        foreach (['all', 'department', 'none'] as $level) {
+            if (in_array($level, $scopes, true)) {
+                return $level;
+            }
+        }
+
+        return 'all';
+    }
+
+    /** ຖືກ ຈຳກັດ ໃຫ້ ເຫັນ/ຈັດການ ສະເພາະ ເຄື່ອງ ຂອງ ພະແນກ ຕົນ ບໍ. */
+    public function equipmentDepartmentScoped(): bool
+    {
+        return $this->equipmentScope() === 'department';
+    }
 }

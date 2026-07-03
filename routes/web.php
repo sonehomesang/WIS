@@ -3,6 +3,8 @@
 use App\Livewire\Borrow\Create;
 use App\Livewire\Borrow\Show;
 use App\Livewire\Dashboard;
+use App\Livewire\Equipment\Categories;
+use App\Livewire\Equipment\InspectionTemplates;
 use App\Livewire\Inventory\Index;
 use App\Livewire\Settings\Audit;
 use App\Livewire\Settings\Backup;
@@ -207,6 +209,14 @@ Route::get('oga/{record}', App\Livewire\Oga\Show::class)
 Route::get('equipment', App\Livewire\Equipment\Index::class)
     ->middleware(['auth', 'verified'])
     ->name('equipment');
+
+Route::get('equipment/inspection-templates', InspectionTemplates::class)
+    ->middleware(['auth', 'verified'])
+    ->name('equipment.templates');
+
+Route::get('equipment/categories', Categories::class)
+    ->middleware(['auth', 'verified'])
+    ->name('equipment.categories');
 
 // ── Expo Info (mini-CRM) — Phase 6.9 ──
 Route::get('expo', App\Livewire\Expo\Index::class)

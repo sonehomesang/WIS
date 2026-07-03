@@ -2,10 +2,14 @@
 
 namespace App\Livewire\Equipment;
 
+use App\Models\Department;
 use App\Models\Equipment;
+use App\Models\EquipmentCategory;
 use App\Models\EquipmentInspection;
 use App\Models\EquipmentPhoto;
+use App\Models\InspectionTemplate;
 use App\Models\Uom;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -41,6 +45,12 @@ class Index extends Component
 
     public string $category = '';
 
+    /** Owner = ພະແນກ ເຈົ້າຂອງ. */
+    public ?int $department_id = null;
+
+    /** Loc-Bin = ບ່ອນ ວາງ/ຊັ້ນ ໃນ ສາງ. */
+    public string $loc_bin = '';
+
     public string $brand_model = '';
 
     public string $serial_no = '';
@@ -48,6 +58,9 @@ class Index extends Component
     public string $location = '';
 
     public string $responsible_name = '';
+
+    /** ຜູ້ຮັບຜິດຊອບ = ລິ້ງ ຫາ ຜູ້ໃຊ້. */
+    public ?int $responsible_user_id = null;
 
     // ຈຳນວນ ລວມ + ຫົວໜ່ວຍ + ຈຳນວນ ທີ່ ຊ່ອມ/ຢຸດ (ໃຊ້ງານ = quantity − repair − retired)
     public int $quantity = 1;
@@ -97,6 +110,18 @@ class Index extends Component
 
     public int $insRetired = 0;
 
+    public ?int $insTemplateId = null;
+
+    /** ປະເພດ ນ້ຳມັນ ຕອນ ກວດ: '' | 'ev' | 'engine'. */
+    public string $insFuelType = '';
+
+    /** @var array<int,array{label:string,status:string,note:string}> */
+    public array $insChecklist = [];
+
+    public ?int $editingInspectionId = null;
+
+    public ?int $viewingInspectionId = null;
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('equipment.view'), 403);
@@ -107,24 +132,52 @@ class Index extends Component
         $this->resetPage();
     }
 
+    /** ຖືກ ຈຳກັດ ໃຫ້ ເບິ່ງ/ຈັດການ ສະເພາະ ພະແນກ ຕົນ ບໍ (department_admin). */
+    protected function deptScoped(): bool
+    {
+        return auth()->user()->equipmentDepartmentScoped();
+    }
+
+    /** ID ພະແນກ ຂອງ ຜູ້ ໃຊ້ ປັດຈຸບັນ. */
+    protected function userDeptId(): ?int
+    {
+        return auth()->user()->department_id;
+    }
+
+    /** ກັນ ບໍ່ ໃຫ້ department_admin ແຕະ ເຄື່ອງ ພະແນກ ອື່ນ. */
+    protected function guardDept(Equipment $e): void
+    {
+        if ($this->deptScoped() && $e->department_id !== $this->userDeptId()) {
+            abort(403);
+        }
+    }
+
     public function newItem(): void
     {
         $this->resetForm();
+        // department_admin: ບັງຄັບ Owner = ພະແນກ ຕົນ ໄວ້ ລ່ວງໜ້າ.
+        if ($this->deptScoped()) {
+            $this->department_id = $this->userDeptId();
+        }
         $this->showModal = true;
     }
 
     public function editItem(int $id): void
     {
         $e = Equipment::findOrFail($id);
+        $this->guardDept($e);
         $this->editingId = $e->id;
         $this->asset_code = $e->asset_code;
         $this->fixed_asset_no = $e->fixed_asset_no ?? '';
         $this->name = $e->name;
         $this->category = $e->category ?? '';
+        $this->department_id = $e->department_id;
+        $this->loc_bin = $e->loc_bin ?? '';
         $this->brand_model = $e->brand_model ?? '';
         $this->serial_no = $e->serial_no ?? '';
         $this->location = $e->location ?? '';
         $this->responsible_name = $e->responsible_name ?? '';
+        $this->responsible_user_id = $e->responsible_user_id;
         $this->quantity = $e->quantity ?: 1;
         $this->unit_id = $e->unit_id;
         $b = $e->statusBreakdown();
@@ -142,15 +195,23 @@ class Index extends Component
     {
         abort_unless(auth()->user()->can('equipment.'.($this->editingId ? 'edit' : 'create')), 403);
 
+        // department_admin ແກ້ ເຄື່ອງ ພະແນກ ອື່ນ ບໍ່ ໄດ້.
+        if ($this->editingId) {
+            $this->guardDept(Equipment::findOrFail($this->editingId));
+        }
+
         $data = $this->validate([
             'asset_code' => ['required', 'string', 'max:32', Rule::unique('equipment', 'asset_code')->ignore($this->editingId)],
             'fixed_asset_no' => ['nullable', 'string', 'max:64'],
             'name' => ['required', 'string', 'max:256'],
             'category' => ['nullable', 'string', 'max:128'],
+            'department_id' => ['nullable', 'exists:departments,id'],
+            'loc_bin' => ['nullable', 'string', 'max:64'],
             'brand_model' => ['nullable', 'string', 'max:256'],
             'serial_no' => ['nullable', 'string', 'max:128'],
             'location' => ['nullable', 'string', 'max:128'],
             'responsible_name' => ['nullable', 'string', 'max:128'],
+            'responsible_user_id' => ['nullable', 'exists:users,id'],
             'quantity' => ['required', 'integer', 'min:1', 'max:100000'],
             'unit_id' => ['nullable', 'exists:uoms,id'],
             'qtyRepair' => ['integer', 'min:0'],
@@ -175,15 +236,27 @@ class Index extends Component
             return;
         }
 
+        // department_admin: ບັງຄັບ Owner = ພະແນກ ຕົນ ສະເໝີ (ຫ້າມ ຍ້າຍ ໄປ ພະແນກ ອື່ນ).
+        $departmentId = $this->deptScoped() ? $this->userDeptId() : ($data['department_id'] ?: null);
+
+        // ຜູ້ຮັບຜິດຊອບ: ຖ້າ ລິ້ງ ຜູ້ໃຊ້ → ໃຊ້ ຊື່ ຜູ້ໃຊ້ ນັ້ນ; ບໍ່ ດັ່ງນັ້ນ ຮັກສາ ຄ່າ ຂໍ້ຄວາມ (legacy).
+        $responsibleUserId = $data['responsible_user_id'] ?: null;
+        $responsibleName = $responsibleUserId
+            ? (User::find($responsibleUserId)?->display_name ?? ($data['responsible_name'] ?: null))
+            : ($data['responsible_name'] ?: null);
+
         $attrs = [
             'asset_code' => $data['asset_code'],
             'fixed_asset_no' => $data['fixed_asset_no'] ?: null,
             'name' => $data['name'],
             'category' => $data['category'] ?: null,
+            'department_id' => $departmentId,
+            'loc_bin' => $data['loc_bin'] ?: null,
             'brand_model' => $data['brand_model'] ?: null,
             'serial_no' => $data['serial_no'] ?: null,
             'location' => $data['location'] ?: null,
-            'responsible_name' => $data['responsible_name'] ?: null,
+            'responsible_name' => $responsibleName,
+            'responsible_user_id' => $responsibleUserId,
             'quantity' => $this->quantity,
             'unit_id' => $data['unit_id'] ?: null,
             'status_counts' => ['active' => $active, 'repair' => $this->qtyRepair, 'retired' => $this->qtyRetired],
@@ -232,6 +305,7 @@ class Index extends Component
     public function delete(int $id): void
     {
         abort_unless(auth()->user()->can('equipment.delete'), 403);
+        $this->guardDept(Equipment::findOrFail($id));
         Equipment::whereKey($id)->delete();
     }
 
@@ -243,6 +317,7 @@ class Index extends Component
         $this->reset([
             'insSearch', 'insEquipmentId', 'insEquipmentLabel', 'insInspector',
             'insNotes', 'insNextDue', 'insPhoto', 'insUpdateStatus', 'insRepair', 'insRetired',
+            'insTemplateId', 'insFuelType', 'insChecklist', 'editingInspectionId',
         ]);
         $this->insDate = now()->toDateString();
         $this->insResult = 'pass';
@@ -251,19 +326,103 @@ class Index extends Component
         $this->showInspectionModal = true;
     }
 
+    /** ແກ້ໄຂ ບັນທຶກ ການ ກວດ ທີ່ ມີ ຢູ່ ແລ້ວ. */
+    public function editInspection(int $id): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+        $ins = EquipmentInspection::with('equipment')->findOrFail($id);
+        $e = $ins->equipment;
+        if ($e) {
+            $this->guardDept($e);
+        }
+
+        $this->reset([
+            'insSearch', 'insPhoto', 'insUpdateStatus',
+        ]);
+        $this->viewingInspectionId = null;
+        $this->editingInspectionId = $ins->id;
+        $this->insEquipmentId = $e?->id;
+        $this->insEquipmentLabel = $e ? $e->asset_code.' · '.$e->name : '';
+        $this->insEquipmentQty = $e?->quantity ?: 1;
+        $b = $e ? $e->statusBreakdown() : ['repair' => 0, 'retired' => 0];
+        $this->insRepair = $b['repair'];
+        $this->insRetired = $b['retired'];
+        $this->insTemplateId = $ins->template_id;
+        $this->insFuelType = $ins->fuel_type ?? '';
+        $this->insChecklist = $ins->checklist ?? [];
+        $this->insResult = $ins->result;
+        $this->insNotes = $ins->notes ?? '';
+        $this->insNextDue = $ins->next_due_date?->toDateString();
+        $this->insDate = $ins->inspected_at?->toDateString();
+        $this->resetValidation();
+        $this->showInspectionModal = true;
+    }
+
+    /** ເປີດ ໜ້າຕ່າງ ເບິ່ງ ລາຍລະອຽດ ການ ກວດ (read-only). */
+    public function viewInspection(int $id): void
+    {
+        abort_unless(auth()->user()->can('equipment.view'), 403);
+        $ins = EquipmentInspection::with('equipment')->findOrFail($id);
+        if ($ins->equipment) {
+            $this->guardDept($ins->equipment);
+        }
+        $this->viewingInspectionId = $id;
+    }
+
     public function pickInspectionEquipment(int $id): void
     {
         $e = Equipment::find($id);
         if (! $e) {
             return;
         }
+        $this->guardDept($e);
         $this->insEquipmentId = $e->id;
         $this->insEquipmentLabel = $e->asset_code.' · '.$e->name;
         $this->insEquipmentQty = $e->quantity ?: 1;
         $b = $e->statusBreakdown();
         $this->insRepair = $b['repair'];
         $this->insRetired = $b['retired'];
+        $this->insTemplateId = null;
+        $this->insFuelType = '';
+        $this->insChecklist = [];
         $this->insSearch = '';
+    }
+
+    /** ເລືອກ ແມ່ແບບ → ໂຫຼດ ເຊັກລິສ ເຂົ້າ ຟອມ (ຖ້າ ຕ້ອງ ເລືອກ ປະເພດ ນ້ຳມັນ ກ່ອນ → ລໍ). */
+    public function updatedInsTemplateId($value): void
+    {
+        $this->insFuelType = '';
+        $this->insChecklist = [];
+        $t = $value ? InspectionTemplate::find($value) : null;
+        if ($t && ! $t->hasFuelTypes()) {
+            $this->insChecklist = $this->buildInsChecklist($t, '');
+        }
+    }
+
+    /** ເລືອກ ປະເພດ ນ້ຳມັນ → ສ້າງ ເຊັກລິສ ຕາມ ປະເພດ. */
+    public function updatedInsFuelType($value): void
+    {
+        $t = $this->insTemplateId ? InspectionTemplate::find($this->insTemplateId) : null;
+        $this->insChecklist = $t ? $this->buildInsChecklist($t, (string) $value) : [];
+    }
+
+    /** ຕິກ ສະຖານະ OK/NG ຕໍ່ ຂໍ້ (ກົດ ຊ້ຳ = ກັບ ໄປ N/A). */
+    public function toggleChecklist(int $i, string $status): void
+    {
+        if (! isset($this->insChecklist[$i])) {
+            return;
+        }
+        $this->insChecklist[$i]['status'] = ($this->insChecklist[$i]['status'] ?? '') === $status ? 'na' : $status;
+    }
+
+    /** ສ້າງ ເຊັກລິສ ຈາກ ແມ່ແບບ: ຂໍ້ "ທັງ 2" + ຂໍ້ ຂອງ ປະເພດ ທີ່ ເລືອກ. */
+    protected function buildInsChecklist(InspectionTemplate $t, string $fuelType): array
+    {
+        return collect($t->normalizedItems())
+            ->filter(fn ($x) => $x['applies'] === 'both' || ($fuelType !== '' && $x['applies'] === $fuelType))
+            ->map(fn ($x) => ['label' => $x['label'], 'status' => 'pass', 'note' => ''])
+            ->values()
+            ->all();
     }
 
     public function saveInspection(): void
@@ -272,17 +431,26 @@ class Index extends Component
 
         $this->validate([
             'insEquipmentId' => ['required', 'exists:equipment,id'],
-            'insDate' => ['required', 'date'],
-            'insInspector' => ['nullable', 'string', 'max:128'],
             'insResult' => ['required', 'in:pass,fail,follow_up'],
             'insNotes' => ['nullable', 'string', 'max:2000'],
             'insNextDue' => ['nullable', 'date'],
             'insPhoto' => ['nullable', 'image', 'max:8192'],
             'insRepair' => ['integer', 'min:0'],
             'insRetired' => ['integer', 'min:0'],
+            'insTemplateId' => ['nullable', 'exists:inspection_templates,id'],
+            'insFuelType' => ['nullable', 'in:ev,engine'],
         ]);
 
+        // ແມ່ແບບ ທີ່ ລາຍການ ຂຶ້ນ ຕາມ ປະເພດ → ຕ້ອງ ເລືອກ ປະເພດ ນ້ຳມັນ ກ່ອນ.
+        $tpl = $this->insTemplateId ? InspectionTemplate::find($this->insTemplateId) : null;
+        if ($tpl && $tpl->hasFuelTypes() && $this->insFuelType === '') {
+            $this->addError('insFuelType', 'ກະລຸນາ ເລືອກ ປະເພດ (ໄຟຟ້າ/ນ້ຳມັນ) ກ່ອນ.');
+
+            return;
+        }
+
         $e = Equipment::findOrFail($this->insEquipmentId);
+        $this->guardDept($e);
 
         // ອັບເດດ ສະຖານະ ຈາກ ຜົນ ກວດກາ (ຖ້າ ເລືອກ)
         if ($this->insUpdateStatus) {
@@ -295,20 +463,68 @@ class Index extends Component
             $e->update(['status_counts' => ['active' => $active, 'repair' => $this->insRepair, 'retired' => $this->insRetired]]);
         }
 
-        $path = $this->insPhoto ? $this->stampAndStore($this->insPhoto, 'equipment/inspections/'.$e->id) : null;
+        // ຜົນ + ຄະແນນ: ຖ້າ ໃຊ້ ເຊັກລິສ → ຄິດໄລ່ ອັດຕະໂນມັດ; ບໍ່ ດັ່ງນັ້ນ ໃຊ້ ຄ່າ ທີ່ ເລືອກ.
+        $score = null;
+        $result = $this->insResult;
+        if (count($this->insChecklist)) {
+            $s = $this->scoreChecklist($this->insChecklist);
+            $score = $s['pct'];
+            $result = $s['result'];
+        }
 
-        $e->inspections()->create([
-            'inspected_at' => $this->insDate,
-            'inspector_name' => $this->insInspector ?: null,
-            'result' => $this->insResult,
+        $payload = [
+            'template_id' => $this->insTemplateId ?: null,
+            'fuel_type' => $this->insFuelType ?: null,
+            'inspector_name' => auth()->user()->display_name,   // ບັງຄັບ ຈາກ ຜູ້ ລ໋ອກອິນ
+            'result' => $result,
+            'score' => $score,
+            'checklist' => $this->insChecklist ?: null,
             'notes' => $this->insNotes ?: null,
             'next_due_date' => $this->insNextDue ?: null,
-            'photo_path' => $path,
-            'created_by' => auth()->id(),
-        ]);
+        ];
+        if ($this->insPhoto) {
+            $payload['photo_path'] = $this->stampAndStore($this->insPhoto, 'equipment/inspections/'.$e->id);
+        }
+
+        if ($this->editingInspectionId) {
+            EquipmentInspection::findOrFail($this->editingInspectionId)->update($payload);
+        } else {
+            $payload['inspected_at'] = now();   // ສະແຕັມ ເວລາ submit
+            $payload['created_by'] = auth()->id();
+            $e->inspections()->create($payload);
+        }
 
         $this->showInspectionModal = false;
         $this->dispatch('saved');
+    }
+
+    /**
+     * ຄິດໄລ່ ຄະແນນ ຈາກ ເຊັກລິສ: ຜ່ານ / (ຜ່ານ+ບໍ່ຜ່ານ) — ຂໍ້ "ບໍ່ກ່ຽວ" ບໍ່ ນັບ.
+     *
+     * @return array{pass:int,fail:int,na:int,considered:int,pct:int,result:string}
+     */
+    protected function scoreChecklist(array $checklist): array
+    {
+        $pass = $fail = $na = 0;
+        foreach ($checklist as $c) {
+            match ($c['status'] ?? 'pass') {
+                'fail' => $fail++,
+                'na' => $na++,
+                default => $pass++,
+            };
+        }
+        $considered = $pass + $fail;
+        $pct = $considered > 0 ? (int) round($pass / $considered * 100) : 100;
+        // 100% → ຜ່ານ · 70–99% → ຕ້ອງຕິດຕາມ · <70% → ບໍ່ຜ່ານ
+        $result = $pct === 100 ? 'pass' : ($pct >= 70 ? 'follow_up' : 'fail');
+
+        return compact('pass', 'fail', 'na', 'considered', 'pct', 'result');
+    }
+
+    /** ຄະແນນ ສົດ ສຳລັບ ສະແດງ ໃນ ຟອມ (null ຖ້າ ບໍ່ ໃຊ້ ເຊັກລິສ). */
+    public function getInsScoreProperty(): ?array
+    {
+        return count($this->insChecklist) ? $this->scoreChecklist($this->insChecklist) : null;
     }
 
     /** ຝັງ ວັນທີ+ເວລາ (ຕອນ upload) ໃສ່ ຮູບ ດ້ວຍ GD ແລ້ວ ບັນທຶກ; fallback ຖ້າ GD ລົ້ມ. */
@@ -356,10 +572,13 @@ class Index extends Component
         $this->fixed_asset_no = '';
         $this->name = '';
         $this->category = '';
+        $this->department_id = null;
+        $this->loc_bin = '';
         $this->brand_model = '';
         $this->serial_no = '';
         $this->location = '';
         $this->responsible_name = '';
+        $this->responsible_user_id = null;
         $this->quantity = 1;
         $this->unit_id = null;
         $this->qtyRepair = 0;
@@ -373,8 +592,13 @@ class Index extends Component
 
     public function render(): View
     {
+        // department_admin ເຫັນ ສະເພາະ ເຄື່ອງ ຂອງ ພະແນກ ຕົນ.
+        $deptScoped = $this->deptScoped();
+        $deptId = $this->userDeptId();
+
         $items = Equipment::query()
-            ->with(['photos', 'unit'])
+            ->with(['photos', 'unit', 'department', 'responsibleUser'])
+            ->when($deptScoped, fn ($q) => $q->where('department_id', $deptId))
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
                 ->where('name', 'like', "%{$this->search}%")
                 ->orWhere('asset_code', 'like', "%{$this->search}%")
@@ -388,15 +612,55 @@ class Index extends Component
         $insResults = $this->showInspectionModal && strlen($this->insSearch) >= 2
             ? Equipment::where(fn ($q) => $q->where('name', 'like', "%{$this->insSearch}%")
                 ->orWhere('asset_code', 'like', "%{$this->insSearch}%"))
+                ->when($deptScoped, fn ($q) => $q->where('department_id', $deptId))
                 ->orderBy('asset_code')->limit(8)->get()
             : collect();
 
+        $insTemplateOptions = collect();
+        if ($this->insEquipmentId) {
+            $cat = Equipment::whereKey($this->insEquipmentId)->value('category');
+            // ໂຊ ແມ່ແບບ ທັງ ໝົດ ທີ່ ເປີດ ໃຊ້ — ຮຽງ ອັນ ກົງ ປະເພດ ຂຶ້ນ ກ່ອນ (ກັນ ບໍ່ ໃຫ້ ຫາຍ ຍ້ອນ ຊື່ ປະເພດ ບໍ່ ກົງ).
+            $insTemplateOptions = InspectionTemplate::where('is_active', true)
+                ->orderByRaw('CASE WHEN category = ? THEN 0 WHEN category IS NULL OR category = ? THEN 1 ELSE 2 END', [$cat, ''])
+                ->orderBy('name')
+                ->get(['id', 'name', 'category'])
+                ->map(fn ($t) => tap($t, fn ($x) => $x->matches = $cat && $x->category === $cat));
+        }
+
+        // ແມ່ແບບ ທີ່ ເລືອກ ຕ້ອງ ເລືອກ ປະເພດ ນ້ຳມັນ ກ່ອນ ບໍ.
+        $insTemplateNeedsFuel = $this->insTemplateId
+            ? (bool) optional(InspectionTemplate::find($this->insTemplateId))->hasFuelTypes()
+            : false;
+
+        $viewingInspection = $this->viewingInspectionId
+            ? EquipmentInspection::with(['equipment', 'template'])->find($this->viewingInspectionId)
+            : null;
+
+        // ປະເພດ ສຳລັບ dropdown ຟອມ (ເປີດ ໃຊ້) — ຮວມ ຄ່າ ປັດຈຸບັນ ຕອນ ແກ້ (ກັນ ຫາຍ ຖ້າ ຖືກ ປິດ).
+        $categoryOptions = EquipmentCategory::where('is_active', true)
+            ->orderBy('sort_order')->orderBy('name')->pluck('name');
+        if ($this->category !== '' && ! $categoryOptions->contains($this->category)) {
+            $categoryOptions = $categoryOptions->prepend($this->category);
+        }
+        $authUser = auth()->user();
+        $canManageCategories = $authUser->is_super_admin || $authUser->hasRole('admin');
+
         return view('livewire.equipment.index', [
             'items' => $items,
+            'insTemplateOptions' => $insTemplateOptions,
             'units' => Uom::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'departments' => Department::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'responsibleUsers' => User::orderBy('display_name')->get(['id', 'display_name']),
+            'categoryOptions' => $categoryOptions,
+            'canManageCategories' => $canManageCategories,
             'categories' => Equipment::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
-            'inspections' => EquipmentInspection::with('equipment')->orderByDesc('inspected_at')->orderByDesc('id')->limit(50)->get(),
+            'inspections' => EquipmentInspection::with('equipment')
+                ->when($deptScoped, fn ($q) => $q->whereHas('equipment', fn ($w) => $w->where('department_id', $deptId)))
+                ->orderByDesc('inspected_at')->orderByDesc('id')->limit(50)->get(),
             'insResults' => $insResults,
+            'insTemplateNeedsFuel' => $insTemplateNeedsFuel,
+            'viewingInspection' => $viewingInspection,
+            'deptScoped' => $deptScoped,
         ]);
     }
 }

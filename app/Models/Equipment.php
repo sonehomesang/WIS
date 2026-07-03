@@ -21,9 +21,9 @@ class Equipment extends Model
     public const STATUSES = ['active', 'repair', 'retired'];
 
     protected $fillable = [
-        'asset_code', 'fixed_asset_no', 'name', 'category', 'brand_model', 'serial_no',
+        'asset_code', 'fixed_asset_no', 'name', 'category', 'department_id', 'brand_model', 'serial_no',
         'quantity', 'unit_id', 'status_counts',
-        'location', 'responsible_name', 'photo_path', 'purchase_date',
+        'location', 'loc_bin', 'responsible_name', 'responsible_user_id', 'photo_path', 'purchase_date',
         'notes', 'created_by', 'updated_by',
     ];
 
@@ -36,6 +36,24 @@ class Equipment extends Model
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Uom::class, 'unit_id');
+    }
+
+    /** ພະແນກ ເຈົ້າຂອງ (Owner). */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    /** ຜູ້ຮັບຜິດຊອບ (ລິ້ງ ຫາ ຜູ້ໃຊ້). */
+    public function responsibleUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'responsible_user_id');
+    }
+
+    /** ຊື່ ຜູ້ຮັບຜິດຊອບ ສະແດງ — ຜູ້ໃຊ້ ທີ່ ລິ້ງ ກ່ອນ, ບໍ່ ດັ່ງນັ້ນ ຄ່າ ຂໍ້ຄວາມ ເກົ່າ. */
+    public function responsibleLabel(): ?string
+    {
+        return $this->responsibleUser?->display_name ?? $this->responsible_name;
     }
 
     public function photos(): HasMany
