@@ -8,7 +8,7 @@
     $statusLabel = ['active' => 'ໃຊ້ງານ', 'repair' => 'ຊ່ອມແປງ', 'retired' => 'ຢຸດໃຊ້'];
 @endphp
 
-<div class="pb-6" x-data="{ tab: 'register', bigImg: null }">
+<div class="pb-6" x-data="{ tab: 'register', bigImg: null }" @wh-lightbox.window="bigImg = $event.detail">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
@@ -49,15 +49,16 @@
                 <table class="w-full text-sm table-fixed">
                     <thead class="sticky top-0 z-10 bg-gray-50 text-gray-600 text-xs border-b border-gray-200 shadow-sm">
                         <tr>
-                            <th class="text-left font-semibold px-3 py-2 w-24">ລະຫັດເຄື່ອງ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-24">ທະບຽນຊັບສິນ</th>
+                            <th class="text-left font-semibold px-3 py-2 w-28">ລະຫັດເຄື່ອງ</th>
+                            <th class="text-left font-semibold px-3 py-2 w-28">ທະບຽນຊັບສິນ</th>
                             <th class="text-left font-semibold px-3 py-2">ຊື່ ເຄື່ອງ / ລາຍລະອຽດ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-28">Owner (ພະແນກ)</th>
-                            <th class="text-left font-semibold px-3 py-2 w-24">Loc-Bin</th>
+                            <th class="text-left font-semibold px-3 py-2 w-24">Owner (ພະແນກ)</th>
+                            <th class="text-left font-semibold px-3 py-2 w-20">Loc-Bin</th>
                             <th class="text-left font-semibold px-3 py-2 w-24">ຮູບ</th>
                             <th class="text-left font-semibold px-3 py-2 w-16">ຈຳນວນ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-32">ສະຖານະ</th>
-                            <th class="px-3 py-2 w-20"></th>
+                            <th class="text-left font-semibold px-3 py-2 w-28">ສະຖານະ</th>
+                            <th class="text-center font-semibold px-2 py-2 w-20">ການ ກວດເຊັກ</th>
+                            <th class="px-3 py-2 w-16"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -91,6 +92,11 @@
                                         @endforeach
                                     </div>
                                 </td>
+                                <td class="px-2 py-2 text-center">
+                                    <button wire:click="viewInspectionHistory({{ $e->id }})" class="text-gray-400 hover:text-sky-700 p-1" title="ສະຖານະ ການ ກວດເຊັກ">
+                                        <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                                    </button>
+                                </td>
                                 <td class="px-3 py-2 pr-5 text-right whitespace-nowrap text-gray-500">
                                     @can('equipment.edit')
                                         <button wire:click="editItem({{ $e->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
@@ -105,7 +111,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="9" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ເຄື່ອງ — ກົດ "+ ເພີ່ມ ເຄື່ອງ"</td></tr>
+                            <tr><td colspan="10" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ເຄື່ອງ — ກົດ "+ ເພີ່ມ ເຄື່ອງ"</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -499,15 +505,29 @@
                         <textarea wire:model="insNotes" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                     </div>
 
-                    {{-- ຮູບ (ຝັງ ວັນທີ+ເວລາ ອັດຕະໂນມັດ) --}}
+                    {{-- ຮູບ ຫຼັກຖານ (ຫຼາຍ ໃບ · ຝັງ ວັນທີ+ເວລາ ອັດຕະໂນມັດ) --}}
                     <div class="md:col-span-2">
-                        <label class="block text-sm text-gray-600 mb-1">ຮູບ ກວດກາ <span class="text-xs text-gray-400">(📷 ກ້ອງ/ແກເລີຣີ · ຝັງ ວັນທີ+ເວລາ ໃຫ້ ອັດຕະໂນມັດ)</span></label>
-                        @if ($insPhoto)
-                            <img src="{{ $insPhoto->temporaryUrl() }}" class="w-24 h-24 rounded object-cover border border-sky-200 mb-2" alt="ຮູບ" />
+                        <label class="block text-sm text-gray-600 mb-1">ຮູບ ຫຼັກຖານ <span class="text-xs text-gray-400">(📷 ກ້ອງ/ແກເລີຣີ · ສູງສຸດ 4 ໃບ · ຝັງ ວັນທີ+ເວລາ ໃຫ້)</span></label>
+                        @if (count($insExistingPhotos) || count($insPhotos))
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                @foreach ($insExistingPhotos as $ei => $p)
+                                    <div class="relative" wire:key="insex-{{ $ei }}">
+                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($p) }}" @click="bigImg='{{ \Illuminate\Support\Facades\Storage::url($p) }}'" class="w-16 h-16 rounded object-cover border border-gray-200 cursor-pointer" alt="ຮູບ" />
+                                        <button type="button" wire:click="removeExistingInsPhoto({{ $ei }})" wire:confirm="ລຶບ ຮູບ ນີ້?" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs leading-none flex items-center justify-center" aria-label="ລຶບ">×</button>
+                                    </div>
+                                @endforeach
+                                @foreach ($insPhotos as $ni => $ph)
+                                    <div class="relative" wire:key="insnew-{{ $ni }}">
+                                        <img src="{{ $ph->temporaryUrl() }}" class="w-16 h-16 rounded object-cover border border-sky-200" alt="ຮູບ ໃໝ່" />
+                                        <button type="button" wire:click="removeInsPhoto({{ $ni }})" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs leading-none flex items-center justify-center" aria-label="ລຶບ">×</button>
+                                    </div>
+                                @endforeach
+                            </div>
                         @endif
-                        <input type="file" wire:model="insPhoto" accept="image/*" class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-sky-50 file:text-sky-700 file:min-h-[40px]" />
-                        <div wire:loading wire:target="insPhoto" class="text-xs text-gray-400 mt-1">ກຳລັງ ອັບໂຫຼດ…</div>
-                        @error('insPhoto')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        <input type="file" wire:model="insPhotos" multiple accept="image/*" class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-sky-50 file:text-sky-700 file:min-h-[40px]" />
+                        <div wire:loading wire:target="insPhotos" class="text-xs text-gray-400 mt-1">ກຳລັງ ອັບໂຫຼດ…</div>
+                        @error('insPhotos.*')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        @error('insPhotos')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
 
                     {{-- ອັບເດດ ສະຖານະ ຈາກ ຜົນ ກວດ --}}
@@ -534,7 +554,7 @@
 
                 <div class="flex justify-end gap-2 pt-2">
                     <button wire:click="$set('showInspectionModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="saveInspection" wire:loading.attr="disabled" wire:target="saveInspection,insPhoto" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">ບັນທຶກ</button>
+                    <button wire:click="saveInspection" wire:loading.attr="disabled" wire:target="saveInspection,insPhotos" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">ບັນທຶກ</button>
                 </div>
             </div>
         </div>
@@ -548,10 +568,10 @@
             $vcl = ['pass' => ['OK · ຜ່ານ', 'text-green-700'], 'fail' => ['NG · ບໍ່ຜ່ານ', 'text-red-700'], 'na' => ['N/A', 'text-gray-400']];
             $vfn = 'inspection-'.\Illuminate\Support\Str::slug($viewingInspection->equipment?->asset_code ?? 'eq').'-'.($viewingInspection->inspected_at?->format('Ymd-Hi') ?? 'na');
         @endphp
-        <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="ins-view-modal">
+        <div class="fixed inset-0 z-[55] flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="ins-view-modal">
             <div class="bg-white w-full md:max-w-sm rounded-t-lg md:rounded-lg p-3 space-y-2 max-h-[90vh] overflow-y-auto">
                 {{-- ໃບ ກວດ ຮູບແບບ ໃບບິນ ~3.5" (336px) --}}
-                <div id="ins-detail-card" class="w-[336px] max-w-full mx-auto bg-white text-gray-800 text-[11px] leading-tight space-y-1.5">
+                <div id="ins-detail-card" class="w-[360px] max-w-full mx-auto bg-white text-gray-800 text-[10px] leading-tight space-y-1.5">
                     <div class="flex items-start justify-between">
                         <div>
                             <h3 class="text-sm font-bold text-gray-900">ໃບ ກວດ ສະພາບ ເຄື່ອງ</h3>
@@ -564,23 +584,52 @@
 
                     <div class="border-t border-dashed border-gray-300"></div>
 
-                    <div class="space-y-0.5">
-                        <div><span class="text-gray-500">ເຄື່ອງ:</span> {{ $viewingInspection->equipment?->asset_code }} · {{ $viewingInspection->equipment?->name }}</div>
-                        <div><span class="text-gray-500">ຜູ້ ກວດ:</span> {{ $viewingInspection->inspector_name ?? '—' }}</div>
-                        <div><span class="text-gray-500">ວັນທີ/ເວລາ:</span> {{ $viewingInspection->inspected_at?->format('d/m/Y H:i') }}</div>
-                        @if ($viewingInspection->template)
-                            <div><span class="text-gray-500">ແມ່ແບບ:</span> {{ $viewingInspection->template->name }}</div>
-                        @endif
-                        @if ($viewingInspection->fuel_type)
-                            <div><span class="text-gray-500">ປະເພດ:</span> {{ ['ev' => 'ໄຟຟ້າ (EV)', 'engine' => 'ນ້ຳມັນ (Engine)'][$viewingInspection->fuel_type] ?? $viewingInspection->fuel_type }}</div>
-                        @endif
-                        <div class="flex items-center gap-1 pt-0.5 flex-wrap">
-                            <span class="text-gray-500">ຜົນ:</span>
-                            <span class="rounded px-1.5 py-0.5 font-medium {{ $vrb[$viewingInspection->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $vrl[$viewingInspection->result] ?? $viewingInspection->result }}</span>
-                            @if (! is_null($viewingInspection->score))<span class="text-gray-600">ສະພາບ ໂດຍ ລວມ <b>{{ $viewingInspection->score }}%</b></span>@endif
+                    @php $vPhotos = $viewingInspection->allPhotos(); @endphp
+                    <div class="flex gap-2 items-start">
+                        <div class="space-y-0.5 flex-1 min-w-0">
+                            <div><span class="text-gray-500">ເຄື່ອງ:</span> {{ $viewingInspection->equipment?->asset_code }} · {{ $viewingInspection->equipment?->name }}</div>
+                            <div><span class="text-gray-500">ຜູ້ ກວດ:</span> {{ $viewingInspection->inspector_name ?? '—' }}</div>
+                            <div><span class="text-gray-500">ວັນທີ/ເວລາ:</span> {{ $viewingInspection->inspected_at?->format('d/m/Y H:i') }}</div>
+                            @if ($viewingInspection->template)
+                                <div><span class="text-gray-500">ແມ່ແບບ:</span> {{ $viewingInspection->template->name }}</div>
+                            @endif
+                            @if ($viewingInspection->fuel_type)
+                                <div><span class="text-gray-500">ປະເພດ:</span> {{ ['ev' => 'ໄຟຟ້າ (EV)', 'engine' => 'ນ້ຳມັນ (Engine)'][$viewingInspection->fuel_type] ?? $viewingInspection->fuel_type }}</div>
+                            @endif
+                            <div class="flex items-center gap-1 pt-0.5 flex-wrap">
+                                <span class="text-gray-500">ຜົນ:</span>
+                                <span class="rounded px-1.5 py-0.5 font-medium {{ $vrb[$viewingInspection->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $vrl[$viewingInspection->result] ?? $viewingInspection->result }}</span>
+                                @if (! is_null($viewingInspection->score))<span class="text-gray-600">ສະພາບ ໂດຍ ລວມ <b>{{ $viewingInspection->score }}%</b></span>@endif
+                            </div>
+                            @if ($viewingInspection->next_due_date)
+                                <div><span class="text-gray-500">ກວດ ຄັ້ງ ໜ້າ:</span> {{ $viewingInspection->next_due_date->format('d/m/Y') }}</div>
+                            @endif
                         </div>
-                        @if ($viewingInspection->next_due_date)
-                            <div><span class="text-gray-500">ກວດ ຄັ້ງ ໜ້າ:</span> {{ $viewingInspection->next_due_date->format('d/m/Y') }}</div>
+                        @if (count($vPhotos))
+                            @php
+                                $vStamp = $viewingInspection->inspected_at?->format('d/m/Y H:i');
+                                // ຝັງ ຮູບ ເປັນ data-URI → html-to-image ບໍ່ ຕ້ອງ ດຶງ ໃໝ່ (export ໄດ້ ແນ່ນອນ).
+                                $vDataUri = function ($path) {
+                                    try {
+                                        $bytes = \Illuminate\Support\Facades\Storage::disk('public')->get($path);
+                                        $mime = str_ends_with(strtolower($path), '.png') ? 'image/png' : 'image/jpeg';
+
+                                        return 'data:'.$mime.';base64,'.base64_encode($bytes);
+                                    } catch (\Throwable $e) {
+                                        return \Illuminate\Support\Facades\Storage::url($path);
+                                    }
+                                };
+                            @endphp
+                            <div class="shrink-0" style="width:140px;">
+                                <div class="grid {{ count($vPhotos) === 1 ? 'grid-cols-1' : 'grid-cols-2' }} gap-1">
+                                    @foreach ($vPhotos as $p)
+                                        <div class="relative">
+                                            <img src="{{ $vDataUri($p) }}" onclick="window.dispatchEvent(new CustomEvent('wh-lightbox',{detail:'{{ \Illuminate\Support\Facades\Storage::url($p) }}'}))" class="w-full {{ count($vPhotos) === 1 ? 'h-32' : 'h-16' }} rounded object-cover border border-gray-200 cursor-pointer" alt="ຮູບ ຫຼັກຖານ" />
+                                            <div class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-center leading-none rounded-b" style="font-size:8px; padding:1px 0;">{{ $vStamp }}</div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
                         @endif
                     </div>
 
@@ -589,10 +638,10 @@
                             @foreach ($viewingInspection->checklist as $ci => $c)
                                 @php $cs = $vcl[$c['status'] ?? 'pass'] ?? ['—', 'text-gray-400']; @endphp
                                 <div class="px-1.5 py-1 flex items-start justify-between gap-2">
-                                    <div class="text-gray-700">{{ $ci + 1 }}. {{ $c['label'] ?? '' }}
-                                        @if (! empty($c['note']))<div class="text-[10px] text-gray-400">↳ {{ $c['note'] }}</div>@endif
+                                    <div class="text-gray-700 min-w-0 flex-1">{{ $ci + 1 }}. {{ $c['label'] ?? '' }}
+                                        @if (! empty($c['note']))<div class="text-[9px] text-gray-400">↳ {{ $c['note'] }}</div>@endif
                                     </div>
-                                    <span class="font-medium whitespace-nowrap {{ $cs[1] }}">{{ $cs[0] }}</span>
+                                    <span class="font-medium whitespace-nowrap shrink-0 text-right {{ $cs[1] }}">{{ $cs[0] }}</span>
                                 </div>
                             @endforeach
                         </div>
@@ -600,10 +649,6 @@
 
                     @if ($viewingInspection->notes)
                         <div><span class="text-gray-500">ໝາຍເຫດ:</span> {{ $viewingInspection->notes }}</div>
-                    @endif
-
-                    @if ($viewingInspection->photo_path)
-                        <img src="{{ \Illuminate\Support\Facades\Storage::url($viewingInspection->photo_path) }}" @click="bigImg='{{ \Illuminate\Support\Facades\Storage::url($viewingInspection->photo_path) }}'" class="w-24 h-24 rounded object-cover border border-gray-200 cursor-pointer hover:ring-2 hover:ring-sky-400" alt="ຮູບ ກວດກາ" />
                     @endif
                 </div>{{-- /#ins-detail-card --}}
 
@@ -614,6 +659,70 @@
                         <button wire:click="editInspection({{ $viewingInspection->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-50">ແກ້ໄຂ</button>
                     @endcan
                     <button wire:click="$set('viewingInspectionId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ປະຫວັດ/ສະຖານະ ການ ກວດເຊັກ ຂອງ ເຄື່ອງ (ຈາກ ໄອຄ່ອນ ດວງຕາ ໃນ ທະບຽນ) --}}
+    @if ($historyEquipment)
+        @php
+            $hrb = ['pass' => 'bg-green-50 text-green-700', 'fail' => 'bg-red-50 text-red-700', 'follow_up' => 'bg-amber-50 text-amber-700'];
+            $hrl = ['pass' => 'ຜ່ານ', 'fail' => 'ບໍ່ຜ່ານ', 'follow_up' => 'ຕ້ອງຕິດຕາມ'];
+            $latest = $historyInspections->first();
+        @endphp
+        <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="ins-history-modal">
+            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-start justify-between gap-2">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800">ການ ກວດເຊັກ</h3>
+                        <div class="text-sm text-gray-500">{{ $historyEquipment->asset_code }} · {{ $historyEquipment->name }}</div>
+                    </div>
+                    <button wire:click="$set('historyEquipmentId', null)" class="text-gray-400 hover:text-gray-700 p-1 shrink-0" aria-label="Close">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                {{-- ສະຖານະ ຫຼ້າສຸດ --}}
+                @if ($latest)
+                    <div class="rounded-md border border-gray-200 p-3 text-sm">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-gray-500">ຫຼ້າສຸດ:</span>
+                            <span class="text-xs rounded px-2 py-0.5 {{ $hrb[$latest->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $hrl[$latest->result] ?? $latest->result }}</span>
+                            @if (! is_null($latest->score))<span class="text-gray-600">ສະພາບ ໂດຍ ລວມ <b>{{ $latest->score }}%</b></span>@endif
+                            <span class="text-gray-400">· {{ $latest->inspected_at?->format('d/m/Y H:i') }}</span>
+                        </div>
+                        @if ($latest->next_due_date)
+                            <div class="mt-1 text-xs {{ $latest->next_due_date->isPast() ? 'text-red-600 font-medium' : 'text-gray-500' }}">ກຳນົດ ກວດ ຄັ້ງ ໜ້າ: {{ $latest->next_due_date->format('d/m/Y') }}{{ $latest->next_due_date->isPast() ? ' (ເກີນ ກຳນົດ)' : '' }}</div>
+                        @endif
+                    </div>
+                @else
+                    <div class="rounded-md bg-gray-50 border border-gray-100 p-3 text-sm text-gray-500">ຍັງ ບໍ່ ເຄີຍ ກວດເຊັກ ເຄື່ອງ ນີ້.</div>
+                @endif
+
+                @can('equipment.edit')
+                    <button wire:click="inspectEquipment({{ $historyEquipment->id }})" class="w-full text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">＋ ກວດເຊັກ ໃໝ່ ໃຫ້ ເຄື່ອງ ນີ້</button>
+                @endcan
+
+                {{-- ປະຫວັດ ທັງ ໝົດ --}}
+                @if ($historyInspections->count())
+                    <div class="border border-gray-200 rounded-md divide-y divide-gray-100">
+                        @foreach ($historyInspections as $h)
+                            <div wire:key="hist-{{ $h->id }}" class="px-3 py-2 flex items-center justify-between gap-2 text-sm">
+                                <div class="min-w-0">
+                                    <div class="text-gray-700">{{ $h->inspected_at?->format('d/m/Y H:i') }} <span class="text-xs rounded px-1.5 py-0.5 {{ $hrb[$h->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $hrl[$h->result] ?? $h->result }}</span>@if (! is_null($h->score))<span class="text-xs text-gray-400 ml-1">{{ $h->score }}%</span>@endif</div>
+                                    <div class="text-xs text-gray-400 truncate">{{ $h->inspector_name ?? '—' }}</div>
+                                </div>
+                                <button wire:click="viewInspection({{ $h->id }})" class="text-gray-400 hover:text-sky-700 p-1 shrink-0" title="ເບິ່ງ ໃບ ກວດ">
+                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                                </button>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                <div class="flex justify-end pt-1">
+                    <button wire:click="$set('historyEquipmentId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
                 </div>
             </div>
         </div>

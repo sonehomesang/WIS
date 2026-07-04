@@ -2,7 +2,7 @@
  * Navigation = network-first (so Livewire pages stay fresh; offline → fallback).
  * /build/ + /icons/ assets = cache-first (hashed, safe to cache).
  */
-const VERSION = 'wh-v1';
+const VERSION = 'wh-v3';
 const OFFLINE_URL = '/offline.html';
 const PRECACHE = [OFFLINE_URL, '/icons/icon-192.png', '/icons/icon-512.png'];
 

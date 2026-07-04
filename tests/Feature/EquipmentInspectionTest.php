@@ -49,7 +49,7 @@ test('an inspection can update the equipment status breakdown', function () {
     expect($e->fresh()->statusBreakdown())->toBe(['active' => 6, 'repair' => 3, 'retired' => 1]);
 });
 
-test('an inspection photo is stored', function () {
+test('multiple inspection evidence photos are stored', function () {
     Storage::fake('public');
     $e = Equipment::create(['asset_code' => 'EQ-03', 'name' => 'Pump', 'quantity' => 1]);
 
@@ -57,11 +57,18 @@ test('an inspection photo is stored', function () {
     Livewire::test(Index::class)
         ->call('newInspection')
         ->call('pickInspectionEquipment', $e->id)
-        ->set('insPhoto', UploadedFile::fake()->image('check.jpg', 800, 600))
+        ->set('insPhotos', [
+            UploadedFile::fake()->image('check1.jpg', 800, 600),
+            UploadedFile::fake()->image('check2.jpg', 800, 600),
+        ])
         ->call('saveInspection')
         ->assertHasNoErrors();
 
     $ins = $e->inspections()->first();
-    expect($ins->photo_path)->not->toBeNull();
-    Storage::disk('public')->assertExists($ins->photo_path);
+    expect($ins->photos)->toHaveCount(2);            // ເກັບ ຫຼາຍ ໃບ
+    expect($ins->photo_path)->toBe($ins->photos[0]); // ຮູບ ທຳອິດ = list
+    expect($ins->allPhotos())->toHaveCount(2);
+    foreach ($ins->photos as $p) {
+        Storage::disk('public')->assertExists($p);
+    }
 });

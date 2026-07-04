@@ -77,36 +77,49 @@ document.addEventListener('alpine:init', () => {
 // Skip nodes flagged data-noexport (toolbars, ⚙ menus) when capturing.
 const exportFilter = (node) => !(node?.dataset && 'noexport' in node.dataset);
 
-// Export a DOM element to a downloaded .JPG (borrow record, dashboard…).
+// Wait for every <img> inside the node to finish loading before capture — html-to-image
+// rejects the whole render if an image is still pending, which makes the button "do nothing".
+async function waitForImages(el) {
+    const imgs = Array.from(el.querySelectorAll('img'));
+    await Promise.all(imgs.map((img) => (img.complete && img.naturalWidth)
+        ? Promise.resolve()
+        : new Promise((res) => { img.onload = img.onerror = res; })));
+}
+
+// Export a DOM element to a downloaded .JPG (inspection sheet, borrow record…).
 window.exportJpg = async (elementId, filename) => {
     const el = document.getElementById(elementId);
     if (!el) {
         return;
     }
     try {
+        await waitForImages(el);
         const { toJpeg } = await import('html-to-image');
-        const dataUrl = await toJpeg(el, { quality: 0.95, backgroundColor: '#ffffff', pixelRatio: 2, filter: exportFilter });
+        // skipFonts: ບໍ່ ຝັງ ຟອນ ພາຍນອກ (fonts.bunny.net) — ຫຼີກ SecurityError ຕອນ ອ່ານ CSS cross-origin.
+        const dataUrl = await toJpeg(el, { quality: 0.95, backgroundColor: '#ffffff', pixelRatio: 2, skipFonts: true, filter: exportFilter });
         const a = document.createElement('a');
         a.href = dataUrl;
         a.download = filename || 'export.jpg';
         a.click();
     } catch (e) {
         console.error('JPG export failed', e);
+        alert('ດຶງ JPG ບໍ່ ສຳເລັດ — ' + (e && e.message ? e.message : e));
     }
 };
 
-// Export a DOM element to a single-page PDF (image fitted to A4 landscape).
+// Export a DOM element to a single-page PDF (image fitted to A4 portrait).
 window.exportPdf = async (elementId, filename) => {
     const el = document.getElementById(elementId);
     if (!el) {
         return;
     }
     try {
+        await waitForImages(el);
         const [{ toPng }, { jsPDF }] = await Promise.all([import('html-to-image'), import('jspdf')]);
-        const dataUrl = await toPng(el, { backgroundColor: '#ffffff', pixelRatio: 2, filter: exportFilter });
+        const dataUrl = await toPng(el, { backgroundColor: '#ffffff', pixelRatio: 2, skipFonts: true, filter: exportFilter });
         const img = new Image();
         img.onload = () => {
-            const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
             const pw = pdf.internal.pageSize.getWidth();
             const ph = pdf.internal.pageSize.getHeight();
             const m = 24;
@@ -119,5 +132,6 @@ window.exportPdf = async (elementId, filename) => {
         img.src = dataUrl;
     } catch (e) {
         console.error('PDF export failed', e);
+        alert('ດຶງ PDF ບໍ່ ສຳເລັດ — ' + (e && e.message ? e.message : e));
     }
 };

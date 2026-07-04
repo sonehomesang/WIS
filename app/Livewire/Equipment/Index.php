@@ -26,6 +26,9 @@ class Index extends Component
     /** ຮູບ ສູງສຸດ ຕໍ່ ເຄື່ອງ. */
     public const MAX_PHOTOS = 3;
 
+    /** ຮູບ ຫຼັກຖານ ສູງສຸດ ຕໍ່ ການ ກວດ. */
+    public const MAX_INS_PHOTOS = 4;
+
     public string $search = '';
 
     public string $categoryFilter = '';
@@ -102,7 +105,11 @@ class Index extends Component
 
     public ?string $insNextDue = null;
 
-    public $insPhoto = null;
+    /** ຮູບ ຫຼັກຖານ ໃໝ່ ທີ່ ອັບໂຫຼດ (ກ້ອງ/ແກເລີຣີ) — ສູງສຸດ MAX_INS_PHOTOS. */
+    public array $insPhotos = [];
+
+    /** ຮູບ ຫຼັກຖານ ທີ່ ບັນທຶກ ແລ້ວ (ຕອນ ແກ້ໄຂ) — array ຂອງ path. */
+    public array $insExistingPhotos = [];
 
     public bool $insUpdateStatus = false;
 
@@ -121,6 +128,9 @@ class Index extends Component
     public ?int $editingInspectionId = null;
 
     public ?int $viewingInspectionId = null;
+
+    /** ເຄື່ອງ ທີ່ ເປີດ ໜ້າຕ່າງ ປະຫວັດ ການ ກວດເຊັກ. */
+    public ?int $historyEquipmentId = null;
 
     public function mount(): void
     {
@@ -316,7 +326,7 @@ class Index extends Component
         abort_unless(auth()->user()->can('equipment.edit'), 403);
         $this->reset([
             'insSearch', 'insEquipmentId', 'insEquipmentLabel', 'insInspector',
-            'insNotes', 'insNextDue', 'insPhoto', 'insUpdateStatus', 'insRepair', 'insRetired',
+            'insNotes', 'insNextDue', 'insPhotos', 'insExistingPhotos', 'insUpdateStatus', 'insRepair', 'insRetired',
             'insTemplateId', 'insFuelType', 'insChecklist', 'editingInspectionId',
         ]);
         $this->insDate = now()->toDateString();
@@ -337,8 +347,9 @@ class Index extends Component
         }
 
         $this->reset([
-            'insSearch', 'insPhoto', 'insUpdateStatus',
+            'insSearch', 'insPhotos', 'insUpdateStatus',
         ]);
+        $this->insExistingPhotos = $ins->allPhotos();
         $this->viewingInspectionId = null;
         $this->editingInspectionId = $ins->id;
         $this->insEquipmentId = $e?->id;
@@ -367,6 +378,42 @@ class Index extends Component
             $this->guardDept($ins->equipment);
         }
         $this->viewingInspectionId = $id;
+    }
+
+    /** ເປີດ ໜ້າຕ່າງ ປະຫວັດ/ສະຖານະ ການ ກວດເຊັກ ຂອງ ເຄື່ອງ ໜຶ່ງ. */
+    public function viewInspectionHistory(int $id): void
+    {
+        abort_unless(auth()->user()->can('equipment.view'), 403);
+        $e = Equipment::findOrFail($id);
+        $this->guardDept($e);
+        $this->historyEquipmentId = $id;
+    }
+
+    /** ຈາກ ໜ້າ ປະຫວັດ → ເລີ່ມ ກວດ ໃໝ່ ໃຫ້ ເຄື່ອງ ນີ້ ເລີຍ (ໃສ່ ເຄື່ອງ ໃຫ້ ອັດຕະໂນມັດ). */
+    public function inspectEquipment(int $id): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+        $this->historyEquipmentId = null;
+        $this->newInspection();
+        $this->pickInspectionEquipment($id);
+    }
+
+    /** ລຶບ ຮູບ ໃໝ່ (ຍັງ ບໍ່ ບັນທຶກ) ອອກ ຈາກ ຄິວ. */
+    public function removeInsPhoto(int $i): void
+    {
+        unset($this->insPhotos[$i]);
+        $this->insPhotos = array_values($this->insPhotos);
+    }
+
+    /** ລຶບ ຮູບ ຫຼັກຖານ ທີ່ ບັນທຶກ ແລ້ວ (ຕອນ ແກ້ໄຂ). */
+    public function removeExistingInsPhoto(int $i): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+        if (isset($this->insExistingPhotos[$i])) {
+            Storage::disk('public')->delete($this->insExistingPhotos[$i]);
+            unset($this->insExistingPhotos[$i]);
+            $this->insExistingPhotos = array_values($this->insExistingPhotos);
+        }
     }
 
     public function pickInspectionEquipment(int $id): void
@@ -434,7 +481,8 @@ class Index extends Component
             'insResult' => ['required', 'in:pass,fail,follow_up'],
             'insNotes' => ['nullable', 'string', 'max:2000'],
             'insNextDue' => ['nullable', 'date'],
-            'insPhoto' => ['nullable', 'image', 'max:8192'],
+            'insPhotos' => ['array', 'max:'.self::MAX_INS_PHOTOS],
+            'insPhotos.*' => ['image', 'max:8192'],
             'insRepair' => ['integer', 'min:0'],
             'insRetired' => ['integer', 'min:0'],
             'insTemplateId' => ['nullable', 'exists:inspection_templates,id'],
@@ -472,6 +520,17 @@ class Index extends Component
             $result = $s['result'];
         }
 
+        // ຮູບ ຫຼັກຖານ: ຮູບ ເກົ່າ (ຄົງ ໄວ້) + ຮູບ ໃໝ່ (ຝັງ ວັນທີ+ເວລາ). ຮວມ ບໍ່ ເກີນ MAX.
+        if (count($this->insExistingPhotos) + count($this->insPhotos) > self::MAX_INS_PHOTOS) {
+            $this->addError('insPhotos', 'ຮູບ ໄດ້ ສູງສຸດ '.self::MAX_INS_PHOTOS.' ໃບ ຕໍ່ ການ ກວດ.');
+
+            return;
+        }
+        $photoPaths = $this->insExistingPhotos;
+        foreach ($this->insPhotos as $photo) {
+            $photoPaths[] = $this->stampAndStore($photo, 'equipment/inspections/'.$e->id);
+        }
+
         $payload = [
             'template_id' => $this->insTemplateId ?: null,
             'fuel_type' => $this->insFuelType ?: null,
@@ -481,10 +540,9 @@ class Index extends Component
             'checklist' => $this->insChecklist ?: null,
             'notes' => $this->insNotes ?: null,
             'next_due_date' => $this->insNextDue ?: null,
+            'photos' => $photoPaths ?: null,
+            'photo_path' => $photoPaths[0] ?? null,   // ຮູບ ທຳອິດ = ໂຊ ໃນ list
         ];
-        if ($this->insPhoto) {
-            $payload['photo_path'] = $this->stampAndStore($this->insPhoto, 'equipment/inspections/'.$e->id);
-        }
 
         if ($this->editingInspectionId) {
             EquipmentInspection::findOrFail($this->editingInspectionId)->update($payload);
@@ -636,6 +694,13 @@ class Index extends Component
             ? EquipmentInspection::with(['equipment', 'template'])->find($this->viewingInspectionId)
             : null;
 
+        // ປະຫວັດ ການ ກວດເຊັກ ຂອງ ເຄື່ອງ (ໜ້າຕ່າງ ຈາກ ໄອຄ່ອນ ດວງຕາ ໃນ ທະບຽນ).
+        $historyEquipment = $this->historyEquipmentId ? Equipment::find($this->historyEquipmentId) : null;
+        $historyInspections = $this->historyEquipmentId
+            ? EquipmentInspection::where('equipment_id', $this->historyEquipmentId)
+                ->orderByDesc('inspected_at')->orderByDesc('id')->limit(50)->get()
+            : collect();
+
         // ປະເພດ ສຳລັບ dropdown ຟອມ (ເປີດ ໃຊ້) — ຮວມ ຄ່າ ປັດຈຸບັນ ຕອນ ແກ້ (ກັນ ຫາຍ ຖ້າ ຖືກ ປິດ).
         $categoryOptions = EquipmentCategory::where('is_active', true)
             ->orderBy('sort_order')->orderBy('name')->pluck('name');
@@ -660,6 +725,8 @@ class Index extends Component
             'insResults' => $insResults,
             'insTemplateNeedsFuel' => $insTemplateNeedsFuel,
             'viewingInspection' => $viewingInspection,
+            'historyEquipment' => $historyEquipment,
+            'historyInspections' => $historyInspections,
             'deptScoped' => $deptScoped,
         ]);
     }

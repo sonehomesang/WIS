@@ -22,12 +22,14 @@ test('manifest is public, well-formed, and reflects the app name', function () {
     expect($json['icons'])->toHaveCount(3);
 });
 
-test('pages register the service worker + link the manifest', function () {
+test('pages link the manifest + (testing) auto-clear any stale service worker', function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => true]));
 
+    // ໄລຍະ ທົດສອບ: SW register ຖືກ ປິດ, ແທນ ດ້ວຍ getRegistrations()→unregister (ກັນ cache ເກົ່າ).
+    // ກ່ອນ ຂຶ້ນ production ໃຫ້ ເປີດ register('/sw.js') ຄືນ ໃນ partials/_pwa-head.blade.php.
     $this->get('/dashboard')->assertOk()
         ->assertSee('manifest.webmanifest', false)
-        ->assertSee("navigator.serviceWorker.register('/sw.js')", false)
+        ->assertSee('serviceWorker.getRegistrations', false)
         ->assertSee('apple-touch-icon', false)
         ->assertSee('window.updateApp()', false);   // update-app button by the bell
 });

@@ -169,6 +169,24 @@ test('checklist score derives follow_up between 70 and 99 percent', function () 
     expect($ins->result)->toBe('follow_up');
 });
 
+test('the eye icon opens a per-equipment inspection history and can start a new one', function () {
+    $u = User::factory()->create();
+    $u->syncRoles(['warehouse_staff']);
+    $e = Equipment::create(['asset_code' => 'EQ-H', 'name' => 'Pump', 'quantity' => 1]);
+    $e->inspections()->create(['inspected_at' => now(), 'inspector_name' => 'X', 'result' => 'pass', 'score' => 100]);
+
+    actingAs($u);
+    Livewire::test(Index::class)
+        ->call('viewInspectionHistory', $e->id)
+        ->assertSet('historyEquipmentId', $e->id)
+        ->assertSee('Pump')
+        // ＋ ກວດ ໃໝ່ → ເປີດ ຟອມ ກວດ ພ້ອມ ໃສ່ ເຄື່ອງ ນີ້ ໃຫ້ ອັດຕະໂນມັດ
+        ->call('inspectEquipment', $e->id)
+        ->assertSet('historyEquipmentId', null)
+        ->assertSet('showInspectionModal', true)
+        ->assertSet('insEquipmentId', $e->id);
+});
+
 test('an existing inspection can be edited', function () {
     $u = User::factory()->create();
     $u->syncRoles(['warehouse_staff']);
