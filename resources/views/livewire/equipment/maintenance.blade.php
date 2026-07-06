@@ -1,0 +1,257 @@
+<div x-data="{ big: null }">
+    @php
+        $tLabels = \App\Models\EquipmentMaintenance::TYPES;
+        $sLabels = \App\Models\EquipmentMaintenance::STATUSES;
+        $fLabels = \App\Models\EquipmentMaintenance::FREQ_LABELS;
+        $tBadge = ['preventive' => 'bg-sky-50 text-sky-700', 'repair' => 'bg-amber-50 text-amber-700', 'service' => 'bg-violet-50 text-violet-700', 'other' => 'bg-gray-100 text-gray-600'];
+        $sBadge = ['planned' => 'bg-gray-100 text-gray-600', 'in_progress' => 'bg-amber-50 text-amber-700', 'done' => 'bg-green-50 text-green-700'];
+    @endphp
+
+    <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
+         class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
+
+    <div class="flex items-center justify-between mb-2 gap-2">
+        <span class="text-xs text-gray-400">ບັນທຶກ ການ ບຳລຸງຮັກສາ/ຊ່ອມແປງ · ຄ່າ ໃຊ້ຈ່າຍ · ກຳນົດ service ຄັ້ງ ໜ້າ</span>
+        @can('equipment.edit')
+            <button wire:click="newMaintenance" class="inline-flex items-center gap-1.5 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" /></svg>
+                ລົງມື ບຳລຸງ
+            </button>
+        @endcan
+    </div>
+
+    {{-- Desktop table --}}
+    <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-600 text-xs border-b border-gray-200">
+                <tr>
+                    <th class="text-left px-3 py-2 font-semibold w-24">ວັນທີ</th>
+                    <th class="text-left px-3 py-2 font-semibold">ເຄື່ອງ · ວຽກ</th>
+                    <th class="text-left px-3 py-2 font-semibold w-28">ປະເພດ</th>
+                    <th class="text-right px-3 py-2 font-semibold w-28">ຄ່າ (ກີບ)</th>
+                    <th class="text-left px-3 py-2 font-semibold w-24">ສະຖານະ</th>
+                    <th class="text-left px-3 py-2 font-semibold w-28">Service ໜ້າ</th>
+                    <th class="px-3 py-2 w-24"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                @forelse ($records as $m)
+                    <tr wire:key="mr-{{ $m->id }}">
+                        <td class="px-3 py-2 whitespace-nowrap text-gray-600">{{ $m->maintenance_date?->format('d/m/Y') }}</td>
+                        <td class="px-3 py-2">
+                            <div class="font-medium text-gray-800 truncate">{{ $m->title }}</div>
+                            <div class="text-xs text-gray-400 truncate">{{ $m->equipment?->asset_code }} · {{ $m->equipment?->name }}@if ($m->performed_by) · {{ $m->performed_by }}@endif</div>
+                        </td>
+                        <td class="px-3 py-2"><span class="text-xs rounded px-1.5 py-0.5 {{ $tBadge[$m->type] ?? 'bg-gray-100 text-gray-600' }}">{{ $tLabels[$m->type] ?? $m->type }}</span></td>
+                        <td class="px-3 py-2 text-right whitespace-nowrap text-gray-700">{{ $m->cost !== null ? number_format($m->cost) : '—' }}</td>
+                        <td class="px-3 py-2"><span class="text-xs rounded px-1.5 py-0.5 {{ $sBadge[$m->status] ?? 'bg-gray-100 text-gray-600' }}">{{ $sLabels[$m->status] ?? $m->status }}</span></td>
+                        <td class="px-3 py-2 whitespace-nowrap">
+                            @if ($m->next_service_date)
+                                <span class="{{ $m->next_service_date->isPast() ? 'text-red-600 font-medium' : ($m->next_service_date->lte(now()->addDays(14)) ? 'text-amber-600' : 'text-gray-600') }}">{{ $m->next_service_date->format('d/m/Y') }}</span>
+                            @else
+                                <span class="text-gray-300">—</span>
+                            @endif
+                        </td>
+                        <td class="px-3 py-2 pr-4 text-right whitespace-nowrap text-gray-500">
+                            <button wire:click="viewHistory({{ $m->equipment_id }})" class="hover:text-sky-700 p-1" title="ປະຫວັດ ບຳລຸງ ຂອງ ເຄື່ອງ ນີ້">
+                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                            </button>
+                            @can('equipment.edit')
+                                <button wire:click="editMaintenance({{ $m->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
+                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
+                                </button>
+                            @endcan
+                            @can('equipment.delete')
+                                <button wire:click="delete({{ $m->id }})" wire:confirm="ລຶບ ບັນທຶກ ນີ້?" class="hover:text-red-600 p-1" title="ລຶບ">
+                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                            @endcan
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="7" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ບັນທຶກ ບຳລຸງ — ກົດ "ລົງມື ບຳລຸງ"</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{-- Mobile cards --}}
+    <div class="md:hidden space-y-2">
+        @forelse ($records as $m)
+            <div wire:key="mm-{{ $m->id }}" class="bg-white border border-gray-100 rounded-lg p-3">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="font-medium text-gray-800">{{ $m->title }}</div>
+                    <span class="text-xs rounded px-1.5 py-0.5 shrink-0 {{ $sBadge[$m->status] ?? 'bg-gray-100 text-gray-600' }}">{{ $sLabels[$m->status] ?? $m->status }}</span>
+                </div>
+                <div class="text-xs text-gray-400">{{ $m->equipment?->asset_code }} · {{ $m->maintenance_date?->format('d/m/Y') }} · {{ $tLabels[$m->type] ?? $m->type }}</div>
+                <div class="text-xs text-gray-600 mt-1">ຄ່າ: {{ $m->cost !== null ? number_format($m->cost).' ກີບ' : '—' }}@if ($m->next_service_date) · service: {{ $m->next_service_date->format('d/m/Y') }}@endif</div>
+                <div class="flex gap-2 mt-2">
+                    @can('equipment.edit')<button wire:click="editMaintenance({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">ແກ້ໄຂ</button>@endcan
+                    @can('equipment.delete')<button wire:click="delete({{ $m->id }})" wire:confirm="ລຶບ ບັນທຶກ ນີ້?" class="text-xs border rounded px-2 py-1 min-h-[36px] text-red-600">ລຶບ</button>@endcan
+                </div>
+            </div>
+        @empty
+            <div class="text-center text-gray-400 py-6">ຍັງບໍ່ມີ ບັນທຶກ ບຳລຸງ</div>
+        @endforelse
+    </div>
+
+    <div class="mt-4">{{ $records->links() }}</div>
+
+    {{-- Record modal --}}
+    @if ($showModal)
+        <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="m-modal">
+            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ ບຳລຸງ' : 'ລົງມື ບຳລຸງ' }}</h3>
+                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                {{-- ເລືອກ ເຄື່ອງ --}}
+                @if (! $mEquipmentId)
+                    <div class="relative">
+                        <label class="block text-sm text-gray-600 mb-1">ເລືອກ ເຄື່ອງ <span class="text-red-500">*</span></label>
+                        <input type="text" wire:model.live.debounce.300ms="mSearch" placeholder="ຄົ້ນຫາ ຊື່/ລະຫັດ…" class="w-full rounded-md border-gray-300 text-sm" />
+                        @if ($searchResults->isNotEmpty())
+                            <div class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-y-auto">
+                                @foreach ($searchResults as $eq)
+                                    <button type="button" wire:click="pickEquipment({{ $eq->id }})" class="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50">{{ $eq->name }} <span class="font-mono text-xs text-gray-400">{{ $eq->asset_code }}</span></button>
+                                @endforeach
+                            </div>
+                        @endif
+                        @error('mEquipmentId')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                @else
+                    <div class="flex items-center justify-between bg-gray-50 border border-gray-100 rounded px-3 py-2 text-sm">
+                        <span class="font-medium text-gray-700">{{ $mEquipmentLabel }}</span>
+                        <button wire:click="$set('mEquipmentId', null)" class="text-xs text-sky-600 hover:underline">ປ່ຽນ</button>
+                    </div>
+                @endif
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ວັນທີ <span class="text-red-500">*</span></label>
+                        <input type="date" wire:model="mDate" class="w-full rounded-md border-gray-300 text-sm" />
+                        @error('mDate')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ປະເພດ <span class="text-red-500">*</span></label>
+                        <select wire:model="mType" class="w-full rounded-md border-gray-300 text-sm">
+                            @foreach ($tLabels as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm text-gray-600 mb-1">ຫົວຂໍ້ ວຽກ <span class="text-red-500">*</span></label>
+                        <input type="text" wire:model="mTitle" placeholder="ເຊັ່ນ ປ່ຽນ ນ້ຳມັນ ເຄື່ອງ" class="w-full rounded-md border-gray-300 text-sm" />
+                        @error('mTitle')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm text-gray-600 mb-1">ລາຍລະອຽດ ວຽກ</label>
+                        <textarea wire:model="mDescription" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ຊ່າງ/ຮ້ານ <span class="text-xs text-gray-400">(ຖ້າ ມີ)</span></label>
+                        <input type="text" wire:model="mPerformedBy" class="w-full rounded-md border-gray-300 text-sm" />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ຄ່າ ໃຊ້ຈ່າຍ (ກີບ) <span class="text-xs text-gray-400">(ຖ້າ ມີ)</span></label>
+                        <input type="number" min="0" step="1000" wire:model="mCost" class="w-full rounded-md border-gray-300 text-sm" />
+                        @error('mCost')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ຮອບ Service</label>
+                        <select wire:model.live="mFrequency" class="w-full rounded-md border-gray-300 text-sm">
+                            <option value="">— ບໍ່ ກຳນົດ (ຄັ້ງ ດຽວ) —</option>
+                            @foreach ($fLabels as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Service ຄັ້ງ ໜ້າ</label>
+                        <input type="date" wire:model="mNextService" class="w-full rounded-md border-gray-300 text-sm" />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ສະຖານະ <span class="text-red-500">*</span></label>
+                        <select wire:model="mStatus" class="w-full rounded-md border-gray-300 text-sm">
+                            @foreach ($sLabels as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm text-gray-600 mb-1">ໝາຍເຫດ</label>
+                        <textarea wire:model="mNotes" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                    </div>
+
+                    {{-- ຮູບ ຫຼັກຖານ --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm text-gray-600 mb-1">ຮູບ ຫຼັກຖານ <span class="text-xs text-gray-400">(📷 ກ້ອງ/ແກເລີຣີ · ສູງສຸດ 4 ໃບ)</span></label>
+                        @if (count($mExistingPhotos) || count($mPhotos))
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                @foreach ($mExistingPhotos as $ei => $p)
+                                    <div class="relative" wire:key="mex-{{ $ei }}">
+                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($p) }}" @click="big='{{ \Illuminate\Support\Facades\Storage::url($p) }}'" class="w-16 h-16 rounded object-cover border border-gray-200 cursor-pointer" alt="ຮູບ" />
+                                        <button type="button" wire:click="removeExistingPhoto({{ $ei }})" wire:confirm="ລຶບ ຮູບ ນີ້?" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs leading-none flex items-center justify-center" aria-label="ລຶບ">×</button>
+                                    </div>
+                                @endforeach
+                                @foreach ($mPhotos as $ni => $ph)
+                                    <div class="relative" wire:key="mnew-{{ $ni }}">
+                                        <img src="{{ $ph->temporaryUrl() }}" class="w-16 h-16 rounded object-cover border border-sky-200" alt="ຮູບ ໃໝ່" />
+                                        <button type="button" wire:click="removePhoto({{ $ni }})" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs leading-none flex items-center justify-center" aria-label="ລຶບ">×</button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                        <input type="file" wire:model="mPhotos" multiple accept="image/*" class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-sky-50 file:text-sky-700 file:min-h-[40px]" />
+                        <div wire:loading wire:target="mPhotos" class="text-xs text-gray-400 mt-1">ກຳລັງ ອັບໂຫຼດ…</div>
+                        @error('mPhotos.*')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="save" wire:loading.attr="disabled" wire:target="save,mPhotos" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">ບັນທຶກ</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- History modal (per equipment) --}}
+    @if ($historyEquipment)
+        <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="m-history">
+            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-start justify-between gap-2">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800">ປະຫວັດ ບຳລຸງຮັກສາ</h3>
+                        <div class="text-sm text-gray-500">{{ $historyEquipment->asset_code }} · {{ $historyEquipment->name }}</div>
+                    </div>
+                    <button wire:click="$set('historyEquipmentId', null)" class="text-gray-400 hover:text-gray-700 p-1 shrink-0" aria-label="Close">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                <div class="rounded-md bg-gray-50 border border-gray-100 p-2 text-sm text-gray-600">ຄ່າ ໃຊ້ຈ່າຍ ລວມ: <b>{{ number_format((float) $history->sum('cost')) }}</b> ກີບ · {{ $history->count() }} ຄັ້ງ</div>
+                @if ($history->count())
+                    <div class="border border-gray-200 rounded-md divide-y divide-gray-100">
+                        @foreach ($history as $h)
+                            <div wire:key="mh-{{ $h->id }}" class="px-3 py-2 text-sm">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="font-medium text-gray-800">{{ $h->title }}</div>
+                                    <span class="text-xs rounded px-1.5 py-0.5 shrink-0 {{ $tBadge[$h->type] ?? 'bg-gray-100 text-gray-600' }}">{{ $tLabels[$h->type] ?? $h->type }}</span>
+                                </div>
+                                <div class="text-xs text-gray-400">{{ $h->maintenance_date?->format('d/m/Y') }}@if ($h->performed_by) · {{ $h->performed_by }}@endif@if ($h->cost !== null) · {{ number_format($h->cost) }} ກີບ@endif</div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-sm text-gray-500">ຍັງ ບໍ່ ເຄີຍ ບຳລຸງ ເຄື່ອງ ນີ້.</div>
+                @endif
+                <div class="flex justify-end pt-1 border-t">
+                    <button wire:click="$set('historyEquipmentId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Lightbox --}}
+    <div x-show="big" @click="big=null" @keydown.escape.window="big=null" class="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4" style="display:none">
+        <img :src="big" class="max-w-full max-h-full rounded shadow-lg" alt="ຮູບ ໃຫຍ່" />
+    </div>
+</div>

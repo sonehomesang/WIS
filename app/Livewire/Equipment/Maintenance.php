@@ -1,0 +1,287 @@
+<?php
+
+namespace App\Livewire\Equipment;
+
+use App\Models\Equipment;
+use App\Models\EquipmentMaintenance;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
+
+/** ແທັບ ບຳລຸງຮັກສາ — ຝັງ ໃນ Equipment › ບຳລຸງຮັກສາ. */
+class Maintenance extends Component
+{
+    use WithFileUploads, WithPagination;
+
+    public const MAX_PHOTOS = 4;
+
+    public bool $showModal = false;
+
+    public ?int $editingId = null;
+
+    // ເລືອກ ເຄື່ອງ
+    public string $mSearch = '';
+
+    public ?int $mEquipmentId = null;
+
+    public string $mEquipmentLabel = '';
+
+    // ຟອມ
+    public ?string $mDate = null;
+
+    public string $mType = 'preventive';
+
+    public string $mTitle = '';
+
+    public string $mDescription = '';
+
+    public string $mPerformedBy = '';
+
+    public ?string $mCost = null;
+
+    public string $mFrequency = '';
+
+    public ?string $mNextService = null;
+
+    public string $mStatus = 'done';
+
+    public string $mNotes = '';
+
+    public array $mPhotos = [];
+
+    /** @var array<int,string> */
+    public array $mExistingPhotos = [];
+
+    // ── ໜ້າຕ່າງ ປະຫວັດ ຕໍ່ ເຄື່ອງ ──
+    public ?int $historyEquipmentId = null;
+
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->can('equipment.view'), 403);
+    }
+
+    public function updatingMSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    /** ຖືກ ຈຳກັດ ໃຫ້ ເບິ່ງ/ຈັດການ ສະເພາະ ພະແນກ ຕົນ ບໍ. */
+    protected function deptScoped(): bool
+    {
+        return auth()->user()->equipmentDepartmentScoped();
+    }
+
+    protected function userDeptId(): ?int
+    {
+        return auth()->user()->department_id;
+    }
+
+    protected function guardDept(Equipment $e): void
+    {
+        if ($this->deptScoped() && $e->department_id !== $this->userDeptId()) {
+            abort(403);
+        }
+    }
+
+    public function newMaintenance(): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+        $this->reset([
+            'editingId', 'mSearch', 'mEquipmentId', 'mEquipmentLabel', 'mDescription',
+            'mPerformedBy', 'mCost', 'mFrequency', 'mNextService', 'mNotes', 'mPhotos', 'mExistingPhotos', 'mTitle',
+        ]);
+        $this->mDate = now()->toDateString();
+        $this->mType = 'preventive';
+        $this->mStatus = 'done';
+        $this->resetValidation();
+        $this->showModal = true;
+    }
+
+    public function editMaintenance(int $id): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+        $m = EquipmentMaintenance::with('equipment')->findOrFail($id);
+        if ($m->equipment) {
+            $this->guardDept($m->equipment);
+        }
+        $this->reset(['mSearch', 'mPhotos']);
+        $this->editingId = $m->id;
+        $this->mEquipmentId = $m->equipment_id;
+        $this->mEquipmentLabel = $m->equipment ? $m->equipment->asset_code.' · '.$m->equipment->name : '';
+        $this->mDate = $m->maintenance_date?->toDateString();
+        $this->mType = $m->type;
+        $this->mTitle = $m->title;
+        $this->mDescription = $m->description ?? '';
+        $this->mPerformedBy = $m->performed_by ?? '';
+        $this->mCost = $m->cost !== null ? (string) $m->cost : null;
+        $this->mFrequency = $m->frequency ?? '';
+        $this->mNextService = $m->next_service_date?->toDateString();
+        $this->mStatus = $m->status;
+        $this->mNotes = $m->notes ?? '';
+        $this->mExistingPhotos = $m->photos ?? [];
+        $this->resetValidation();
+        $this->showModal = true;
+    }
+
+    public function pickEquipment(int $id): void
+    {
+        $e = Equipment::find($id);
+        if (! $e) {
+            return;
+        }
+        $this->guardDept($e);
+        $this->mEquipmentId = $e->id;
+        $this->mEquipmentLabel = $e->asset_code.' · '.$e->name;
+        $this->mSearch = '';
+    }
+
+    /** ເລືອກ ຮອບ → ຄິດ ວັນ service ຄັ້ງ ໜ້າ. */
+    public function updatedMFrequency($value): void
+    {
+        $due = $this->nextServiceFor((string) $value);
+        if ($due) {
+            $this->mNextService = $due;
+        }
+    }
+
+    protected function nextServiceFor(string $frequency): ?string
+    {
+        $from = $this->mDate ? Carbon::parse($this->mDate) : now();
+
+        return match ($frequency) {
+            'monthly' => $from->copy()->addMonth()->toDateString(),
+            'quarterly' => $from->copy()->addMonths(3)->toDateString(),
+            'semi_annual' => $from->copy()->addMonths(6)->toDateString(),
+            'annual' => $from->copy()->addYear()->toDateString(),
+            default => null,
+        };
+    }
+
+    public function removePhoto(int $i): void
+    {
+        unset($this->mPhotos[$i]);
+        $this->mPhotos = array_values($this->mPhotos);
+    }
+
+    public function removeExistingPhoto(int $i): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+        if (isset($this->mExistingPhotos[$i])) {
+            Storage::disk('public')->delete($this->mExistingPhotos[$i]);
+            unset($this->mExistingPhotos[$i]);
+            $this->mExistingPhotos = array_values($this->mExistingPhotos);
+        }
+    }
+
+    public function save(): void
+    {
+        abort_unless(auth()->user()->can('equipment.'.($this->editingId ? 'edit' : 'create')), 403);
+
+        $data = $this->validate([
+            'mEquipmentId' => ['required', 'exists:equipment,id'],
+            'mDate' => ['required', 'date'],
+            'mType' => ['required', 'in:'.implode(',', array_keys(EquipmentMaintenance::TYPES))],
+            'mTitle' => ['required', 'string', 'max:256'],
+            'mDescription' => ['nullable', 'string', 'max:2000'],
+            'mPerformedBy' => ['nullable', 'string', 'max:256'],
+            'mCost' => ['nullable', 'numeric', 'min:0'],
+            'mFrequency' => ['nullable', 'in:'.implode(',', EquipmentMaintenance::FREQUENCIES)],
+            'mNextService' => ['nullable', 'date'],
+            'mStatus' => ['required', 'in:'.implode(',', array_keys(EquipmentMaintenance::STATUSES))],
+            'mNotes' => ['nullable', 'string', 'max:2000'],
+            'mPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
+            'mPhotos.*' => ['image', 'max:8192'],
+        ]);
+
+        $e = Equipment::findOrFail($this->mEquipmentId);
+        $this->guardDept($e);
+
+        if (count($this->mExistingPhotos) + count($this->mPhotos) > self::MAX_PHOTOS) {
+            $this->addError('mPhotos', 'ຮູບ ໄດ້ ສູງສຸດ '.self::MAX_PHOTOS.' ໃບ.');
+
+            return;
+        }
+        $photoPaths = $this->mExistingPhotos;
+        foreach ($this->mPhotos as $photo) {
+            $photoPaths[] = $photo->store('equipment/maintenance/'.$e->id, 'public');
+        }
+
+        $nextService = $this->mNextService ?: $this->nextServiceFor($this->mFrequency);
+
+        $attrs = [
+            'equipment_id' => $e->id,
+            'maintenance_date' => $data['mDate'],
+            'type' => $data['mType'],
+            'title' => $data['mTitle'],
+            'description' => $data['mDescription'] ?: null,
+            'performed_by' => $data['mPerformedBy'] ?: null,
+            'cost' => $data['mCost'] !== null && $data['mCost'] !== '' ? $data['mCost'] : null,
+            'frequency' => $this->mFrequency ?: null,
+            'next_service_date' => $nextService ?: null,
+            'status' => $data['mStatus'],
+            'notes' => $data['mNotes'] ?: null,
+            'photos' => $photoPaths ?: null,
+        ];
+
+        if ($this->editingId) {
+            EquipmentMaintenance::findOrFail($this->editingId)->update($attrs);
+        } else {
+            $e->maintenances()->create($attrs + ['created_by' => auth()->id()]);
+        }
+
+        $this->showModal = false;
+        $this->dispatch('saved');
+    }
+
+    public function delete(int $id): void
+    {
+        abort_unless(auth()->user()->can('equipment.delete'), 403);
+        $m = EquipmentMaintenance::with('equipment')->findOrFail($id);
+        if ($m->equipment) {
+            $this->guardDept($m->equipment);
+        }
+        $m->delete();
+    }
+
+    public function viewHistory(int $equipmentId): void
+    {
+        abort_unless(auth()->user()->can('equipment.view'), 403);
+        $e = Equipment::findOrFail($equipmentId);
+        $this->guardDept($e);
+        $this->historyEquipmentId = $equipmentId;
+    }
+
+    public function render(): View
+    {
+        $deptScoped = $this->deptScoped();
+        $deptId = $this->userDeptId();
+
+        $searchResults = strlen($this->mSearch) >= 2
+            ? Equipment::where(fn ($q) => $q->where('name', 'like', "%{$this->mSearch}%")
+                ->orWhere('asset_code', 'like', "%{$this->mSearch}%"))
+                ->when($deptScoped, fn ($q) => $q->where('department_id', $deptId))
+                ->orderBy('asset_code')->limit(8)->get()
+            : collect();
+
+        $records = EquipmentMaintenance::with('equipment')
+            ->when($deptScoped, fn ($q) => $q->whereHas('equipment', fn ($w) => $w->where('department_id', $deptId)))
+            ->orderByDesc('maintenance_date')->orderByDesc('id')
+            ->paginate(10);
+
+        $historyEquipment = $this->historyEquipmentId ? Equipment::find($this->historyEquipmentId) : null;
+        $history = $this->historyEquipmentId
+            ? EquipmentMaintenance::where('equipment_id', $this->historyEquipmentId)
+                ->orderByDesc('maintenance_date')->orderByDesc('id')->limit(50)->get()
+            : collect();
+
+        return view('livewire.equipment.maintenance', [
+            'searchResults' => $searchResults,
+            'records' => $records,
+            'historyEquipment' => $historyEquipment,
+            'history' => $history,
+        ]);
+    }
+}

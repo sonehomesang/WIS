@@ -234,10 +234,8 @@
                 </table>
             </div>
         </div>
-        <div x-show="tab==='maintenance'" x-cloak class="mt-4 bg-white border border-gray-100 rounded-lg p-5">
-            <h3 class="font-medium text-gray-800 mb-1">ບຳລຸງຮັກສາ (Maintenance)</h3>
-            <p class="text-sm text-gray-500">ບັນທຶກ ການ ບຳລຸງ/ຊ່ອມແປງ + ຄ່າ ໃຊ້ຈ່າຍ + ກຳນົດ service ຄັ້ງ ໜ້າ.</p>
-            <div class="mt-3 text-xs text-sky-700 bg-sky-50 border border-sky-100 rounded-md px-3 py-2">📋 ໂຄງ ໄວ້ ກ່ອນ — ຈະ ອອກແບບ ລາຍລະອຽດ ແທັບ ນີ້ ຕໍ່ໄປ.</div>
+        <div x-show="tab==='maintenance'" x-cloak class="mt-4">
+            <livewire:equipment.maintenance />
         </div>
     </div>
 
