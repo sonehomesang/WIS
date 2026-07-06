@@ -66,6 +66,24 @@ class Equipment extends Model
         return $this->hasMany(EquipmentInspection::class)->latest('inspected_at');
     }
 
+    /** ລາຍการ ຢືມ ທີ່ ຍັງ ໃຊ້ ຢູ່ (active/overdue) — ໃຊ້ ຫາ ຜູ້ຢືມ ປັດຈຸບັນ. */
+    public function activeBorrowItems(): HasMany
+    {
+        return $this->hasMany(BorrowItem::class)
+            ->whereHas('record', fn ($q) => $q->whereIn('status', ['active', 'overdue']));
+    }
+
+    /** ຊື່ ຜູ້ຢືມ ປັດຈຸບັນ (distinct) — ວ່າງ ຖ້າ ບໍ່ ໄດ້ ຖືກ ຢືມ. */
+    public function currentBorrowers(): array
+    {
+        return $this->activeBorrowItems
+            ->map(fn ($i) => $i->record?->borrower_name)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     /** ຈຳນວນ ຕໍ່ ສະຖານະ ພ້ອມ key ຄົບ (default 0). */
     public function statusBreakdown(): array
     {

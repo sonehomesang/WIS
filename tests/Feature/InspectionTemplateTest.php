@@ -31,10 +31,10 @@ test('admin can create an inspection template (blank checklist items dropped)', 
 
     $t = InspectionTemplate::first();
     expect($t->name)->toBe('Power tools');
-    // ຂໍ້ ວ່າງ ຖືກ ຕັດ ອອກ · ເກັບ ເປັນ {label, applies}
+    // ຂໍ້ ວ່າງ ຖືກ ຕັດ ອອກ · ເກັບ ເປັນ {label, applies, freqs}
     expect($t->normalizedItems())->toBe([
-        ['label' => 'Casing ok', 'applies' => 'both'],
-        ['label' => 'Cable ok', 'applies' => 'ev'],
+        ['label' => 'Casing ok', 'applies' => 'both', 'freqs' => []],
+        ['label' => 'Cable ok', 'applies' => 'ev', 'freqs' => []],
     ]);
 });
 
@@ -128,6 +128,58 @@ test('the OK/NG toggle sets and clears a checklist status', function () {
         ->assertSet('insChecklist.0.status', 'na')          // ກົດ ຊ້ຳ → N/A
         ->call('toggleChecklist', 0, 'pass')
         ->assertSet('insChecklist.0.status', 'pass');
+});
+
+test('a frequency-typed template filters the checklist by the chosen frequency and auto-sets next due', function () {
+    $u = User::factory()->create();
+    $u->syncRoles(['warehouse_staff']);
+    $e = Equipment::create(['asset_code' => 'FQ-1', 'name' => 'Forklift', 'quantity' => 1]);
+    $t = InspectionTemplate::create([
+        'name' => 'FQ',
+        'items' => [
+            ['label' => 'Daily A', 'applies' => 'both', 'freqs' => ['pre_use']],
+            ['label' => 'Monthly B', 'applies' => 'both', 'freqs' => ['monthly']],
+            ['label' => 'Always C', 'applies' => 'both', 'freqs' => []],   // ບໍ່ ຕິດ ຮອບ = ຂຶ້ນ ທຸກ ຮອບ
+        ],
+        'is_active' => true,
+    ]);
+
+    actingAs($u);
+    $c = Livewire::test(Index::class)
+        ->call('newInspection')
+        ->call('pickInspectionEquipment', $e->id)
+        ->set('insTemplateId', $t->id)
+        ->assertCount('insChecklist', 0)          // ຍັງ ບໍ່ ເລືອກ ຮອບ → ວ່າງ
+        ->set('insFrequency', 'pre_use')
+        ->assertCount('insChecklist', 2);         // Daily A + Always C
+    expect(collect($c->get('insChecklist'))->pluck('label')->all())->toBe(['Daily A', 'Always C']);
+
+    $c->set('insFrequency', 'monthly')->assertCount('insChecklist', 2);   // Monthly B + Always C
+    expect($c->get('insNextDue'))->toBe(now()->addMonth()->toDateString());  // ຄິດ +1 ເດືອນ ໃຫ້ ເອງ
+
+    $c->call('saveInspection')->assertHasNoErrors();
+    $ins = $e->inspections()->first();
+    expect($ins->frequency)->toBe('monthly');
+    expect($ins->next_due_date->toDateString())->toBe(now()->addMonth()->toDateString());
+});
+
+test('a frequency-typed template requires a frequency before saving', function () {
+    $u = User::factory()->create();
+    $u->syncRoles(['warehouse_staff']);
+    $e = Equipment::create(['asset_code' => 'FQ-2', 'name' => 'Forklift', 'quantity' => 1]);
+    $t = InspectionTemplate::create([
+        'name' => 'FQ2',
+        'items' => [['label' => 'M', 'applies' => 'both', 'freqs' => ['monthly']]],
+        'is_active' => true,
+    ]);
+
+    actingAs($u);
+    Livewire::test(Index::class)
+        ->call('newInspection')
+        ->call('pickInspectionEquipment', $e->id)
+        ->set('insTemplateId', $t->id)
+        ->call('saveInspection')
+        ->assertHasErrors('insFrequency');
 });
 
 test('a fuel-typed template requires a fuel type before saving', function () {

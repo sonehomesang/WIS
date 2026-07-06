@@ -95,23 +95,33 @@
                             <span class="text-gray-400">ຂໍ້ "ທັງ 2" ຂຶ້ນ ທຸກ ປະເພດ</span>
                         </div>
                     @endif
-                    <div class="space-y-1">
+                    <div class="space-y-1.5">
                         @foreach ($tItems as $i => $item)
                             @php $ap = $item['applies'] ?? 'both'; @endphp
                             @continue($tFilter !== 'all' && $ap !== 'both' && $ap !== $tFilter)
-                            <div wire:key="tit-{{ $i }}" class="flex items-center gap-1.5">
-                                <span class="text-xs text-gray-400 w-5 text-right shrink-0">{{ $i + 1 }}.</span>
-                                <input type="text" wire:model="tItems.{{ $i }}.label" placeholder="ຂໍ້ ກວດ…" class="flex-1 rounded-md border-gray-300 text-xs py-1" />
-                                <select wire:model="tItems.{{ $i }}.applies" class="rounded-md border-gray-300 text-xs py-1 shrink-0" title="ໃຊ້ ກັບ ປະເພດ ໃດ">
-                                    <option value="both">ທັງ 2</option>
-                                    <option value="engine">ນ້ຳມັນ</option>
-                                    <option value="ev">ໄຟຟ້າ</option>
-                                </select>
-                                <button type="button" wire:click="removeChecklistItem({{ $i }})" class="text-red-500 px-1 shrink-0" title="ລຶບ ຂໍ້">×</button>
+                            <div wire:key="tit-{{ $i }}" class="border border-gray-100 rounded-md p-1.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs text-gray-400 w-5 text-right shrink-0">{{ $i + 1 }}.</span>
+                                    <input type="text" wire:model="tItems.{{ $i }}.label" placeholder="ຂໍ້ ກວດ…" class="flex-1 rounded-md border-gray-300 text-xs py-1" />
+                                    <select wire:model="tItems.{{ $i }}.applies" class="rounded-md border-gray-300 text-xs py-1 shrink-0" title="ໃຊ້ ກັບ ປະເພດ ໃດ">
+                                        <option value="both">ທັງ 2</option>
+                                        <option value="engine">ນ້ຳມັນ</option>
+                                        <option value="ev">ໄຟຟ້າ</option>
+                                    </select>
+                                    <button type="button" wire:click="removeChecklistItem({{ $i }})" class="text-red-500 px-1 shrink-0" title="ລຶບ ຂໍ້">×</button>
+                                </div>
+                                <div class="flex items-center gap-2 flex-wrap mt-1 pl-6">
+                                    <span class="text-[11px] text-gray-400">ຮອບ:</span>
+                                    @foreach (\App\Models\InspectionTemplate::FREQ_LABELS as $fk => $fl)
+                                        <label class="inline-flex items-center gap-1 text-[11px] text-gray-600">
+                                            <input type="checkbox" value="{{ $fk }}" wire:model="tItems.{{ $i }}.freqs" class="rounded border-gray-300 text-sky-600 w-3.5 h-3.5"> {{ $fl }}
+                                        </label>
+                                    @endforeach
+                                </div>
                             </div>
                         @endforeach
                     </div>
-                    <p class="text-xs text-gray-400 mt-1">ຄໍລັມ ຂວາ = ຂໍ້ ນີ້ ໃຊ້ ກັບ ປະເພດ ໃດ (ທັງ 2 / ນ້ຳມັນ / ໄຟຟ້າ). ຕອນ ກວດ ຈິງ ຈະ ສະແດງ ສະເພາະ ຂໍ້ ຂອງ ປະເພດ ທີ່ ເລືອກ.</p>
+                    <p class="text-xs text-gray-400 mt-1">ແຕ່ລະ ຂໍ້: ເລືອກ <b>ໃຊ້ ກັບ ປະເພດ</b> (ທັງ2/ນ້ຳມັນ/ໄຟຟ້າ) + ຕິກ <b>ຮອບ</b> ທີ່ ຕ້ອງ ກວດ (ຕິກ ຫຼາຍ ໄດ້; ບໍ່ ຕິກ = ຂຶ້ນ ທຸກ ຮອບ). ຕອນ ກວດ ຈິງ ຈະ ຄັດ ລິສ ຕາມ ຮອບ + ປະເພດ ທີ່ ເລືອກ.</p>
                     <button type="button" wire:click="addChecklistItem" class="mt-2 text-sm text-sky-600">+ ເພີ່ມ ຂໍ້</button>
                 </div>
 

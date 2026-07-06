@@ -122,6 +122,9 @@ class Index extends Component
     /** ປະເພດ ນ້ຳມັນ ຕອນ ກວດ: '' | 'ev' | 'engine'. */
     public string $insFuelType = '';
 
+    /** ຮອບ ການ ກວດ: '' | pre_use | monthly | quarterly | semi_annual | annual. */
+    public string $insFrequency = '';
+
     /** @var array<int,array{label:string,status:string,note:string}> */
     public array $insChecklist = [];
 
@@ -211,7 +214,7 @@ class Index extends Component
         }
 
         $data = $this->validate([
-            'asset_code' => ['required', 'string', 'max:32', Rule::unique('equipment', 'asset_code')->ignore($this->editingId)],
+            'asset_code' => ['required', 'string', 'max:10', Rule::unique('equipment', 'asset_code')->ignore($this->editingId)],
             'fixed_asset_no' => ['nullable', 'string', 'max:64'],
             'name' => ['required', 'string', 'max:256'],
             'category' => ['nullable', 'string', 'max:128'],
@@ -230,7 +233,11 @@ class Index extends Component
             'notes' => ['nullable', 'string', 'max:2000'],
             'newPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
             'newPhotos.*' => ['image', 'max:4096'],
-        ], [], ['newPhotos.*' => 'ຮູບ']);
+        ], [
+            'asset_code.unique' => 'ລະຫັດເຄື່ອງ ນີ້ ມີ ຢູ່ ແລ້ວ — ຫ້າມ ຊ້ຳ.',
+            'asset_code.max' => 'ລະຫັດເຄື່ອງ ບໍ່ ເກີນ 10 ຕົວ.',
+            'asset_code.required' => 'ກະລຸນາ ໃສ່ ລະຫັດເຄື່ອງ.',
+        ], ['newPhotos.*' => 'ຮູບ']);
 
         if (count($this->existingPhotos) + count($this->newPhotos) > self::MAX_PHOTOS) {
             $this->addError('newPhotos', 'ຮູບ ໄດ້ ສູງສຸດ '.self::MAX_PHOTOS.' ໃບ ຕໍ່ ເຄື່ອງ.');
@@ -327,7 +334,7 @@ class Index extends Component
         $this->reset([
             'insSearch', 'insEquipmentId', 'insEquipmentLabel', 'insInspector',
             'insNotes', 'insNextDue', 'insPhotos', 'insExistingPhotos', 'insUpdateStatus', 'insRepair', 'insRetired',
-            'insTemplateId', 'insFuelType', 'insChecklist', 'editingInspectionId',
+            'insTemplateId', 'insFuelType', 'insFrequency', 'insChecklist', 'editingInspectionId',
         ]);
         $this->insDate = now()->toDateString();
         $this->insResult = 'pass';
@@ -360,6 +367,7 @@ class Index extends Component
         $this->insRetired = $b['retired'];
         $this->insTemplateId = $ins->template_id;
         $this->insFuelType = $ins->fuel_type ?? '';
+        $this->insFrequency = $ins->frequency ?? '';
         $this->insChecklist = $ins->checklist ?? [];
         $this->insResult = $ins->result;
         $this->insNotes = $ins->notes ?? '';
@@ -431,26 +439,63 @@ class Index extends Component
         $this->insRetired = $b['retired'];
         $this->insTemplateId = null;
         $this->insFuelType = '';
+        $this->insFrequency = '';
         $this->insChecklist = [];
         $this->insSearch = '';
     }
 
-    /** ເລືອກ ແມ່ແບບ → ໂຫຼດ ເຊັກລິສ ເຂົ້າ ຟອມ (ຖ້າ ຕ້ອງ ເລືອກ ປະເພດ ນ້ຳມັນ ກ່ອນ → ລໍ). */
+    /** ເລືອກ ແມ່ແບບ → ລ້າງ ຕົວ ເລືອກ ແລ້ວ ສ້າງ ເຊັກລິສ (ຖ້າ ຕ້ອງ ເລືອກ ປະເພດ/ຮອບ ກ່ອນ → ລໍ). */
     public function updatedInsTemplateId($value): void
     {
         $this->insFuelType = '';
-        $this->insChecklist = [];
-        $t = $value ? InspectionTemplate::find($value) : null;
-        if ($t && ! $t->hasFuelTypes()) {
-            $this->insChecklist = $this->buildInsChecklist($t, '');
+        $this->insFrequency = '';
+        $this->rebuildInsChecklist();
+    }
+
+    /** ເລືອກ ປະເພດ ນ້ຳມັນ → ສ້າງ ເຊັກລິສ ໃໝ່. */
+    public function updatedInsFuelType($value): void
+    {
+        $this->rebuildInsChecklist();
+    }
+
+    /** ເລືອກ ຮອບ ກວດ → ສ້າງ ເຊັກລິສ ໃໝ່ + ຄິດ ວັນ ກວດ ຄັ້ງ ໜ້າ. */
+    public function updatedInsFrequency($value): void
+    {
+        $this->rebuildInsChecklist();
+        $due = $this->nextDueFor((string) $value);
+        if ($due) {
+            $this->insNextDue = $due;
         }
     }
 
-    /** ເລືອກ ປະເພດ ນ້ຳມັນ → ສ້າງ ເຊັກລິສ ຕາມ ປະເພດ. */
-    public function updatedInsFuelType($value): void
+    /** ສ້າງ ເຊັກລິສ ຕາມ ຕົວ ເລືອກ ປັດຈຸບັນ (ນ້ຳມັນ + ຮອບ) — ວ່າງ ຖ້າ ຍັງ ບໍ່ ເລືອກ ຄົບ. */
+    protected function rebuildInsChecklist(): void
     {
         $t = $this->insTemplateId ? InspectionTemplate::find($this->insTemplateId) : null;
-        $this->insChecklist = $t ? $this->buildInsChecklist($t, (string) $value) : [];
+        if (! $t) {
+            $this->insChecklist = [];
+
+            return;
+        }
+        // ຕ້ອງ ເລືອກ ໃຫ້ ຄົບ ກ່ອນ ຈຶ່ງ ຄັດ ລິສ.
+        if (($t->hasFuelTypes() && $this->insFuelType === '') || ($t->hasFrequencies() && $this->insFrequency === '')) {
+            $this->insChecklist = [];
+
+            return;
+        }
+        $this->insChecklist = $this->buildInsChecklist($t, $this->insFuelType, $this->insFrequency);
+    }
+
+    /** ວັນ ກວດ ຄັ້ງ ໜ້າ ຕາມ ຮອບ (null = ບໍ່ ກຳນົດ, ເຊັ່ນ ກ່ອນ ໃຊ້). */
+    protected function nextDueFor(string $frequency): ?string
+    {
+        return match ($frequency) {
+            'monthly' => now()->addMonth()->toDateString(),
+            'quarterly' => now()->addMonths(3)->toDateString(),
+            'semi_annual' => now()->addMonths(6)->toDateString(),
+            'annual' => now()->addYear()->toDateString(),
+            default => null,
+        };
     }
 
     /** ຕິກ ສະຖານະ OK/NG ຕໍ່ ຂໍ້ (ກົດ ຊ້ຳ = ກັບ ໄປ N/A). */
@@ -462,11 +507,15 @@ class Index extends Component
         $this->insChecklist[$i]['status'] = ($this->insChecklist[$i]['status'] ?? '') === $status ? 'na' : $status;
     }
 
-    /** ສ້າງ ເຊັກລິສ ຈາກ ແມ່ແບບ: ຂໍ້ "ທັງ 2" + ຂໍ້ ຂອງ ປະເພດ ທີ່ ເລືອກ. */
-    protected function buildInsChecklist(InspectionTemplate $t, string $fuelType): array
+    /** ສ້າງ ເຊັກລິສ ຈາກ ແມ່ແບບ: ຄັດ ຕາມ ປະເພດ (ນ້ຳມັນ) + ຮອບ ທີ່ ເລືອກ. */
+    protected function buildInsChecklist(InspectionTemplate $t, string $fuelType, string $frequency): array
     {
         return collect($t->normalizedItems())
-            ->filter(fn ($x) => $x['applies'] === 'both' || ($fuelType !== '' && $x['applies'] === $fuelType))
+            ->filter(fn ($x) => // ປະເພດ: "ທັງ 2" ຫຼື ກົງ ປະເພດ ທີ່ ເລືອກ
+                ($x['applies'] === 'both' || ($fuelType !== '' && $x['applies'] === $fuelType))
+                // ຮອບ: ບໍ່ ຕິດ ຮອບ (ຂຶ້ນ ທຸກ ຮອບ) ຫຼື ຮອບ ທີ່ ເລືອກ ຢູ່ ໃນ ຂໍ້ ນັ້ນ
+                && (empty($x['freqs']) || ($frequency !== '' && in_array($frequency, $x['freqs'], true)))
+            )
             ->map(fn ($x) => ['label' => $x['label'], 'status' => 'pass', 'note' => ''])
             ->values()
             ->all();
@@ -487,12 +536,18 @@ class Index extends Component
             'insRetired' => ['integer', 'min:0'],
             'insTemplateId' => ['nullable', 'exists:inspection_templates,id'],
             'insFuelType' => ['nullable', 'in:ev,engine'],
+            'insFrequency' => ['nullable', 'in:'.implode(',', InspectionTemplate::FREQUENCIES)],
         ]);
 
-        // ແມ່ແບບ ທີ່ ລາຍການ ຂຶ້ນ ຕາມ ປະເພດ → ຕ້ອງ ເລືອກ ປະເພດ ນ້ຳມັນ ກ່ອນ.
+        // ແມ່ແບບ ທີ່ ລາຍການ ຂຶ້ນ ຕາມ ປະເພດ/ຮອບ → ຕ້ອງ ເລືອກ ກ່ອນ.
         $tpl = $this->insTemplateId ? InspectionTemplate::find($this->insTemplateId) : null;
         if ($tpl && $tpl->hasFuelTypes() && $this->insFuelType === '') {
             $this->addError('insFuelType', 'ກະລຸນາ ເລືອກ ປະເພດ (ໄຟຟ້າ/ນ້ຳມັນ) ກ່ອນ.');
+
+            return;
+        }
+        if ($tpl && $tpl->hasFrequencies() && $this->insFrequency === '') {
+            $this->addError('insFrequency', 'ກະລຸນາ ເລືອກ ຮອບ ການ ກວດ ກ່ອນ.');
 
             return;
         }
@@ -531,15 +586,19 @@ class Index extends Component
             $photoPaths[] = $this->stampAndStore($photo, 'equipment/inspections/'.$e->id);
         }
 
+        // ວັນ ກວດ ຄັ້ງ ໜ້າ: ໃຊ້ ຄ່າ ທີ່ ພິມ; ຖ້າ ວ່າງ ຄິດ ຈາກ ຮອບ ໃຫ້ ເອງ.
+        $nextDue = $this->insNextDue ?: $this->nextDueFor($this->insFrequency);
+
         $payload = [
             'template_id' => $this->insTemplateId ?: null,
             'fuel_type' => $this->insFuelType ?: null,
+            'frequency' => $this->insFrequency ?: null,
             'inspector_name' => auth()->user()->display_name,   // ບັງຄັບ ຈາກ ຜູ້ ລ໋ອກອິນ
             'result' => $result,
             'score' => $score,
             'checklist' => $this->insChecklist ?: null,
             'notes' => $this->insNotes ?: null,
-            'next_due_date' => $this->insNextDue ?: null,
+            'next_due_date' => $nextDue ?: null,
             'photos' => $photoPaths ?: null,
             'photo_path' => $photoPaths[0] ?? null,   // ຮູບ ທຳອິດ = ໂຊ ໃນ list
         ];
@@ -655,7 +714,7 @@ class Index extends Component
         $deptId = $this->userDeptId();
 
         $items = Equipment::query()
-            ->with(['photos', 'unit', 'department', 'responsibleUser'])
+            ->with(['photos', 'unit', 'department', 'responsibleUser', 'activeBorrowItems.record'])
             ->when($deptScoped, fn ($q) => $q->where('department_id', $deptId))
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
                 ->where('name', 'like', "%{$this->search}%")
@@ -685,10 +744,10 @@ class Index extends Component
                 ->map(fn ($t) => tap($t, fn ($x) => $x->matches = $cat && $x->category === $cat));
         }
 
-        // ແມ່ແບບ ທີ່ ເລືອກ ຕ້ອງ ເລືອກ ປະເພດ ນ້ຳມັນ ກ່ອນ ບໍ.
-        $insTemplateNeedsFuel = $this->insTemplateId
-            ? (bool) optional(InspectionTemplate::find($this->insTemplateId))->hasFuelTypes()
-            : false;
+        // ແມ່ແບບ ທີ່ ເລືອກ ຕ້ອງ ເລືອກ ປະເພດ ນ້ຳມັນ / ຮອບ ກ່ອນ ບໍ.
+        $insTpl = $this->insTemplateId ? InspectionTemplate::find($this->insTemplateId) : null;
+        $insTemplateNeedsFuel = (bool) $insTpl?->hasFuelTypes();
+        $insTemplateNeedsFreq = (bool) $insTpl?->hasFrequencies();
 
         $viewingInspection = $this->viewingInspectionId
             ? EquipmentInspection::with(['equipment', 'template'])->find($this->viewingInspectionId)
@@ -724,6 +783,7 @@ class Index extends Component
                 ->orderByDesc('inspected_at')->orderByDesc('id')->limit(50)->get(),
             'insResults' => $insResults,
             'insTemplateNeedsFuel' => $insTemplateNeedsFuel,
+            'insTemplateNeedsFreq' => $insTemplateNeedsFreq,
             'viewingInspection' => $viewingInspection,
             'historyEquipment' => $historyEquipment,
             'historyInspections' => $historyInspections,

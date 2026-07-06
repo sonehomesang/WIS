@@ -92,26 +92,32 @@ class InspectionTemplateSeeder extends Seeder
                     .'ເລືອກ ປະເພດ ລົດ (ໄຟຟ້າ/ນ້ຳມັນ) ກ່ອນ → ລາຍການ ຈະ ຂຶ້ນ ຕາມ ປະເພດ. '
                     .'S/OK = ໃຊ້ໄດ້ ປອດໄພ (ຜ່ານ) · R/NG = ຕ້ອງ ສ້ອມ (ບໍ່ຜ່ານ). ພົບ ຂໍ້ ບົກພ່ອງ ໃຫ້ ແຈ້ງ ຫົວໜ້າ ທັນທີ ກ່ອນ ນຳ ໃຊ້.',
                 'items' => [
-                    ['label' => 'ງ່າມ, ເສົາ ຍົກ ແລະ ແຜງ ຮັບ ສິນຄ້າ (Forks, Mast & Load Backrest)', 'applies' => 'both'],
-                    ['label' => 'ລະບົບ ໄຮໂດຼລິກ / ບໍ່ ມີ ຮົ່ວ (Hydraulic System — Leakage)', 'applies' => 'both'],
-                    ['label' => 'ຢາງ ແລະ ລໍ້ (Tyres & Wheels)', 'applies' => 'both'],
-                    ['label' => 'ລະບົບ ບັງຄັບ ລ້ຽວ (Steering System)', 'applies' => 'both'],
-                    ['label' => 'ເບກ ແລະ ເບກ ຈອດ (Brake & Parking Brake)', 'applies' => 'both'],
-                    ['label' => 'ແກ, ໄຟ ແລະ ສຽງ ຖອຍ ຫຼັງ (Horn, Lights & Reverse Alarm)', 'applies' => 'both'],
-                    ['label' => 'ສາຍ ຄາດ ນິລະໄພ ແລະ ບ່ອນ ນັ່ງ (Seat Belt & Operator Seat)', 'applies' => 'both'],
-                    ['label' => 'ຫຼັງຄາ ກັນ ຕົກ ແລະ ປ້າຍ ຄວາມ ປອດໄພ (Overhead Guard & Safety Labels)', 'applies' => 'both'],
-                    ['label' => 'ໜ້າ ປັດ ແລະ ໄຟ ເຕືອນ (Dashboard & Warning Indicators)', 'applies' => 'both'],
-                    ['label' => 'ແບັດເຕີຣີ ແລະ ຂົ້ວ ຕໍ່ (Battery & Connector)', 'applies' => 'ev'],
-                    ['label' => 'ນ້ຳມັນ ເຄື່ອງ ແລະ ນ້ຳມັນ ເຊື້ອ ໄຟ (Engine Oil & Fuel)', 'applies' => 'engine'],
-                    ['label' => 'ນ້ຳ ຫລໍ່ ເຢັນ ແລະ ໝໍ້ ນ້ຳ (Coolant & Radiator)', 'applies' => 'engine'],
-                    ['label' => 'ການ ຮົ່ວ ນ້ຳມັນ/LPG ແລະ ທໍ່ ໄອ ເສຍ (Fuel/LPG Leakage & Exhaust)', 'applies' => 'engine'],
-                    ['label' => 'ຟັງຊັນ ເຄື່ອນ ທີ່, ຍົກ ແລະ ອຽງ (Travel, Lift & Tilt Function)', 'applies' => 'both'],
-                    ['label' => 'ສະພາບ ໂດຍ ລວມ (Overall Condition)', 'applies' => 'both'],
+                    ['label' => 'ງ່າມ, ເສົາ ຍົກ ແລະ ແຜງ ຮັບ ສິນຄ້າ (Forks, Mast & Load Backrest)', 'applies' => 'both', 'freqs' => ['pre_use', 'monthly', 'annual']],
+                    ['label' => 'ລະບົບ ໄຮໂດຼລິກ / ບໍ່ ມີ ຮົ່ວ (Hydraulic System — Leakage)', 'applies' => 'both', 'freqs' => ['pre_use', 'monthly', 'quarterly']],
+                    ['label' => 'ຢາງ ແລະ ລໍ້ (Tyres & Wheels)', 'applies' => 'both', 'freqs' => ['pre_use', 'monthly', 'quarterly']],
+                    ['label' => 'ລະບົບ ບັງຄັບ ລ້ຽວ (Steering System)', 'applies' => 'both', 'freqs' => ['pre_use', 'quarterly']],
+                    ['label' => 'ເບກ ແລະ ເບກ ຈອດ (Brake & Parking Brake)', 'applies' => 'both', 'freqs' => ['pre_use', 'monthly', 'quarterly']],
+                    ['label' => 'ແກ, ໄຟ ແລະ ສຽງ ຖອຍ ຫຼັງ (Horn, Lights & Reverse Alarm)', 'applies' => 'both', 'freqs' => ['pre_use', 'monthly']],
+                    ['label' => 'ສາຍ ຄາດ ນິລະໄພ ແລະ ບ່ອນ ນັ່ງ (Seat Belt & Operator Seat)', 'applies' => 'both', 'freqs' => ['pre_use', 'monthly']],
+                    ['label' => 'ຫຼັງຄາ ກັນ ຕົກ ແລະ ປ້າຍ ຄວາມ ປອດໄພ (Overhead Guard & Safety Labels)', 'applies' => 'both', 'freqs' => ['pre_use', 'semi_annual', 'annual']],
+                    ['label' => 'ໜ້າ ປັດ ແລະ ໄຟ ເຕືອນ (Dashboard & Warning Indicators)', 'applies' => 'both', 'freqs' => ['pre_use', 'monthly']],
+                    ['label' => 'ແບັດເຕີຣີ ແລະ ຂົ້ວ ຕໍ່ (Battery & Connector)', 'applies' => 'ev', 'freqs' => ['pre_use', 'monthly', 'quarterly']],
+                    ['label' => 'ນ້ຳມັນ ເຄື່ອງ ແລະ ນ້ຳມັນ ເຊື້ອ ໄຟ (Engine Oil & Fuel)', 'applies' => 'engine', 'freqs' => ['pre_use', 'monthly']],
+                    ['label' => 'ນ້ຳ ຫລໍ່ ເຢັນ ແລະ ໝໍ້ ນ້ຳ (Coolant & Radiator)', 'applies' => 'engine', 'freqs' => ['pre_use', 'monthly', 'semi_annual']],
+                    ['label' => 'ການ ຮົ່ວ ນ້ຳມັນ/LPG ແລະ ທໍ່ ໄອ ເສຍ (Fuel/LPG Leakage & Exhaust)', 'applies' => 'engine', 'freqs' => ['pre_use', 'quarterly', 'annual']],
+                    ['label' => 'ຟັງຊັນ ເຄື່ອນ ທີ່, ຍົກ ແລະ ອຽງ (Travel, Lift & Tilt Function)', 'applies' => 'both', 'freqs' => ['pre_use', 'monthly', 'quarterly']],
+                    ['label' => 'ສະພາບ ໂດຍ ລວມ (Overall Condition)', 'applies' => 'both', 'freqs' => ['pre_use', 'monthly', 'quarterly', 'semi_annual', 'annual']],
                 ],
             ],
         ];
 
+        // WH-FLT-001 = ແມ່ແບບ ລະບົບ (seed) → updateOrCreate ໃຫ້ ໄດ້ freqs ໃໝ່; ອື່ນ ໆ firstOrCreate (ບໍ່ ທັບ ຂອງ ເກົ່າ).
         foreach ($templates as $t) {
+            if (str_contains($t['name'], 'WH-FLT-001')) {
+                InspectionTemplate::updateOrCreate(['name' => $t['name']], $t);
+
+                continue;
+            }
             InspectionTemplate::firstOrCreate(['name' => $t['name']], $t);
         }
     }

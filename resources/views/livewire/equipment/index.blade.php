@@ -57,6 +57,7 @@
                             <th class="text-left font-semibold px-3 py-2 w-24">ຮູບ</th>
                             <th class="text-left font-semibold px-3 py-2 w-16">ຈຳນວນ</th>
                             <th class="text-left font-semibold px-3 py-2 w-28">ສະຖານະ</th>
+                            <th class="text-left font-semibold px-3 py-2 w-24">ຜູ້ຢືມ</th>
                             <th class="text-center font-semibold px-2 py-2 w-20">ການ ກວດເຊັກ</th>
                             <th class="px-3 py-2 w-16"></th>
                         </tr>
@@ -92,6 +93,14 @@
                                         @endforeach
                                     </div>
                                 </td>
+                                <td class="px-3 py-2 text-gray-600 truncate">
+                                    @php $bws = $e->currentBorrowers(); @endphp
+                                    @if (count($bws))
+                                        <span class="text-amber-700" title="ກຳລັງ ຖືກ ຢືມ">{{ $bws[0] }}</span>@if (count($bws) > 1)<span class="text-xs text-gray-400"> +{{ count($bws) - 1 }}</span>@endif
+                                    @else
+                                        <span class="text-gray-300">—</span>
+                                    @endif
+                                </td>
                                 <td class="px-2 py-2 text-center">
                                     <button wire:click="viewInspectionHistory({{ $e->id }})" class="text-gray-400 hover:text-sky-700 p-1" title="ສະຖານະ ການ ກວດເຊັກ">
                                         <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
@@ -111,7 +120,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="10" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ເຄື່ອງ — ກົດ "+ ເພີ່ມ ເຄື່ອງ"</td></tr>
+                            <tr><td colspan="11" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ເຄື່ອງ — ກົດ "+ ເພີ່ມ ເຄື່ອງ"</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -133,6 +142,8 @@
                         <div class="text-xs text-gray-400">{{ $e->asset_code }}@if ($e->fixed_asset_no) · FA: {{ $e->fixed_asset_no }}@endif · {{ $e->category ?? '—' }} · {{ $e->quantity }} {{ $e->unit?->name ?? '' }}</div>
                         <div class="text-xs text-gray-600 mt-1">Owner: {{ $e->department?->name ?? '—' }} · Loc-Bin: {{ $e->loc_bin ?? '—' }}</div>
                         <div class="text-xs text-gray-600">{{ $e->location ?? '—' }} · {{ $e->responsibleLabel() ?? '—' }}</div>
+                        @php $bwsM = $e->currentBorrowers(); @endphp
+                        @if (count($bwsM))<div class="text-xs text-amber-700 mt-0.5">ຜູ້ຢືມ: {{ $bwsM[0] }}@if (count($bwsM) > 1) +{{ count($bwsM) - 1 }}@endif</div>@endif
                         <div class="flex gap-2 mt-2">
                             @can('equipment.edit')<button wire:click="editItem({{ $e->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">ແກ້ໄຂ</button>@endcan
                             @can('equipment.delete')<button wire:click="delete({{ $e->id }})" wire:confirm="ລຶບ ເຄື່ອງ ນີ້?" class="text-xs border rounded px-2 py-1 min-h-[36px] text-red-600">ລຶບ</button>@endcan
@@ -153,9 +164,15 @@
                 <div class="flex items-center gap-2 shrink-0">
                     @can('equipment.edit')
                         @unless ($deptScoped)
-                            <a href="{{ route('equipment.templates') }}" wire:navigate class="text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">ⓘ ແມ່ແບບ ກວດກາ</a>
+                            <a href="{{ route('equipment.templates') }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" /></svg>
+                                ເບິ່ງ/ສ້າງ ເທມເພລດ ກວດ ເຄື່ອງ
+                            </a>
                         @endunless
-                        <button wire:click="newInspection" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">+ ບັນທຶກ ການ ກວດກາ</button>
+                        <button wire:click="newInspection" class="inline-flex items-center gap-1.5 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                            ລົງມື ກວດເຄື່ອງ
+                        </button>
                     @endcan
                 </div>
             </div>
@@ -236,8 +253,8 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm text-gray-600 mb-1">ລະຫັດເຄື່ອງ <span class="text-red-500">*</span></label>
-                        <input type="text" wire:model="asset_code" placeholder="ເຊັ່ນ EQ-0001" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
+                        <label class="block text-sm text-gray-600 mb-1">ລະຫັດເຄື່ອງ <span class="text-red-500">*</span> <span class="text-xs text-gray-400">(ບໍ່ ຊ້ຳ · ບໍ່ ເກີນ 10 ຕົວ)</span></label>
+                        <input type="text" wire:model="asset_code" maxlength="10" placeholder="ເຊັ່ນ EQ-0001" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
                         @error('asset_code')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
                     <div>
@@ -426,6 +443,20 @@
                             @error('insFuelType')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                         </div>
                     @endif
+                    {{-- ຮອບ ການ ກວດ (ສະແດງ ເມື່ອ ແມ່ແບບ ມີ ຂໍ້ ຕິດ ຮອບ) --}}
+                    @if ($insTemplateNeedsFreq)
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">ຮອບ ການ ກວດ <span class="text-red-500">*</span></label>
+                            <select wire:model.live="insFrequency" class="w-full rounded-md border-gray-300 text-sm">
+                                <option value="">— ເລືອກ ຮອບ —</option>
+                                @foreach (\App\Models\InspectionTemplate::FREQ_LABELS as $fk => $fl)<option value="{{ $fk }}">{{ $fl }}</option>@endforeach
+                            </select>
+                            @if ($insFrequency === '')
+                                <p class="text-xs text-amber-600 mt-1">ເລືອກ ຮອບ ກ່ອນ ຈຶ່ງ ສະແດງ ລາຍການ ກວດ ຂອງ ຮອບ ນັ້ນ</p>
+                            @endif
+                            @error('insFrequency')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    @endif
                     @if (count($insChecklist))
                         <div class="overflow-x-auto border border-gray-200 rounded-md">
                             <table class="w-full text-xs" style="table-layout:fixed;">
@@ -596,6 +627,9 @@
                             @if ($viewingInspection->fuel_type)
                                 <div><span class="text-gray-500">ປະເພດ:</span> {{ ['ev' => 'ໄຟຟ້າ (EV)', 'engine' => 'ນ້ຳມັນ (Engine)'][$viewingInspection->fuel_type] ?? $viewingInspection->fuel_type }}</div>
                             @endif
+                            @if ($viewingInspection->frequency)
+                                <div><span class="text-gray-500">ຮອບ ກວດ:</span> {{ \App\Models\InspectionTemplate::FREQ_LABELS[$viewingInspection->frequency] ?? $viewingInspection->frequency }}</div>
+                            @endif
                             <div class="flex items-center gap-1 pt-0.5 flex-wrap">
                                 <span class="text-gray-500">ຜົນ:</span>
                                 <span class="rounded px-1.5 py-0.5 font-medium {{ $vrb[$viewingInspection->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $vrl[$viewingInspection->result] ?? $viewingInspection->result }}</span>
@@ -711,7 +745,7 @@
                             <div wire:key="hist-{{ $h->id }}" class="px-3 py-2 flex items-center justify-between gap-2 text-sm">
                                 <div class="min-w-0">
                                     <div class="text-gray-700">{{ $h->inspected_at?->format('d/m/Y H:i') }} <span class="text-xs rounded px-1.5 py-0.5 {{ $hrb[$h->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $hrl[$h->result] ?? $h->result }}</span>@if (! is_null($h->score))<span class="text-xs text-gray-400 ml-1">{{ $h->score }}%</span>@endif</div>
-                                    <div class="text-xs text-gray-400 truncate">{{ $h->inspector_name ?? '—' }}</div>
+                                    <div class="text-xs text-gray-400 truncate">{{ $h->inspector_name ?? '—' }}@if ($h->frequency) · ຮອບ: {{ \App\Models\InspectionTemplate::FREQ_LABELS[$h->frequency] ?? $h->frequency }}@endif</div>
                                 </div>
                                 <button wire:click="viewInspection({{ $h->id }})" class="text-gray-400 hover:text-sky-700 p-1 shrink-0" title="ເບິ່ງ ໃບ ກວດ">
                                     <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>

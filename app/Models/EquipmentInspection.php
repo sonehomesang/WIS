@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class EquipmentInspection extends Model
 {
     protected $fillable = [
-        'equipment_id', 'template_id', 'fuel_type', 'inspected_at', 'inspector_name', 'result', 'score',
+        'equipment_id', 'template_id', 'fuel_type', 'frequency', 'inspected_at', 'inspector_name', 'result', 'score',
         'checklist', 'notes', 'next_due_date', 'photo_path', 'photos', 'created_by',
     ];
 

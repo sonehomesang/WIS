@@ -39,7 +39,7 @@ class InspectionTemplates extends Component
     {
         abort_unless(auth()->user()->can('equipment.edit'), 403);
         $this->resetForm();
-        $this->tItems = [['label' => '', 'applies' => 'both']];
+        $this->tItems = [['label' => '', 'applies' => 'both', 'freqs' => []]];
         $this->showModal = true;
     }
 
@@ -50,7 +50,7 @@ class InspectionTemplates extends Component
         $this->tName = $t->name;
         $this->tCategory = $t->category ?? '';
         $this->tMethod = $t->method ?? '';
-        $this->tItems = $t->normalizedItems() ?: [['label' => '', 'applies' => 'both']];
+        $this->tItems = $t->normalizedItems() ?: [['label' => '', 'applies' => 'both', 'freqs' => []]];
         $this->tActive = $t->is_active;
         $this->tFilter = 'all';
         $this->resetValidation();
@@ -59,7 +59,7 @@ class InspectionTemplates extends Component
 
     public function addChecklistItem(): void
     {
-        $this->tItems[] = ['label' => '', 'applies' => 'both'];
+        $this->tItems[] = ['label' => '', 'applies' => 'both', 'freqs' => []];
     }
 
     public function removeChecklistItem(int $i): void
@@ -78,17 +78,24 @@ class InspectionTemplates extends Component
             'tMethod' => ['nullable', 'string', 'max:2000'],
             'tItems.*.label' => ['nullable', 'string', 'max:256'],
             'tItems.*.applies' => ['nullable', 'in:both,ev,engine'],
+            'tItems.*.freqs' => ['nullable', 'array'],
+            'tItems.*.freqs.*' => ['in:'.implode(',', InspectionTemplate::FREQUENCIES)],
         ]);
 
-        // ເກັບ ສະເພาະ ຂໍ້ ທີ່ ມີ ຊື່; ຮັກສາ ປ້າຍ applies (ທັງສอง/ev/engine).
+        // ເກັບ ສະເພາະ ຂໍ້ ທີ່ ມີ ຊື່; ຮັກສາ ປ້າຍ applies + ຮອບ (freqs).
         $items = collect($this->tItems)
             ->map(function ($it) {
                 if (is_string($it)) {
-                    return ['label' => trim($it), 'applies' => 'both'];
+                    return ['label' => trim($it), 'applies' => 'both', 'freqs' => []];
                 }
                 $applies = $it['applies'] ?? 'both';
+                $freqs = array_values(array_intersect(InspectionTemplate::FREQUENCIES, (array) ($it['freqs'] ?? [])));
 
-                return ['label' => trim((string) ($it['label'] ?? '')), 'applies' => in_array($applies, ['both', 'ev', 'engine'], true) ? $applies : 'both'];
+                return [
+                    'label' => trim((string) ($it['label'] ?? '')),
+                    'applies' => in_array($applies, ['both', 'ev', 'engine'], true) ? $applies : 'both',
+                    'freqs' => $freqs,
+                ];
             })
             ->filter(fn ($x) => $x['label'] !== '')
             ->values()
