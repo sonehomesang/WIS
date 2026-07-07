@@ -4,6 +4,7 @@ namespace App\Livewire\Equipment;
 
 use App\Models\Equipment;
 use App\Models\EquipmentMaintenance;
+use App\Models\MaintenanceTemplate;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -58,6 +59,12 @@ class Maintenance extends Component
     /** @var array<int,string> */
     public array $mExistingPhotos = [];
 
+    // ── ເຊັກລິສ ຈາກ ແມ່ແບບ (ຄັດ ຕາມ ຮອບ = mFrequency) ──
+    public ?int $mTemplateId = null;
+
+    /** @var array<int,array{label:string,remark:string,action:string,status:string}> */
+    public array $mChecklist = [];
+
     // ── ໜ້າຕ່າງ ປະຫວັດ ຕໍ່ ເຄື່ອງ ──
     public ?int $historyEquipmentId = null;
 
@@ -95,6 +102,7 @@ class Maintenance extends Component
         $this->reset([
             'editingId', 'mSearch', 'mEquipmentId', 'mEquipmentLabel', 'mDescription',
             'mPerformedBy', 'mCost', 'mFrequency', 'mNextService', 'mNotes', 'mPhotos', 'mExistingPhotos', 'mTitle',
+            'mTemplateId', 'mChecklist',
         ]);
         $this->mDate = now()->toDateString();
         $this->mType = 'preventive';
@@ -143,6 +151,8 @@ class Maintenance extends Component
         $this->mStatus = $m->status;
         $this->mNotes = $m->notes ?? '';
         $this->mExistingPhotos = $m->photos ?? [];
+        $this->mTemplateId = $m->template_id;
+        $this->mChecklist = $m->checklist ?? [];
         $this->resetValidation();
         $this->showModal = true;
     }
@@ -157,15 +167,48 @@ class Maintenance extends Component
         $this->mEquipmentId = $e->id;
         $this->mEquipmentLabel = $e->asset_code.' · '.$e->name;
         $this->mSearch = '';
+        // ແມ່ແບບ ຜູກ ຕໍ່ ເຄື່ອງ → ປ່ຽນ ເຄື່ອງ ຕ້ອງ ລ້າງ ແມ່ແບບ/ເຊັກລິສ.
+        $this->reset(['mTemplateId', 'mChecklist']);
     }
 
-    /** ເລືອກ ຮອບ → ຄິດ ວັນ service ຄັ້ງ ໜ້າ. */
+    /** ເລືອກ ຮອບ → ຄິດ ວັນ service ຄັ້ງ ໜ້າ + ຄັດ ເຊັກລິສ ຕາມ ຮອບ. */
     public function updatedMFrequency($value): void
     {
         $due = $this->nextServiceFor((string) $value);
         if ($due) {
             $this->mNextService = $due;
         }
+        $this->rebuildChecklist();
+    }
+
+    /** ເລືອກ ແມ່ແບບ → ຄັດ ເຊັກລິສ ໃໝ່ (ຕາມ ຮອບ ທີ່ ເລືອກ ຢູ່). */
+    public function updatedMTemplateId($value): void
+    {
+        $this->rebuildChecklist();
+    }
+
+    /** ຄັດ ລາຍການ ຈາກ ແມ່ແບບ ຕາມ ຮອບ (mFrequency) — ວ່າງ ຖ້າ ຍັງ ບໍ່ ເລືອກ ຄົບ. */
+    protected function rebuildChecklist(): void
+    {
+        $t = $this->mTemplateId ? MaintenanceTemplate::find($this->mTemplateId) : null;
+        if (! $t || $this->mFrequency === '') {
+            $this->mChecklist = [];
+
+            return;
+        }
+        $this->mChecklist = collect($t->itemsForCycle($this->mFrequency))
+            ->map(fn ($x) => ['label' => $x['label'], 'remark' => $x['remark'], 'action' => $x['action'], 'status' => 'ok'])
+            ->values()
+            ->all();
+    }
+
+    /** ຕິກ ສະຖານະ ຂໍ້: ✓ ok / ✗ ng (ກົດ ຊ້ຳ = ກັບ ໄປ N/A). */
+    public function toggleMaintChecklist(int $i, string $status): void
+    {
+        if (! isset($this->mChecklist[$i])) {
+            return;
+        }
+        $this->mChecklist[$i]['status'] = ($this->mChecklist[$i]['status'] ?? '') === $status ? 'na' : $status;
     }
 
     protected function nextServiceFor(string $frequency): ?string
@@ -213,6 +256,7 @@ class Maintenance extends Component
             'mNextService' => ['nullable', 'date'],
             'mStatus' => ['required', 'in:'.implode(',', array_keys(EquipmentMaintenance::STATUSES))],
             'mNotes' => ['nullable', 'string', 'max:2000'],
+            'mTemplateId' => ['nullable', 'exists:maintenance_templates,id'],
             'mPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
             'mPhotos.*' => ['image', 'max:8192'],
         ]);
@@ -232,8 +276,12 @@ class Maintenance extends Component
 
         $nextService = $this->mNextService ?: $this->nextServiceFor($this->mFrequency);
 
+        // ເກັບ ເຊັກລິສ ສະເພາະ ເມື່ອ ຜູກ ແມ່ແບບ + ມີ ຮອບ (ຄັດ ໄດ້).
+        $checklist = ($this->mTemplateId && count($this->mChecklist)) ? $this->mChecklist : null;
+
         $attrs = [
             'equipment_id' => $e->id,
+            'template_id' => $checklist ? $this->mTemplateId : null,
             'maintenance_date' => $data['mDate'],
             'type' => $data['mType'],
             'title' => $data['mTitle'],
@@ -243,6 +291,7 @@ class Maintenance extends Component
             'frequency' => $this->mFrequency ?: null,
             'next_service_date' => $nextService ?: null,
             'status' => $data['mStatus'],
+            'checklist' => $checklist,
             'notes' => $data['mNotes'] ?: null,
             'photos' => $photoPaths ?: null,
         ];
@@ -292,6 +341,12 @@ class Maintenance extends Component
             ->orderByDesc('maintenance_date')->orderByDesc('id')
             ->paginate(10);
 
+        // ແມ່ແບບ ເຊັກລິສ ຂອງ ເຄື່ອງ ທີ່ ເລືອກ (ໃຫ້ ເລືອກ ໃນ ຟອມ).
+        $templateOptions = $this->mEquipmentId
+            ? MaintenanceTemplate::where('equipment_id', $this->mEquipmentId)
+                ->where('is_active', true)->orderBy('name')->get(['id', 'name'])
+            : collect();
+
         $historyEquipment = $this->historyEquipmentId ? Equipment::find($this->historyEquipmentId) : null;
         $history = $this->historyEquipmentId
             ? EquipmentMaintenance::where('equipment_id', $this->historyEquipmentId)
@@ -304,6 +359,7 @@ class Maintenance extends Component
             'historyEquipment' => $historyEquipment,
             'history' => $history,
             'deptScoped' => $deptScoped,
+            'templateOptions' => $templateOptions,
         ]);
     }
 }

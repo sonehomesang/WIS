@@ -4,6 +4,7 @@ use App\Livewire\Equipment\Maintenance;
 use App\Models\Department;
 use App\Models\Equipment;
 use App\Models\EquipmentMaintenance;
+use App\Models\MaintenanceTemplate;
 use App\Models\Unit;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -116,6 +117,77 @@ test('maintenance evidence photos are stored', function () {
     foreach ($m->photos as $p) {
         Storage::disk('public')->assertExists($p);
     }
+});
+
+test('recording with a template + cycle loads the checklist filtered by cycle and saves a snapshot', function () {
+    $e = Equipment::create(['asset_code' => 'MT-CK', 'name' => 'Forklift', 'quantity' => 1]);
+    $t = MaintenanceTemplate::create([
+        'name' => 'PM', 'equipment_id' => $e->id, 'is_active' => true,
+        'items' => [
+            ['label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => 'SAE', 'cycles' => ['monthly' => 'X', 'quarterly' => 'X']],
+            ['label' => 'ໄສ້ກອງ ອາກາດ', 'remark' => '', 'cycles' => ['quarterly' => 'X']],   // ໄຕມາດ ເທົ່ານັ້ນ
+            ['label' => 'ລົມ ຢາງ', 'remark' => '', 'cycles' => ['monthly' => 'C']],
+        ],
+    ]);
+
+    actingAs($this->staff);
+    Livewire::test(Maintenance::class)
+        ->call('newMaintenance')
+        ->call('pickEquipment', $e->id)
+        ->set('mTitle', 'Service ຮອບ ເດືອນ')
+        ->set('mTemplateId', $t->id)
+        ->set('mFrequency', 'monthly')          // ຄັດ ລາຍການ ຮອບ ເດືອນ
+        ->assertCount('mChecklist', 2)          // ນ້ຳມັນ(X) + ລົມຢາງ(C); ໄສ້ກອງ ບໍ່ ຂຶ້ນ (ໄຕມາດ)
+        ->call('toggleMaintChecklist', 1, 'ng')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $m = $e->maintenances()->first();
+    expect($m->template_id)->toBe($t->id);
+    expect($m->frequency)->toBe('monthly');
+    expect($m->checklist)->toHaveCount(2);
+    expect($m->checklist[0]['action'])->toBe('X');    // ນ້ຳມັນ = ປ່ຽນ
+    expect($m->checklist[0]['status'])->toBe('ok');   // ຄ່າ ຕັ້ງຕົ້ນ
+    expect($m->checklist[1]['status'])->toBe('ng');   // ລົມ ຢາງ = ມີ ບັນຫາ
+});
+
+test('changing the cycle re-filters the checklist and clearing the template empties it', function () {
+    $e = Equipment::create(['asset_code' => 'MT-CK3', 'name' => 'Loader', 'quantity' => 1]);
+    $t = MaintenanceTemplate::create([
+        'name' => 'PM', 'equipment_id' => $e->id, 'is_active' => true,
+        'items' => [
+            ['label' => 'A', 'remark' => '', 'cycles' => ['monthly' => 'C']],
+            ['label' => 'B', 'remark' => '', 'cycles' => ['quarterly' => 'X']],
+        ],
+    ]);
+
+    actingAs($this->staff);
+    Livewire::test(Maintenance::class)
+        ->call('newMaintenance')
+        ->call('pickEquipment', $e->id)
+        ->set('mTemplateId', $t->id)
+        ->set('mFrequency', 'monthly')->assertCount('mChecklist', 1)
+        ->set('mFrequency', 'quarterly')->assertCount('mChecklist', 1)
+        ->set('mFrequency', 'annual')->assertCount('mChecklist', 0)     // ບໍ່ ມີ ຂໍ້ ຮອບ ປີ
+        ->set('mTemplateId', '')->set('mFrequency', 'monthly')->assertCount('mChecklist', 0);   // ບໍ່ ໃຊ້ ແມ່ແບບ → ວ່າງ
+});
+
+test('editing a maintenance record loads its saved checklist', function () {
+    $e = Equipment::create(['asset_code' => 'MT-CK2', 'name' => 'Truck', 'quantity' => 1]);
+    $t = MaintenanceTemplate::create(['name' => 'T', 'equipment_id' => $e->id, 'is_active' => true,
+        'items' => [['label' => 'X', 'remark' => '', 'cycles' => ['monthly' => 'C']]]]);
+    $m = $e->maintenances()->create([
+        'maintenance_date' => '2026-07-06', 'type' => 'service', 'title' => 's', 'status' => 'done',
+        'template_id' => $t->id, 'frequency' => 'monthly',
+        'checklist' => [['label' => 'X', 'remark' => '', 'action' => 'C', 'status' => 'ng']],
+    ]);
+
+    actingAs($this->staff);
+    Livewire::test(Maintenance::class)
+        ->call('editMaintenance', $m->id)
+        ->assertSet('mTemplateId', $t->id)
+        ->assertCount('mChecklist', 1)
+        ->assertSet('mChecklist.0.status', 'ng');
 });
 
 test('an admin can delete a maintenance record', function () {

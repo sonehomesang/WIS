@@ -53,6 +53,10 @@
                         <td class="px-3 py-2">
                             <div class="font-medium text-gray-800 truncate">{{ $m->title }}</div>
                             <div class="text-xs text-gray-400 truncate">{{ $m->equipment?->asset_code }} · {{ $m->equipment?->name }}@if ($m->performed_by) · {{ $m->performed_by }}@endif</div>
+                            @if ($m->checklist)
+                                @php $ck = collect($m->checklist); $ng = $ck->where('status', 'ng')->count(); @endphp
+                                <div class="text-[11px] mt-0.5"><span class="text-gray-500">☑ ເຊັກລິສ {{ $ck->count() }} ຂໍ້</span>@if ($ng) <span class="text-red-600 font-medium">· {{ $ng }} ບັນຫາ</span>@endif</div>
+                            @endif
                         </td>
                         <td class="px-3 py-2"><span class="text-xs rounded px-1.5 py-0.5 {{ $tBadge[$m->type] ?? 'bg-gray-100 text-gray-600' }}">{{ $tLabels[$m->type] ?? $m->type }}</span></td>
                         <td class="px-3 py-2 text-right whitespace-nowrap text-gray-700">{{ $m->cost !== null ? number_format($m->cost) : '—' }}</td>
@@ -97,6 +101,10 @@
                 </div>
                 <div class="text-xs text-gray-400">{{ $m->equipment?->asset_code }} · {{ $m->maintenance_date?->format('d/m/Y') }} · {{ $tLabels[$m->type] ?? $m->type }}</div>
                 <div class="text-xs text-gray-600 mt-1">ຄ່າ: {{ $m->cost !== null ? number_format($m->cost).' ກີບ' : '—' }}@if ($m->next_service_date) · service: {{ $m->next_service_date->format('d/m/Y') }}@endif</div>
+                @if ($m->checklist)
+                    @php $ckM = collect($m->checklist); $ngM = $ckM->where('status', 'ng')->count(); @endphp
+                    <div class="text-[11px] mt-0.5"><span class="text-gray-500">☑ ເຊັກລິສ {{ $ckM->count() }} ຂໍ້</span>@if ($ngM) <span class="text-red-600 font-medium">· {{ $ngM }} ບັນຫາ</span>@endif</div>
+                @endif
                 <div class="flex gap-2 mt-2">
                     @can('equipment.edit')<button wire:click="editMaintenance({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">ແກ້ໄຂ</button>@endcan
                     @can('equipment.delete')<button wire:click="delete({{ $m->id }})" wire:confirm="ລຶບ ບັນທຶກ ນີ້?" class="text-xs border rounded px-2 py-1 min-h-[36px] text-red-600">ລຶບ</button>@endcan
@@ -112,7 +120,7 @@
     {{-- Record modal --}}
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="m-modal">
-            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+            <div class="bg-white w-full md:max-w-xl rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ ບຳລຸງ' : ($planning ? 'ວາງແຜນ ບຳລຸງ ລ່ວງໜ້າ' : 'ລົງມື ບຳລຸງ') }}</h3>
                     <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
@@ -138,6 +146,20 @@
                     <div class="flex items-center justify-between bg-gray-50 border border-gray-100 rounded px-3 py-2 text-sm">
                         <span class="font-medium text-gray-700">{{ $mEquipmentLabel }}</span>
                         <button wire:click="$set('mEquipmentId', null)" class="text-xs text-sky-600 hover:underline">ປ່ຽນ</button>
+                    </div>
+                @endif
+
+                {{-- ໃຊ້ ແມ່ແບບ ເຊັກລິສ (ຖ້າ ເຄື່ອງ ນີ້ ມີ ແມ່ແບບ) --}}
+                @if ($mEquipmentId && $templateOptions->isNotEmpty())
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ໃຊ້ ແມ່ແບບ ເຊັກລິສ <span class="text-xs text-gray-400">(ຖ້າ ຕ້ອງການ)</span></label>
+                        <select wire:model.live="mTemplateId" class="w-full rounded-md border-gray-300 text-sm">
+                            <option value="">— ບໍ່ ໃຊ້ ແມ່ແບບ —</option>
+                            @foreach ($templateOptions as $tpl)<option value="{{ $tpl->id }}">{{ $tpl->name }}</option>@endforeach
+                        </select>
+                        @if ($mTemplateId && $mFrequency === '')
+                            <p class="text-xs text-amber-600 mt-1">ເລືອກ "ຮອບ Service" ຂ້າງລຸ່ມ ເພື່ອ ໃຫ້ ລາຍການ ເຊັກລິສ ຂຶ້ນ ຕາມ ຮອບ</p>
+                        @endif
                     </div>
                 @endif
 
@@ -217,6 +239,39 @@
                         @error('mPhotos.*')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
                 </div>
+
+                {{-- ເຊັກລິສ ຈາກ ແມ່ແບບ — ຄັດ ຕາມ ຮອບ (mFrequency) --}}
+                @if (count($mChecklist))
+                    <div class="border border-gray-200 rounded-md overflow-hidden">
+                        <div class="bg-gray-50 px-3 py-1.5 text-xs border-b border-gray-200 flex items-center justify-between gap-2">
+                            <span class="text-gray-600 font-medium">ເຊັກລິສ ບຳລຸງ — ຮອບ {{ $fLabels[$mFrequency] ?? $mFrequency }}</span>
+                            <span class="text-gray-400 whitespace-nowrap">C=ກວດ · X=ປ່ຽນ · ✓=ແລ້ວ · ✗=ບັນຫາ</span>
+                        </div>
+                        <table class="w-full text-xs">
+                            <tbody>
+                                @foreach ($mChecklist as $i => $c)
+                                    <tr wire:key="mck-{{ $i }}" class="border-b border-gray-50 last:border-0">
+                                        <td class="px-2 py-1 text-gray-400 w-6 text-right align-top">{{ $i + 1 }}</td>
+                                        <td class="px-1 py-1 w-9 text-center align-top">
+                                            <span class="text-[10px] font-bold rounded px-1 py-0.5 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $c['action'] ?? '' }}</span>
+                                        </td>
+                                        <td class="px-1 py-1 align-top">
+                                            <div class="text-gray-700 leading-tight">{{ $c['label'] }}</div>
+                                            @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
+                                        </td>
+                                        <td class="px-1 py-1 pr-2 w-[74px] align-top">
+                                            <div class="flex gap-1 justify-center">
+                                                <button type="button" wire:click="toggleMaintChecklist({{ $i }}, 'ok')" class="w-8 rounded border py-0.5 {{ ($c['status'] ?? '') === 'ok' ? 'bg-green-50 text-green-700 border-green-300 font-medium' : 'border-gray-300 text-gray-400' }}" title="ແລ້ວ">✓</button>
+                                                <button type="button" wire:click="toggleMaintChecklist({{ $i }}, 'ng')" class="w-8 rounded border py-0.5 {{ ($c['status'] ?? '') === 'ng' ? 'bg-red-50 text-red-700 border-red-300 font-medium' : 'border-gray-300 text-gray-400' }}" title="ມີ ບັນຫາ">✗</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        <p class="text-[11px] text-gray-400 px-3 py-1.5 border-t border-gray-100">ກົດ ✓/✗ ຕໍ່ ຂໍ້ (ກົດ ຊ້ຳ = N/A). ຄ່າ ຕັ້ງຕົ້ນ ✓. ຈະ ເກັບ ໄວ້ ກັບ ບັນທຶກ ບຳລຸງ.</p>
+                    </div>
+                @endif
 
                 <div class="flex justify-end gap-2 pt-2 border-t">
                     <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
