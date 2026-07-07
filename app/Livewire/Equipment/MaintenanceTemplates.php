@@ -23,7 +23,7 @@ class MaintenanceTemplates extends Component
 
     public string $tMethod = '';
 
-    /** @var array<int,array{label:string,freqs:array<int,string>}> */
+    /** @var array<int,array{label:string,remark:string,cycles:array<string,string>}> */
     public array $tItems = [];
 
     public bool $tActive = true;
@@ -35,11 +35,17 @@ class MaintenanceTemplates extends Component
         abort_if(auth()->user()->equipmentDepartmentScoped(), 403);
     }
 
+    /** ຂໍ້ ເປົ່າ ໃໝ່. */
+    protected function blankItem(): array
+    {
+        return ['label' => '', 'remark' => '', 'cycles' => []];
+    }
+
     public function newTemplate(): void
     {
         abort_unless(auth()->user()->can('equipment.edit'), 403);
         $this->resetForm();
-        $this->tItems = [['label' => '', 'freqs' => []]];
+        $this->tItems = [$this->blankItem()];
         $this->showModal = true;
     }
 
@@ -50,7 +56,7 @@ class MaintenanceTemplates extends Component
         $this->tName = $t->name;
         $this->tEquipmentId = $t->equipment_id;
         $this->tMethod = $t->method ?? '';
-        $this->tItems = $t->normalizedItems() ?: [['label' => '', 'freqs' => []]];
+        $this->tItems = $t->normalizedItems() ?: [$this->blankItem()];
         $this->tActive = $t->is_active;
         $this->resetValidation();
         $this->showModal = true;
@@ -58,13 +64,32 @@ class MaintenanceTemplates extends Component
 
     public function addChecklistItem(): void
     {
-        $this->tItems[] = ['label' => '', 'freqs' => []];
+        $this->tItems[] = $this->blankItem();
     }
 
     public function removeChecklistItem(int $i): void
     {
         unset($this->tItems[$i]);
         $this->tItems = array_values($this->tItems);
+    }
+
+    /** ກົດ ຊ່ອງ ຮອບ → ສະຫຼັບ: ວ່າງ → ກວດ(C) → ປ່ຽນ(X) → ວ່າງ. */
+    public function bumpCycle(int $i, string $cycle): void
+    {
+        if (! isset($this->tItems[$i]) || ! in_array($cycle, MaintenanceTemplate::FREQUENCIES, true)) {
+            return;
+        }
+        $current = $this->tItems[$i]['cycles'][$cycle] ?? '';
+        $next = match ($current) {
+            '' => 'C',
+            'C' => 'X',
+            default => '',
+        };
+        if ($next === '') {
+            unset($this->tItems[$i]['cycles'][$cycle]);
+        } else {
+            $this->tItems[$i]['cycles'][$cycle] = $next;
+        }
     }
 
     public function save(): void
@@ -76,21 +101,27 @@ class MaintenanceTemplates extends Component
             'tEquipmentId' => ['required', 'exists:equipment,id'],
             'tMethod' => ['nullable', 'string', 'max:2000'],
             'tItems.*.label' => ['nullable', 'string', 'max:256'],
-            'tItems.*.freqs' => ['nullable', 'array'],
-            'tItems.*.freqs.*' => ['in:'.implode(',', MaintenanceTemplate::FREQUENCIES)],
+            'tItems.*.remark' => ['nullable', 'string', 'max:256'],
         ]);
 
-        // ເກັບ ສະເພາະ ຂໍ້ ທີ່ ມີ ຊື່; ຮັກສາ ຮອບ (freqs).
+        // ເກັບ ສະເພາະ ຂໍ້ ທີ່ ມີ ຊື່; ຄັດ cycles ໃຫ້ ຢູ່ ໃນ ຮອບ + action ທີ່ ຮັບຮອງ.
         $items = collect($this->tItems)
             ->map(function ($it) {
                 if (is_string($it)) {
-                    return ['label' => trim($it), 'freqs' => []];
+                    return ['label' => trim($it), 'remark' => '', 'cycles' => []];
                 }
-                $freqs = array_values(array_intersect(MaintenanceTemplate::FREQUENCIES, (array) ($it['freqs'] ?? [])));
+                $cycles = [];
+                foreach (MaintenanceTemplate::FREQUENCIES as $f) {
+                    $v = $it['cycles'][$f] ?? null;
+                    if (in_array($v, ['C', 'X'], true)) {
+                        $cycles[$f] = $v;
+                    }
+                }
 
                 return [
                     'label' => trim((string) ($it['label'] ?? '')),
-                    'freqs' => $freqs,
+                    'remark' => trim((string) ($it['remark'] ?? '')),
+                    'cycles' => $cycles,
                 ];
             })
             ->filter(fn ($x) => $x['label'] !== '')

@@ -59,7 +59,7 @@
     {{-- Modal --}}
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="mtpl-modal">
-            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="bg-white w-full md:max-w-2xl rounded-t-lg md:rounded-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ ແມ່ແບບ ບຳລຸງ' : 'ແມ່ແບບ ບຳລຸງ ໃໝ່' }}</h3>
                     <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
@@ -99,27 +99,36 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm text-gray-600 mb-1">ລາຍການ ເຊັກລິສ ບຳລຸງ</label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-sm text-gray-600">ລາຍການ ເຊັກລິສ ບຳລຸງ</label>
+                        <span class="text-[11px] text-gray-400">ກົດ ຮອບ ເພື່ອ ສະຫຼັບ: — → <b class="text-sky-700">C ກວດ</b> → <b class="text-amber-700">X ປ່ຽນ</b></span>
+                    </div>
                     <div class="space-y-1.5">
                         @foreach ($tItems as $i => $item)
                             <div wire:key="mtit-{{ $i }}" class="border border-gray-100 rounded-md p-1.5">
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-xs text-gray-400 w-5 text-right shrink-0">{{ $i + 1 }}.</span>
-                                    <input type="text" wire:model="tItems.{{ $i }}.label" placeholder="ວຽກ ບຳລຸງ…" class="flex-1 rounded-md border-gray-300 text-xs py-1" />
+                                    <input type="text" wire:model="tItems.{{ $i }}.label" placeholder="ວຽກ ບຳລຸງ…" class="flex-1 min-w-0 rounded-md border-gray-300 text-xs py-1" />
+                                    <input type="text" wire:model="tItems.{{ $i }}.remark" placeholder="ໝາຍເຫດ/ອາໄຫຼ່…" class="w-28 shrink-0 rounded-md border-gray-200 text-xs py-1 text-gray-500" />
                                     <button type="button" wire:click="removeChecklistItem({{ $i }})" class="text-red-500 px-1 shrink-0" title="ລຶບ ຂໍ້">×</button>
                                 </div>
-                                <div class="flex items-center gap-2 flex-wrap mt-1 pl-6">
-                                    <span class="text-[11px] text-gray-400">ຮອບ:</span>
+                                <div class="flex items-center gap-1.5 flex-wrap mt-1 pl-6">
+                                    <span class="text-[11px] text-gray-400 mr-0.5">ຮອບ:</span>
                                     @foreach (\App\Models\MaintenanceTemplate::FREQ_LABELS as $fk => $fl)
-                                        <label class="inline-flex items-center gap-1 text-[11px] text-gray-600">
-                                            <input type="checkbox" value="{{ $fk }}" wire:model="tItems.{{ $i }}.freqs" class="rounded border-gray-300 text-sky-600 w-3.5 h-3.5"> {{ $fl }}
-                                        </label>
+                                        @php $st = $item['cycles'][$fk] ?? ''; @endphp
+                                        <button type="button" wire:click="bumpCycle({{ $i }}, '{{ $fk }}')"
+                                                class="inline-flex flex-col items-center leading-none px-2 py-1 rounded border text-[10px] transition-colors
+                                                {{ $st === 'C' ? 'bg-sky-50 border-sky-300 text-sky-700' : ($st === 'X' ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300') }}"
+                                                title="{{ $fl }} · {{ \App\Models\MaintenanceTemplate::FREQ_HOURS[$fk] }}">
+                                            <span>{{ $fl }}</span>
+                                            <span class="font-bold text-xs mt-0.5">{{ $st ?: '—' }}</span>
+                                        </button>
                                     @endforeach
                                 </div>
                             </div>
                         @endforeach
                     </div>
-                    <p class="text-xs text-gray-400 mt-1">ແຕ່ລະ ຂໍ້: ຕິກ <b>ຮອບ</b> ທີ່ ຕ້ອງ ເຮັດ (ຕິກ ຫຼາຍ ໄດ້; ບໍ່ ຕິກ = ຂຶ້ນ ທຸກ ຮອບ). ຕອນ ບຳລຸງ ຈິງ ຈະ ຄັດ ລິສ ຕາມ ຮອບ ທີ່ ເລືອກ.</p>
+                    <p class="text-xs text-gray-400 mt-1">ໃສ່ <b>ໝົດທຸກ ລາຍການ</b> ແລ້ວ ໝາຍ ແຕ່ລະ ຮອບ ວ່າ <b class="text-sky-700">C</b>=ກວດ ຫຼື <b class="text-amber-700">X</b>=ປ່ຽນ (ວ່າງ = ບໍ່ ເຮັດ ຮອບ ນັ້ນ). ຕອນ ບຳລຸງ ຈິງ ຈະ ຄັດ ລິສ ຕາມ ຮອບ ທີ່ ເລືອກ ພ້ອມ ສະແດງ C/X.</p>
                     <button type="button" wire:click="addChecklistItem" class="mt-2 text-sm text-sky-600">+ ເພີ່ມ ຂໍ້</button>
                 </div>
 
