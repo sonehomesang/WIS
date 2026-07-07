@@ -3,17 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * ແມ່ແບບ ບຳລຸງຮັກສາ — ຊຸດ ເຊັກລິສ ວຽກ ບຳລຸງ ຕໍ່ ປະເພດ ເຄື່ອງ. admin CRUD (Equipment › ແມ່ແບບ ບຳລຸງ).
+ * ແມ່ແບບ ບຳລຸງຮັກສາ — ຊຸດ ເຊັກລິສ ວຽກ ບຳລຸງ ຕໍ່ ເຄື່ອງ ໜຶ່ງ. admin CRUD (Equipment › ແມ່ແບບ ບຳລຸງ).
  */
 class MaintenanceTemplate extends Model
 {
     use SoftDeletes;
 
     protected $fillable = [
-        'name', 'category', 'method', 'items', 'is_active', 'created_by', 'updated_by',
+        'name', 'equipment_id', 'category', 'method', 'items', 'is_active', 'created_by', 'updated_by',
     ];
 
     protected $casts = [
@@ -21,16 +22,21 @@ class MaintenanceTemplate extends Model
         'is_active' => 'boolean',
     ];
 
-    /** ຮອບ service — ຄື EquipmentMaintenance (ບໍ່ ມີ pre_use). */
-    public const FREQUENCIES = ['monthly', 'quarterly', 'semi_annual', 'annual'];
+    /** ຮອບ ບຳລຸງ — ໃຊ້ ເປັນ ຟິລເຕີ ຄັດ ລາຍການ ຕອນ ລົງມື. */
+    public const FREQUENCIES = ['daily', 'monthly', 'quarterly', 'annual'];
 
     /** ປ້າຍ ຮອບ (ພາສາ ລາວ). */
     public const FREQ_LABELS = [
+        'daily' => 'ວັນ',
         'monthly' => 'ເດືອນ',
         'quarterly' => 'ໄຕມາດ',
-        'semi_annual' => '6 ເດືອນ',
         'annual' => 'ປີ',
     ];
+
+    public function equipment(): BelongsTo
+    {
+        return $this->belongsTo(Equipment::class);
+    }
 
     /**
      * ຄືນ ຂໍ້ ເຊັກລິສ ໃນ ຮູບແບບ ມາດຕະຖານ [{label, freqs}].

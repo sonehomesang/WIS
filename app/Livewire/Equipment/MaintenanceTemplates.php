@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Equipment;
 
-use App\Models\EquipmentCategory;
+use App\Models\Equipment;
 use App\Models\MaintenanceTemplate;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-/** ຈັດການ ແມ່ແບບ ເຊັກລິສ ບຳລຸງຮັກສາ (Equipment › ແມ່ແບບ ບຳລຸງ). */
+/** ຈັດການ ແມ່ແບບ ເຊັກລິສ ບຳລຸງຮັກສາ ຕໍ່ ເຄື່ອງ (Equipment › ແມ່ແບບ ບຳລຸງ). */
 #[Layout('layouts.app')]
 class MaintenanceTemplates extends Component
 {
@@ -18,7 +18,8 @@ class MaintenanceTemplates extends Component
 
     public string $tName = '';
 
-    public string $tCategory = '';
+    // ເຄື່ອງ ທີ່ ແມ່ແບບ ນີ້ ໃຊ້ ນຳ — ປະເພດ ດຶງ ຈາກ ເຄື່ອງ ນີ້.
+    public ?int $tEquipmentId = null;
 
     public string $tMethod = '';
 
@@ -47,7 +48,7 @@ class MaintenanceTemplates extends Component
         $t = MaintenanceTemplate::findOrFail($id);
         $this->editingId = $t->id;
         $this->tName = $t->name;
-        $this->tCategory = $t->category ?? '';
+        $this->tEquipmentId = $t->equipment_id;
         $this->tMethod = $t->method ?? '';
         $this->tItems = $t->normalizedItems() ?: [['label' => '', 'freqs' => []]];
         $this->tActive = $t->is_active;
@@ -72,7 +73,7 @@ class MaintenanceTemplates extends Component
 
         $data = $this->validate([
             'tName' => ['required', 'string', 'max:256'],
-            'tCategory' => ['nullable', 'string', 'max:128'],
+            'tEquipmentId' => ['required', 'exists:equipment,id'],
             'tMethod' => ['nullable', 'string', 'max:2000'],
             'tItems.*.label' => ['nullable', 'string', 'max:256'],
             'tItems.*.freqs' => ['nullable', 'array'],
@@ -96,9 +97,13 @@ class MaintenanceTemplates extends Component
             ->values()
             ->all();
 
+        // ປະເພດ ດຶງ ຈາກ ເຄື່ອງ ທີ່ ເລືອກ (ຜູກ ໄວ້ ຕັ້ງແຕ່ ຕອນ ສ້າງ ທະບຽນ ເຄື່ອງ).
+        $e = Equipment::findOrFail($data['tEquipmentId']);
+
         $attrs = [
             'name' => $data['tName'],
-            'category' => $data['tCategory'] ?: null,
+            'equipment_id' => $e->id,
+            'category' => $e->category,
             'method' => $data['tMethod'] ?: null,
             'items' => $items,
             'is_active' => $this->tActive,
@@ -125,7 +130,7 @@ class MaintenanceTemplates extends Component
     {
         $this->editingId = null;
         $this->tName = '';
-        $this->tCategory = '';
+        $this->tEquipmentId = null;
         $this->tMethod = '';
         $this->tItems = [];
         $this->tActive = true;
@@ -134,16 +139,18 @@ class MaintenanceTemplates extends Component
 
     public function render(): View
     {
-        // ປະເພດ ເຄື່ອງ ດຶງ ຈາກ master ດຽວ ກັບ ຟອມ ສ້າງ ເຄື່ອງ — ຮວມ ຄ່າ ປັດຈຸບັນ ຕອນ ແກ້ (ກັນ ຫາຍ ຖ້າ ຖືກ ປິດ).
-        $categoryOptions = EquipmentCategory::where('is_active', true)
-            ->orderBy('sort_order')->orderBy('name')->pluck('name');
-        if ($this->tCategory !== '' && ! $categoryOptions->contains($this->tCategory)) {
-            $categoryOptions = $categoryOptions->prepend($this->tCategory);
-        }
+        $equipmentOptions = Equipment::orderBy('asset_code')->orderBy('name')
+            ->get(['id', 'asset_code', 'name', 'category']);
+
+        // ປະເພດ ຂອງ ເຄື່ອງ ທີ່ ເລືອກ (ສະແດງ ແບບ read-only ໃນ ຟອມ).
+        $selectedCategory = $this->tEquipmentId
+            ? $equipmentOptions->firstWhere('id', $this->tEquipmentId)?->category
+            : null;
 
         return view('livewire.equipment.maintenance-templates', [
-            'templates' => MaintenanceTemplate::orderBy('name')->get(),
-            'categoryOptions' => $categoryOptions,
+            'templates' => MaintenanceTemplate::with('equipment')->orderBy('name')->get(),
+            'equipmentOptions' => $equipmentOptions,
+            'selectedCategory' => $selectedCategory,
         ]);
     }
 }

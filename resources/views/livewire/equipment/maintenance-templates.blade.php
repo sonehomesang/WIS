@@ -15,7 +15,7 @@
                 <thead class="bg-gray-50 text-gray-600 text-xs border-b border-gray-200">
                     <tr>
                         <th class="text-left px-3 py-2 font-semibold">ຊື່ ແມ່ແບບ</th>
-                        <th class="text-left px-3 py-2 font-semibold">ປະເພດ ເຄື່ອງ</th>
+                        <th class="text-left px-3 py-2 font-semibold">ເຄື່ອງ</th>
                         <th class="text-left px-3 py-2 font-semibold">ຈຳນວນ ຂໍ້</th>
                         <th class="text-left px-3 py-2 font-semibold">ໃຊ້</th>
                         <th class="px-3 py-2 w-20"></th>
@@ -25,7 +25,14 @@
                     @forelse ($templates as $t)
                         <tr wire:key="mtpl-{{ $t->id }}">
                             <td class="px-3 py-2 font-medium text-gray-800">{{ $t->name }}</td>
-                            <td class="px-3 py-2 text-gray-600">{{ $t->category ?? 'ທົ່ວໄປ' }}</td>
+                            <td class="px-3 py-2 text-gray-600">
+                                @if ($t->equipment)
+                                    <div class="text-gray-800">{{ $t->equipment->asset_code }} · {{ $t->equipment->name }}</div>
+                                    @if ($t->category)<div class="text-xs text-gray-400">{{ $t->category }}</div>@endif
+                                @else
+                                    <span class="text-gray-300">—</span>
+                                @endif
+                            </td>
                             <td class="px-3 py-2 text-gray-600">{{ count($t->items ?? []) }}</td>
                             <td class="px-3 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $t->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $t->is_active ? 'ເປີດ' : 'ປິດ' }}</span></td>
                             <td class="px-3 py-2 pr-5 text-right whitespace-nowrap text-gray-500">
@@ -66,17 +73,19 @@
                         <input type="text" wire:model="tName" placeholder="ເຊັ່ນ ບຳລຸງ Forklift ຕາມ ຮອບ" class="w-full rounded-md border-gray-300 text-sm" />
                         @error('tName')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
-                    <div>
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="block text-sm text-gray-600">ປະເພດ ເຄື່ອງ <span class="text-xs text-gray-400">(ວ່າງ = ທົ່ວໄປ)</span></label>
-                            @can('equipment.edit')
-                                <a href="{{ route('equipment.categories') }}" wire:navigate class="text-xs text-sky-600 hover:underline">＋ ຈັດການ ປະເພດ</a>
-                            @endcan
-                        </div>
-                        <select wire:model="tCategory" class="w-full rounded-md border-gray-300 text-sm">
-                            <option value="">— ທົ່ວໄປ (ທຸກ ປະເພດ) —</option>
-                            @foreach ($categoryOptions as $cat)<option value="{{ $cat }}">{{ $cat }}</option>@endforeach
+                    <div class="md:col-span-2">
+                        <label class="block text-sm text-gray-600 mb-1">ເລືອກ ເຄື່ອງ <span class="text-red-500">*</span></label>
+                        <select wire:model.live="tEquipmentId" class="w-full rounded-md border-gray-300 text-sm">
+                            <option value="">— ເລືອກ ເຄື່ອງ ຈາກ ທະບຽນ —</option>
+                            @foreach ($equipmentOptions as $eq)
+                                <option value="{{ $eq->id }}">{{ $eq->asset_code }} · {{ $eq->name }}</option>
+                            @endforeach
                         </select>
+                        @error('tEquipmentId')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ປະເພດ ເຄື່ອງ <span class="text-xs text-gray-400">(ດຶງ ຈາກ ເຄື່ອງ)</span></label>
+                        <div class="w-full rounded-md border border-gray-200 bg-gray-50 text-sm px-3 py-2 text-gray-600">{{ $selectedCategory ?: '—' }}</div>
                     </div>
                     <div class="flex items-end">
                         <label class="inline-flex items-center gap-2 text-sm text-gray-700">
