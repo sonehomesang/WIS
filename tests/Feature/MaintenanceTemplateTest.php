@@ -74,6 +74,34 @@ test('bumpCycle rotates a cell through none, check, replace', function () {
         ->assertSet('tItems.0.cycles.semi_annual', null);        // ກັບ ໄປ ວ່າງ
 });
 
+test('viewing a template shows its checklist matrix read-only', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+    $e = Equipment::create(['asset_code' => 'FL-V', 'name' => 'Forklift V', 'category' => 'Forklift', 'quantity' => 1]);
+    $t = MaintenanceTemplate::create([
+        'name' => 'PM View', 'equipment_id' => $e->id, 'category' => 'Forklift', 'is_active' => true,
+        'items' => [['label' => 'ກວດ ນ້ຳມັນ ເຄື່ອງ', 'remark' => 'SAE', 'cycles' => ['monthly' => 'X']]],
+    ]);
+
+    Livewire::test(MaintenanceTemplates::class)
+        ->call('viewTemplate', $t->id)
+        ->assertSet('viewingId', $t->id)
+        ->assertSee('PM View')
+        ->assertSee('ກວດ ນ້ຳມັນ ເຄື່ອງ')
+        ->assertSee('SAE');
+});
+
+test('a requester without edit rights can still be blocked from the page but view is open to viewers', function () {
+    // ຜູ້ ທີ່ ເຂົ້າ ໜ້າ ໄດ້ (SA/admin) ເບິ່ງ ໄດ້ ໂດຍ ບໍ່ ຕ້ອງ ສິດ ແກ້ໄຂ — viewTemplate ບໍ່ ເຊັກ edit.
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+    $e = Equipment::create(['asset_code' => 'FL-V2', 'name' => 'Forklift V2', 'quantity' => 1]);
+    $t = MaintenanceTemplate::create(['name' => 'V2', 'equipment_id' => $e->id, 'items' => [], 'is_active' => true]);
+
+    Livewire::test(MaintenanceTemplates::class)
+        ->call('viewTemplate', $t->id)
+        ->assertSet('viewingId', $t->id)
+        ->assertHasNoErrors();
+});
+
 test('creating a template requires selecting an equipment', function () {
     actingAs(User::factory()->create(['is_super_admin' => true]));
 

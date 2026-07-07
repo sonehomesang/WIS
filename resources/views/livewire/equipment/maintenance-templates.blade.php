@@ -36,6 +36,9 @@
                             <td class="px-3 py-2 text-gray-600">{{ count($t->items ?? []) }}</td>
                             <td class="px-3 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $t->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $t->is_active ? 'ເປີດ' : 'ປິດ' }}</span></td>
                             <td class="px-3 py-2 pr-5 text-right whitespace-nowrap text-gray-500">
+                                <button wire:click="viewTemplate({{ $t->id }})" class="hover:text-sky-700 p-1" title="ເບິ່ງ">
+                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                                </button>
                                 @can('equipment.edit')
                                     <button wire:click="editTemplate({{ $t->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
                                         <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
@@ -135,6 +138,87 @@
                 <div class="flex justify-end gap-2 pt-2 border-t">
                     <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
                     <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- View modal (read-only) --}}
+    @if ($viewing)
+        @php
+            $vItems = $viewing->normalizedItems();
+            $vFreqs = \App\Models\MaintenanceTemplate::FREQ_LABELS;
+            $vHours = \App\Models\MaintenanceTemplate::FREQ_HOURS;
+        @endphp
+        <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="mtpl-view">
+            <div class="bg-white w-full md:max-w-2xl rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-start justify-between gap-2">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800">{{ $viewing->name }}</h3>
+                        <div class="text-sm text-gray-500">
+                            {{ $viewing->equipment ? $viewing->equipment->asset_code.' · '.$viewing->equipment->name : '— ຍັງ ບໍ່ ຜູກ ເຄື່ອງ —' }}
+                            @if ($viewing->category) · {{ $viewing->category }}@endif
+                            · <span class="text-xs rounded px-1.5 py-0.5 {{ $viewing->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $viewing->is_active ? 'ເປີດ' : 'ປິດ' }}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        @can('equipment.edit')
+                            <button wire:click="editTemplate({{ $viewing->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-md px-2.5 py-1.5 hover:bg-sky-50">ແກ້ໄຂ</button>
+                        @endcan
+                        <button wire:click="$set('viewingId', null)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+
+                @if ($viewing->method)
+                    <div class="text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-md px-3 py-2">{{ $viewing->method }}</div>
+                @endif
+
+                <div class="flex items-center justify-between text-xs text-gray-500">
+                    <span>{{ count($vItems) }} ລາຍການ</span>
+                    <span><b class="text-sky-700">C</b>=ກວດ · <b class="text-amber-700">X</b>=ປ່ຽນ · —=ບໍ່ ເຮັດ</span>
+                </div>
+
+                <div class="overflow-x-auto border border-gray-200 rounded-md">
+                    <table class="w-full text-xs" style="min-width:560px">
+                        <thead class="bg-gray-50 text-gray-600 border-b border-gray-200">
+                            <tr>
+                                <th class="px-2 py-1.5 text-left font-semibold w-6">#</th>
+                                <th class="px-2 py-1.5 text-left font-semibold">ລາຍການ</th>
+                                @foreach ($vFreqs as $fk => $fl)
+                                    <th class="px-1 py-1.5 text-center font-semibold w-14">{{ $fl }}<span class="block text-[9px] font-normal text-gray-400 font-mono">{{ $vHours[$fk] }}</span></th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($vItems as $i => $c)
+                                <tr wire:key="vw-{{ $i }}" class="border-b border-gray-50 last:border-0">
+                                    <td class="px-2 py-1 text-gray-400 align-top">{{ $i + 1 }}</td>
+                                    <td class="px-2 py-1 align-top">
+                                        <div class="text-gray-700 leading-tight">{{ $c['label'] }}</div>
+                                        @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
+                                    </td>
+                                    @foreach ($vFreqs as $fk => $fl)
+                                        @php $act = $c['cycles'][$fk] ?? ''; @endphp
+                                        <td class="px-1 py-1 text-center align-top">
+                                            @if ($act)
+                                                <span class="text-[10px] font-bold rounded px-1 py-0.5 {{ $act === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $act }}</span>
+                                            @else
+                                                <span class="text-gray-300">—</span>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @empty
+                                <tr><td colspan="7" class="px-3 py-6 text-center text-gray-400">ຍັງ ບໍ່ ມີ ລາຍການ</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex justify-end pt-1 border-t">
+                    <button wire:click="$set('viewingId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
                 </div>
             </div>
         </div>

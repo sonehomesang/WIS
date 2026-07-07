@@ -16,6 +16,9 @@ class MaintenanceTemplates extends Component
 
     public ?int $editingId = null;
 
+    // ── ເບິ່ງ ແມ່ແບບ ແບບ read-only ──
+    public ?int $viewingId = null;
+
     public string $tName = '';
 
     // ເຄື່ອງ ທີ່ ແມ່ແບບ ນີ້ ໃຊ້ ນຳ — ປະເພດ ດຶງ ຈາກ ເຄື່ອງ ນີ້.
@@ -47,6 +50,12 @@ class MaintenanceTemplates extends Component
         $this->resetForm();
         $this->tItems = [$this->blankItem()];
         $this->showModal = true;
+    }
+
+    /** ເບິ່ງ ແມ່ແບບ ແບບ read-only (ບໍ່ ຕ້ອງ ສິດ ແກ້ໄຂ). */
+    public function viewTemplate(int $id): void
+    {
+        $this->viewingId = $id;
     }
 
     public function editTemplate(int $id): void
@@ -178,10 +187,15 @@ class MaintenanceTemplates extends Component
             ? $equipmentOptions->firstWhere('id', $this->tEquipmentId)?->category
             : null;
 
+        $viewing = $this->viewingId
+            ? MaintenanceTemplate::with('equipment')->find($this->viewingId)
+            : null;
+
         return view('livewire.equipment.maintenance-templates', [
             'templates' => MaintenanceTemplate::with('equipment')->orderBy('name')->get(),
             'equipmentOptions' => $equipmentOptions,
             'selectedCategory' => $selectedCategory,
+            'viewing' => $viewing,
         ]);
     }
 }
