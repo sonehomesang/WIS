@@ -121,6 +121,27 @@ test('legacy freqs items are read as check actions', function () {
     ]);
 });
 
+test('the TCM seeder loads the standard forklift checklist and links a forklift when present', function () {
+    $fl = Equipment::create(['asset_code' => 'FLT-1', 'name' => 'TCM Forklift FD30T3Z', 'category' => 'Forklift', 'quantity' => 1]);
+
+    (new Database\Seeders\MaintenanceTemplateSeeder)->run();
+
+    $t = MaintenanceTemplate::where('name', 'like', 'TCM FD30T3Z%')->first();
+    expect($t)->not->toBeNull();
+    expect($t->equipment_id)->toBe($fl->id);          // ຜູກ ກັບ forklift ທີ່ ພົບ
+    expect($t->category)->toBe('Forklift');
+
+    $items = $t->normalizedItems();
+    expect(count($items))->toBeGreaterThanOrEqual(40);
+    // ທຸກ ຂໍ້ ຕ້ອງ ມີ ຢ່າງໜ້ອຍ 1 ຮອບ, ແລະ ຄ່າ ຕ້ອງ ເປັນ C ຫຼື X ເທົ່ານັ້ນ
+    expect(collect($items)->every(fn ($x) => count($x['cycles']) > 0))->toBeTrue();
+    expect(collect($items)->flatMap(fn ($x) => array_values($x['cycles']))->unique()->sort()->values()->all())->toBe(['C', 'X']);
+
+    // ຣັນ ຊ້ຳ ບໍ່ ຊ້ຳ ຂໍ້ມູນ
+    (new Database\Seeders\MaintenanceTemplateSeeder)->run();
+    expect(MaintenanceTemplate::where('name', 'like', 'TCM FD30T3Z%')->count())->toBe(1);
+});
+
 test('an admin can delete a maintenance template', function () {
     actingAs(User::factory()->create(['is_super_admin' => true]));
     $t = MaintenanceTemplate::create(['name' => 'Doomed', 'items' => [], 'is_active' => true]);
