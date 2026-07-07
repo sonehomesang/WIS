@@ -67,8 +67,16 @@
                         @error('tName')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-600 mb-1">ປະເພດ ເຄື່ອງ <span class="text-xs text-gray-400">(ວ່າງ = ທົ່ວໄປ)</span></label>
-                        <input type="text" wire:model="tCategory" placeholder="Forklift · Generator…" class="w-full rounded-md border-gray-300 text-sm" />
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-sm text-gray-600">ປະເພດ ເຄື່ອງ <span class="text-xs text-gray-400">(ວ່າງ = ທົ່ວໄປ)</span></label>
+                            @can('equipment.edit')
+                                <a href="{{ route('equipment.categories') }}" wire:navigate class="text-xs text-sky-600 hover:underline">＋ ຈັດການ ປະເພດ</a>
+                            @endcan
+                        </div>
+                        <select wire:model="tCategory" class="w-full rounded-md border-gray-300 text-sm">
+                            <option value="">— ທົ່ວໄປ (ທຸກ ປະເພດ) —</option>
+                            @foreach ($categoryOptions as $cat)<option value="{{ $cat }}">{{ $cat }}</option>@endforeach
+                        </select>
                     </div>
                     <div class="flex items-end">
                         <label class="inline-flex items-center gap-2 text-sm text-gray-700">

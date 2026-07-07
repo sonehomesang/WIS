@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Equipment\MaintenanceTemplates;
+use App\Models\EquipmentCategory;
 use App\Models\MaintenanceTemplate;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -36,6 +37,17 @@ test('admin can create a maintenance template (blank items dropped, freqs kept)'
         ['label' => 'ກວດ ຢາງ', 'freqs' => []],
     ]);
     expect($t->hasFrequencies())->toBeTrue();
+});
+
+test('the category dropdown is sourced from the active equipment category master', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+    EquipmentCategory::create(['name' => 'Excavator', 'is_active' => true, 'sort_order' => 1]);
+    EquipmentCategory::create(['name' => 'Retired type', 'is_active' => false, 'sort_order' => 2]);
+
+    Livewire::test(MaintenanceTemplates::class)
+        ->call('newTemplate')
+        ->assertSee('Excavator')          // ປະເພດ ທີ່ ເປີດ ໃຊ້ ຂຶ້ນ ໃນ dropdown
+        ->assertDontSee('Retired type');  // ປະເພດ ທີ່ ປິດ ບໍ່ ຂຶ້ນ
 });
 
 test('editing a template updates it without creating a new one', function () {

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Equipment;
 
+use App\Models\EquipmentCategory;
 use App\Models\MaintenanceTemplate;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -133,8 +134,16 @@ class MaintenanceTemplates extends Component
 
     public function render(): View
     {
+        // ປະເພດ ເຄື່ອງ ດຶງ ຈາກ master ດຽວ ກັບ ຟອມ ສ້າງ ເຄື່ອງ — ຮວມ ຄ່າ ປັດຈຸບັນ ຕອນ ແກ້ (ກັນ ຫາຍ ຖ້າ ຖືກ ປິດ).
+        $categoryOptions = EquipmentCategory::where('is_active', true)
+            ->orderBy('sort_order')->orderBy('name')->pluck('name');
+        if ($this->tCategory !== '' && ! $categoryOptions->contains($this->tCategory)) {
+            $categoryOptions = $categoryOptions->prepend($this->tCategory);
+        }
+
         return view('livewire.equipment.maintenance-templates', [
             'templates' => MaintenanceTemplate::orderBy('name')->get(),
+            'categoryOptions' => $categoryOptions,
         ]);
     }
 }
