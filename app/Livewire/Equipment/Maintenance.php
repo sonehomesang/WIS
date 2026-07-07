@@ -22,6 +22,9 @@ class Maintenance extends Component
 
     public ?int $editingId = null;
 
+    /** ເປີດ ຟອມ ໃນ ໂໝດ ວາງແຜນ ລ່ວງໜ້າ (ບໍ່ ແມ່ນ ລົງມື ແລ້ວ). */
+    public bool $planning = false;
+
     // ເລືອກ ເຄື່ອງ
     public string $mSearch = '';
 
@@ -86,18 +89,35 @@ class Maintenance extends Component
         }
     }
 
-    public function newMaintenance(): void
+    /** ຄ່າ ຕັ້ງຕົ້ນ ຮ່ວມ ຂອງ ຟອມ ໃໝ່ (ໃຊ້ ໂດຍ ລົງມື + ວາງແຜນ). */
+    protected function resetForm(): void
     {
-        abort_unless(auth()->user()->can('equipment.edit'), 403);
         $this->reset([
             'editingId', 'mSearch', 'mEquipmentId', 'mEquipmentLabel', 'mDescription',
             'mPerformedBy', 'mCost', 'mFrequency', 'mNextService', 'mNotes', 'mPhotos', 'mExistingPhotos', 'mTitle',
         ]);
         $this->mDate = now()->toDateString();
         $this->mType = 'preventive';
-        $this->mStatus = 'done';
         $this->resetValidation();
         $this->showModal = true;
+    }
+
+    /** ລົງມື ບຳລຸງ — ບັນທຶກ ວຽກ ທີ່ ເຮັດ ແລ້ວ (ສະຖານະ = ແລ້ວ). */
+    public function newMaintenance(): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+        $this->resetForm();
+        $this->mStatus = 'done';
+        $this->planning = false;
+    }
+
+    /** ວາງແຜນ ບຳລຸງ ລ່ວງໜ້າ — ຕັ້ງ ນັດ ໄວ້ ກ່ອນ (ສະຖານະ = ວາງແຜນ). */
+    public function newPlan(): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+        $this->resetForm();
+        $this->mStatus = 'planned';
+        $this->planning = true;
     }
 
     public function editMaintenance(int $id): void
@@ -108,6 +128,7 @@ class Maintenance extends Component
             $this->guardDept($m->equipment);
         }
         $this->reset(['mSearch', 'mPhotos']);
+        $this->planning = false;
         $this->editingId = $m->id;
         $this->mEquipmentId = $m->equipment_id;
         $this->mEquipmentLabel = $m->equipment ? $m->equipment->asset_code.' · '.$m->equipment->name : '';

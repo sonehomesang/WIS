@@ -41,6 +41,26 @@ test('warehouse staff can record a maintenance', function () {
     expect($m->created_by)->toBe($this->staff->id);
 });
 
+test('planning ahead creates a planned maintenance record', function () {
+    $e = Equipment::create(['asset_code' => 'MT-07', 'name' => 'Chiller', 'quantity' => 1]);
+
+    actingAs($this->staff);
+    Livewire::test(Maintenance::class)
+        ->call('newPlan')
+        ->assertSet('planning', true)
+        ->assertSet('mStatus', 'planned')
+        ->call('pickEquipment', $e->id)
+        ->set('mDate', '2026-09-01')
+        ->set('mTitle', 'ນັດ Service ຮອບ ໜ້າ')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $m = $e->maintenances()->first();
+    expect($m->status)->toBe('planned');
+    expect($m->title)->toBe('ນັດ Service ຮອບ ໜ້າ');
+    expect($m->cost)->toBeNull();
+});
+
 test('cost is optional and stored as null when blank', function () {
     $e = Equipment::create(['asset_code' => 'MT-02', 'name' => 'Pump', 'quantity' => 1]);
 

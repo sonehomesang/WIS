@@ -13,10 +13,16 @@
     <div class="flex items-center justify-between mb-2 gap-2">
         <span class="text-xs text-gray-400">ບັນທຶກ ການ ບຳລຸງຮັກສາ/ຊ່ອມແປງ · ຄ່າ ໃຊ້ຈ່າຍ · ກຳນົດ service ຄັ້ງ ໜ້າ</span>
         @can('equipment.edit')
-            <button wire:click="newMaintenance" class="inline-flex items-center gap-1.5 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap shrink-0">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" /></svg>
-                ລົງມື ບຳລຸງ
-            </button>
+            <div class="flex items-center gap-2 shrink-0">
+                <button wire:click="newPlan" class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008Z" /></svg>
+                    ວາງແຜນ ບຳລຸງ
+                </button>
+                <button wire:click="newMaintenance" class="inline-flex items-center gap-1.5 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" /></svg>
+                    ລົງມື ບຳລຸງ
+                </button>
+            </div>
         @endcan
     </div>
 
@@ -69,7 +75,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ບັນທຶກ ບຳລຸງ — ກົດ "ລົງມື ບຳລຸງ"</td></tr>
+                    <tr><td colspan="7" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ບັນທຶກ ບຳລຸງ — ກົດ "ວາງແຜນ ບຳລຸງ" ຫຼື "ລົງມື ບຳລຸງ"</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -102,7 +108,7 @@
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="m-modal">
             <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ ບຳລຸງ' : 'ລົງມື ບຳລຸງ' }}</h3>
+                    <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ ບຳລຸງ' : ($planning ? 'ວາງແຜນ ບຳລຸງ ລ່ວງໜ້າ' : 'ລົງມື ບຳລຸງ') }}</h3>
                     <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
@@ -131,7 +137,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm text-gray-600 mb-1">ວັນທີ <span class="text-red-500">*</span></label>
+                        <label class="block text-sm text-gray-600 mb-1">{{ $planning ? 'ວັນທີ ນັດ ບຳລຸງ' : 'ວັນທີ' }} <span class="text-red-500">*</span></label>
                         <input type="date" wire:model="mDate" class="w-full rounded-md border-gray-300 text-sm" />
                         @error('mDate')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
