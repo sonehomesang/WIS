@@ -39,6 +39,7 @@
                         'catalog' => 'Shops Material',
                         'equipment' => 'Equipment and Tools',
                         'equipment.templates' => 'ແມ່ແບບ ການ ກວດກາ',
+                        'equipment.maintenance-templates' => 'ແມ່ແບບ ບຳລຸງຮັກສາ',
                         'equipment.categories' => 'ປະເພດ ເຄື່ອງ',
                         'request' => 'Request Material',
                         'request.create' => 'New Material Request',

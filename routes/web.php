@@ -214,6 +214,10 @@ Route::get('equipment/inspection-templates', InspectionTemplates::class)
     ->middleware(['auth', 'verified'])
     ->name('equipment.templates');
 
+Route::get('equipment/maintenance-templates', App\Livewire\Equipment\MaintenanceTemplates::class)
+    ->middleware(['auth', 'verified'])
+    ->name('equipment.maintenance-templates');
+
 Route::get('equipment/categories', Categories::class)
     ->middleware(['auth', 'verified'])
     ->name('equipment.categories');

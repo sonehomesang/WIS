@@ -14,6 +14,12 @@
         <span class="text-xs text-gray-400">ບັນທຶກ ການ ບຳລຸງຮັກສາ/ຊ່ອມແປງ · ຄ່າ ໃຊ້ຈ່າຍ · ກຳນົດ service ຄັ້ງ ໜ້າ</span>
         @can('equipment.edit')
             <div class="flex items-center gap-2 shrink-0">
+                @unless ($deptScoped)
+                    <a href="{{ route('equipment.maintenance-templates') }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" /></svg>
+                        ເບິ່ງ/ສ້າງ ເທມເພລດ ບຳລຸງ
+                    </a>
+                @endunless
                 <button wire:click="newPlan" class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008Z" /></svg>
                     ວາງແຜນ ບຳລຸງ

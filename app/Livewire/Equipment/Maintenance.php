@@ -303,6 +303,7 @@ class Maintenance extends Component
             'records' => $records,
             'historyEquipment' => $historyEquipment,
             'history' => $history,
+            'deptScoped' => $deptScoped,
         ]);
     }
 }
