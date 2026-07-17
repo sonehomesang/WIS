@@ -44,7 +44,10 @@
         {{-- Brand --}}
         <div class="flex items-center justify-between h-16 px-4 border-b border-gray-800">
             <a href="{{ route('dashboard') }}" wire:navigate class="leading-tight">
-                <div class="text-lg font-semibold text-white">WH</div>
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-lg font-semibold text-white">WH</span>
+                    <span class="text-[10px] font-mono text-gray-500 whitespace-nowrap" title="ອັບເດດ ຫຼ້າສຸດ: {{ \App\Support\AppVersion::updatedAt() ?? '—' }}">{{ \App\Support\AppVersion::label() }}</span>
+                </div>
                 <div class="text-[11px] text-gray-400">Warehouse · Nam Theun 2</div>
             </a>
             <button @click="open = false" class="md:hidden p-2 min-h-[44px] min-w-[44px] text-gray-400 hover:text-white" aria-label="Close menu">
