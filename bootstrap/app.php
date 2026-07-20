@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\MustChangePassword;
 use App\Http\Middleware\ReplaceTerms;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -18,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // HTTP security headers on every web response (clickjacking/MIME/HSTS/CSP).
         $middleware->appendToGroup('web', SecurityHeaders::class);
+
+        // ບັງຄັບ ຕັ້ງ ລະຫັດ ໃໝ່ ຕອນ login ຄັ້ງ ທຳອິດ (ຜູ້ໃຊ້ ທີ່ ໃຫ້ ລະຫັດ ຊົ່ວຄາວ).
+        $middleware->appendToGroup('web', MustChangePassword::class);
 
         // Trust reverse-proxy headers (X-Forwarded-Proto/Host) so HTTPS is detected
         // behind cloudflared tunnel / nginx — otherwise asset URLs come out as http://

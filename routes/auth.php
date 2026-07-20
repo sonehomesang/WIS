@@ -25,6 +25,10 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    // ຕັ້ງ ລະຫັດ ໃໝ່ ຕອນ login ຄັ້ງ ທຳອິດ (ບັງຄັບ ໂດຍ MustChangePassword middleware).
+    Volt::route('password/force', 'pages.auth.force-password')
+        ->name('password.force');
+
     Volt::route('verify-email', 'pages.auth.verify-email')
         ->name('verification.notice');
 

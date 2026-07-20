@@ -36,6 +36,7 @@ class User extends Authenticatable
         'auth_provider',
         'is_pre_created',
         'is_super_admin',
+        'must_change_password',
         'dashboard_prefs',
     ];
 
@@ -71,6 +72,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_pre_created' => 'boolean',
             'is_super_admin' => 'boolean',
+            'must_change_password' => 'boolean',
             'dashboard_prefs' => 'array',
         ];
     }
