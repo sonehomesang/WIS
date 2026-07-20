@@ -31,6 +31,9 @@ test('super admin can save letterhead (company info + logo)', function () {
     Livewire::test(System::class)
         ->set('lhCompanyLo', 'ບໍລິສັດ ທົດສອບ')
         ->set('lhCompanyEn', 'Test Co')
+        ->set('lhAddress3', 'PO Box 5862, Vientiane')
+        ->set('lhFax', '856-21-263 901')
+        ->set('lhWebsite', 'www.namtheun2.com')
         ->set('lhFooter', 'footer line')
         ->set('lhLogo', UploadedFile::fake()->image('logo.png', 120, 120))
         ->call('saveLetterhead')
@@ -38,6 +41,9 @@ test('super admin can save letterhead (company info + logo)', function () {
 
     $lh = Setting::get('letterhead');
     expect($lh['company_name'])->toBe('ບໍລິສັດ ທົດສອບ');
+    expect($lh['address3'])->toBe('PO Box 5862, Vientiane');
+    expect($lh['fax'])->toBe('856-21-263 901');
+    expect($lh['website'])->toBe('www.namtheun2.com');
     expect($lh['footer_note'])->toBe('footer line');
     expect($lh['logo_path'])->not->toBeNull();
     Storage::disk('public')->assertExists($lh['logo_path']);

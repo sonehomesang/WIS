@@ -25,7 +25,7 @@
     </style>
 </head>
 <body>
-    @include('pdf._letterhead', ['docTitle' => 'ໃບເບີກວັດສະດຸ / MATERIAL REQUEST'])
+    @include('pdf._letterhead', ['docTitle' => 'ໃບຂໍເບີກວັດສະດຸ ຈາກຮ້ານ / MATERIAL REQUEST'])
 
     <table class="fields">
         <tr><td class="lbl">ໃບເບີກເລກທີ່</td><td style="width:32%">{{ $record->request_number }}</td><td class="lbl">ສະຖานะ</td><td>{{ strtoupper($record->status) }}</td></tr>

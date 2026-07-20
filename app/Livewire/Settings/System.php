@@ -45,9 +45,15 @@ class System extends Component
 
     public string $lhAddress2 = '';
 
+    public string $lhAddress3 = '';
+
     public string $lhPhone = '';
 
+    public string $lhFax = '';
+
     public string $lhEmail = '';
+
+    public string $lhWebsite = '';
 
     public string $lhFooter = '';
 
@@ -78,12 +84,15 @@ class System extends Component
         $this->curSecondaryEnabled = (bool) ($cur['secondary_enabled'] ?? true);
 
         $lh = Setting::get('letterhead', []);
-        $this->lhCompanyLo = $lh['company_name'] ?? '';
-        $this->lhCompanyEn = $lh['company_name_en'] ?? '';
-        $this->lhAddress1 = $lh['address1'] ?? '';
-        $this->lhAddress2 = $lh['address2'] ?? '';
-        $this->lhPhone = $lh['phone'] ?? '';
-        $this->lhEmail = $lh['email'] ?? '';
+        $this->lhCompanyLo = ($lh['company_name'] ?? '') ?: 'ບໍລິສັດ ໄຟຟ້າ ນ້ຳເທີນ 2';
+        $this->lhCompanyEn = ($lh['company_name_en'] ?? '') ?: 'Nam Theun 2 Power Company Ltd.';
+        $this->lhAddress1 = ($lh['address1'] ?? '') ?: 'Head Office, House No.249, Unit 15,';
+        $this->lhAddress2 = ($lh['address2'] ?? '') ?: 'Lao-Thai Road, Vatnak Village, Sisattanak District,';
+        $this->lhAddress3 = ($lh['address3'] ?? '') ?: 'PO Box: 5862, Vientiane, Lao PDR';
+        $this->lhPhone = ($lh['phone'] ?? '') ?: '856-21-263 900';
+        $this->lhFax = ($lh['fax'] ?? '') ?: '856-21-263 901';
+        $this->lhEmail = ($lh['email'] ?? '') ?: 'dcc@namtheun2.com';
+        $this->lhWebsite = ($lh['website'] ?? '') ?: 'www.namtheun2.com';
         $this->lhFooter = $lh['footer_note'] ?? '';
         $this->lhLogoPath = $lh['logo_path'] ?? null;
     }
@@ -129,8 +138,11 @@ class System extends Component
             'lhCompanyEn' => ['nullable', 'string', 'max:256'],
             'lhAddress1' => ['nullable', 'string', 'max:256'],
             'lhAddress2' => ['nullable', 'string', 'max:256'],
+            'lhAddress3' => ['nullable', 'string', 'max:256'],
             'lhPhone' => ['nullable', 'string', 'max:128'],
+            'lhFax' => ['nullable', 'string', 'max:128'],
             'lhEmail' => ['nullable', 'string', 'max:128'],
+            'lhWebsite' => ['nullable', 'string', 'max:128'],
             'lhFooter' => ['nullable', 'string', 'max:256'],
             'lhLogo' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
         ]);
@@ -148,8 +160,11 @@ class System extends Component
             'company_name_en' => $this->lhCompanyEn ?: null,
             'address1' => $this->lhAddress1 ?: null,
             'address2' => $this->lhAddress2 ?: null,
+            'address3' => $this->lhAddress3 ?: null,
             'phone' => $this->lhPhone ?: null,
+            'fax' => $this->lhFax ?: null,
             'email' => $this->lhEmail ?: null,
+            'website' => $this->lhWebsite ?: null,
             'footer_note' => $this->lhFooter ?: null,
             'logo_path' => $this->lhLogoPath,
         ], auth()->id());

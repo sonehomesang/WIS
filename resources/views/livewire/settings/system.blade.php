@@ -110,10 +110,13 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                 <div><label class="block text-xs text-gray-500 mb-1">ຊື່ບໍລິສັດ (ລາວ)</label><input type="text" wire:model="lhCompanyLo" class="w-full rounded-md border-gray-300 text-sm" /></div>
                 <div><label class="block text-xs text-gray-500 mb-1">Company name (EN)</label><input type="text" wire:model="lhCompanyEn" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                <div><label class="block text-xs text-gray-500 mb-1">ທີ່ຢູ່ ແຖວ 1</label><input type="text" wire:model="lhAddress1" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                <div><label class="block text-xs text-gray-500 mb-1">ທີ່ຢູ່ ແຖວ 2</label><input type="text" wire:model="lhAddress2" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                <div><label class="block text-xs text-gray-500 mb-1">ເບີໂທ</label><input type="text" wire:model="lhPhone" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-1">ທີ່ຢູ່ ແຖວ 1</label><input type="text" wire:model="lhAddress1" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-1">ທີ່ຢູ່ ແຖວ 2</label><input type="text" wire:model="lhAddress2" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-1">ທີ່ຢູ່ ແຖວ 3</label><input type="text" wire:model="lhAddress3" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div><label class="block text-xs text-gray-500 mb-1">ເບີໂທ (Tel)</label><input type="text" wire:model="lhPhone" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div><label class="block text-xs text-gray-500 mb-1">Fax</label><input type="text" wire:model="lhFax" class="w-full rounded-md border-gray-300 text-sm" /></div>
                 <div><label class="block text-xs text-gray-500 mb-1">Email</label><input type="text" wire:model="lhEmail" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                <div><label class="block text-xs text-gray-500 mb-1">Web</label><input type="text" wire:model="lhWebsite" class="w-full rounded-md border-gray-300 text-sm" /></div>
                 <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-1">Footer note</label><input type="text" wire:model="lhFooter" class="w-full rounded-md border-gray-300 text-sm" /></div>
             </div>
 
