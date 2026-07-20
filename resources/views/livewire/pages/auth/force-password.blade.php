@@ -47,14 +47,14 @@ new #[Layout('layouts.guest')] class extends Component
     <form wire:submit="updatePassword" class="space-y-4">
         <div>
             <label for="password" class="block text-sm font-medium text-gray-600 mb-1">ລະຫັດຜ່ານ ໃໝ່</label>
-            <x-text-input wire:model="password" id="password" class="block w-full" type="password" required autofocus autocomplete="new-password" />
+            <x-password-input wire:model="password" id="password" required autofocus autocomplete="new-password" placeholder="••••••••" />
             <p class="text-xs text-gray-400 mt-1">ຢ່າງ ໜ້ອຍ 10 ຕົວ</p>
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <div>
             <label for="password_confirmation" class="block text-sm font-medium text-gray-600 mb-1">ຢືນຢັນ ລະຫັດຜ່ານ</label>
-            <x-text-input wire:model="password_confirmation" id="password_confirmation" class="block w-full" type="password" required autocomplete="new-password" />
+            <x-password-input wire:model="password_confirmation" id="password_confirmation" required autocomplete="new-password" placeholder="••••••••" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 

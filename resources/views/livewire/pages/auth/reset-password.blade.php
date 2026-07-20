@@ -37,6 +37,12 @@ new #[Layout('layouts.guest')] class extends Component
             'token' => ['required'],
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'password.required' => 'ກະລຸນາ ໃສ່ ລະຫັດຜ່ານ ໃໝ່.',
+            'password.min' => 'ລະຫັດຜ່ານ ຕ້ອງ ຍາວ ຢ່າງ ໜ້ອຍ 10 ຕົວ.',
+            'password.confirmed' => 'ລະຫັດຜ່ານ ຢືນຢັນ ບໍ່ ກົງ ກັນ.',
+            'email.required' => 'ກະລຸນາ ໃສ່ ອີເມວ.',
+            'email.email' => 'ຮູບ ແບບ ອີເມວ ບໍ່ ຖືກ ຕ້ອງ.',
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we
@@ -84,16 +90,15 @@ new #[Layout('layouts.guest')] class extends Component
         <!-- Password -->
         <div>
             <label for="password" class="block text-sm font-medium text-gray-600 mb-1">ລະຫັດຜ່ານ ໃໝ່</label>
-            <x-text-input wire:model="password" id="password" class="block w-full" type="password" name="password" required autocomplete="new-password" />
+            <x-password-input wire:model="password" id="password" name="password" required autocomplete="new-password" placeholder="••••••••" />
+            <p class="text-xs text-gray-400 mt-1">ຢ່າງ ໜ້ອຍ 10 ຕົວ</p>
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <!-- Confirm Password -->
         <div>
             <label for="password_confirmation" class="block text-sm font-medium text-gray-600 mb-1">ຢືນຢັນ ລະຫັດຜ່ານ</label>
-            <x-text-input wire:model="password_confirmation" id="password_confirmation" class="block w-full"
-                          type="password"
-                          name="password_confirmation" required autocomplete="new-password" />
+            <x-password-input wire:model="password_confirmation" id="password_confirmation" name="password_confirmation" required autocomplete="new-password" placeholder="••••••••" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 

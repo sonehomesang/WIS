@@ -8,6 +8,8 @@ new #[Layout('layouts.guest')] class extends Component
 {
     public string $email = '';
 
+    public bool $sent = false;
+
     /**
      * Send a password reset link to the provided email address.
      */
@@ -15,6 +17,9 @@ new #[Layout('layouts.guest')] class extends Component
     {
         $this->validate([
             'email' => ['required', 'string', 'email'],
+        ], [
+            'email.required' => 'ກະລຸນາ ໃສ່ ອີເມວ.',
+            'email.email' => 'ຮູບ ແບບ ອີເມວ ບໍ່ ຖືກ ຕ້ອງ.',
         ]);
 
         // We will send the password reset link to this user. Once we have attempted
@@ -32,7 +37,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         $this->reset('email');
 
-        session()->flash('status', __($status));
+        $this->sent = true;
     }
 }; ?>
 
@@ -44,6 +49,16 @@ new #[Layout('layouts.guest')] class extends Component
 
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
+
+    @if ($sent)
+        <div class="mb-4 rounded-lg bg-green-50 border border-green-200 p-4">
+            <p class="text-sm font-medium text-green-800">✓ ສົ່ງ ລິ້ງ ຕັ້ງ ລະຫັດຜ່ານ ໃໝ່ ໄປ ອີເມວ ຂອງ ທ່ານ ແລ້ວ</p>
+            <p class="mt-1 text-sm text-green-700 leading-relaxed">
+                ກະລຸນາ ເຊັກ ກ່ອງ ຈົດໝາຍ (Inbox). ຖ້າ ບໍ່ ພົບ ໃຫ້ ເບິ່ງ ຢູ່ <strong>Junk / Spam</strong> ນຳ.
+                ລິ້ງ ໃຊ້ ໄດ້ ພາຍ ໃນ 60 ນາທີ.
+            </p>
+        </div>
+    @endif
 
     <form wire:submit="sendPasswordResetLink" class="space-y-4">
         <!-- Email Address -->
