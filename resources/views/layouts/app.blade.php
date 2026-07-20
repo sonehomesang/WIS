@@ -62,6 +62,7 @@
                         'settings.suppliers' => 'Suppliers',
                         'settings.suppliers.show' => 'Supplier detail',
                         'settings.notifications' => 'Notifications',
+                        'settings.email' => 'Email (SMTP)',
                         'settings.notification-log' => 'Notification log',
                         'settings.audit' => 'Audit log',
                         'settings.reports' => 'Reports',

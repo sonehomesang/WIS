@@ -3,9 +3,13 @@
 namespace App\Providers;
 
 use App\Models\Material;
+use App\Models\Setting;
 use App\Observers\MaterialObserver;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -37,5 +41,54 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('term', function (string $expr) {
             return "<?php echo e(\\App\\Models\\Translation::term({$expr})); ?>";
         });
+
+        // ຄ່າ SMTP ທີ່ admin ຕັ້ງ ໃນ Settings › Email → override config ຕອນ runtime.
+        self::applyMailSettings();
+    }
+
+    /**
+     * ນຳ ຄ່າ mail ຈາກ ຕາຕະລາງ settings (admin ຕັ້ງ) ມາ ໃສ່ config.
+     * ຖ້າ ຍັງ ບໍ່ ຕັ້ງ (mailer != smtp) → ໃຊ້ ຄ່າ .env ຕາມ ເດີມ (log).
+     */
+    public static function applyMailSettings(): void
+    {
+        try {
+            $m = Cache::rememberForever(
+                'settings.mail',
+                fn () => Schema::hasTable('settings') ? Setting::get('mail', []) : []
+            );
+        } catch (\Throwable $e) {
+            return;   // DB ຍັງ ບໍ່ ພ້ອມ (migrate / fresh install)
+        }
+
+        if (($m['mailer'] ?? '') !== 'smtp' || empty($m['host'])) {
+            return;
+        }
+
+        $password = null;
+        if (! empty($m['password'])) {
+            try {
+                $password = Crypt::decryptString($m['password']);
+            } catch (\Throwable $e) {
+                $password = null;
+            }
+        }
+
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => $m['host'],
+            'mail.mailers.smtp.port' => (int) ($m['port'] ?? 587),
+            'mail.mailers.smtp.username' => ($m['username'] ?? '') ?: null,
+            'mail.mailers.smtp.password' => $password,
+            // ssl → smtps (port 465) · tls/none → ປ່ອຍ null (STARTTLS ຢູ່ 587).
+            'mail.mailers.smtp.scheme' => ($m['scheme'] ?? '') === 'ssl' ? 'smtps' : null,
+        ]);
+
+        if (! empty($m['from_address'])) {
+            config([
+                'mail.from.address' => $m['from_address'],
+                'mail.from.name' => ($m['from_name'] ?? '') ?: config('app.name'),
+            ]);
+        }
     }
 }

@@ -288,6 +288,10 @@ Route::get('settings/notifications', Notifications::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.notifications');
 
+Route::get('settings/email', App\Livewire\Settings\Email::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.email');
+
 Route::get('settings/notification-log', NotificationLog::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.notification-log');
