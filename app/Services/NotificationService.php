@@ -8,35 +8,35 @@ use App\Models\User;
 
 /**
  * NotificationService — ສ້າງ in-app notification (Phase 6.10).
- * ໂມດູລ workflow ເອີ້ນ ຕอน transition ສຳຄັນ. Bell component ສະແດງ + mark read.
+ * ໂມດູລ workflow ເອີ້ນ ຕອນ transition ສຳຄັນ. Bell component ສະແດງ + mark read.
  *
  * Phase 6.11 — master kill-switch + editable message templates, ຄວບຄຸມ
- * ຈาก Settings › Notifications. ດ້ວຍ feature flag `notifications.enabled`.
+ * ຈາກ Settings › Notifications. ດ້ວຍ feature flag `notifications.enabled`.
  */
 class NotificationService
 {
     /** Default templates: key => [title, message] with {placeholders}. */
     public const TEMPLATES = [
-        'request.submit' => ['title' => 'ໃບເບີກ {number} ລໍ approve', 'message' => 'ຈาก {requester}'],
-        'request.approve' => ['title' => 'ໃບເບີກ {number} ຖูก approve ແລ້ວ', 'message' => ''],
-        'request.reject' => ['title' => 'ໃບເບີກ {number} ຖูก reject', 'message' => '{reason}'],
+        'request.submit' => ['title' => 'ໃບເບີກ {number} ລໍ approve', 'message' => 'ຈາກ {requester}'],
+        'request.approve' => ['title' => 'ໃບເບີກ {number} ຖືກ approve ແລ້ວ', 'message' => ''],
+        'request.reject' => ['title' => 'ໃບເບີກ {number} ຖືກ reject', 'message' => '{reason}'],
         'request.close' => ['title' => 'ໃບເບີກ {number} ສຳເລັດ', 'message' => '{invoice}'],
         // borrow
-        'borrow.submit' => ['title' => 'ການຢືມ {number} ລໍ ດำเนินการ', 'message' => 'ຈาก {borrower}'],
-        'borrow.approve' => ['title' => 'ການຢືມ {number} ຖูก approve — ໄປຮັບເຄື່ອງ', 'message' => ''],
-        'borrow.reminder' => ['title' => 'ການຢືມ {number} ໃກ້/ເກີນ ກຳນົດคืน', 'message' => 'ກຳນົดคืน {date}'],
+        'borrow.submit' => ['title' => 'ການຢືມ {number} ລໍ ດຳເນີນການ', 'message' => 'ຈາກ {borrower}'],
+        'borrow.approve' => ['title' => 'ການຢືມ {number} ຖືກ approve — ໄປ ຮັບ ເຄື່ອງ', 'message' => ''],
+        'borrow.reminder' => ['title' => 'ການຢືມ {number} ໃກ້/ເກີນ ກຳນົດ ຄືນ', 'message' => 'ກຳນົດ ຄືນ {date}'],
         // deposit
-        'deposit.submit' => ['title' => 'ການຝາກ {number} ລໍ ຮັບເຂົ້າ', 'message' => 'ຈาก {owner}'],
-        'deposit.accept' => ['title' => 'ການຝາກ {number} ຖูกຮັບແລ້ວ', 'message' => ''],
-        'deposit.stored' => ['title' => 'ການຝາກ {number} ເກັບเข้า stored', 'message' => ''],
-        'deposit.claim' => ['title' => 'ການຝາກ {number} ຮັບคืนສຳເລັດ', 'message' => ''],
+        'deposit.submit' => ['title' => 'ການຝາກ {number} ລໍ ຮັບ ເຂົ້າ', 'message' => 'ຈາກ {owner}'],
+        'deposit.accept' => ['title' => 'ການຝາກ {number} ຖືກ ຮັບ ແລ້ວ', 'message' => ''],
+        'deposit.stored' => ['title' => 'ການຝາກ {number} ເກັບ ເຂົ້າ stored', 'message' => ''],
+        'deposit.claim' => ['title' => 'ການຝາກ {number} ຮັບ ຄືນ ສຳເລັດ', 'message' => ''],
         // da
-        'da.submit' => ['title' => 'DA {number} ລໍ review', 'message' => 'ຈาก {actor}'],
+        'da.submit' => ['title' => 'DA {number} ລໍ review', 'message' => 'ຈາກ {actor}'],
         'da.pending' => ['title' => 'DA {number} ລໍ approve (ຫົວໜ້າ)', 'message' => ''],
         'da.resolved' => ['title' => 'DA {number} resolved', 'message' => ''],
         // oga
-        'oga.dispatch' => ['title' => 'OGA {number} ສົ່ງออกแล้ว', 'message' => ''],
-        'oga.delivered' => ['title' => 'OGA {number} ส่งถึงแล้ว', 'message' => ''],
+        'oga.dispatch' => ['title' => 'OGA {number} ສົ່ງ ອອກ ແລ້ວ', 'message' => ''],
+        'oga.delivered' => ['title' => 'OGA {number} ສົ່ງ ຮອດ ແລ້ວ', 'message' => ''],
     ];
 
     /**
@@ -193,7 +193,7 @@ class NotificationService
         }
     }
 
-    /** ສົ່ງຫາ ທຸກ user ໃນ role (ເຊັ່ນ warehouse_staff). */
+    /** ສົ່ງ ຫາ ທຸກ user ໃນ role (ເຊັ່ນ warehouse_staff). */
     public function notifyRole(string $role, string $type, string $title, ?string $message = null, ?string $link = null): void
     {
         $ids = User::role($role)->where('status', 'active')->pluck('id')->all();
