@@ -24,6 +24,10 @@ new #[Layout('layouts.guest')] class extends Component
     {
         $this->validate([
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'password.required' => 'ກະລຸນາ ໃສ່ ລະຫັດຜ່ານ ໃໝ່.',
+            'password.min' => 'ລະຫັດຜ່ານ ຕ້ອງ ຍາວ ຢ່າງ ໜ້ອຍ 10 ຕົວ.',
+            'password.confirmed' => 'ລະຫັດຜ່ານ ຢືນຢັນ ບໍ່ ກົງ ກັນ.',
         ]);
 
         auth()->user()->forceFill([
@@ -44,6 +48,7 @@ new #[Layout('layouts.guest')] class extends Component
         <div>
             <label for="password" class="block text-sm font-medium text-gray-600 mb-1">ລະຫັດຜ່ານ ໃໝ່</label>
             <x-text-input wire:model="password" id="password" class="block w-full" type="password" required autofocus autocomplete="new-password" />
+            <p class="text-xs text-gray-400 mt-1">ຢ່າງ ໜ້ອຍ 10 ຕົວ</p>
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
