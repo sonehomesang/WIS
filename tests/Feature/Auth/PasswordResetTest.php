@@ -3,7 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\SetPasswordNotification;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Volt\Volt;
 
@@ -24,7 +24,7 @@ test('reset password link can be requested', function () {
         ->set('email', $user->email)
         ->call('sendPasswordResetLink');
 
-    Notification::assertSentTo($user, ResetPassword::class);
+    Notification::assertSentTo($user, SetPasswordNotification::class);
 });
 
 test('reset password screen can be rendered', function () {
@@ -36,7 +36,7 @@ test('reset password screen can be rendered', function () {
         ->set('email', $user->email)
         ->call('sendPasswordResetLink');
 
-    Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
+    Notification::assertSentTo($user, SetPasswordNotification::class, function ($notification) {
         $response = $this->get('/reset-password/'.$notification->token);
 
         $response
@@ -56,7 +56,7 @@ test('password can be reset with valid token', function () {
         ->set('email', $user->email)
         ->call('sendPasswordResetLink');
 
-    Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+    Notification::assertSentTo($user, SetPasswordNotification::class, function ($notification) use ($user) {
         $component = Volt::test('pages.auth.reset-password', ['token' => $notification->token])
             ->set('email', $user->email)
             ->set('password', 'new-password-123')

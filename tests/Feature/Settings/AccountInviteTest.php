@@ -3,7 +3,7 @@
 use App\Livewire\Settings\Users;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\SetPasswordNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
@@ -37,7 +37,7 @@ test('creating a user sets no usable password and issues a set-password link', f
     // admin never set a password; the random one is unguessable
     expect(Hash::check('password', $user->password))->toBeFalse();
 
-    Notification::assertSentTo($user, ResetPassword::class);
+    Notification::assertSentTo($user, SetPasswordNotification::class);
 });
 
 test('the resend button (linkFor) issues a fresh set-password link', function () {
@@ -51,7 +51,7 @@ test('the resend button (linkFor) issues a fresh set-password link', function ()
         ->assertSet('setLinkEmail', 'x@namtheun2.com')
         ->assertSeeHtml('reset-password');
 
-    Notification::assertSentTo($u, ResetPassword::class);
+    Notification::assertSentTo($u, SetPasswordNotification::class);
 });
 
 test('password policy requires at least 10 characters', function () {

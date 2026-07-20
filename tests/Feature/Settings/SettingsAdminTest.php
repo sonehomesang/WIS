@@ -29,10 +29,32 @@ test('notification settings save flags + templates', function () {
     // index 1 = 'request.approve' (order of NotificationService::TEMPLATES)
     Livewire::test(Notifications::class)
         ->assertSet('templates.1.key', 'request.approve')
-        ->set('templates.1.title', 'ໃບ {number} ຜ່ານແລ້ວ')
+        ->set('templates.1.lo.title', 'ໃບ {number} ຜ່ານແລ້ວ')
         ->call('saveTemplates');
 
-    expect(Setting::get('notification_templates')['request.approve']['title'])->toBe('ໃບ {number} ຜ່ານແລ້ວ');
+    expect(Setting::get('notification_templates')['request.approve']['lo']['title'])->toBe('ໃບ {number} ຜ່ານແລ້ວ');
+});
+
+test('notification email template saves both languages + send language', function () {
+    Livewire::test(Notifications::class)
+        ->set('lang', 'en')
+        ->call('saveFlags')
+        ->set('email.lo.subject', 'ຫົວ ຂໍ້ ລາວ ໃໝ່')
+        ->set('email.en.subject', 'New EN subject')
+        ->call('saveEmail');
+
+    expect(Setting::get('notifications')['lang'])->toBe('en');
+    $stored = Setting::get('notification_templates')['email.set_password'];
+    expect($stored['lo']['subject'])->toBe('ຫົວ ຂໍ້ ລາວ ໃໝ່');
+    expect($stored['en']['subject'])->toBe('New EN subject');
+});
+
+test('disabling an in-app template via the settings page persists', function () {
+    Livewire::test(Notifications::class)
+        ->set('templates.1.enabled', false)
+        ->call('saveTemplates');
+
+    expect(Setting::get('notification_templates')['request.approve']['enabled'])->toBeFalse();
 });
 
 test('master flag short-circuits notifications', function () {

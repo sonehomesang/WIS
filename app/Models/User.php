@@ -49,6 +49,12 @@ class User extends Authenticatable
         return array_merge(self::DASHBOARD_DEFAULTS, $this->dashboard_prefs ?? []);
     }
 
+    /** ໃຊ້ notification ຂອງ ເຮົາ (ລາວ/ອັງກິດ, admin ແກ້ ໄດ້) ແທນ default ຂອງ Laravel. */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\SetPasswordNotification($token));
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

@@ -39,26 +39,121 @@ class NotificationService
         'oga.delivered' => ['title' => 'OGA {number} ส่งถึงแล้ว', 'message' => ''],
     ];
 
+    /**
+     * Default EMAIL templates — ສອງ ພາສາ (lo + en). admin ແກ້/ແປ ໄດ້ ຢູ່ Settings › Notifications.
+     * placeholder: {app} {minutes} {name}.
+     *
+     * @var array<string,array{lo:array<string,string>,en:array<string,string>}>
+     */
+    public const EMAILS = [
+        'email.set_password' => [
+            'lo' => [
+                'subject' => 'ຕັ້ງ / ຣີເຊັດ ລະຫັດຜ່ານ',
+                'greeting' => 'ສະບາຍ ດີ!',
+                'intro' => 'ທ່ານ ໄດ້ ຮັບ ອີເມວ ນີ້ ຍ້ອນ ມີ ຄຳ ຂໍ ຕັ້ງ / ຣີເຊັດ ລະຫັດຜ່ານ ສຳລັບ ບັນຊີ ຂອງ ທ່ານ.',
+                'button' => 'ຕັ້ງ ລະຫັດຜ່ານ',
+                'expiry' => 'ລິ້ງ ນີ້ ຈະ ໝົດ ອາຍຸ ພາຍ ໃນ {minutes} ນາທີ.',
+                'outro' => 'ຖ້າ ທ່ານ ບໍ່ ໄດ້ ຮ້ອງ ຂໍ ການ ນີ້, ບໍ່ ຕ້ອງ ເຮັດ ຫຍັງ.',
+                'salutation' => 'ດ້ວຍ ຄວາມ ນັບຖື,',
+            ],
+            'en' => [
+                'subject' => 'Set / Reset your password',
+                'greeting' => 'Hello!',
+                'intro' => 'You are receiving this email because we received a password set/reset request for your account.',
+                'button' => 'Set Password',
+                'expiry' => 'This link will expire in {minutes} minutes.',
+                'outro' => 'If you did not request this, no further action is required.',
+                'salutation' => 'Regards,',
+            ],
+        ],
+    ];
+
     /** Master switch — false short-circuits every notify call. */
     public static function enabled(): bool
     {
         return (bool) (Setting::get('notifications', ['enabled' => true])['enabled'] ?? true);
     }
 
-    /** Resolve a template (custom over default) with {placeholder} replacement. */
-    public static function template(string $key, array $vars = []): array
+    /** Active SEND language for outgoing messages (admin-set): 'lo' | 'en'. */
+    public static function lang(): string
     {
-        $custom = Setting::get('notification_templates', [])[$key] ?? [];
-        $tpl = array_merge(self::TEMPLATES[$key] ?? ['title' => '', 'message' => ''], array_filter($custom, fn ($v) => $v !== null && $v !== ''));
+        $l = Setting::get('notifications', [])['lang'] ?? 'lo';
 
+        return in_array($l, ['lo', 'en'], true) ? $l : 'lo';
+    }
+
+    /** Whether a template key is enabled. Email keys are always on (ບໍ່ ໃຫ້ ປິດ). */
+    public static function templateEnabled(string $key): bool
+    {
+        if (isset(self::EMAILS[$key])) {
+            return true;
+        }
+
+        return (bool) ((Setting::get('notification_templates', [])[$key] ?? [])['enabled'] ?? true);
+    }
+
+    /** Default field set for a key, as ['lo' => [...], 'en' => [...]]. */
+    public static function defaults(string $key): array
+    {
+        if (isset(self::EMAILS[$key])) {
+            return self::EMAILS[$key];
+        }
+        if (isset(self::TEMPLATES[$key])) {
+            return ['lo' => self::TEMPLATES[$key], 'en' => []];
+        }
+
+        return ['lo' => [], 'en' => []];
+    }
+
+    /**
+     * Resolve every field of a template for the active (or given) language.
+     * Fallback chain per field: stored[lang] → stored[lo] → default[lang] → default[lo],
+     * then {placeholder} replacement. Handles the legacy flat shape (title/message) too.
+     *
+     * @return array<string,string>
+     */
+    public static function resolve(string $key, array $vars = [], ?string $lang = null): array
+    {
+        $lang = $lang ?: self::lang();
+        $stored = Setting::get('notification_templates', [])[$key] ?? [];
+
+        // legacy flat ['title'=>, 'message'=>] → treat as lo
+        if (! isset($stored['lo']) && ! isset($stored['en']) && (isset($stored['title']) || isset($stored['message']))) {
+            $stored = ['lo' => $stored];
+        }
+
+        $def = self::defaults($key);
         $repl = [];
         foreach ($vars as $k => $v) {
             $repl['{'.$k.'}'] = (string) $v;
         }
 
+        $out = [];
+        foreach (array_keys($def['lo'] ?? []) as $f) {
+            $val = (string) ($stored[$lang][$f] ?? '');
+            if ($val === '') {
+                $val = (string) ($stored['lo'][$f] ?? '');
+            }
+            if ($val === '' && $lang === 'en') {
+                $val = (string) ($def['en'][$f] ?? '');
+            }
+            if ($val === '') {
+                $val = (string) ($def['lo'][$f] ?? '');
+            }
+            $out[$f] = strtr($val, $repl);
+        }
+
+        return $out;
+    }
+
+    /** Resolve an in-app template (title + message) for the active language. */
+    public static function template(string $key, array $vars = [], ?string $lang = null): array
+    {
+        $r = self::resolve($key, $vars, $lang);
+
         return [
-            'title' => strtr($tpl['title'] ?? '', $repl),
-            'message' => trim(strtr($tpl['message'] ?? '', $repl)) ?: null,
+            'title' => $r['title'] ?? '',
+            'message' => (isset($r['message']) && trim($r['message']) !== '') ? trim($r['message']) : null,
         ];
     }
 
@@ -80,6 +175,9 @@ class NotificationService
     /** Notify using a stored template; resolves title/message from the key. */
     public function notifyTemplate(?int $userId, string $type, string $key, array $vars = [], ?string $link = null): void
     {
+        if (! self::templateEnabled($key)) {
+            return;
+        }
         $t = self::template($key, $vars);
         if ($t['title'] === '') {
             return;
@@ -105,6 +203,9 @@ class NotificationService
     /** Notify every active user in a role, using a stored template. */
     public function notifyRoleTemplate(string $role, string $type, string $key, array $vars = [], ?string $link = null): void
     {
+        if (! self::templateEnabled($key)) {
+            return;
+        }
         $t = self::template($key, $vars);
         if ($t['title'] === '') {
             return;
@@ -115,6 +216,9 @@ class NotificationService
     /** Notify a set of users, using a stored template. */
     public function notifyUsersTemplate(array $userIds, string $type, string $key, array $vars = [], ?string $link = null): void
     {
+        if (! self::templateEnabled($key)) {
+            return;
+        }
         $t = self::template($key, $vars);
         if ($t['title'] === '') {
             return;
