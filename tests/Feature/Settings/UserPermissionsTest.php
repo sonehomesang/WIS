@@ -23,55 +23,70 @@ test('a requester does not see DA/OGA/Expo by default', function () {
     expect($u->can('expo.view'))->toBeFalse();
 });
 
-test('admin can grant an extra menu to one individual (view+create+edit)', function () {
+test('granting only view gives view without create or edit', function () {
     $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@namtheun2.com', 'status' => 'active']);
     $u->syncRoles(['requester']);
 
     actingAs($this->admin);
     Livewire::test(Users::class)
         ->call('editUser', $u->id)
-        ->set('extraMenus', ['da'])
+        ->set('extraPerms.da.view', true)
         ->call('save')
         ->assertHasNoErrors();
 
     $u->refresh();
     expect($u->can('da.view'))->toBeTrue();
-    expect($u->can('da.create'))->toBeTrue();
-    expect($u->can('da.edit'))->toBeTrue();
-    // not granted: delete stays off
-    expect($u->can('da.delete'))->toBeFalse();
+    expect($u->can('da.create'))->toBeFalse();
+    expect($u->can('da.edit'))->toBeFalse();
 });
 
-test('revoking an extra menu removes the direct permission', function () {
+test('granting create or edit implies view', function () {
     $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@namtheun2.com', 'status' => 'active']);
     $u->syncRoles(['requester']);
-    $u->givePermissionTo('da.view', 'da.create', 'da.edit');
-    expect($u->can('da.view'))->toBeTrue();
 
     actingAs($this->admin);
     Livewire::test(Users::class)
-        ->call('editUser', $u->id)   // editUser pre-loads extraMenus = ['da']
-        ->set('extraMenus', [])      // untick it
+        ->call('editUser', $u->id)
+        ->set('extraPerms.da.edit', true)   // edit only, view left unticked
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $u->refresh();
+    expect($u->can('da.view'))->toBeTrue();   // implied
+    expect($u->can('da.edit'))->toBeTrue();
+    expect($u->can('da.create'))->toBeFalse();
+});
+
+test('revoking clears the direct permission', function () {
+    $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@namtheun2.com', 'status' => 'active']);
+    $u->syncRoles(['requester']);
+    $u->givePermissionTo('da.view', 'da.create', 'da.edit');
+
+    actingAs($this->admin);
+    Livewire::test(Users::class)
+        ->call('editUser', $u->id)
+        ->set('extraPerms.da.view', false)
+        ->set('extraPerms.da.create', false)
+        ->set('extraPerms.da.edit', false)
         ->call('save')
         ->assertHasNoErrors();
 
     expect($u->refresh()->can('da.view'))->toBeFalse();
 });
 
-test('escalation guard: non-grantable menus (users/roles/settings) are ignored', function () {
+test('escalation guard: admin menus cannot be granted per person', function () {
     $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@namtheun2.com', 'status' => 'active']);
     $u->syncRoles(['requester']);
 
     actingAs($this->admin);
     Livewire::test(Users::class)
         ->call('editUser', $u->id)
-        ->set('extraMenus', ['da', 'users', 'roles', 'settings'])
+        ->set('extraPerms.da.view', true)
+        ->set('extraPerms.users.view', true)   // not grantable → ignored
         ->call('save')
         ->assertHasNoErrors();
 
     $u->refresh();
-    expect($u->can('da.view'))->toBeTrue();        // grantable → applied
-    expect($u->can('users.view'))->toBeFalse();    // not grantable → ignored
-    expect($u->can('roles.view'))->toBeFalse();
-    expect($u->can('settings.view'))->toBeFalse();
+    expect($u->can('da.view'))->toBeTrue();
+    expect($u->can('users.view'))->toBeFalse();
 });

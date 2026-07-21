@@ -51,7 +51,7 @@ class Users extends Component
     public string $status = 'active';
 
     /** ສິດ ເພີ່ມເຕີມ ລາຍ ບຸກຄົນ — menu keys ທີ່ ເປີດ ໃຫ້ ໂດຍກົງ (ນອກ ເໜືອ ບົດບາດ). */
-    public array $extraMenus = [];
+    public array $extraPerms = [];
 
     /**
      * ເມນູ ປະຕິບັດການ ທີ່ admin ເປີດ ໃຫ້ ລາຍ ບຸກຄົນ ໄດ້ (ເບິ່ງ+ເພີ່ມ+ແກ້).
@@ -72,6 +72,27 @@ class Users extends Component
             'oga' => 'OGA',
             'expo' => 'Expo Info',
         ];
+    }
+
+    /**
+     * Action ທີ່ ເປີດ ໃຫ້ ຕິກ ຕໍ່ ເມນູ (ຕໍ່ ບຸກຄົນ). label = Lao.
+     *
+     * @return array<string,string>
+     */
+    public static function grantableActions(): array
+    {
+        return ['view' => 'ເບິ່ງ', 'create' => 'ເພີ່ມ', 'edit' => 'ແກ້'];
+    }
+
+    /** ຕັ້ງ ໂຄງ extraPerms ໃຫ້ ທຸກ ເມນູ/action = false. */
+    protected function initExtraPerms(): void
+    {
+        $this->extraPerms = [];
+        foreach (array_keys(self::grantableMenus()) as $m) {
+            foreach (array_keys(self::grantableActions()) as $a) {
+                $this->extraPerms[$m][$a] = false;
+            }
+        }
     }
 
     public function mount(): void
@@ -116,10 +137,12 @@ class Users extends Component
 
         // ໂຫຼດ ສິດ ເພີ່ມເຕີມ ໂດຍກົງ (ບໍ່ ນັບ ສິດ ທີ່ ມາ ຈาก ບົດບາດ)
         $direct = $user->getDirectPermissions()->pluck('name')->all();
-        $this->extraMenus = array_values(array_filter(
-            array_keys(self::grantableMenus()),
-            fn ($m) => in_array("{$m}.view", $direct, true),
-        ));
+        $this->initExtraPerms();
+        foreach (array_keys(self::grantableMenus()) as $m) {
+            foreach (array_keys(self::grantableActions()) as $a) {
+                $this->extraPerms[$m][$a] = in_array("{$m}.{$a}", $direct, true);
+            }
+        }
 
         $this->resetValidation();
         $this->showModal = true;
@@ -170,9 +193,19 @@ class Users extends Component
         // ສິດ ເພີ່ມເຕີມ ລາຍ ບຸກຄົນ (ໂດຍກົງ): view+create+edit ຕໍ່ ເມນູ ທີ່ ໝາຍ.
         // intersect ກັບ grantable → ກັນ ການ ໃຫ້ ສິດ admin (escalation).
         $directPerms = [];
-        foreach (array_intersect($this->extraMenus, array_keys(self::grantableMenus())) as $m) {
-            foreach (['view', 'create', 'edit'] as $a) {
-                $directPerms[] = "{$m}.{$a}";
+        foreach (array_keys(self::grantableMenus()) as $m) {
+            $p = $this->extraPerms[$m] ?? [];
+            $create = ! empty($p['create']);
+            $edit = ! empty($p['edit']);
+            $view = ! empty($p['view']) || $create || $edit;   // create/edit ⇒ view
+            if ($view) {
+                $directPerms[] = "{$m}.view";
+            }
+            if ($create) {
+                $directPerms[] = "{$m}.create";
+            }
+            if ($edit) {
+                $directPerms[] = "{$m}.edit";
             }
         }
         $user->syncPermissions($directPerms);
@@ -234,7 +267,7 @@ class Users extends Component
         $this->department_id = null;
         $this->supplier_id = null;
         $this->status = 'active';
-        $this->extraMenus = [];
+        $this->initExtraPerms();
         $this->setPasswordLink = '';
         $this->setLinkEmail = '';
         $this->resetValidation();
@@ -257,6 +290,7 @@ class Users extends Component
             'roles' => Role::when(! auth()->user()->is_super_admin, fn ($q) => $q->where('name', '!=', 'super_admin'))
                 ->orderBy('name')->pluck('name'),
             'grantableMenus' => self::grantableMenus(),
+            'grantableActions' => self::grantableActions(),
             'units' => Unit::where('is_active', true)->orderBy('name')->get(),
             'suppliers' => Supplier::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'formDepartments' => $this->unit_id
