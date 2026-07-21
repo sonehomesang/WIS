@@ -101,7 +101,7 @@
                 @endphp
 
                 <!-- Global app header: title (left) + user menu (right) — ທຸກໜ້າ -->
-                <header class="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
+                <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
                     <div class="px-4 sm:px-6 lg:px-8">
                         <div class="h-16 flex items-center justify-between gap-3">
                             <div class="flex items-center gap-2 min-w-0">
