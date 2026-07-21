@@ -2,6 +2,7 @@
 
 use App\Livewire\Dashboard;
 use App\Models\BorrowRecord;
+use App\Models\MaterialRequest;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Livewire\Livewire;
@@ -52,6 +53,33 @@ test('action queue surfaces overdue borrow for staff', function () {
         ->assertSee('ສິ່ງທີ່ຕ້ອງເຮັດ')
         ->assertSee('ການຢືມ ເກີນກຳນົດ')
         ->assertSee('ກິດຈະກຳລ່າສຸດ');
+});
+
+test('action queue surfaces completed requests with SAP still open for staff', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+
+    // completed but SAP not yet closed → should be tracked
+    MaterialRequest::create([
+        'request_number' => 'MR'.now()->year.'-9200', 'requester_user_id' => $admin->id,
+        'requester_email' => $admin->email, 'requester_name' => 'A', 'currency' => 'THB',
+        'status' => 'completed', 'sap_status' => 'pr_raised',
+    ]);
+    // completed + SAP closed → should NOT be tracked
+    MaterialRequest::create([
+        'request_number' => 'MR'.now()->year.'-9201', 'requester_user_id' => $admin->id,
+        'requester_email' => $admin->email, 'requester_name' => 'B', 'currency' => 'THB',
+        'status' => 'completed', 'sap_status' => 'closed',
+    ]);
+
+    Livewire::test(Dashboard::class)
+        ->assertOk()
+        ->assertSee('SAP ຍັງບໍ່ closed')
+        ->assertViewHas('actionRows', function ($rows) {
+            $row = collect($rows)->firstWhere('label', 'ໃບເບີກ completed · SAP ຍັງບໍ່ closed');
+
+            return $row && $row['count'] === 1;   // pr_raised counted, closed excluded
+        });
 });
 
 test('widget toggle persists to the user dashboard_prefs', function () {

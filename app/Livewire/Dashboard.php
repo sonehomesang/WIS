@@ -137,6 +137,9 @@ class Dashboard extends Component
                 'count' => DiscrepancyAdvice::whereIn('status', ['submitted', 'purchasing_review', 'pending_approval'])->count(), 'alert' => false];
             $rows[] = ['label' => 'OGA ລໍ້ dispatch', 'route' => 'oga',
                 'count' => OutwardsGoodsAdvice::where('status', 'draft')->count(), 'alert' => false];
+            // completed requests still moving through SAP (PR/FR set but not yet closed)
+            $rows[] = ['label' => 'ໃບເບີກ completed · SAP ຍັງບໍ່ closed', 'route' => 'request',
+                'count' => MaterialRequest::where('status', 'completed')->whereNotNull('sap_status')->where('sap_status', '!=', 'closed')->count(), 'alert' => false];
         }
 
         if ($u->hasRole('approver') && ! $staff) {
