@@ -1,5 +1,6 @@
 @php
     $fmt = fn ($d) => $d?->format('d/m/Y') ?? '—';
+    $fmtDt = fn ($d) => $d?->format('d/m/Y H:i') ?? '—';
     $vatLabel = $record->vat_enabled ? rtrim(rtrim(number_format($record->vat_rate, 2), '0'), '.').'%' : '(ປິດ)';
 @endphp
 <!DOCTYPE html>
@@ -29,7 +30,7 @@
             <td style="width:54%; vertical-align:top; padding-right:14px;">
                 @include('pdf._letterhead_block')
             </td>
-            <td style="width:46%; vertical-align:top; padding:30px 0 0 14px; border-left:1px solid #94a3b8;">
+            <td style="width:46%; vertical-align:top; padding:30px 0 0 14px;">
                 <div style="text-align:center; margin-bottom:7px;">
                     <div style="font-size:15px; font-weight:bold;">ໃບຂໍເບີກເຄື່ອງຈາກຮ້ານຄ້າ</div>
                     <div style="font-size:9px; color:#555;">MATERIAL REQUEST</div>
@@ -68,9 +69,9 @@
 
     <table class="sig">
         <tr>
-            <td>ຜູ້ເບີກ<div class="sigbox"></div><div class="muted">{{ $record->requester_name }}</div></td>
-            <td>ຜູ້ອະນຸມັດ<div class="sigbox"></div><div class="muted">{{ $record->approver_name ?? '' }} · {{ $fmt($record->approved_at) }}</div></td>
-            <td>ທີມສາງ<div class="sigbox"></div><div class="muted">{{ $record->warehouse_staff_name ?? '' }} · {{ $fmt($record->validated_at) }}</div></td>
+            <td>ຜູ້ເບີກ<div class="sigbox"></div><div class="muted">{{ $record->requester_name }} · {{ $fmtDt($record->created_at) }}</div></td>
+            <td>ຜູ້ອະນຸມັດ<div class="sigbox"></div><div class="muted">{{ $record->approver_name ?? '' }} · {{ $fmtDt($record->approved_at) }}</div></td>
+            <td>ທີມສາງ<div class="sigbox"></div><div class="muted">{{ $record->warehouse_staff_name ?? '' }} · {{ $fmtDt($record->validated_at) }}</div></td>
         </tr>
     </table>
 
