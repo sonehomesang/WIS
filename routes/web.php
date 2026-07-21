@@ -27,7 +27,6 @@ use App\Models\ExpoEvent;
 use App\Models\MaterialRequest;
 use App\Models\OutwardsGoodsAdvice;
 use App\Models\Setting;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 
 // ໜ້າ ທຳອິດ: login ແລ້ວ → dashboard, ຍັງ → ໜ້າ login (ບໍ່ ມີ ໜ້າ welcome ເກົ່າ ແລ້ວ).
@@ -83,8 +82,7 @@ Route::get('borrow/{record}/pdf', function (BorrowRecord $record) {
     );
     $record->load(['items.inventoryItem.primaryPhoto', 'items.photos', 'unit', 'department']);
 
-    return Pdf::loadView('borrow.pdf', ['record' => $record])
-        ->download("borrow-{$record->request_number}.pdf");
+    return \App\Support\PdfExport::download('borrow.pdf', ['record' => $record], "borrow-{$record->request_number}.pdf");
 })->middleware(['auth', 'verified'])->name('borrow.pdf');
 
 Route::get('borrow/{record}', Show::class)
@@ -110,8 +108,7 @@ Route::get('deposit/{record}/pdf', function (DepositRecord $record) {
     );
     $record->load(['items.photos', 'unit', 'department', 'history']);
 
-    return Pdf::loadView('deposit.pdf', ['record' => $record])
-        ->download("deposit-{$record->request_number}.pdf");
+    return \App\Support\PdfExport::download('deposit.pdf', ['record' => $record], "deposit-{$record->request_number}.pdf");
 })->middleware(['auth', 'verified'])->name('deposit.pdf');
 
 Route::get('deposit/{record}', App\Livewire\Deposit\Show::class)
@@ -144,8 +141,7 @@ Route::get('request/{record}/pdf', function (MaterialRequest $record) {
     );
     $record->load(['items', 'supplier', 'unit', 'department', 'history']);
 
-    return Pdf::loadView('request.pdf', ['record' => $record])
-        ->download("request-{$record->request_number}.pdf");
+    return \App\Support\PdfExport::download('request.pdf', ['record' => $record], "request-{$record->request_number}.pdf");
 })->middleware(['auth', 'verified'])->name('request.pdf');
 
 Route::get('request/{record}', App\Livewire\Request\Show::class)
@@ -171,8 +167,7 @@ Route::get('da/{record}/pdf', function (DiscrepancyAdvice $record) {
     );
     $record->load(['items', 'photos', 'supplier', 'history']);
 
-    return Pdf::loadView('da.pdf', ['record' => $record])
-        ->download("da-{$record->da_number}.pdf");
+    return \App\Support\PdfExport::download('da.pdf', ['record' => $record], "da-{$record->da_number}.pdf");
 })->middleware(['auth', 'verified'])->name('da.pdf');
 
 Route::get('da/{record}', App\Livewire\Da\Show::class)
@@ -197,8 +192,7 @@ Route::get('oga/{record}/pdf', function (OutwardsGoodsAdvice $record) {
     }
     $record->load(['items', 'photos', 'supplier', 'history']);
 
-    return Pdf::loadView('oga.pdf', ['record' => $record])
-        ->download("oga-{$record->oga_number}.pdf");
+    return \App\Support\PdfExport::download('oga.pdf', ['record' => $record], "oga-{$record->oga_number}.pdf");
 })->middleware(['auth', 'verified'])->name('oga.pdf');
 
 Route::get('oga/{record}', App\Livewire\Oga\Show::class)
@@ -235,8 +229,7 @@ Route::get('expo/{record}/pdf', function (ExpoEvent $record) {
     abort_unless(auth()->user()->can('expo.view'), 403);
     $record->load(['attendees', 'companies.contacts', 'companies.files']);
 
-    return Pdf::loadView('expo.pdf', ['record' => $record])
-        ->download("expo-{$record->expo_number}.pdf");
+    return \App\Support\PdfExport::download('expo.pdf', ['record' => $record], "expo-{$record->expo_number}.pdf");
 })->middleware(['auth', 'verified'])->name('expo.pdf');
 
 Route::get('expo/{record}', App\Livewire\Expo\Show::class)
