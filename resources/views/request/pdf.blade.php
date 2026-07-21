@@ -29,7 +29,7 @@
             <td style="width:54%; vertical-align:top; padding-right:14px;">
                 @include('pdf._letterhead_block')
             </td>
-            <td style="width:46%; vertical-align:top; padding:16px 0 0 14px; border-left:1px solid #94a3b8;">
+            <td style="width:46%; vertical-align:top; padding:30px 0 0 14px; border-left:1px solid #94a3b8;">
                 <div style="text-align:center; margin-bottom:7px;">
                     <div style="font-size:15px; font-weight:bold;">ໃບຂໍເບີກເຄື່ອງຈາກຮ້ານຄ້າ</div>
                     <div style="font-size:9px; color:#555;">MATERIAL REQUEST</div>
@@ -48,7 +48,7 @@
     <div style="border-bottom:2px solid #1e3a5f; margin-bottom:12px;"></div>
 
     <table class="items">
-        <thead><tr><th style="width:5%">#</th><th>ລາຍລະອຽດ</th><th style="width:10%">ໜ່ວຍ</th><th style="width:10%">ຈຳນວນ</th><th style="width:15%">ລາຄາ</th><th style="width:15%">ລວມ</th></tr></thead>
+        <thead><tr><th style="width:5%">#</th><th>ລາຍລະອຽດ</th><th style="width:8%">ໜ່ວຍ</th><th style="width:8%">ຈຳນວນ</th><th style="width:12%">ລາຄາ</th><th style="width:13%">ລວມ</th></tr></thead>
         <tbody>
             @foreach ($record->items as $it)
                 <tr>
