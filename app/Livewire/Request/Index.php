@@ -80,6 +80,9 @@ class Index extends Component
         if ($u->hasRole('supplier')) {
             return $q->where('assigned_supplier_id', $u->supplier_id);
         }
+        if ($u->transactionScope() === 'department' && $u->department_id) {
+            return $q->where('requester_dept_id', $u->department_id);
+        }
         if ($u->hasAnyRole(['approver', 'line_manager'])) {
             return $q->where(fn ($w) => $w->where('approver_user_id', $u->id)->orWhere('requester_user_id', $u->id));
         }

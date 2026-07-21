@@ -84,7 +84,8 @@ class RolesPermissions extends Component
             }
         }
         $role->syncPermissions($perms);
-        $role->scope_rules = $this->scope;
+        // merge → ຮັກສາ key ອື່ນ (ເຊັ່ນ equipmentScope) ທີ່ editor ບໍ່ ໄດ້ ຄຸມ
+        $role->scope_rules = array_merge($role->scope_rules ?? [], $this->scope);
         $role->save();
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();

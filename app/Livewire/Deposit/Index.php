@@ -76,9 +76,13 @@ class Index extends Component
             $q->onlyTrashed();
         }
 
-        if (! ($u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']))) {
-            $q->where('owner_user_id', $u->id);
+        if ($u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff'])) {
+            return $q;
         }
+        if ($u->transactionScope() === 'department' && $u->department_id) {
+            return $q->where('owner_dept_id', $u->department_id);
+        }
+        $q->where('owner_user_id', $u->id);
 
         return $q;
     }

@@ -107,12 +107,16 @@ class Index extends Component
             $q->onlyTrashed();
         }
 
-        if (! ($u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']))) {
-            $email = mb_strtolower($u->email);
-            $q->where(fn ($w) => $w->where('borrower_user_id', $u->id)
-                ->orWhere('approver_email', $email)
-                ->orWhere('acknowledge_email', $email));
+        if ($u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff'])) {
+            return $q;   // ເຫັນ ໝົດ
         }
+        if ($u->transactionScope() === 'department' && $u->department_id) {
+            return $q->where('borrower_dept_id', $u->department_id);   // ໝົດ ພະແນກ ຕົນ
+        }
+        $email = mb_strtolower($u->email);
+        $q->where(fn ($w) => $w->where('borrower_user_id', $u->id)
+            ->orWhere('approver_email', $email)
+            ->orWhere('acknowledge_email', $email));
 
         return $q;
     }

@@ -140,4 +140,26 @@ class User extends Authenticatable
     {
         return $this->equipmentScope() === 'department';
     }
+
+    /**
+     * ຂອບເຂດ ການ ເຫັນ transaction (borrow/deposit/request) ຈາກ role scope_rules —
+     * 'all' > 'department' > 'assigned' > 'own'. super_admin ໄດ້ 'all' ສະເໝີ.
+     */
+    public function transactionScope(): string
+    {
+        if ($this->is_super_admin) {
+            return 'all';
+        }
+        $scopes = $this->roles->pluck('scope_rules')
+            ->map(fn ($r) => $r['transactionScope'] ?? null)
+            ->filter()
+            ->all();
+        foreach (['all', 'department', 'assigned', 'own'] as $level) {
+            if (in_array($level, $scopes, true)) {
+                return $level;
+            }
+        }
+
+        return 'own';
+    }
 }

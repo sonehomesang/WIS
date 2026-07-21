@@ -37,6 +37,7 @@
                             <label class="block text-xs text-gray-500 mb-1">transactionScope</label>
                             <select wire:model="scope.transactionScope" @disabled(! $canEdit) class="w-full rounded-md border-gray-300 text-sm disabled:bg-gray-50">
                                 <option value="all">all</option>
+                                <option value="department">department</option>
                                 <option value="assigned">assigned</option>
                                 <option value="own">own</option>
                                 <option value="own_orders">own_orders</option>

@@ -128,6 +128,10 @@ class RolePermissionSeeder extends Seeder
         $deptAdmin['inventory'] = 'viewOnly';
         $deptAdmin['notifications'] = 'viewOnly';
         $deptAdmin['equipment'] = 'adminPerm';
+        // ເບິ່ງ transaction ຂອງ ພະແນກ ຕົນ (scope = department, ເບິ່ງ scopes())
+        foreach (['borrow', 'deposit', 'request'] as $m) {
+            $deptAdmin[$m] = 'viewOnly';
+        }
 
         return [
             'super_admin' => $superAdmin,
@@ -153,7 +157,7 @@ class RolePermissionSeeder extends Seeder
             'requester' => ['transactionScope' => 'own', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
             'supplier' => ['transactionScope' => 'own_orders', 'inventoryScope' => 'none', 'catalogScope' => 'own_supplier', 'equipmentScope' => 'none'],
             // department_admin — ເຫັນ/ຈັດການ ສະເພາະ ເຄື່ອງ ຂອງ ພະແນກ ຕົນ.
-            'department_admin' => ['transactionScope' => 'own', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'department'],
+            'department_admin' => ['transactionScope' => 'department', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'department'],
         ];
     }
 }
