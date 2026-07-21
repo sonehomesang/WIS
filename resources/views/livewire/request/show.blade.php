@@ -82,7 +82,7 @@
                 <div class="border border-emerald-200 bg-emerald-50/50 rounded-md p-3 text-xs text-gray-600">
                     ຮັບເຄື່ອງ: {{ $record->received_at?->format('d/m/Y H:i') }} · {{ $record->received_by_name }}
                     · invoice {{ $record->invoice_received ? '✓' : '✗' }} · delivery-note {{ $record->delivery_note_received ? '✓' : '✗' }} · spec {{ $record->spec_match ? '✓' : '✗' }}
-                    @if ($record->status === 'completed')<div class="mt-1">ປິດ: invoice #{{ $record->invoice_number }} · SAP {{ $record->sap_reference }}</div>@endif
+                    @if ($record->status === 'completed')<div class="mt-1">ປິດ: invoice #{{ $record->invoice_number }} · SAP {{ $record->sap_reference }}@if ($record->sapStatusLabel()) · <span class="font-medium">{{ $record->sapStatusLabel() }}</span>@endif</div>@endif
                 </div>
             @endif
 
@@ -179,7 +179,8 @@
                 <h3 class="font-medium text-gray-800">ປິດໃບເບີກ</h3>
                 <div><label class="block text-sm text-gray-600 mb-1">ເລກ Invoice <span class="text-red-500">*</span></label><input type="text" wire:model="invoiceNumber" class="w-full rounded-md border-gray-300 text-sm" />@error('invoiceNumber')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
                 <div><label class="block text-sm text-gray-600 mb-1">SAP reference <span class="text-red-500">*</span></label><input type="text" wire:model="sapReference" class="w-full rounded-md border-gray-300 text-sm" />@error('sapReference')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showClose', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="close" class="bg-emerald-700 text-white rounded px-3 py-1.5 text-sm">ຢืนยันປິດ</button></div>
+                <div><label class="block text-sm text-gray-600 mb-1">SAP PR/FR status</label><select wire:model="sapStatus" class="w-full rounded-md border-gray-300 text-sm"><option value="">— ບໍ່ລະບຸ —</option>@foreach (\App\Models\MaterialRequest::sapStatuses() as $k => $lbl)<option value="{{ $k }}">{{ $lbl }}</option>@endforeach</select>@error('sapStatus')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showClose', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="close" class="bg-emerald-700 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນປິດ</button></div>
             </div></div>
         @endif
         @if ($showDelete)

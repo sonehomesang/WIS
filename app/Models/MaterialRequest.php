@@ -30,6 +30,27 @@ class MaterialRequest extends Model
         'planned_delivery_date' => 'date',
     ];
 
+    /**
+     * SAP PR/FR procurement status (ບັນທຶກຕອນ close) — key => label.
+     *
+     * @return array<string,string>
+     */
+    public static function sapStatuses(): array
+    {
+        return [
+            'pr_raised' => 'PR raised',
+            'pr_approved' => 'PR approved',
+            'fr_issued' => 'FR issued',
+            'closed' => 'Closed',
+        ];
+    }
+
+    /** ປ້າຍ label ຂອງ sap_status (fallback = ຄ່າດິບ). */
+    public function sapStatusLabel(): ?string
+    {
+        return $this->sap_status ? (self::sapStatuses()[$this->sap_status] ?? $this->sap_status) : null;
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(MaterialRequestItem::class, 'record_id')->orderBy('sort_order')->orderBy('id');

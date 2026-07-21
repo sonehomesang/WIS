@@ -45,6 +45,9 @@ class Show extends Component
 
     public string $sapReference = '';
 
+    /** SAP PR/FR status ເລືອກຕອນ close (ວ່າງ = ບໍ່ລະບຸ). */
+    public string $sapStatus = '';
+
     public bool $showDelete = false;
 
     public string $deleteReason = '';
@@ -210,9 +213,15 @@ class Show extends Component
         $this->validate([
             'invoiceNumber' => ['required', 'string', 'max:128'],
             'sapReference' => ['required', 'string', 'max:128'],
+            // '' = ບໍ່ລະບຸ (ທາງເລືອກ); ຫຼື ໜຶ່ງໃນ key ທີ່ອະນຸຍາດ
+            'sapStatus' => [\Illuminate\Validation\Rule::in(array_merge([''], array_keys(MaterialRequest::sapStatuses())))],
         ]);
-        if ($this->act('close', ['invoice_number' => $this->invoiceNumber, 'sap_reference' => $this->sapReference])) {
-            $this->reset(['showClose', 'invoiceNumber', 'sapReference']);
+        if ($this->act('close', [
+            'invoice_number' => $this->invoiceNumber,
+            'sap_reference' => $this->sapReference,
+            'sap_status' => $this->sapStatus ?: null,
+        ])) {
+            $this->reset(['showClose', 'invoiceNumber', 'sapReference', 'sapStatus']);
         }
     }
 

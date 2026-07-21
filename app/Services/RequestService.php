@@ -271,6 +271,7 @@ class RequestService
         $r->completed_by = $actor->id;
         $r->invoice_number = $opts['invoice_number'];
         $r->sap_reference = $opts['sap_reference'];
+        $r->sap_status = $opts['sap_status'] ?? null;
     }
 
     private function doCancel(MaterialRequest $r, array $opts): void

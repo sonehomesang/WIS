@@ -109,10 +109,12 @@ test('full workflow: submit → approve → validate → dispatch → receive �
     expect($r->refresh()->status)->toBe('dispatched');
     $svc->transition($r, 'confirmReceipt', $admin, ['invoice_received' => true]);
     expect($r->refresh()->status)->toBe('received');
-    $svc->transition($r, 'close', $admin, ['invoice_number' => 'INV-1', 'sap_reference' => 'PR-9']);
+    $svc->transition($r, 'close', $admin, ['invoice_number' => 'INV-1', 'sap_reference' => 'PR-9', 'sap_status' => 'fr_issued']);
     $r->refresh();
     expect($r->status)->toBe('completed');
     expect($r->invoice_number)->toBe('INV-1');
+    expect($r->sap_status)->toBe('fr_issued');
+    expect($r->sapStatusLabel())->toBe('FR issued');
 });
 
 test('reject requires reason and moves to rejected', function () {
@@ -126,6 +128,38 @@ test('reject requires reason and moves to rejected', function () {
 
     $svc->transition($r->refresh(), 'reject', $admin, ['reason' => 'budget']);
     expect($r->refresh()->status)->toBe('rejected');
+});
+
+test('close via Livewire: SAP status optional when blank, persists when picked', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $svc = app(RequestService::class);
+
+    $toReceived = function () use ($admin, $svc) {
+        $r = aRequestDraft($admin);
+        foreach (['submit', 'approve', 'validate', 'dispatch', 'confirmReceipt'] as $step) {
+            $svc->transition($r, $step, $admin, []);
+        }
+
+        return $r->refresh();
+    };
+
+    // blank SAP status → close still succeeds (field is optional)
+    Livewire::test(Show::class, ['record' => $toReceived()])
+        ->set('invoiceNumber', 'INV-2')->set('sapReference', 'PR-2')
+        ->call('close')->assertHasNoErrors();
+
+    // picked SAP status → persists
+    $r2 = $toReceived();
+    Livewire::test(Show::class, ['record' => $r2])
+        ->set('invoiceNumber', 'INV-3')->set('sapReference', 'PR-3')->set('sapStatus', 'pr_raised')
+        ->call('close')->assertHasNoErrors();
+    expect($r2->refresh()->sap_status)->toBe('pr_raised');
+
+    // invalid SAP status → rejected
+    Livewire::test(Show::class, ['record' => $toReceived()])
+        ->set('invoiceNumber', 'INV-4')->set('sapReference', 'PR-4')->set('sapStatus', 'bogus')
+        ->call('close')->assertHasErrors('sapStatus');
 });
 
 test('close requires invoice and SAP', function () {

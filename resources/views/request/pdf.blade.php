@@ -40,7 +40,7 @@
                     <tr><td class="lbl">ຜູ້ເບີກ</td><td>{{ $record->requester_name }}</td><td class="lbl">ໜ່ວຍງານ</td><td>{{ $record->unit?->name ?? '—' }} / {{ $record->department?->name ?? '—' }}</td></tr>
                     <tr><td class="lbl">ຈຸດປະສົງ</td><td colspan="3">{{ $record->purpose ?? '—' }}</td></tr>
                     <tr><td class="lbl">ກ່ຽວຂ້ອງກັບ</td><td>{{ $record->request_type ?? '—' }} {{ $record->wo_e_form }}</td><td class="lbl">ຮ້ານຄ້າ</td><td>{{ $record->supplier?->name ?? '—' }}</td></tr>
-                    <tr><td class="lbl">ສະຖານະ</td><td colspan="3">{{ strtoupper($record->status) }}</td></tr>
+                    <tr><td class="lbl">ສະຖານະ</td><td colspan="3">{{ strtoupper($record->status) }}@if ($record->sapStatusLabel()) · SAP: {{ $record->sapStatusLabel() }}@endif</td></tr>
                 </table>
             </td>
         </tr>
