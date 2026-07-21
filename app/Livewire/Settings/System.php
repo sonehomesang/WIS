@@ -84,7 +84,7 @@ class System extends Component
         $this->curSecondaryEnabled = (bool) ($cur['secondary_enabled'] ?? true);
 
         $lh = Setting::get('letterhead', []);
-        $this->lhCompanyLo = ($lh['company_name'] ?? '') ?: 'ບໍລິສັດ ໄຟຟ້າ ນ້ຳເທີນ 2';
+        $this->lhCompanyLo = array_key_exists('company_name', $lh) ? (string) ($lh['company_name'] ?? '') : 'ບໍລິສັດ ໄຟຟ້າ ນ້ຳເທີນ 2';
         $this->lhCompanyEn = ($lh['company_name_en'] ?? '') ?: 'Nam Theun 2 Power Company Ltd.';
         $this->lhAddress1 = ($lh['address1'] ?? '') ?: 'Head Office, House No.249, Unit 15,';
         $this->lhAddress2 = ($lh['address2'] ?? '') ?: 'Lao-Thai Road, Vatnak Village, Sisattanak District,';
