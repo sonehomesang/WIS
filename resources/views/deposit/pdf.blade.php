@@ -21,10 +21,10 @@
     <style>
         * { font-family: 'Phetsarath OT', DejaVu Sans, sans-serif; }
         body { font-size: 11px; color: #111; margin: 0; }
-        h2 { text-align: center; font-size: 15px; margin: 0 0 4px; }
-        .sub { text-align: center; color: #666; font-size: 9px; margin-bottom: 12px; }
         table { width: 100%; border-collapse: collapse; }
         .fields td { border: 1px solid #555; padding: 4px 6px; }
+        .info td { border: 1px solid #555; padding: 2px 5px; font-size: 9px; vertical-align: top; }
+        .info td.lbl { white-space: nowrap; width: 1%; }
         .lbl { background: #f3f4f6; font-weight: bold; width: 18%; }
         .items th { border: 1px solid #555; background: #f3f4f6; padding: 4px; }
         .items td { border: 1px solid #555; padding: 4px; vertical-align: top; }
@@ -37,25 +37,29 @@
     </style>
 </head>
 <body>
-    @include('pdf._letterhead', ['docTitle' => 'ໃບຝາກເຄື່ອງ / DEPOSIT RECORD', 'docSub' => $record->request_type === 'pre_request' ? 'Pre-request' : 'Walk-in'])
-
-    <table class="fields">
+    <table style="margin-bottom:6px;">
         <tr>
-            <td class="lbl">ໃບຝາກເລກທີ່</td><td style="width:32%">{{ $record->request_number }}</td>
-            <td class="lbl">ວັນທີຝາກ</td><td>{{ $fmt($record->deposit_date) }}</td>
+            <td style="width:54%; vertical-align:top; padding-right:14px;">
+                @include('pdf._letterhead_block')
+            </td>
+            <td style="width:46%; vertical-align:top; padding:30px 0 0 14px;">
+                <div style="text-align:center; margin-bottom:7px;">
+                    <div style="font-size:15px; font-weight:bold;">ໃບຝາກເຄື່ອງ</div>
+                    <div style="font-size:9px; color:#555;">DEPOSIT RECORD · {{ $record->request_type === 'pre_request' ? 'Pre-request' : 'Walk-in' }}</div>
+                </div>
+                <table class="info">
+                    <tr><td class="lbl">ໃບຝາກເລກທີ່</td><td>{{ $record->request_number }}</td><td class="lbl">ວັນທີຝາກ</td><td>{{ $fmt($record->deposit_date) }}</td></tr>
+                    <tr><td class="lbl">ເຈົ້າຂອງ</td><td>{{ $record->owner_name }}</td><td class="lbl">ໜ່ວຍງານ</td><td>{{ $record->unit?->name ?? '—' }} / {{ $record->department?->name ?? '—' }}</td></tr>
+                    <tr><td class="lbl">ປະເພດ</td><td>{{ $record->item_category ?? '—' }}</td><td class="lbl">ແຫຼ່ງທີ່ມາ</td><td>{{ $record->origin_source ?? '—' }}</td></tr>
+                    <tr><td class="lbl">ໄລຍະເວລາ</td><td>{{ $record->expected_duration ?? '—' }}</td><td class="lbl">ບ່ອນເກັບ</td><td>{{ $storage }}</td></tr>
+                    <tr><td class="lbl">ເຫດຜົນ</td><td colspan="3">{{ $record->deposit_reason ?? '—' }}</td></tr>
+                    @if ($record->warehouse_instructions)<tr><td class="lbl">ຄຳແນະນຳ</td><td colspan="3">{{ $record->warehouse_instructions }}</td></tr>@endif
+                </table>
+            </td>
         </tr>
-        <tr><td class="lbl">ເຈົ້າຂອງ</td><td colspan="3">{{ $record->owner_name }} — {{ $record->unit?->name ?? '—' }} / {{ $record->department?->name ?? '—' }}</td></tr>
-        <tr>
-            <td class="lbl">ປະເພດ</td><td>{{ $record->item_category ?? '—' }}</td>
-            <td class="lbl">ແຫຼ່ງທີ່ມາ</td><td>{{ $record->origin_source ?? '—' }}</td>
-        </tr>
-        <tr>
-            <td class="lbl">ໄລຍະເວລາ</td><td>{{ $record->expected_duration ?? '—' }}</td>
-            <td class="lbl">ບ່ອນເກັບ</td><td>{{ $storage }}</td>
-        </tr>
-        <tr><td class="lbl">ເຫດผົน</td><td colspan="3">{{ $record->deposit_reason ?? '—' }}</td></tr>
-        @if ($record->warehouse_instructions)<tr><td class="lbl">ຄຳແນະນຳ</td><td colspan="3">{{ $record->warehouse_instructions }}</td></tr>@endif
     </table>
+
+    <div style="border-bottom:2px solid #1e3a5f; margin-bottom:12px;"></div>
 
     <table class="items" style="margin-top:10px">
         <thead><tr>

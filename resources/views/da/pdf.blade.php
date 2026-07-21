@@ -20,10 +20,10 @@
     <style>
         * { font-family: 'Phetsarath OT', DejaVu Sans, sans-serif; }
         body { font-size: 11px; color: #111; margin: 0; }
-        h2 { text-align: center; font-size: 15px; margin: 0 0 4px; }
-        .sub { text-align: center; color: #666; font-size: 9px; margin-bottom: 12px; }
         table { width: 100%; border-collapse: collapse; }
         .fields td { border: 1px solid #555; padding: 4px 6px; }
+        .info td { border: 1px solid #555; padding: 2px 5px; font-size: 9px; vertical-align: top; }
+        .info td.lbl { white-space: nowrap; width: 1%; }
         .lbl { background: #f3f4f6; font-weight: bold; width: 20%; }
         .items th { border: 1px solid #555; background: #f3f4f6; padding: 4px; }
         .items td { border: 1px solid #555; padding: 4px; }
@@ -37,13 +37,26 @@
     </style>
 </head>
 <body>
-    @include('pdf._letterhead', ['docTitle' => 'ໃບແຈ້ງຄວາມຜິດ / DISCREPANCY ADVICE'])
-
-    <table class="fields">
-        <tr><td class="lbl">DA No.</td><td style="width:30%">{{ $record->da_number }}</td><td class="lbl">ວັນທີ</td><td>{{ $fmt($record->date) }}</td></tr>
-        <tr><td class="lbl">Supplier</td><td>{{ $record->supplier_name ?? '—' }}</td><td class="lbl">PO</td><td>{{ $record->po_number ?? '—' }}</td></tr>
-        <tr><td class="lbl">ປະເພດຄວາມຜິດ</td><td colspan="3">{{ collect($record->discrepancy_types ?? [])->map(fn ($t) => $typeLabel[$t] ?? $t)->implode(', ') ?: '—' }}</td></tr>
+    <table style="margin-bottom:6px;">
+        <tr>
+            <td style="width:54%; vertical-align:top; padding-right:14px;">
+                @include('pdf._letterhead_block')
+            </td>
+            <td style="width:46%; vertical-align:top; padding:30px 0 0 14px;">
+                <div style="text-align:center; margin-bottom:7px;">
+                    <div style="font-size:15px; font-weight:bold;">ໃບແຈ້ງຄວາມຜິດ</div>
+                    <div style="font-size:9px; color:#555;">DISCREPANCY ADVICE</div>
+                </div>
+                <table class="info">
+                    <tr><td class="lbl">DA No.</td><td>{{ $record->da_number }}</td><td class="lbl">ວັນທີ</td><td>{{ $fmt($record->date) }}</td></tr>
+                    <tr><td class="lbl">Supplier</td><td>{{ $record->supplier_name ?? '—' }}</td><td class="lbl">PO</td><td>{{ $record->po_number ?? '—' }}</td></tr>
+                    <tr><td class="lbl">ປະເພດຄວາມຜິດ</td><td colspan="3">{{ collect($record->discrepancy_types ?? [])->map(fn ($t) => $typeLabel[$t] ?? $t)->implode(', ') ?: '—' }}</td></tr>
+                </table>
+            </td>
+        </tr>
     </table>
+
+    <div style="border-bottom:2px solid #1e3a5f; margin-bottom:12px;"></div>
 
     <div class="sec">A · Items</div>
     <table class="items">

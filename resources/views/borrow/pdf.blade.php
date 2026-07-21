@@ -25,9 +25,10 @@
     <style>
         * { font-family: 'Phetsarath OT', DejaVu Sans, sans-serif; }
         body { font-size: 11px; color: #111; margin: 0; }
-        h2 { text-align: center; font-size: 15px; margin: 0 0 12px; }
         table { width: 100%; border-collapse: collapse; }
         .fields td { border: 1px solid #555; padding: 4px 6px; }
+        .info td { border: 1px solid #555; padding: 2px 5px; font-size: 9px; vertical-align: top; }
+        .info td.lbl { white-space: nowrap; width: 1%; }
         .lbl { background: #f3f4f6; font-weight: bold; width: 18%; }
         .items th { border: 1px solid #555; background: #f3f4f6; padding: 4px; }
         .items td { border: 1px solid #555; padding: 4px; vertical-align: top; }
@@ -40,20 +41,27 @@
     </style>
 </head>
 <body>
-    @include('pdf._letterhead', ['docTitle' => 'ບັນທຶກລາຍລະອຽດ ການຢືມເຄື່ອງ / BORROW RECORD'])
-
-    <table class="fields">
+    <table style="margin-bottom:6px;">
         <tr>
-            <td class="lbl">ໃບຢືມເລກທີ່</td><td style="width:32%">{{ $record->request_number }}</td>
-            <td class="lbl">ຢືມ/ເບີກວັນທີ</td><td>{{ $fmt($record->borrow_date) }}</td>
-        </tr>
-        <tr><td class="lbl">ຜູ້ຢືມ</td><td colspan="3">{{ $record->borrower_name }} — {{ $record->unit?->name ?? '—' }} / {{ $record->department?->name ?? '—' }}</td></tr>
-        <tr><td class="lbl">ຈຸດປະສົງ</td><td colspan="3">{{ $record->purpose ?? '—' }}</td></tr>
-        <tr>
-            <td class="lbl">ກຳນົດວັນທີສົ່ງ</td><td>{{ $fmt($record->planned_return_date) }}</td>
-            <td class="lbl">ຂໍຕໍ່ອາຍຸ</td><td>{{ $ext }}</td>
+            <td style="width:54%; vertical-align:top; padding-right:14px;">
+                @include('pdf._letterhead_block')
+            </td>
+            <td style="width:46%; vertical-align:top; padding:30px 0 0 14px;">
+                <div style="text-align:center; margin-bottom:7px;">
+                    <div style="font-size:15px; font-weight:bold;">ບັນທຶກການຢືມເຄື່ອງ</div>
+                    <div style="font-size:9px; color:#555;">BORROW RECORD</div>
+                </div>
+                <table class="info">
+                    <tr><td class="lbl">ໃບຢືມເລກທີ່</td><td>{{ $record->request_number }}</td><td class="lbl">ວັນທີຢືມ</td><td>{{ $fmt($record->borrow_date) }}</td></tr>
+                    <tr><td class="lbl">ຜູ້ຢືມ</td><td>{{ $record->borrower_name }}</td><td class="lbl">ໜ່ວຍງານ</td><td>{{ $record->unit?->name ?? '—' }} / {{ $record->department?->name ?? '—' }}</td></tr>
+                    <tr><td class="lbl">ຈຸດປະສົງ</td><td colspan="3">{{ $record->purpose ?? '—' }}</td></tr>
+                    <tr><td class="lbl">ກຳນົດສົ່ງ</td><td>{{ $fmt($record->planned_return_date) }}</td><td class="lbl">ຕໍ່ອາຍຸ</td><td>{{ $ext }}</td></tr>
+                </table>
+            </td>
         </tr>
     </table>
+
+    <div style="border-bottom:2px solid #1e3a5f; margin-bottom:12px;"></div>
 
     <table class="items" style="margin-top:10px">
         <thead><tr>

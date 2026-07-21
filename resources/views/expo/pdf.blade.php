@@ -22,6 +22,8 @@
         body { font-size: 11px; color: #111; margin: 0; }
         table { width: 100%; border-collapse: collapse; }
         .fields td { border: 1px solid #555; padding: 4px 6px; }
+        .info td { border: 1px solid #555; padding: 2px 5px; font-size: 9px; vertical-align: top; }
+        .info td.lbl { white-space: nowrap; width: 1%; }
         .lbl { background: #f3f4f6; font-weight: bold; width: 20%; }
         .items th { border: 1px solid #555; background: #f3f4f6; padding: 4px; }
         .items td { border: 1px solid #555; padding: 4px; vertical-align: top; }
@@ -31,14 +33,27 @@
     </style>
 </head>
 <body>
-    @include('pdf._letterhead', ['docTitle' => 'ບົດລາຍງານ ການເຂົ້າຮ່ວມ EXPO / EXPO REPORT'])
-
-    <table class="fields">
-        <tr><td class="lbl">ງານ</td><td style="width:30%">{{ $record->title }}</td><td class="lbl">ເລກທີ</td><td>{{ $record->expo_number }}</td></tr>
-        <tr><td class="lbl">ສະຖານທີ່</td><td>{{ collect([$record->venue, $record->city, $record->country])->filter()->implode(', ') }}</td><td class="lbl">ວັນທີ</td><td>{{ $fmt($record->start_date) }}–{{ $fmt($record->end_date) }}</td></tr>
-        <tr><td class="lbl">ຫົວข้อ</td><td>{{ $record->topic ?? '—' }}</td><td class="lbl">ບໍລິສັດໃນງານ</td><td>{{ $record->total_companies_at_expo ?? '—' }}</td></tr>
-        <tr><td class="lbl">ຜູ້ໄປ</td><td colspan="3">{{ $record->attendees->pluck('user_name')->implode(', ') ?: '—' }}</td></tr>
+    <table style="margin-bottom:6px;">
+        <tr>
+            <td style="width:54%; vertical-align:top; padding-right:14px;">
+                @include('pdf._letterhead_block')
+            </td>
+            <td style="width:46%; vertical-align:top; padding:30px 0 0 14px;">
+                <div style="text-align:center; margin-bottom:7px;">
+                    <div style="font-size:15px; font-weight:bold;">ບົດລາຍງານ ການເຂົ້າຮ່ວມ EXPO</div>
+                    <div style="font-size:9px; color:#555;">EXPO REPORT</div>
+                </div>
+                <table class="info">
+                    <tr><td class="lbl">ງານ</td><td>{{ $record->title }}</td><td class="lbl">ເລກທີ</td><td>{{ $record->expo_number }}</td></tr>
+                    <tr><td class="lbl">ສະຖານທີ່</td><td>{{ collect([$record->venue, $record->city, $record->country])->filter()->implode(', ') }}</td><td class="lbl">ວັນທີ</td><td>{{ $fmt($record->start_date) }}–{{ $fmt($record->end_date) }}</td></tr>
+                    <tr><td class="lbl">ຫົວຂໍ້</td><td>{{ $record->topic ?? '—' }}</td><td class="lbl">ບໍລິສັດໃນງານ</td><td>{{ $record->total_companies_at_expo ?? '—' }}</td></tr>
+                    <tr><td class="lbl">ຜູ້ໄປ</td><td colspan="3">{{ $record->attendees->pluck('user_name')->implode(', ') ?: '—' }}</td></tr>
+                </table>
+            </td>
+        </tr>
     </table>
+
+    <div style="border-bottom:2px solid #1e3a5f; margin-bottom:12px;"></div>
 
     <div class="sec">ບໍລິສັດໜ້າສົນໃຈ ({{ $record->companies->count() }})</div>
     <table class="items">
