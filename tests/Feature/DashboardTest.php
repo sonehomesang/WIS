@@ -55,30 +55,36 @@ test('action queue surfaces overdue borrow for staff', function () {
         ->assertSee('ກິດຈະກຳລ່າສຸດ');
 });
 
-test('action queue surfaces completed requests with SAP still open for staff', function () {
+test('action queue surfaces completed requests with no PR/FR opened for staff', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $this->actingAs($admin);
 
-    // completed but SAP not yet closed → should be tracked
+    // completed but no SAP PR/FR opened yet → should be tracked
     MaterialRequest::create([
         'request_number' => 'MR'.now()->year.'-9200', 'requester_user_id' => $admin->id,
         'requester_email' => $admin->email, 'requester_name' => 'A', 'currency' => 'THB',
-        'status' => 'completed', 'sap_status' => 'pr_raised',
+        'status' => 'completed',   // sap_status left null
     ]);
-    // completed + SAP closed → should NOT be tracked
+    // completed + PR already raised → already opened → NOT tracked
     MaterialRequest::create([
         'request_number' => 'MR'.now()->year.'-9201', 'requester_user_id' => $admin->id,
         'requester_email' => $admin->email, 'requester_name' => 'B', 'currency' => 'THB',
+        'status' => 'completed', 'sap_status' => 'pr_raised',
+    ]);
+    // completed + closed → NOT tracked
+    MaterialRequest::create([
+        'request_number' => 'MR'.now()->year.'-9202', 'requester_user_id' => $admin->id,
+        'requester_email' => $admin->email, 'requester_name' => 'C', 'currency' => 'THB',
         'status' => 'completed', 'sap_status' => 'closed',
     ]);
 
     Livewire::test(Dashboard::class)
         ->assertOk()
-        ->assertSee('SAP ຍັງບໍ່ closed')
+        ->assertSee('ຍັງບໍ່ເປີດ PR/FR')
         ->assertViewHas('actionRows', function ($rows) {
-            $row = collect($rows)->firstWhere('label', 'ໃບເບີກ completed · SAP ຍັງບໍ່ closed');
+            $row = collect($rows)->firstWhere('label', 'ໃບເບີກເຄື່ອງ ຍັງບໍ່ເປີດ PR/FR');
 
-            return $row && $row['count'] === 1;   // pr_raised counted, closed excluded
+            return $row && $row['count'] === 1;   // only the sap_status-null one is counted
         });
 });
 
