@@ -11,6 +11,7 @@
         body { font-size: 11px; color: #111; margin: 0; }
         table { width: 100%; border-collapse: collapse; }
         .fields td { border: 1px solid #555; padding: 4px 6px; }
+        .info td { border: 1px solid #555; padding: 2px 5px; font-size: 9px; vertical-align: top; }
         .lbl { background: #f3f4f6; font-weight: bold; white-space: nowrap; }
         .items th { border: 1px solid #555; background: #f3f4f6; padding: 4px; }
         .items td { border: 1px solid #555; padding: 4px; vertical-align: top; }
@@ -33,13 +34,11 @@
                     <div style="font-size:15px; font-weight:bold;">ໃບຂໍເບີກເຄື່ອງຈາກຮ້ານຄ້າ</div>
                     <div style="font-size:9px; color:#555;">MATERIAL REQUEST</div>
                 </div>
-                <table class="fields">
+                <table class="info">
                     <tr><td class="lbl">ເລກທີ່</td><td>{{ $record->request_number }}</td><td class="lbl">ວັນທີ</td><td>{{ $fmt($record->created_at) }}</td></tr>
-                    <tr><td class="lbl">ຜູ້ເບີກ</td><td colspan="3">{{ $record->requester_name }}</td></tr>
-                    <tr><td class="lbl">ໜ່ວຍງານ</td><td colspan="3">{{ $record->unit?->name ?? '—' }} / {{ $record->department?->name ?? '—' }}</td></tr>
+                    <tr><td class="lbl">ຜູ້ເບີກ</td><td>{{ $record->requester_name }}</td><td class="lbl">ໜ່ວຍງານ</td><td>{{ $record->unit?->name ?? '—' }} / {{ $record->department?->name ?? '—' }}</td></tr>
                     <tr><td class="lbl">ຈຸດປະສົງ</td><td colspan="3">{{ $record->purpose ?? '—' }}</td></tr>
-                    <tr><td class="lbl">ກ່ຽວຂ້ອງກັບ</td><td colspan="3">{{ $record->request_type ?? '—' }} {{ $record->wo_e_form }}</td></tr>
-                    <tr><td class="lbl">ຮ້ານຄ້າ</td><td colspan="3">{{ $record->supplier?->name ?? '—' }}</td></tr>
+                    <tr><td class="lbl">ກ່ຽວຂ້ອງກັບ</td><td>{{ $record->request_type ?? '—' }} {{ $record->wo_e_form }}</td><td class="lbl">ຮ້ານຄ້າ</td><td>{{ $record->supplier?->name ?? '—' }}</td></tr>
                     <tr><td class="lbl">ສະຖານະ</td><td colspan="3">{{ strtoupper($record->status) }}</td></tr>
                 </table>
             </td>
