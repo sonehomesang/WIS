@@ -90,3 +90,20 @@ test('escalation guard: admin menus cannot be granted per person', function () {
     expect($u->can('da.view'))->toBeTrue();
     expect($u->can('users.view'))->toBeFalse();
 });
+
+test('A-Z filter and search match display name, username, or email', function () {
+    $u = User::factory()->create([
+        'display_name' => 'Sone', 'username' => 'khamsone',
+        'email' => 'khamsone@namtheun2.com', 'status' => 'active',
+    ]);
+    $u->syncRoles(['requester']);
+
+    actingAs($this->admin);
+
+    // "K" finds it via username/email even though display_name starts with S
+    Livewire::test(Users::class)->set('letter', 'K')->assertSee('Sone');
+    // "S" still finds it via display_name
+    Livewire::test(Users::class)->set('letter', 'S')->assertSee('Sone');
+    // search by registered name
+    Livewire::test(Users::class)->set('search', 'khamsone')->assertSee('Sone');
+});

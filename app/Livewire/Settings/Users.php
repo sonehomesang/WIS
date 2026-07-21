@@ -22,7 +22,7 @@ class Users extends Component
 
     public string $search = '';
 
-    /** A-Z group filter (ໂຕອັກສອນຂຶ້ນໜ້າ display_name); ວ່າງ = ທັງໝົດ. */
+    /** A-Z group filter (ໂຕອັກສອນ ຂຶ້ນ ໜ້າ display_name / username / email); ວ່າງ = ທັງໝົດ. */
     public string $letter = '';
 
     // Modal + form
@@ -278,9 +278,12 @@ class Users extends Component
         $users = User::with(['roles', 'unit', 'department'])
             ->when($this->search, function ($q) {
                 $q->where(fn ($w) => $w->where('display_name', 'like', "%{$this->search}%")
+                    ->orWhere('username', 'like', "%{$this->search}%")
                     ->orWhere('email', 'like', "%{$this->search}%"));
             })
-            ->when($this->letter, fn ($q) => $q->where('display_name', 'like', "{$this->letter}%"))
+            ->when($this->letter, fn ($q) => $q->where(fn ($w) => $w->where('display_name', 'like', "{$this->letter}%")
+                ->orWhere('username', 'like', "{$this->letter}%")
+                ->orWhere('email', 'like', "{$this->letter}%")))
             ->orderBy('display_name')
             ->paginate(9);
 
