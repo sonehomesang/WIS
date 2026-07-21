@@ -162,6 +162,24 @@ test('close via Livewire: SAP status optional when blank, persists when picked',
         ->call('close')->assertHasErrors('sapStatus');
 });
 
+test('request index shows purpose, WO and SAP status columns', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $svc = app(RequestService::class);
+    $r = aRequestDraft($admin);
+    $r->forceFill(['purpose' => 'Maintain PWH pump', 'request_type' => 'CM', 'wo_e_form' => 'WO-83000123'])->save();
+    foreach (['submit', 'approve', 'validate', 'dispatch', 'confirmReceipt'] as $s) {
+        $svc->transition($r, $s, $admin, []);
+    }
+    $svc->transition($r->refresh(), 'close', $admin, ['invoice_number' => 'INV', 'sap_reference' => 'PR', 'sap_status' => 'fr_issued']);
+
+    Livewire::test(Index::class)
+        ->assertSee('ຈຸດປະສົງ')            // Purpose column header
+        ->assertSee('Maintain PWH pump')  // purpose value
+        ->assertSee('WO-83000123')        // work order value
+        ->assertSee('FR issued');         // SAP status label
+});
+
 test('close requires invoice and SAP', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $this->actingAs($admin);

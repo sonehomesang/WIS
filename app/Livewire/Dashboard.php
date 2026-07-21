@@ -141,7 +141,7 @@ class Dashboard extends Component
 
         if ($u->hasRole('approver') && ! $staff) {
             $rows[] = ['label' => 'ໃບເບີກ ລໍ້ approve', 'route' => 'request',
-                'count' => MaterialRequest::whereIn('status', ['submitted', 'acknowledged'])->count(), 'alert' => true];
+                'count' => MaterialRequest::where('status', 'submitted')->count(), 'alert' => true];
             $rows[] = ['label' => 'ການຢືມ ລໍ້ approve', 'route' => 'borrow',
                 'count' => BorrowRecord::whereIn('status', ['draft', 'acknowledged'])->count(), 'alert' => false];
         }

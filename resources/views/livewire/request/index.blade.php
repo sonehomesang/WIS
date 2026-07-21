@@ -46,10 +46,13 @@
                     <tr>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ໄອດີ <span class="text-gray-400">(MR No.)</span></th>
                         <th class="text-left font-semibold px-4 py-2">ຜູ້ເບີກ <span class="text-gray-400">(Requester)</span></th>
-                        <th class="text-left font-semibold px-4 py-2 w-full">ລາຍການ <span class="text-gray-400">(Items)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍການ <span class="text-gray-400">(Items)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 w-full">ຈຸດປະສົງ <span class="text-gray-400">(Purpose)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">WO <span class="text-gray-400">(ກ່ຽວຂ້ອງ)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ມູນຄ່າ <span class="text-gray-400">(Grand total)</span></th>
                         <th class="text-left font-semibold px-4 py-2">Supplier</th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖานะ <span class="text-gray-400">(Status)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">SAP</th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍລະອຽດ</th>
                     </tr>
                 </thead>
@@ -59,10 +62,13 @@
                         <tr wire:key="mr-{{ $r->id }}" class="hover:bg-gray-50">
                             <td class="px-4 py-2 align-top whitespace-nowrap"><a href="{{ route('request.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
                             <td class="px-4 py-2 align-top"><div class="font-semibold text-gray-800">{{ $r->requester_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->requester_email }}</div></td>
-                            <td class="px-4 py-2 align-top text-gray-600 w-full">{{ $r->items->count() }} ລາຍການ<div class="text-xs text-gray-400">Qty {{ $r->items->sum('quantity') }}</div></td>
+                            <td class="px-4 py-2 align-top text-gray-600 whitespace-nowrap">{{ $r->items->count() }} ລາຍການ<div class="text-xs text-gray-400">Qty {{ $r->items->sum('quantity') }}</div></td>
+                            <td class="px-4 py-2 align-top text-gray-600 w-full">{{ $r->purpose ?: '—' }}</td>
+                            <td class="px-4 py-2 align-top text-gray-600 whitespace-nowrap">{{ $r->wo_e_form ?: '—' }}@if ($r->request_type)<div class="text-xs text-gray-400">{{ $r->request_type }}</div>@endif</td>
                             <td class="px-4 py-2 align-top text-gray-700 whitespace-nowrap"><span class="font-medium">{{ number_format($r->grand_total, 2) }}</span> <span class="text-xs text-gray-400">{{ $r->currency }}</span>@if ($r->vat_enabled)<div class="text-xs text-gray-400">+VAT {{ rtrim(rtrim(number_format($r->vat_rate, 2), '0'), '.') }}%</div>@endif</td>
                             <td class="px-4 py-2 align-top text-xs text-gray-600">{{ $r->supplier?->name ?? '—' }}</td>
                             <td class="px-4 py-2 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap">@if ($r->sapStatusLabel())<span class="inline-flex items-center text-xs font-medium rounded-full px-2 py-0.5 bg-violet-50 text-violet-700">{{ $r->sapStatusLabel() }}</span>@else<span class="text-gray-300">—</span>@endif</td>
                             <td class="px-4 py-2 align-top whitespace-nowrap">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืน?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50">↩ ກູ້คืน</button>
@@ -72,7 +78,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີໃບເບີກ</td></tr>
+                        <tr><td colspan="10" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີໃບເບີກ</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -88,6 +94,8 @@
                             <div class="font-mono text-xs text-indigo-600">{{ $r->request_number }}</div>
                             <div class="font-semibold text-gray-800">{{ $r->requester_name }}</div>
                             <div class="text-xs text-gray-500">{{ $r->items->count() }} ລາຍການ · {{ number_format($r->grand_total, 2) }} {{ $r->currency }}</div>
+                            @if ($r->purpose)<div class="text-xs text-gray-500 truncate">{{ $r->purpose }}</div>@endif
+                            @if ($r->wo_e_form || $r->sapStatusLabel())<div class="text-xs text-gray-400 truncate">@if ($r->wo_e_form)WO {{ $r->wo_e_form }}@endif @if ($r->sapStatusLabel())<span class="text-violet-600">SAP: {{ $r->sapStatusLabel() }}</span>@endif</div>@endif
                         </div>
                         <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $cls }} shrink-0">{{ $lbl }}</span>
                     </div>
