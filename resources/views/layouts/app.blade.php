@@ -23,7 +23,7 @@
             <x-layout.sidebar />
 
             <!-- Main column (shifted right of the sidebar on desktop) -->
-            <div class="md:pl-60">
+            <div class="md:pl-64">
                 @php
                     // Page title ໄດນາມິກ ຕາມ route ປັດຈຸບັນ (ແທນ logo). Fallback = headline ຂອງ route name.
                     $routeName = request()->route()?->getName();
