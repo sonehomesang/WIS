@@ -37,6 +37,37 @@ test('duplicate category names are rejected', function () {
         ->assertHasErrors('cName');
 });
 
+test('category filter and form dropdown both read the active master, not record strings', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+
+    EquipmentCategory::create(['name' => 'Sling-Lifting', 'is_active' => true]);
+    EquipmentCategory::create(['name' => 'Power tool', 'is_active' => true]);
+    EquipmentCategory::create(['name' => 'Retired cat', 'is_active' => false]);   // disabled → hidden
+    // a legacy record whose category string is NOT in the master
+    Equipment::create(['asset_code' => 'EQ-LEG', 'name' => 'Old sling', 'quantity' => 1, 'category' => 'Sling']);
+
+    Livewire::test(Index::class)
+        ->assertViewHas('categories', fn ($c) => $c->contains('Sling-Lifting')       // filter ← master
+            && $c->contains('Power tool')
+            && ! $c->contains('Retired cat')                                          // inactive excluded
+            && ! $c->contains('Sling'))                                               // legacy record string NOT shown
+        ->assertViewHas('categoryOptions', fn ($c) => $c->contains('Sling-Lifting')); // form ← same master
+});
+
+test('renaming a category cascades to existing equipment records', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+    $cat = EquipmentCategory::create(['name' => 'Sling-Lifting', 'is_active' => true]);
+    Equipment::create(['asset_code' => 'EQ-C1', 'name' => 'Chain sling', 'quantity' => 1, 'category' => 'Sling-Lifting']);
+
+    Livewire::test(Categories::class)
+        ->call('editCategory', $cat->id)
+        ->set('cName', 'Lifting Gear')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Equipment::where('asset_code', 'EQ-C1')->value('category'))->toBe('Lifting Gear');
+});
+
 test('a requester cannot manage equipment categories', function () {
     $u = User::factory()->create();
     $u->syncRoles(['requester']);

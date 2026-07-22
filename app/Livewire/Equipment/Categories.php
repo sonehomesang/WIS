@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Equipment;
 
+use App\Models\Equipment;
 use App\Models\EquipmentCategory;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -73,7 +74,13 @@ class Categories extends Component
         ];
 
         if ($this->editingId) {
-            EquipmentCategory::findOrFail($this->editingId)->update($attrs);
+            $cat = EquipmentCategory::findOrFail($this->editingId);
+            $oldName = $cat->name;
+            $cat->update($attrs);
+            // rename cascade: ຮັກສາ equipment records ໃຫ້ຕົງກັບ master (ບໍ່ໃຫ້ orphan ຕອນປ່ຽນຊື່).
+            if ($oldName !== $attrs['name']) {
+                Equipment::where('category', $oldName)->update(['category' => $attrs['name']]);
+            }
         } else {
             EquipmentCategory::create($attrs + ['created_by' => auth()->id()]);
         }

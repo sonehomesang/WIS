@@ -777,7 +777,8 @@ class Index extends Component
             'responsibleUsers' => User::orderBy('display_name')->get(['id', 'display_name']),
             'categoryOptions' => $categoryOptions,
             'canManageCategories' => $canManageCategories,
-            'categories' => Equipment::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
+            // filter dropdown ← ອ່ານ master ດຽວກັນກັບ ຟອມ (EquipmentCategory ທີ່ເປີດ), ບໍ່ແມ່ນ distinct ຈາກ record.
+            'categories' => EquipmentCategory::where('is_active', true)->orderBy('sort_order')->orderBy('name')->pluck('name'),
             'inspections' => EquipmentInspection::with('equipment')
                 ->when($deptScoped, fn ($q) => $q->whereHas('equipment', fn ($w) => $w->where('department_id', $deptId)))
                 ->orderByDesc('inspected_at')->orderByDesc('id')->limit(50)->get(),
