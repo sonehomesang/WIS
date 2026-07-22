@@ -195,3 +195,33 @@ test('a department-scoped admin cannot access the central template manager', fun
 
     Livewire::test(MaintenanceTemplates::class)->assertForbidden();
 });
+
+test('a maintenance template can be scoped to a category or general (no equipment needed)', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+
+    Livewire::test(MaintenanceTemplates::class)
+        ->call('newTemplate')
+        ->set('tName', 'Cat PM')->set('tScope', 'category')->set('tCategory', 'Vehicles')
+        ->set('tItems', [['label' => 'Grease', 'remark' => '', 'cycles' => ['monthly' => 'C']]])
+        ->call('save')->assertHasNoErrors();
+    $cat = MaintenanceTemplate::where('name', 'Cat PM')->first();
+    expect($cat->equipment_id)->toBeNull();
+    expect($cat->category)->toBe('Vehicles');
+
+    Livewire::test(MaintenanceTemplates::class)
+        ->call('newTemplate')
+        ->set('tName', 'Gen PM')->set('tScope', 'general')
+        ->set('tItems', [['label' => 'Walk-around', 'remark' => '', 'cycles' => ['daily' => 'C']]])
+        ->call('save')->assertHasNoErrors();
+    $gen = MaintenanceTemplate::where('name', 'Gen PM')->first();
+    expect($gen->equipment_id)->toBeNull();
+    expect($gen->category)->toBeNull();
+});
+
+test('category scope requires a category', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+    Livewire::test(MaintenanceTemplates::class)
+        ->call('newTemplate')
+        ->set('tName', 'No cat')->set('tScope', 'category')->set('tCategory', '')
+        ->call('save')->assertHasErrors('tCategory');
+});

@@ -167,15 +167,20 @@
                     </div>
                 @endif
 
-                {{-- ໃຊ້ ແມ່ແບບ ເຊັກລິສ (ຖ້າ ເຄື່ອງ ນີ້ ມີ ແມ່ແບບ) --}}
-                @if ($mEquipmentId && $templateOptions->isNotEmpty())
+                {{-- ໃຊ້ ແມ່ແບບ ເຊັກລິສ — ຄັດ ຕາມ ເຄື່ອງ/ປະເພດ/ທົ່ວໄປ; ຕິກ "ໂຊ ທັງໝົດ" ໄດ້ --}}
+                @if ($mEquipmentId)
                     <div>
-                        <label class="block text-sm text-gray-600 mb-1">ໃຊ້ ແມ່ແບບ ເຊັກລິສ <span class="text-xs text-gray-400">(ຖ້າ ຕ້ອງການ)</span></label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-sm text-gray-600">ໃຊ້ ແມ່ແບບ ເຊັກລິສ <span class="text-xs text-gray-400">(ຖ້າ ຕ້ອງການ)</span></label>
+                            <label class="inline-flex items-center gap-1.5 text-xs text-gray-500"><input type="checkbox" wire:model.live="mShowAllTemplates" class="rounded border-gray-300 text-sky-600 w-3.5 h-3.5"> ໂຊ ທັງໝົດ</label>
+                        </div>
                         <select wire:model.live="mTemplateId" class="w-full rounded-md border-gray-300 text-sm">
                             <option value="">— ບໍ່ ໃຊ້ ແມ່ແບບ —</option>
                             @foreach ($templateOptions as $tpl)<option value="{{ $tpl->id }}">{{ $tpl->name }}</option>@endforeach
                         </select>
-                        @if ($mTemplateId && $mFrequency === '')
+                        @if ($templateOptions->isEmpty())
+                            <p class="text-xs text-gray-400 mt-1">ບໍ່ ມີ ແມ່ແບບ ກົງ ກັບ ເຄື່ອງ ນີ້ — ຕິກ "ໂຊ ທັງໝົດ" ຫຼື ສ້າງ ແມ່ແບບ ໃໝ່ (ຕໍ່ ປະເພດ/ທົ່ວໄປ).</p>
+                        @elseif ($mTemplateId && $mFrequency === '')
                             <p class="text-xs text-amber-600 mt-1">ເລືອກ "ຮອບ Service" ຂ້າງລຸ່ມ ເພື່ອ ໃຫ້ ລາຍການ ເຊັກລິສ ຂຶ້ນ ຕາມ ຮອບ</p>
                         @endif
                     </div>

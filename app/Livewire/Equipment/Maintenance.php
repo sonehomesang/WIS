@@ -32,6 +32,9 @@ class Maintenance extends Component
     /** ເບິ່ງ ບັນທຶກ ບຳລຸງ ແບບ read-only (ບໍ່ ຕ້ອງ ສິດ ແກ້). */
     public ?int $viewingId = null;
 
+    /** ໂຊ ແມ່ແບບ ທັງໝົດ (ບໍ່ ຄັດ ຕາມ ເຄື່ອງ/ປະເພດ) — ທາງເລືອກ ຢືດຢຸ່ນ. */
+    public bool $mShowAllTemplates = false;
+
     public ?int $mEquipmentId = null;
 
     public string $mEquipmentLabel = '';
@@ -392,11 +395,20 @@ class Maintenance extends Component
             ->orderByDesc('maintenance_date')->orderByDesc('id')
             ->paginate(10);
 
-        // ແມ່ແບບ ເຊັກລິສ ຂອງ ເຄື່ອງ ທີ່ ເລືອກ (ໃຫ້ ເລືອກ ໃນ ຟອມ).
-        $templateOptions = $this->mEquipmentId
-            ? MaintenanceTemplate::where('equipment_id', $this->mEquipmentId)
-                ->where('is_active', true)->orderBy('name')->get(['id', 'name'])
-            : collect();
+        // ແມ່ແບບ ເຊັກລິສ ສຳລັບ ເຄື່ອງ ທີ່ ເລືອກ — ຄັດ ຕາມ scope: ຕໍ່ ເຄື່ອງ ນີ້ · ຕໍ່ ປະເພດ ຂອງ ມັນ · ທົ່ວໄປ.
+        // ຕິກ "ໂຊ ທັງໝົດ" → ໂຊ ແມ່ແບບ active ໝົດ (ບໍ່ ຄັດ).
+        $templateOptions = collect();
+        if ($this->mEquipmentId) {
+            $q = MaintenanceTemplate::where('is_active', true);
+            if (! $this->mShowAllTemplates) {
+                $eqCat = Equipment::whereKey($this->mEquipmentId)->value('category');
+                $q->where(fn ($w) => $w
+                    ->where('equipment_id', $this->mEquipmentId)                              // ຕໍ່ ເຄື່ອງ ນີ້
+                    ->orWhere(fn ($g) => $g->whereNull('equipment_id')->where(fn ($c) => $c   // ທົ່ວໄປ / ຕໍ່ ປະເພດ
+                        ->whereNull('category')->when($eqCat, fn ($x) => $x->orWhere('category', $eqCat)))));
+            }
+            $templateOptions = $q->orderBy('name')->get(['id', 'name', 'equipment_id', 'category']);
+        }
 
         $historyEquipment = $this->historyEquipmentId ? Equipment::find($this->historyEquipmentId) : null;
         $history = $this->historyEquipmentId

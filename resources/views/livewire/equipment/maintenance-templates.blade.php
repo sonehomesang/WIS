@@ -78,19 +78,38 @@
                         @error('tName')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block text-sm text-gray-600 mb-1">ເລືອກ ເຄື່ອງ <span class="text-red-500">*</span></label>
-                        <select wire:model.live="tEquipmentId" class="w-full rounded-md border-gray-300 text-sm">
-                            <option value="">— ເລືອກ ເຄື່ອງ ຈາກ ທະບຽນ —</option>
-                            @foreach ($equipmentOptions as $eq)
-                                <option value="{{ $eq->id }}">{{ $eq->asset_code }} · {{ $eq->name }}</option>
-                            @endforeach
+                        <label class="block text-sm text-gray-600 mb-1">ໃຊ້ ກັບ <span class="text-red-500">*</span></label>
+                        <select wire:model.live="tScope" class="w-full rounded-md border-gray-300 text-sm">
+                            <option value="equipment">ເຄື່ອງ ໜຶ່ງ ໜ່ວຍ (ລຸ້ນ ສະເພາະ)</option>
+                            <option value="category">ໝົດ ໃນ ປະເພດ (ທຸກ ເຄື່ອງ ປະເພດ ດຽວກັນ)</option>
+                            <option value="general">ທົ່ວໄປ (ທຸກ ເຄື່ອງ)</option>
                         </select>
-                        @error('tEquipmentId')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">ປະເພດ ເຄື່ອງ <span class="text-xs text-gray-400">(ດຶງ ຈາກ ເຄື່ອງ)</span></label>
-                        <div class="w-full rounded-md border border-gray-200 bg-gray-50 text-sm px-3 py-2 text-gray-600">{{ $selectedCategory ?: '—' }}</div>
-                    </div>
+                    @if ($tScope === 'equipment')
+                        <div class="md:col-span-2">
+                            <label class="block text-sm text-gray-600 mb-1">ເລືອກ ເຄື່ອງ <span class="text-red-500">*</span></label>
+                            <select wire:model.live="tEquipmentId" class="w-full rounded-md border-gray-300 text-sm">
+                                <option value="">— ເລືອກ ເຄື່ອງ ຈາກ ທະບຽນ —</option>
+                                @foreach ($equipmentOptions as $eq)
+                                    <option value="{{ $eq->id }}">{{ $eq->asset_code }} · {{ $eq->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('tEquipmentId')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <p class="text-xs text-gray-400 mt-1">ປະເພດ: {{ $selectedCategory ?: '—' }} (ດຶງ ຈາກ ເຄື່ອງ)</p>
+                        </div>
+                    @elseif ($tScope === 'category')
+                        <div class="md:col-span-2">
+                            <label class="block text-sm text-gray-600 mb-1">ປະເພດ ເຄື່ອງ <span class="text-red-500">*</span></label>
+                            <select wire:model="tCategory" class="w-full rounded-md border-gray-300 text-sm">
+                                <option value="">— ເລືອກ ປະເພດ —</option>
+                                @foreach ($categories as $cat)<option value="{{ $cat }}">{{ $cat }}</option>@endforeach
+                            </select>
+                            @error('tCategory')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <p class="text-xs text-gray-400 mt-1">ໃຊ້ ໄດ້ ກັບ ທຸກ ເຄື່ອງ ໃນ ປະເພດ ນີ້.</p>
+                        </div>
+                    @else
+                        <div class="md:col-span-2 text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-md px-3 py-2">ໃຊ້ ໄດ້ ກັບ ທຸກ ເຄື່ອງ (ບໍ່ ຜູກ ເຄື່ອງ/ປະເພດ).</div>
+                    @endif
                     <div class="flex items-end">
                         <label class="inline-flex items-center gap-2 text-sm text-gray-700">
                             <input type="checkbox" wire:model="tActive" class="rounded border-gray-300 text-sky-600"> ເປີດ ໃຊ້

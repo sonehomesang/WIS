@@ -21,8 +21,14 @@ class MaintenanceTemplates extends Component
 
     public string $tName = '';
 
-    // ເຄື່ອງ ທີ່ ແມ່ແບບ ນີ້ ໃຊ້ ນຳ — ປະເພດ ດຶງ ຈາກ ເຄື່ອງ ນີ້.
+    // scope ຂອງ ແມ່ແບບ: equipment (ເຄື່ອງ ໜຶ່ງ ໜ່ວຍ) · category (ໝົດ ໃນ ປະເພດ) · general (ທຸກ ເຄື່ອງ).
+    public string $tScope = 'equipment';
+
+    // ເຄື່ອງ ທີ່ ແມ່ແບບ ນີ້ ໃຊ້ ນຳ (ຖ້າ scope=equipment) — ປະເພດ ດຶງ ຈາກ ເຄື່ອງ ນີ້.
     public ?int $tEquipmentId = null;
+
+    // ປະເພດ (ຖ້າ scope=category).
+    public string $tCategory = '';
 
     public string $tMethod = '';
 
@@ -64,6 +70,8 @@ class MaintenanceTemplates extends Component
         $this->editingId = $t->id;
         $this->tName = $t->name;
         $this->tEquipmentId = $t->equipment_id;
+        $this->tCategory = $t->equipment_id ? '' : ($t->category ?? '');
+        $this->tScope = $t->equipment_id ? 'equipment' : ($t->category ? 'category' : 'general');
         $this->tMethod = $t->method ?? '';
         $this->tItems = $t->normalizedItems() ?: [$this->blankItem()];
         $this->tActive = $t->is_active;
@@ -107,7 +115,9 @@ class MaintenanceTemplates extends Component
 
         $data = $this->validate([
             'tName' => ['required', 'string', 'max:256'],
-            'tEquipmentId' => ['required', 'exists:equipment,id'],
+            'tScope' => ['required', 'in:equipment,category,general'],
+            'tEquipmentId' => [$this->tScope === 'equipment' ? 'required' : 'nullable', 'exists:equipment,id'],
+            'tCategory' => [$this->tScope === 'category' ? 'required' : 'nullable', 'string', 'max:128'],
             'tMethod' => ['nullable', 'string', 'max:2000'],
             'tItems.*.label' => ['nullable', 'string', 'max:256'],
             'tItems.*.remark' => ['nullable', 'string', 'max:256'],
@@ -137,13 +147,17 @@ class MaintenanceTemplates extends Component
             ->values()
             ->all();
 
-        // ປະເພດ ດຶງ ຈາກ ເຄື່ອງ ທີ່ ເລືອກ (ຜູກ ໄວ້ ຕັ້ງແຕ່ ຕອນ ສ້າງ ທະບຽນ ເຄື່ອງ).
-        $e = Equipment::findOrFail($data['tEquipmentId']);
+        // scope → equipment_id + category. equipment: ຜູກ ເຄື່ອງ (ປະເພດ ດຶງ ຈາກ ເຄື່ອງ) · category: ໝົດ ໃນ ປະເພດ · general: ທຸກ ເຄື່ອງ.
+        [$equipmentId, $category] = match ($this->tScope) {
+            'equipment' => [($e = Equipment::findOrFail($data['tEquipmentId']))->id, $e->category],
+            'category' => [null, $data['tCategory'] ?: null],
+            default => [null, null],
+        };
 
         $attrs = [
             'name' => $data['tName'],
-            'equipment_id' => $e->id,
-            'category' => $e->category,
+            'equipment_id' => $equipmentId,
+            'category' => $category,
             'method' => $data['tMethod'] ?: null,
             'items' => $items,
             'is_active' => $this->tActive,
@@ -170,7 +184,9 @@ class MaintenanceTemplates extends Component
     {
         $this->editingId = null;
         $this->tName = '';
+        $this->tScope = 'equipment';
         $this->tEquipmentId = null;
+        $this->tCategory = '';
         $this->tMethod = '';
         $this->tItems = [];
         $this->tActive = true;
@@ -191,7 +207,11 @@ class MaintenanceTemplates extends Component
             ? MaintenanceTemplate::with('equipment')->find($this->viewingId)
             : null;
 
+        $categories = \App\Models\EquipmentCategory::where('is_active', true)
+            ->orderBy('sort_order')->orderBy('name')->pluck('name');
+
         return view('livewire.equipment.maintenance-templates', [
+            'categories' => $categories,
             'templates' => MaintenanceTemplate::with('equipment')->orderBy('name')->get(),
             'equipmentOptions' => $equipmentOptions,
             'selectedCategory' => $selectedCategory,

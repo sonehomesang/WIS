@@ -277,3 +277,25 @@ test('a maintenance record can be viewed read-only with its checklist', function
         ->assertSee('PM viewable')
         ->assertSee('ກວດ ເບກ');
 });
+
+test('the PM template picker matches by equipment, category, or general (+ show all)', function () {
+    actingAs($this->staff);
+    $eq = Equipment::create(['asset_code' => 'FL-M', 'name' => 'Forklift', 'quantity' => 1, 'category' => 'Vehicles']);
+
+    MaintenanceTemplate::create(['name' => 'Specific PM', 'equipment_id' => $eq->id, 'category' => 'Vehicles', 'is_active' => true, 'items' => []]);
+    MaintenanceTemplate::create(['name' => 'Category PM', 'equipment_id' => null, 'category' => 'Vehicles', 'is_active' => true, 'items' => []]);
+    MaintenanceTemplate::create(['name' => 'General PM', 'equipment_id' => null, 'category' => null, 'is_active' => true, 'items' => []]);
+    MaintenanceTemplate::create(['name' => 'Sling PM', 'equipment_id' => null, 'category' => 'Sling', 'is_active' => true, 'items' => []]);
+
+    Livewire::test(Maintenance::class)
+        ->call('newMaintenance')
+        ->call('pickEquipment', $eq->id)
+        ->assertViewHas('templateOptions', function ($o) {
+            $n = $o->pluck('name')->all();
+
+            return in_array('Specific PM', $n) && in_array('Category PM', $n)
+                && in_array('General PM', $n) && ! in_array('Sling PM', $n);   // Sling excluded
+        })
+        ->set('mShowAllTemplates', true)
+        ->assertViewHas('templateOptions', fn ($o) => $o->pluck('name')->contains('Sling PM'));   // show all
+});
