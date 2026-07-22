@@ -69,6 +69,9 @@
                             @endif
                         </td>
                         <td class="px-3 py-2 pr-4 text-right whitespace-nowrap text-gray-500">
+                            <button wire:click="viewRecord({{ $m->id }})" class="hover:text-sky-700 p-1" title="ເບິ່ງ">
+                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                            </button>
                             @php $ngc = collect($m->checklist ?? [])->where('status', 'ng')->count(); @endphp
                             @if ($ngc && $m->type !== 'repair')
                                 @can('equipment.create')
@@ -114,6 +117,7 @@
                     <div class="text-[11px] mt-0.5"><span class="text-gray-500">☑ ເຊັກລິສ {{ $ckM->count() }} ຂໍ້</span>@if ($ngM) <span class="text-red-600 font-medium">· {{ $ngM }} ບັນຫາ</span>@endif</div>
                 @endif
                 <div class="flex gap-2 mt-2">
+                    <button wire:click="viewRecord({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">👁 ເບິ່ງ</button>
                     @php $ngc = collect($m->checklist ?? [])->where('status', 'ng')->count(); @endphp
                     @if ($ngc && $m->type !== 'repair')
                         @can('equipment.create')<button wire:click="createRepairsFromNg({{ $m->id }})" wire:confirm="ສ້າງ ໃບ ສ້ອມ (CM) ຈາກ {{ $ngc }} ຂໍ້ NG?" class="text-xs border border-amber-300 text-amber-700 rounded px-2 py-1 min-h-[36px]">🔧 ສ້າງ CM ({{ $ngc }})</button>@endcan
@@ -326,6 +330,64 @@
                 @endif
                 <div class="flex justify-end pt-1 border-t">
                     <button wire:click="$set('historyEquipmentId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- View record (read-only) --}}
+    @if ($viewing)
+        <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="m-view">
+            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="text-lg font-medium text-gray-800">{{ $viewing->title }}</h3>
+                            <span class="text-xs rounded px-1.5 py-0.5 {{ $tBadge[$viewing->type] ?? 'bg-gray-100 text-gray-600' }}">{{ $tLabels[$viewing->type] ?? $viewing->type }}</span>
+                            <span class="text-xs rounded px-1.5 py-0.5 {{ $sBadge[$viewing->status] ?? 'bg-gray-100 text-gray-600' }}">{{ $sLabels[$viewing->status] ?? $viewing->status }}</span>
+                        </div>
+                        <div class="text-sm text-gray-500 mt-0.5">{{ $viewing->equipment?->asset_code }} · {{ $viewing->equipment?->name }}</div>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        @can('equipment.edit')<button wire:click="editMaintenance({{ $viewing->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-md px-2.5 py-1.5 hover:bg-sky-50">ແກ້ໄຂ</button>@endcan
+                        <button wire:click="$set('viewingId', null)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div><span class="text-gray-400 text-xs block">ວັນທີ</span>{{ $viewing->maintenance_date?->format('d/m/Y') ?? '—' }}</div>
+                    <div><span class="text-gray-400 text-xs block">ຮອບ</span>{{ $viewing->frequency ? (\App\Models\EquipmentMaintenance::FREQ_LABELS[$viewing->frequency] ?? $viewing->frequency) : '—' }}</div>
+                    <div><span class="text-gray-400 text-xs block">ຄ່າ ໃຊ້ຈ່າຍ</span>{{ $viewing->cost !== null ? number_format($viewing->cost).' ກີບ' : '—' }}</div>
+                    <div><span class="text-gray-400 text-xs block">Service ໜ້າ</span>{{ $viewing->next_service_date?->format('d/m/Y') ?? '—' }}</div>
+                    <div class="col-span-2"><span class="text-gray-400 text-xs block">ຜູ້ ເຮັດ</span>{{ $viewing->performed_by ?: '—' }}</div>
+                </div>
+
+                @if ($viewing->description)<div class="text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-md px-3 py-2">{{ $viewing->description }}</div>@endif
+
+                @if ($viewing->checklist && count($viewing->checklist))
+                    @php $vck = collect($viewing->checklist); $vng = $vck->where('status', 'ng')->count(); @endphp
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">ເຊັກລິສ {{ $vck->count() }} ຂໍ້</span>
+                        @if ($vng)<span class="text-red-600 font-medium">{{ $vng }} ບັນຫາ (NG)</span>@else<span class="text-green-600">ຜ່ານ ໝົດ</span>@endif
+                    </div>
+                    <div class="border border-gray-200 rounded-md divide-y divide-gray-50 text-xs">
+                        @foreach ($viewing->checklist as $c)
+                            @php $st = $c['status'] ?? 'na'; @endphp
+                            <div class="px-3 py-1.5 flex items-start gap-2 {{ $st === 'ng' ? 'bg-red-50' : '' }}">
+                                <span class="shrink-0 w-5 text-center font-bold {{ $st === 'ok' ? 'text-green-600' : ($st === 'ng' ? 'text-red-600' : 'text-gray-300') }}">{{ $st === 'ok' ? '✓' : ($st === 'ng' ? '✗' : '—') }}</span>
+                                <div class="min-w-0">
+                                    <div class="text-gray-700 leading-tight">{{ $c['label'] ?? '' }}@if (! empty($c['action'])) <span class="text-[10px] rounded px-1 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $c['action'] }}</span>@endif</div>
+                                    @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                <div class="flex justify-end pt-1 border-t">
+                    <button wire:click="$set('viewingId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
                 </div>
             </div>
         </div>

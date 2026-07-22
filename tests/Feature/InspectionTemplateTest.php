@@ -280,3 +280,19 @@ test('an existing inspection can be edited', function () {
     expect($ins->fresh()->result)->toBe('fail');
     expect($ins->fresh()->notes)->toBe('corrected');
 });
+
+test('an inspection template can be previewed read-only (view button)', function () {
+    $staff = User::factory()->create();
+    $staff->syncRoles(['warehouse_staff']);
+    actingAs($staff);
+    $t = InspectionTemplate::create([
+        'name' => 'Preview me', 'category' => 'Forklift', 'is_active' => true,
+        'items' => [['label' => 'Check brakes', 'applies' => 'both', 'freqs' => ['pre_use']]],
+    ]);
+
+    Livewire::test(InspectionTemplates::class)
+        ->call('viewTemplate', $t->id)
+        ->assertSet('viewingId', $t->id)
+        ->assertSee('Preview me')
+        ->assertSee('Check brakes');
+});

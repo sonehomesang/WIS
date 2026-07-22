@@ -14,6 +14,9 @@ class InspectionTemplates extends Component
 
     public ?int $editingId = null;
 
+    /** ເບິ່ງ ແມ່ແບບ ແບບ read-only (ບໍ່ ຕ້ອງ ສິດ ແກ້ໄຂ). */
+    public ?int $viewingId = null;
+
     public string $tName = '';
 
     public string $tCategory = '';
@@ -41,6 +44,12 @@ class InspectionTemplates extends Component
         $this->resetForm();
         $this->tItems = [['label' => '', 'applies' => 'both', 'freqs' => []]];
         $this->showModal = true;
+    }
+
+    /** ເບິ່ງ ແມ່ແບບ read-only — ໃຜ ເຫັນ ໜ້າ ນີ້ ກໍ່ ເບິ່ງ ໄດ້ (ບໍ່ ຕ້ອງ ສິດ ແກ້). */
+    public function viewTemplate(int $id): void
+    {
+        $this->viewingId = $id;
     }
 
     public function editTemplate(int $id): void
@@ -142,6 +151,7 @@ class InspectionTemplates extends Component
     {
         return view('livewire.equipment.inspection-templates', [
             'templates' => InspectionTemplate::orderBy('name')->get(),
+            'viewing' => $this->viewingId ? InspectionTemplate::find($this->viewingId) : null,
         ]);
     }
 }

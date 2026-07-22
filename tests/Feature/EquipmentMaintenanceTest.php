@@ -262,3 +262,18 @@ test('C2: creating CM from NG checklist items makes linked repair records, idemp
     Livewire::test(Maintenance::class)->call('createRepairsFromNg', $pm->id);   // again
     expect(EquipmentMaintenance::where('source_maintenance_id', $pm->id)->count())->toBe(2);  // no duplicates
 });
+
+test('a maintenance record can be viewed read-only with its checklist', function () {
+    actingAs($this->staff);
+    $e = Equipment::create(['asset_code' => 'FL-VW', 'name' => 'Forklift', 'quantity' => 1]);
+    $m = $e->maintenances()->create([
+        'maintenance_date' => now()->toDateString(), 'type' => 'preventive', 'title' => 'PM viewable', 'status' => 'done',
+        'checklist' => [['label' => 'ກວດ ເບກ', 'status' => 'ng']],
+    ]);
+
+    Livewire::test(Maintenance::class)
+        ->call('viewRecord', $m->id)
+        ->assertSet('viewingId', $m->id)
+        ->assertSee('PM viewable')
+        ->assertSee('ກວດ ເບກ');
+});

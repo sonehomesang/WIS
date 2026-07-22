@@ -29,6 +29,9 @@ class Maintenance extends Component
     // ເລືອກ ເຄື່ອງ
     public string $mSearch = '';
 
+    /** ເບິ່ງ ບັນທຶກ ບຳລຸງ ແບບ read-only (ບໍ່ ຕ້ອງ ສິດ ແກ້). */
+    public ?int $viewingId = null;
+
     public ?int $mEquipmentId = null;
 
     public string $mEquipmentLabel = '';
@@ -362,6 +365,16 @@ class Maintenance extends Component
         $this->historyEquipmentId = $equipmentId;
     }
 
+    /** ເບິ່ງ ບັນທຶກ ບຳລຸງ read-only (ເຫັນ ໜ້າ ນີ້ ກໍ່ ເບິ່ງ ໄດ້; ດຶງ dept scope ຕາມ ເຄື່ອງ). */
+    public function viewRecord(int $id): void
+    {
+        $m = EquipmentMaintenance::with('equipment')->findOrFail($id);
+        if ($m->equipment) {
+            $this->guardDept($m->equipment);
+        }
+        $this->viewingId = $id;
+    }
+
     public function render(): View
     {
         $deptScoped = $this->deptScoped();
@@ -398,6 +411,7 @@ class Maintenance extends Component
             'history' => $history,
             'deptScoped' => $deptScoped,
             'templateOptions' => $templateOptions,
+            'viewing' => $this->viewingId ? EquipmentMaintenance::with('equipment')->find($this->viewingId) : null,
         ]);
     }
 }
