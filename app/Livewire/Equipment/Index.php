@@ -35,6 +35,9 @@ class Index extends Component
 
     public string $statusFilter = '';
 
+    /** filter ຕາມ owner/ພະແນກ (department_id). */
+    public string $departmentFilter = '';
+
     // Modal + form (register)
     public bool $showModal = false;
 
@@ -138,6 +141,11 @@ class Index extends Component
     public function mount(): void
     {
         abort_unless(auth()->user()->can('equipment.view'), 403);
+    }
+
+    public function updatingDepartmentFilter(): void
+    {
+        $this->resetPage();
     }
 
     public function updatingSearch(): void
@@ -721,6 +729,7 @@ class Index extends Component
                 ->orWhere('asset_code', 'like', "%{$this->search}%")
                 ->orWhere('serial_no', 'like', "%{$this->search}%")))
             ->when($this->categoryFilter, fn ($q) => $q->where('category', $this->categoryFilter))
+            ->when($this->departmentFilter, fn ($q) => $q->where('department_id', $this->departmentFilter))
             // ກັ່ນຕອງ ສະຖານະ: ມີ ≥1 ໜ່ວຍ ໃນ ສະຖານະ ນັ້ນ
             ->when($this->statusFilter, fn ($q) => $q->where('status_counts->'.$this->statusFilter, '>', 0))
             ->orderBy('asset_code')

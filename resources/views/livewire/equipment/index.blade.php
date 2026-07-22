@@ -37,6 +37,10 @@
                     <option value="repair">ຊ່ອມແປງ</option>
                     <option value="retired">ຢຸດໃຊ້</option>
                 </select>
+                <select wire:model.live="departmentFilter" class="rounded-md border-gray-300 shadow-sm text-sm">
+                    <option value="">ທຸກ Owner (ພະແນກ)</option>
+                    @foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach
+                </select>
                 <div class="flex-1"></div>
                 <span class="text-xs text-gray-400">ທັງໝົດ {{ $items->total() }} ລາຍການ</span>
                 @can('equipment.create')

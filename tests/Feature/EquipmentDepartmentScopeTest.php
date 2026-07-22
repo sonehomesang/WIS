@@ -64,6 +64,19 @@ test('department_admin new equipment is forced to its own department', function 
     expect($eq->loc_bin)->toBe('A-01-03');
 });
 
+test('the owner/department filter narrows the list to that department', function () {
+    $admin = User::factory()->create();
+    $admin->syncRoles(['admin']);
+    actingAs($admin);
+
+    Livewire::test(Index::class)
+        ->assertSee('EQ-A')->assertSee('EQ-B')            // no filter → both
+        ->set('departmentFilter', (string) $this->deptA->id)
+        ->assertSee('EQ-A')->assertDontSee('EQ-B')        // filter Dept A → only A
+        ->set('departmentFilter', (string) $this->deptB->id)
+        ->assertDontSee('EQ-A')->assertSee('EQ-B');       // filter Dept B → only B
+});
+
 test('department_admin cannot open the shared template manager', function () {
     actingAs($this->deptAdmin);
     Livewire::test(InspectionTemplates::class)->assertForbidden();
