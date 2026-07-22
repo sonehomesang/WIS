@@ -56,8 +56,8 @@
                             <th class="text-left font-semibold px-3 py-2 w-28">ລະຫັດເຄື່ອງ</th>
                             <th class="text-left font-semibold px-3 py-2 w-28">ທະບຽນຊັບສິນ</th>
                             <th class="text-left font-semibold px-3 py-2">ຊື່ ເຄື່ອງ / ລາຍລະອຽດ</th>
-                            <th class="text-left font-semibold px-3 py-2 w-24">Owner (ພະແນກ)</th>
-                            <th class="text-left font-semibold px-3 py-2 w-20">Loc-Bin</th>
+                            <th class="text-left font-semibold px-3 py-2 w-20">Owner (ພະແນກ)</th>
+                            <th class="text-left font-semibold px-3 py-2 w-24">Loc-Bin</th>
                             <th class="text-left font-semibold px-3 py-2 w-24">ຮູບ</th>
                             <th class="text-left font-semibold px-3 py-2 w-16">ຈຳນວນ</th>
                             <th class="text-left font-semibold px-3 py-2 w-28">ສະຖານະ</th>
@@ -77,7 +77,7 @@
                                     <div class="text-xs text-gray-400 truncate">{{ $meta ? implode(' · ', $meta) : '—' }}</div>
                                 </td>
                                 <td class="px-3 py-2 text-gray-600 truncate">{{ $e->department?->name ?? '—' }}</td>
-                                <td class="px-3 py-2 text-gray-600 truncate">{{ $e->loc_bin ?? '—' }}</td>
+                                <td class="px-3 py-2 text-gray-600 break-words">{{ $e->loc_bin ?? '—' }}</td>
                                 <td class="px-3 py-2">
                                     <div class="flex gap-0.5">
                                         @forelse ($e->photos->take(3) as $p)
