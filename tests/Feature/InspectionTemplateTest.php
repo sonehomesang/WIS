@@ -5,6 +5,7 @@ use App\Livewire\Equipment\InspectionTemplates;
 use App\Models\Equipment;
 use App\Models\InspectionTemplate;
 use App\Models\User;
+use Database\Seeders\InspectionTemplateSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Livewire\Livewire;
 
@@ -12,6 +13,18 @@ use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
     $this->seed(RolePermissionSeeder::class);
+});
+
+test('the seeder installs one merged forklift template with type + frequency tags', function () {
+    $this->seed(InspectionTemplateSeeder::class);
+
+    $forklifts = InspectionTemplate::where('category', 'Forklift')->where('is_active', true)->get();
+    expect($forklifts)->toHaveCount(1);                       // 2 legacy → 1 merged
+
+    $t = $forklifts->first();
+    expect(count($t->normalizedItems()))->toBe(36);
+    expect($t->hasFuelTypes())->toBeTrue();                  // EV/engine split present
+    expect($t->hasFrequencies())->toBeTrue();                // round filter present
 });
 
 test('admin can create an inspection template (blank checklist items dropped)', function () {
