@@ -30,6 +30,18 @@ test('super admin can create an item with photos', function () {
     Storage::disk('public')->assertExists($item->photos->first()->path);
 });
 
+test('save surfaces a Lao validation warning listing the missing required field', function () {
+    $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+
+    Livewire::test(Index::class)
+        ->call('newItem')
+        ->set('name', '')                              // required, now empty
+        ->call('save')
+        ->assertHasErrors(['name' => 'required'])
+        ->assertSee('ຍັງບັນທຶກບໍ່ໄດ້')                    // yellow warning box heading
+        ->assertSee('ຊື່ (Name) — ຈຳເປັນຕ້ອງໃສ່.');       // Lao label + message in the list
+});
+
 test('removing a photo deletes the file and record', function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => true]));
     $item = InventoryItem::create(['slug' => 'x', 'name' => 'X', 'quantity' => 1]);

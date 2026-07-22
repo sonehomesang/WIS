@@ -151,6 +151,24 @@ class Index extends Component
     {
         abort_unless(auth()->user()->can('inventory.'.($this->editingId ? 'edit' : 'create')), 403);
 
+        // Lao field labels + messages so the warning box reads clearly.
+        $attributes = [
+            'name' => 'ຊື່ (Name)', 'category' => 'ໝວດ (Category)', 'brand' => 'ຍີ່ຫໍ້ (Brand)',
+            'model' => 'ລຸ້ນ (Model)', 'serial_number' => 'Serial number', 'quantity' => 'ຈຳນວນ (Qty)',
+            'min_quantity' => 'ຈຳນວນຕ່ຳສຸດ (Min qty)', 'unit' => 'ໜ່ວຍ (Unit)', 'location_id' => 'ບ່ອນຈັດວາງ (Location)',
+            'building_id' => 'ອາຄານ (Building)', 'room_id' => 'ຫ້ອງ (Room)', 'shelf_label' => 'ຊັ້ນວາງ (Shelf)',
+            'status' => 'ສະຖານະ (Status)', 'description' => 'ລາຍລະອຽດ', 'newPhotos.*' => 'ຮູບ',
+        ];
+        $messages = [
+            'required' => ':attribute — ຈຳເປັນຕ້ອງໃສ່.',
+            'integer' => ':attribute ຕ້ອງເປັນຕົວເລກ.',
+            'min' => ':attribute ຕ້ອງບໍ່ໜ້ອຍກວ່າ :min.',
+            'in' => ':attribute ບໍ່ຖືກຕ້ອງ.',
+            'max' => ':attribute ໃຫຍ່/ຍາວ ເກີນ :max.',
+            'image' => ':attribute ຕ້ອງເປັນຮູບພາບ.',
+            'exists' => ':attribute ທີ່ເລືອກ ບໍ່ພົບ.',
+        ];
+
         $data = $this->validate([
             'name' => ['required', 'string', 'max:256'],
             'description' => ['nullable', 'string', 'max:2000'],
@@ -169,7 +187,7 @@ class Index extends Component
             'is_active' => ['boolean'],
             'newPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
             'newPhotos.*' => ['image', 'max:4096'],
-        ], [], ['name' => 'ຊື່', 'newPhotos.*' => 'ຮູບ']);
+        ], $messages, $attributes);
 
         if (count($this->existingPhotos) + count($this->newPhotos) > self::MAX_PHOTOS) {
             $this->addError('newPhotos', 'ຮູບໄດ້ສູງສຸດ '.self::MAX_PHOTOS.' ໃບຕໍ່ item.');
