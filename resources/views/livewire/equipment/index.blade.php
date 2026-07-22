@@ -249,6 +249,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
+                @include('partials._form-errors')
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">ລະຫັດເຄື່ອງ <span class="text-red-500">*</span> <span class="text-xs text-gray-400">(ບໍ່ ຊ້ຳ · ບໍ່ ເກີນ 10 ຕົວ)</span></label>
@@ -391,6 +392,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
+                @include('partials._form-errors')
 
                 {{-- ເລືອກ ເຄື່ອງ --}}
                 @if (! $insEquipmentId)

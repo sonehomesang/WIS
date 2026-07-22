@@ -121,6 +121,7 @@
                     <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1">✕</button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    @include('partials._form-errors', ['wrapClass' => 'md:col-span-2'])
                     <div>
                         <label class="block text-gray-600 mb-1">Supplier <span class="text-red-500">*</span></label>
                         <select wire:model="supplier_id" class="w-full rounded-md border-gray-300 text-sm" @disabled($this->isSupplierScoped())>

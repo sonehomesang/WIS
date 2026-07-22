@@ -128,6 +128,8 @@
                     </button>
                 </div>
 
+                @include('partials._form-errors')
+
                 {{-- ເລືອກ ເຄື່ອງ --}}
                 @if (! $mEquipmentId)
                     <div class="relative">

@@ -3,6 +3,8 @@
         <a href="{{ route('request') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບໄປ list</a>
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror
 
+        @include('partials._form-errors')
+
         {{-- meta --}}
         <div class="bg-white border border-gray-100 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div class="md:col-span-2">

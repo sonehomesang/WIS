@@ -88,6 +88,7 @@
                     </button>
                 </div>
                 <div class="space-y-3">
+                    @include('partials._form-errors')
                     @if ($type === 'department')
                         <div>
                             <label class="block text-sm text-gray-600 mb-1">ໜ່ວຍງານ (Org Unit) <span class="text-red-500">*</span></label>

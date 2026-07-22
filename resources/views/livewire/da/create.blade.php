@@ -8,6 +8,8 @@
         <a href="{{ route('da') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບໄປ list</a>
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror
 
+        @include('partials._form-errors')
+
         <div class="bg-white border border-gray-100 rounded-lg p-4 space-y-3">
             <div class="text-sm font-medium text-gray-700">A. ຂໍ້ມູນ Warehouse</div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">

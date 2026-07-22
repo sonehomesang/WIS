@@ -39,7 +39,7 @@ test('save surfaces a Lao validation warning listing the missing required field'
         ->call('save')
         ->assertHasErrors(['name' => 'required'])
         ->assertSee('ຍັງບັນທຶກບໍ່ໄດ້')                    // yellow warning box heading
-        ->assertSee('ຊື່ (Name) — ຈຳເປັນຕ້ອງໃສ່.');       // Lao label + message in the list
+        ->assertSee('ຊ່ອງ ຊື່ ຈຳເປັນຕ້ອງໃສ່.');           // Lao message from lang/lo/validation.php
 });
 
 test('removing a photo deletes the file and record', function () {

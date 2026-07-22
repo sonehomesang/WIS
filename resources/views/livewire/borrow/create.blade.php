@@ -10,6 +10,8 @@
                 </a>
             </div>
 
+            @include('partials._form-errors')
+
             {{-- ① type --}}
             <div>
                 <div class="font-semibold text-sm mb-2">① ປະເພດການຍືມ</div>

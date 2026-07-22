@@ -43,6 +43,7 @@
                     <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ' : 'ເພີ່ມ' }} ໜ່ວຍວັດ</h3>
                     <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
                 </div>
+                @include('partials._form-errors')
                 <div>
                     <label class="block text-sm text-gray-600 mb-1">ຊື່ (Name) <span class="text-red-500">*</span></label>
                     <input type="text" wire:model="name" placeholder="pcs, kg, m, ກ່ອງ…" class="w-full rounded-md border-gray-300 text-sm" />

@@ -142,6 +142,7 @@
                     </button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    @include('partials._form-errors', ['wrapClass' => 'md:col-span-2'])
                     <div class="md:col-span-2">
                         <label class="block text-sm text-gray-600 mb-1">ຊື່ (display name) <span class="text-red-500">*</span></label>
                         <input type="text" wire:model="display_name" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />

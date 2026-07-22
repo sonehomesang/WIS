@@ -71,6 +71,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    @include('partials._form-errors', ['wrapClass' => 'md:col-span-2'])
                     <div class="md:col-span-2">
                         <label class="block text-sm text-gray-600 mb-1">ຊື່ ແມ່ແບບ <span class="text-red-500">*</span></label>
                         <input type="text" wire:model="tName" placeholder="ເຊັ່ນ ບຳລຸງ Forklift ຕາມ ຮອບ" class="w-full rounded-md border-gray-300 text-sm" />

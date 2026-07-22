@@ -53,6 +53,8 @@
                     </button>
                 </div>
 
+                @include('partials._form-errors')
+
                 <div>
                     <label class="block text-sm text-gray-600 mb-1">ຊື່ ປະເພດ <span class="text-red-500">*</span></label>
                     <input type="text" wire:model="cName" placeholder="Generator · Vehicle · Power tool…" class="w-full rounded-md border-gray-300 text-sm" />

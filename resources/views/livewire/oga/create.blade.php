@@ -5,6 +5,8 @@
         <a href="{{ route('oga') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບໄປ list</a>
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror
 
+        @include('partials._form-errors')
+
         <div class="bg-white border border-gray-100 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div><label class="block text-gray-600 mb-1">ວັນທີ <span class="text-red-500">*</span></label><input type="date" wire:model="date" class="w-full rounded-md border-gray-300 text-sm" />@error('date')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
             <div><label class="block text-gray-600 mb-1">PO number</label><input type="text" wire:model="po_number" class="w-full rounded-md border-gray-300 text-sm" /></div>

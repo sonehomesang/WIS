@@ -2,6 +2,8 @@
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <a href="{{ route('expo') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບໄປ list</a>
 
+        @include('partials._form-errors')
+
         <div class="bg-white border border-gray-100 rounded-lg p-5 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div class="md:col-span-2"><label class="block text-gray-600 mb-1">ຊື່ງານ <span class="text-red-500">*</span></label><input type="text" wire:model="title" class="w-full rounded-md border-gray-300 text-sm" />@error('title')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror</div>
             <div><label class="block text-gray-600 mb-1">ປະເພດ / ຫົວข้อ</label><input type="text" wire:model="topic" class="w-full rounded-md border-gray-300 text-sm" /></div>

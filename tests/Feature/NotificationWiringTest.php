@@ -36,7 +36,7 @@ test('deposit submit notifies warehouse staff, accept notifies owner', function 
     expect(Notification::where('user_id', $staff->id)->where('title', 'like', '%'.$r->request_number.'%')->exists())->toBeTrue();
 
     $svc->transition($r, 'accept', $staff, ['storage_shelf_label' => 'A-1']);
-    expect(Notification::where('user_id', $owner->id)->where('title', 'like', '%ຖูกຮັບ%')->exists())->toBeTrue();
+    expect(Notification::where('user_id', $owner->id)->where('title', 'like', '%ຖືກ ຮັບ%')->exists())->toBeTrue();
 });
 
 test('master notifications flag suppresses creation', function () {

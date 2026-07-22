@@ -28,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Lao-first app: ຂໍ້ຄວາມ validation / diffForHumans ໃຫ້ເປັນລາວ (lang/lo).
+        // .env APP_LOCALE=en ເປັນຄ່າ default ເກົ່າ — ບັງຄັບ lo ໃຫ້ຄົງທີ່ ບໍ່ຂຶ້ນກັບ .env.
+        $this->app->setLocale('lo');
+
         // super_admin ມີສິດເໜືອທຸກຢ່າງ (ເໜືອ admin ທົ່ວໄປ) — bypass ທຸກ permission check.
         Gate::before(fn ($user, $ability) => $user->is_super_admin ? true : null);
 

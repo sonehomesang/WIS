@@ -148,17 +148,7 @@
                     <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    @if ($errors->any())
-                        <div class="md:col-span-2 flex items-start gap-2.5 rounded-md border border-amber-300 bg-amber-50 px-3 py-2.5" x-data x-init="$el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })">
-                            <svg class="w-5 h-5 shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
-                            <div class="text-sm text-amber-800">
-                                <p class="font-medium">ຍັງບັນທຶກບໍ່ໄດ້ — ກະລຸນາ ຕື່ມ/ແກ້ ຊ່ອງລຸ່ມນີ້:</p>
-                                <ul class="mt-1 list-disc list-inside space-y-0.5">
-                                    @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
-                                </ul>
-                            </div>
-                        </div>
-                    @endif
+                    @include('partials._form-errors', ['wrapClass' => 'md:col-span-2'])
                     <div class="md:col-span-2">
                         <label class="block text-sm text-gray-600 mb-1">ຊື່ (Name) <span class="text-red-500">*</span></label>
                         <input type="text" wire:model="name" class="w-full rounded-md border-gray-300 text-sm" />
