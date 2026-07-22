@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
  */
 class InspectionTemplateSeeder extends Seeder
 {
-    /** ຊື່ ແມ່ແບບ Forklift ເກົ່າ 2 ອັນ ທີ່ ຖືກ ລວມ ແລ້ວ → ປິດ (is_active=false), ບໍ່ ລຶບ (ຮັກສາ ປະຫວັດ). */
+    /** ຊື່ ແມ່ແບບ Forklift ເກົ່າ 2 ອັນ ທີ່ ຖືກ ລວມ ແລ້ວ → soft-delete (ບໍ່ ໃຫ້ ສັບສົນ; ກູ້คืນ ໄດ້). */
     private const LEGACY_FORKLIFT = [
         'ກວດ Forklift ປະຈຳວັນ (Forklift Daily Inspection)',
         'ແບບຟອມກວດສອບລົດຍົກກ່ອນນຳໃຊ້ປະຈຳວັນ (WH-FLT-001)',
@@ -111,7 +111,8 @@ class InspectionTemplateSeeder extends Seeder
             InspectionTemplate::firstOrCreate(['name' => $t['name']], $t);
         }
 
-        // ປິດ 2 ແມ່ແບບ Forklift ເກົ່າ ທີ່ ຖືກ ລວມ ແລ້ວ (ຖ້າ ມີ) — ບໍ່ ລຶບ, ຮັກສາ ປະຫວັດ ການ ກວດ ເກົ່າ.
-        InspectionTemplate::whereIn('name', self::LEGACY_FORKLIFT)->update(['is_active' => false]);
+        // soft-delete 2 ແມ່ແບບ Forklift ເກົ່າ ທີ່ ຖືກ ລວມ ແລ້ວ (ຖ້າ ມີ) — ບໍ່ ໃຫ້ ສະແດງ, ກັນ ສັບສົນ.
+        // ປອດໄພ: ການ ກວດ ເກົ່າ snapshot checklist ຂອງ ໂຕເອງ (equipment_inspections.checklist) + template_id nullable.
+        InspectionTemplate::whereIn('name', self::LEGACY_FORKLIFT)->delete();
     }
 }
