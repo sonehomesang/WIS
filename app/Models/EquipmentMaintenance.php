@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /** ບັນທຶກ ການ ບຳລຸງຮັກສາ/ຊ່ອມແປງ ຂອງ ເຄື່ອງ. */
@@ -36,9 +38,15 @@ class EquipmentMaintenance extends Model
     ];
 
     protected $fillable = [
-        'equipment_id', 'template_id', 'maintenance_date', 'type', 'title', 'description', 'performed_by',
-        'cost', 'frequency', 'next_service_date', 'status', 'checklist', 'notes', 'photos', 'created_by',
+        'equipment_id', 'template_id', 'source_maintenance_id', 'maintenance_date', 'type', 'title', 'description',
+        'performed_by', 'cost', 'frequency', 'next_service_date', 'status', 'checklist', 'notes', 'photos', 'created_by',
     ];
+
+    /** ໃບ ສ້ອມ (CM) ທີ່ ຍັງ ບໍ່ ແລ້ວ (planned/in_progress). ໃຊ້ dashboard queue (C3). */
+    public function scopeOpenRepairs(Builder $q): Builder
+    {
+        return $q->where('type', 'repair')->whereIn('status', ['planned', 'in_progress']);
+    }
 
     protected $casts = [
         'maintenance_date' => 'date',
@@ -56,5 +64,17 @@ class EquipmentMaintenance extends Model
     public function template(): BelongsTo
     {
         return $this->belongsTo(MaintenanceTemplate::class, 'template_id');
+    }
+
+    /** ໃບ ບຳລຸງ/ກວດ ຕົ້ນທາງ ທີ່ ພົບ NG (ສຳລັບ ໃບ ສ້ອມ CM). */
+    public function sourceMaintenance(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'source_maintenance_id');
+    }
+
+    /** ໃບ ສ້ອມ (CM) ທີ່ ຖືກ ສ້າງ ຈາກ ຂໍ້ NG ຂອງ ໃບ ນີ້. */
+    public function correctiveRepairs(): HasMany
+    {
+        return $this->hasMany(self::class, 'source_maintenance_id');
     }
 }

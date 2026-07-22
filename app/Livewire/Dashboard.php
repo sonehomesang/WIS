@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\BorrowRecord;
 use App\Models\DepositRecord;
 use App\Models\DiscrepancyAdvice;
+use App\Models\EquipmentMaintenance;
 use App\Models\MaterialRequest;
 use App\Models\Notification;
 use App\Models\OutwardsGoodsAdvice;
@@ -137,6 +138,9 @@ class Dashboard extends Component
                 'count' => DiscrepancyAdvice::whereIn('status', ['submitted', 'purchasing_review', 'pending_approval'])->count(), 'alert' => false];
             $rows[] = ['label' => 'OGA ລໍ້ dispatch', 'route' => 'oga',
                 'count' => OutwardsGoodsAdvice::where('status', 'draft')->count(), 'alert' => false];
+            // ໃບ ສ້ອມ (CM) ທີ່ ຍັງ ບໍ່ ແລ້ວ — ລວມ ອັນ ທີ່ ສ້າງ ຈາກ ຂໍ້ NG (C3).
+            $rows[] = ['label' => 'ວຽກ ສ້ອມ ເຄື່ອງ (CM) ລໍ ເຮັດ', 'route' => 'equipment',
+                'count' => EquipmentMaintenance::openRepairs()->count(), 'alert' => true];
             // completed requests that have not opened a SAP PR/FR yet (sap_status empty)
             $rows[] = ['label' => 'ໃບເບີກເຄື່ອງ ຍັງບໍ່ເປີດ PR/FR', 'route' => 'request',
                 'count' => MaterialRequest::where('status', 'completed')->whereNull('sap_status')->count(), 'alert' => false];

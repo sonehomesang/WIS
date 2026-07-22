@@ -69,6 +69,14 @@
                             @endif
                         </td>
                         <td class="px-3 py-2 pr-4 text-right whitespace-nowrap text-gray-500">
+                            @php $ngc = collect($m->checklist ?? [])->where('status', 'ng')->count(); @endphp
+                            @if ($ngc && $m->type !== 'repair')
+                                @can('equipment.create')
+                                    <button wire:click="createRepairsFromNg({{ $m->id }})" wire:confirm="ສ້າງ ໃບ ສ້ອມ (CM) ຈາກ {{ $ngc }} ຂໍ້ ບັນຫາ (NG)?" class="text-amber-600 hover:text-amber-700 p-1" title="ສ້າງ ໃບ ສ້ອມ (CM) ຈາກ NG">
+                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z" /></svg>
+                                    </button>
+                                @endcan
+                            @endif
                             <button wire:click="viewHistory({{ $m->equipment_id }})" class="hover:text-sky-700 p-1" title="ປະຫວັດ ບຳລຸງ ຂອງ ເຄື່ອງ ນີ້">
                                 <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
                             </button>
@@ -106,6 +114,10 @@
                     <div class="text-[11px] mt-0.5"><span class="text-gray-500">☑ ເຊັກລິສ {{ $ckM->count() }} ຂໍ້</span>@if ($ngM) <span class="text-red-600 font-medium">· {{ $ngM }} ບັນຫາ</span>@endif</div>
                 @endif
                 <div class="flex gap-2 mt-2">
+                    @php $ngc = collect($m->checklist ?? [])->where('status', 'ng')->count(); @endphp
+                    @if ($ngc && $m->type !== 'repair')
+                        @can('equipment.create')<button wire:click="createRepairsFromNg({{ $m->id }})" wire:confirm="ສ້າງ ໃບ ສ້ອມ (CM) ຈາກ {{ $ngc }} ຂໍ້ NG?" class="text-xs border border-amber-300 text-amber-700 rounded px-2 py-1 min-h-[36px]">🔧 ສ້າງ CM ({{ $ngc }})</button>@endcan
+                    @endif
                     @can('equipment.edit')<button wire:click="editMaintenance({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">ແກ້ໄຂ</button>@endcan
                     @can('equipment.delete')<button wire:click="delete({{ $m->id }})" wire:confirm="ລຶບ ບັນທຶກ ນີ້?" class="text-xs border rounded px-2 py-1 min-h-[36px] text-red-600">ລຶບ</button>@endcan
                 </div>

@@ -306,6 +306,44 @@ class Maintenance extends Component
         $this->dispatch('saved');
     }
 
+    /** C2: ສ້າງ ໃບ ສ້ອມ (CM · type=repair) ຈາກ ຂໍ້ NG ຂອງ ໃບ ບຳລຸງ/ກວດ ຕົ້ນທາງ. idempotent (ບໍ່ ຊ້ຳ ຕໍ່ label). */
+    public function createRepairsFromNg(int $id): void
+    {
+        abort_unless(auth()->user()->can('equipment.create'), 403);
+        $src = EquipmentMaintenance::with('equipment')->findOrFail($id);
+        if ($src->equipment) {
+            $this->guardDept($src->equipment);
+        }
+
+        $ng = collect($src->checklist ?? [])->where('status', 'ng')
+            ->map(fn ($c) => trim((string) ($c['label'] ?? '')))->filter()->unique();
+        if ($ng->isEmpty() || ! $src->equipment) {
+            return;
+        }
+
+        $existing = $src->correctiveRepairs()->pluck('title')->all();
+        $ref = 'ຈາກ: '.($src->title ?: 'ບຳລຸງ/ກວດ').' · '.optional($src->maintenance_date)->format('d/m/Y');
+        $created = 0;
+        foreach ($ng as $label) {
+            if (in_array($label, $existing, true)) {
+                continue;
+            }
+            $src->equipment->maintenances()->create([
+                'source_maintenance_id' => $src->id,
+                'maintenance_date' => now()->toDateString(),
+                'type' => 'repair',
+                'title' => $label,
+                'description' => $ref,
+                'status' => 'planned',
+                'created_by' => auth()->id(),
+            ]);
+            $created++;
+        }
+
+        session()->flash('ok', $created ? "✓ ສ້າງ ໃບ ສ້ອມ (CM) {$created} ໃບ ຈາກ NG" : 'ທຸກ ຂໍ້ NG ມີ ໃບ ສ້ອມ ແລ້ວ');
+        $this->dispatch('saved');
+    }
+
     public function delete(int $id): void
     {
         abort_unless(auth()->user()->can('equipment.delete'), 403);

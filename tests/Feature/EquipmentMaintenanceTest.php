@@ -239,3 +239,26 @@ test('department_admin sees and manages only its own department maintenance', fu
         ->call('editMaintenance', $mB->id)
         ->assertForbidden();
 });
+
+test('C2: creating CM from NG checklist items makes linked repair records, idempotently', function () {
+    actingAs($this->staff);
+    $e = Equipment::create(['asset_code' => 'FL-CM', 'name' => 'Forklift', 'quantity' => 1]);
+    $pm = $e->maintenances()->create([
+        'maintenance_date' => now()->toDateString(), 'type' => 'preventive', 'title' => 'PM monthly', 'status' => 'done',
+        'checklist' => [
+            ['label' => 'ກວດ ເບກ', 'status' => 'ok'],
+            ['label' => 'ກວດ ຢາງ', 'status' => 'ng'],
+            ['label' => 'ກວດ ໄຟ ສ່ອງ', 'status' => 'ng'],
+        ],
+    ]);
+
+    Livewire::test(Maintenance::class)->call('createRepairsFromNg', $pm->id);
+
+    $repairs = EquipmentMaintenance::where('type', 'repair')->where('source_maintenance_id', $pm->id)->get();
+    expect($repairs)->toHaveCount(2);                                  // only the 2 NG items
+    expect($repairs->pluck('title')->all())->toContain('ກວດ ຢາງ', 'ກວດ ໄຟ ສ່ອງ');
+    expect($repairs->every(fn ($r) => $r->status === 'planned'))->toBeTrue();
+
+    Livewire::test(Maintenance::class)->call('createRepairsFromNg', $pm->id);   // again
+    expect(EquipmentMaintenance::where('source_maintenance_id', $pm->id)->count())->toBe(2);  // no duplicates
+});

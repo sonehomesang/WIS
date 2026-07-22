@@ -2,6 +2,7 @@
 
 use App\Livewire\Dashboard;
 use App\Models\BorrowRecord;
+use App\Models\Equipment;
 use App\Models\MaterialRequest;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -85,6 +86,22 @@ test('action queue surfaces completed requests with no PR/FR opened for staff', 
             $row = collect($rows)->firstWhere('label', 'ໃບເບີກເຄື່ອງ ຍັງບໍ່ເປີດ PR/FR');
 
             return $row && $row['count'] === 1;   // only the sap_status-null one is counted
+        });
+});
+
+test('C3: action queue counts open corrective maintenance (CM) for staff', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $e = Equipment::create(['asset_code' => 'FL-CMQ', 'name' => 'Forklift', 'quantity' => 1]);
+    $e->maintenances()->create(['maintenance_date' => now()->toDateString(), 'type' => 'repair', 'title' => 'fix brake', 'status' => 'planned']);
+    $e->maintenances()->create(['maintenance_date' => now()->toDateString(), 'type' => 'repair', 'title' => 'closed', 'status' => 'done']);      // done → excluded
+    $e->maintenances()->create(['maintenance_date' => now()->toDateString(), 'type' => 'preventive', 'title' => 'pm', 'status' => 'planned']);   // not repair → excluded
+
+    Livewire::test(Dashboard::class)
+        ->assertViewHas('actionRows', function ($rows) {
+            $row = collect($rows)->firstWhere('label', 'ວຽກ ສ້ອມ ເຄື່ອງ (CM) ລໍ ເຮັດ');
+
+            return $row && $row['count'] === 1;
         });
 });
 
