@@ -20,7 +20,7 @@ class ImportMaterialsJson extends Command
 {
     protected $signature = 'material:import-json {path} {--suppliers= : suppliers snapshot json} {--fresh : ລຶບ migrated materials ກ່ອນ}';
 
-    protected $description = 'Import materials catalog (+ suppliers) ຈาก WIS emulator-snapshot JSON';
+    protected $description = 'Import materials catalog (+ suppliers) ຈາກ WIS emulator-snapshot JSON';
 
     public function handle(): int
     {
@@ -93,7 +93,7 @@ class ImportMaterialsJson extends Command
         return self::SUCCESS;
     }
 
-    /** find-or-create WH supplier ຈาก WIS supplierId (ໃຊ້ wis_id ກ່ອນ, ບໍ່ມີ → name). */
+    /** find-or-create WH supplier ຈາກ WIS supplierId (ໃຊ້ wis_id ກ່ອນ, ບໍ່ມີ → name). */
     private function resolveSupplier(?string $wisSupplierId, array $suppliers, array &$map): ?int
     {
         if (! $wisSupplierId) {

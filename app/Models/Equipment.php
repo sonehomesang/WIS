@@ -71,7 +71,7 @@ class Equipment extends Model
         return $this->hasMany(EquipmentMaintenance::class)->latest('maintenance_date');
     }
 
-    /** ລາຍการ ຢືມ ທີ່ ຍັງ ໃຊ້ ຢູ່ (active/overdue) — ໃຊ້ ຫາ ຜູ້ຢືມ ປັດຈຸບັນ. */
+    /** ລາຍການ ຢືມ ທີ່ ຍັງ ໃຊ້ ຢູ່ (active/overdue) — ໃຊ້ ຫາ ຜູ້ຢືມ ປັດຈຸບັນ. */
     public function activeBorrowItems(): HasMany
     {
         return $this->hasMany(BorrowItem::class)

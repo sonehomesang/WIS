@@ -11,8 +11,8 @@
     [$slbl, $scls] = $statusMeta($record->status);
     $lbl = 'px-3 py-2 text-gray-500 text-xs bg-gray-50 border border-gray-200';
     $bd = 'px-3 py-2 border border-gray-200';
-    $typeLabel = ['incorrect_supplied' => 'ສົ່ງຜິດ', 'oversupplied' => 'ສົ່ງເກີນ', 'undersupplied' => 'ສົ່ງຂາດ', 'damaged' => 'ເສຍຫາຍ', 'no_paperwork' => 'ບໍ່ມີเอกสาร', 'other' => 'ອື່ນໆ'];
-    $kindLabel = ['overview' => 'ພาบรวม', 'defect' => 'ຈຸດເສຍ', 'comparison' => 'ປຽບທຽບ'];
+    $typeLabel = ['incorrect_supplied' => 'ສົ່ງຜິດ', 'oversupplied' => 'ສົ່ງເກີນ', 'undersupplied' => 'ສົ່ງຂາດ', 'damaged' => 'ເສຍຫາຍ', 'no_paperwork' => 'ບໍ່ມີເອກະສານ', 'other' => 'ອື່ນໆ'];
+    $kindLabel = ['overview' => 'ພາບຮວມ', 'defect' => 'ຈຸດເສຍ', 'comparison' => 'ປຽບທຽບ'];
 @endphp
 
 <div class="pb-6">
@@ -24,7 +24,7 @@
 
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror
-        @if ($record->reject_reason && $record->status === 'purchasing_review')<div class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">⚠ Leader ສົ່ງกลับ: {{ $record->reject_reason }}</div>@endif
+        @if ($record->reject_reason && $record->status === 'purchasing_review')<div class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">⚠ Leader ສົ່ງກັບ: {{ $record->reject_reason }}</div>@endif
         @if ($record->status === 'cancelled' && $record->cancel_reason)<div class="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">ຍົກເລີກ: {{ $record->cancel_reason }}</div>@endif
 
         <div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4 text-sm">
@@ -78,7 +78,7 @@
                     <tbody>
                         <tr><td class="{{ $lbl }}" style="width:22%">ການຕັດສິນໃຈ</td><td class="{{ $bd }}" colspan="3">{{ collect($record->purchasing_decisions ?? [])->implode(', ') ?: '—' }}</td></tr>
                         @if ($record->purchasing_note)<tr><td class="{{ $lbl }}">ໝາຍເຫດ</td><td class="{{ $bd }}" colspan="3">{{ $record->purchasing_note }}</td></tr>@endif
-                        @if ($record->return_transport_account)<tr><td class="{{ $lbl }}">ການส่งคืน</td><td class="{{ $bd }}" colspan="3">{{ $record->return_transport_account }} / {{ $record->return_transport_mode }} · {{ $record->return_carrier_name }} {{ $record->return_carrier_phone }}</td></tr>@endif
+                        @if ($record->return_transport_account)<tr><td class="{{ $lbl }}">ການສົ່ງຄືນ</td><td class="{{ $bd }}" colspan="3">{{ $record->return_transport_account }} / {{ $record->return_transport_mode }} · {{ $record->return_carrier_name }} {{ $record->return_carrier_phone }}</td></tr>@endif
                     </tbody>
                 </table>
             @endif
@@ -89,14 +89,14 @@
                 <table class="w-full border-collapse">
                     <tbody>
                         <tr><td class="{{ $lbl }}" style="width:22%">Resolution</td><td class="{{ $bd }}" colspan="3">{{ $record->resolution_action ?? '—' }}</td></tr>
-                        <tr><td class="{{ $lbl }}">ອະນຸมัด</td><td class="{{ $bd }}">{{ $record->approved_by_name }} ({{ $record->approved_title }})</td><td class="{{ $lbl }}">Next</td><td class="{{ $bd }}">{{ $record->next_step }}</td></tr>
+                        <tr><td class="{{ $lbl }}">ອະນຸມັດ</td><td class="{{ $bd }}">{{ $record->approved_by_name }} ({{ $record->approved_title }})</td><td class="{{ $lbl }}">Next</td><td class="{{ $bd }}">{{ $record->next_step }}</td></tr>
                     </tbody>
                 </table>
             @endif
 
             @if ($linkedOgas->count())
                 <div class="border border-sky-200 bg-sky-50/50 rounded-md p-3">
-                    <div class="font-semibold text-gray-700 mb-1">🚚 OGA ທີ່ສ້າງຈาก DA ນີ້</div>
+                    <div class="font-semibold text-gray-700 mb-1">🚚 OGA ທີ່ສ້າງຈາກ DA ນີ້</div>
                     <div class="flex flex-wrap gap-2">
                         @foreach ($linkedOgas as $o)
                             <a href="{{ route('oga.show', $o->id) }}" wire:navigate class="font-mono text-xs text-sky-700 border border-sky-200 bg-white rounded px-2 py-1 hover:bg-sky-100">{{ $o->oga_number }} <span class="text-gray-400">({{ $o->status }})</span></a>
@@ -126,9 +126,9 @@
                 @if ($canAct)<button wire:click="$set('showDecide', true)" class="text-white bg-amber-600 rounded px-3 py-1.5">ບັນທຶກການຕັດສິນໃຈ</button>@endif
                 <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">ຍົກເລີກ</button>
             @elseif ($record->status === 'pending_approval')
-                @if ($canAct)<button wire:click="$set('showApprove', true)" class="text-white bg-emerald-600 rounded px-3 py-1.5">ອະນຸมัด</button><button wire:click="$set('showReject', true)" class="text-amber-700 border border-amber-200 bg-amber-50 rounded px-3 py-1.5">ສົ່ງกลับ</button>@endif
+                @if ($canAct)<button wire:click="$set('showApprove', true)" class="text-white bg-emerald-600 rounded px-3 py-1.5">ອະນຸມັດ</button><button wire:click="$set('showReject', true)" class="text-amber-700 border border-amber-200 bg-amber-50 rounded px-3 py-1.5">ສົ່ງກັບ</button>@endif
             @elseif ($record->status === 'resolved' && $record->next_step === 'oga' && $editable)
-                <a href="{{ route('oga.create', ['da' => $record->id]) }}" wire:navigate class="inline-flex items-center gap-1 text-white bg-sky-600 rounded px-3 py-1.5 hover:bg-sky-700">🚚 ສ້າງ OGA ຈาก DA</a>
+                <a href="{{ route('oga.create', ['da' => $record->id]) }}" wire:navigate class="inline-flex items-center gap-1 text-white bg-sky-600 rounded px-3 py-1.5 hover:bg-sky-700">🚚 ສ້າງ OGA ຈາກ DA</a>
             @else
                 <span class="text-gray-400">— ບໍ່ມີ action ({{ $record->status }})</span>
             @endif
@@ -139,8 +139,8 @@
         @if ($showCancel)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
                 <h3 class="font-medium text-gray-800">ຍົກເລີກ DA</h3>
-                <textarea wire:model="cancelReason" rows="2" placeholder="ເຫດผົน…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showCancel', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="cancel" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยัน</button></div>
+                <textarea wire:model="cancelReason" rows="2" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showCancel', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="cancel" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນ</button></div>
             </div></div>
         @endif
         @if ($showDecide)
@@ -150,42 +150,42 @@
                 <div class="space-y-1">@foreach ($decisionOptions as $d)<label class="flex items-center gap-2 text-sm"><input type="checkbox" value="{{ $d }}" wire:model="decisions" class="rounded border-gray-300 text-sky-600" /> {{ $d }}</label>@endforeach</div>
                 <textarea wire:model="purchasingNote" rows="2" placeholder="ໝາຍເຫດ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                 <div class="grid grid-cols-2 gap-2">
-                    <select wire:model="transportAccount" class="rounded-md border-gray-300 text-sm"><option value="">ບัญชีขนส่ง</option><option value="vendor">vendor</option><option value="ntpc">ntpc</option></select>
+                    <select wire:model="transportAccount" class="rounded-md border-gray-300 text-sm"><option value="">ບັນຊີຂົນສົ່ງ</option><option value="vendor">vendor</option><option value="ntpc">ntpc</option></select>
                     <select wire:model="transportMode" class="rounded-md border-gray-300 text-sm"><option value="">ວິທີ</option><option value="road">road</option><option value="air">air</option></select>
                     <input type="text" wire:model="carrierName" placeholder="Carrier" class="rounded-md border-gray-300 text-sm" />
                     <input type="text" wire:model="carrierPhone" placeholder="Phone" class="rounded-md border-gray-300 text-sm" />
                 </div>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showDecide', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="purchasingDecide" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยัน</button></div>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showDecide', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="purchasingDecide" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນ</button></div>
             </div></div>
         @endif
         @if ($showApprove)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-md space-y-3">
-                <h3 class="font-medium text-gray-800">C · ອະນຸมัด (Leader)</h3>
+                <h3 class="font-medium text-gray-800">C · ອະນຸມັດ (Leader)</h3>
                 <textarea wire:model="resolution" rows="2" placeholder="Resolution action…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                 <input type="text" wire:model="approvedTitle" placeholder="ຕຳແໜ່ງ (e.g. Leader Warehousing)" class="w-full rounded-md border-gray-300 text-sm" />
-                <div><label class="block text-sm text-gray-600 mb-1">Next step</label><select wire:model="nextStep" class="w-full rounded-md border-gray-300 text-sm"><option value="finished">ปิด (finished)</option><option value="oga">ສ້າງ OGA ຕໍ່</option></select></div>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showApprove', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="approve" class="bg-emerald-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยันອະນຸมัด</button></div>
+                <div><label class="block text-sm text-gray-600 mb-1">Next step</label><select wire:model="nextStep" class="w-full rounded-md border-gray-300 text-sm"><option value="finished">ປິດ (finished)</option><option value="oga">ສ້າງ OGA ຕໍ່</option></select></div>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showApprove', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="approve" class="bg-emerald-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນອະນຸມັດ</button></div>
             </div></div>
         @endif
         @if ($showReject)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
-                <h3 class="font-medium text-gray-800">ສົ່ງกลับ Purchasing</h3>
+                <h3 class="font-medium text-gray-800">ສົ່ງກັບ Purchasing</h3>
                 @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                <textarea wire:model="rejectReason" rows="3" placeholder="ເຫດผົน…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showReject', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="reject" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยัน</button></div>
+                <textarea wire:model="rejectReason" rows="3" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showReject', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="reject" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນ</button></div>
             </div></div>
         @endif
         @if ($showDelete)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
                 <h3 class="font-medium text-red-700">🗑 ລຶບ DA</h3>
-                <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດผົน…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                 @error('deleteReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยันລຶບ</button></div>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນລຶບ</button></div>
             </div></div>
         @endif
         @if ($showItems)
             <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4"><div class="bg-white w-full md:max-w-2xl rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <h3 class="font-medium text-gray-800">✏️ ແກ້ ລາຍການ (ฮ่าง)</h3>
+                <h3 class="font-medium text-gray-800">✏️ ແກ້ ລາຍການ (ຮ່າງ)</h3>
                 <div class="space-y-2">
                     @foreach ($di as $i => $row)
                         <div wire:key="di-{{ $i }}" class="border border-gray-100 rounded-lg p-2 grid grid-cols-12 gap-2 items-start">

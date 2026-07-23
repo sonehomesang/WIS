@@ -70,7 +70,7 @@ class Email extends Component
         ]);
 
         $existing = Setting::get('mail', []);
-        // ວ່າງ = ຮັກສາ ລະຫັດ ເກົ່າ (ເຂົ້າລະຫັດ ໄວ້); ໃສ່ ໃໝ່ = ເຂົ້າລະຫัດ ໃໝ່
+        // ວ່າງ = ຮັກສາ ລະຫັດ ເກົ່າ (ເຂົ້າລະຫັດ ໄວ້); ໃສ່ ໃໝ່ = ເຂົ້າລະຫັດ ໃໝ່
         $password = $this->password !== ''
             ? Crypt::encryptString($this->password)
             : ($existing['password'] ?? null);

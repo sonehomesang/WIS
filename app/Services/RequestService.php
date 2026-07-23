@@ -43,8 +43,8 @@ class RequestService
     }
 
     /**
-     * ປຽບທຽບລາຄາ supplier ອື່ນໆ ສຳລັບສິນຄ້າດຽວກັນ (ຈັບคู่ ດ້ວຍ material_nbr ກ່ອນ, ບໍ່ມີ → description).
-     * Groundwork ສຳລັບ multi-supplier — ຄืน [] ຖ້າມີ supplier ດຽວ.
+     * ປຽບທຽບລາຄາ supplier ອື່ນໆ ສຳລັບສິນຄ້າດຽວກັນ (ຈັບຄູ່ ດ້ວຍ material_nbr ກ່ອນ, ບໍ່ມີ → description).
+     * Groundwork ສຳລັບ multi-supplier — ຄືນ [] ຖ້າມີ supplier ດຽວ.
      *
      * @return array<int,array{material_id:int,supplier_id:?int,supplier_name:string,unit_price:float,currency:string}>
      */
@@ -159,7 +159,7 @@ class RequestService
         });
     }
 
-    /** In-app notifications ຕอน transition ສຳຄັນ (Phase 6.10). */
+    /** In-app notifications ຕອນ transition ສຳຄັນ (Phase 6.10). */
     private function notify(MaterialRequest $r, string $action): void
     {
         $svc = app(NotificationService::class);
@@ -176,15 +176,15 @@ class RequestService
 
     private function doSubmit(MaterialRequest $r): void
     {
-        $this->assert($r->status === 'draft', 'submit ໄດ້ສະເພาະ draft.');
+        $this->assert($r->status === 'draft', 'submit ໄດ້ສະເພາະ draft.');
         $this->assert($r->items()->exists(), 'ຕ້ອງມີຢ່າງໜ້ອຍ 1 ລາຍການ.');
-        $this->snapshotVat($r);   // freeze VAT ຕอนสົ່ງ
+        $this->snapshotVat($r);   // freeze VAT ຕອນສົ່ງ
         $r->status = 'submitted';
     }
 
     private function doApprove(MaterialRequest $r, $actor): void
     {
-        $this->assert($r->status === 'submitted', 'approve ໄດ້ສະເພາะ submitted.');
+        $this->assert($r->status === 'submitted', 'approve ໄດ້ສະເພາະ submitted.');
         $r->status = 'approved';
         $r->approved_at = now();
         $r->approver_user_id = $actor->id;
@@ -193,15 +193,15 @@ class RequestService
 
     private function doReject(MaterialRequest $r, array $opts): void
     {
-        $this->assert(in_array($r->status, ['submitted', 'approved'], true), 'reject ໄດ້ສະເພาະ submitted/approved.');
-        $this->assert(! empty($opts['reason']), 'ຕ້ອງໃສ່ເຫດผົน.');
+        $this->assert(in_array($r->status, ['submitted', 'approved'], true), 'reject ໄດ້ສະເພາະ submitted/approved.');
+        $this->assert(! empty($opts['reason']), 'ຕ້ອງໃສ່ເຫດຜົນ.');
         $r->status = 'rejected';
         $r->reject_reason = $opts['reason'];
     }
 
     private function doValidate(MaterialRequest $r, $actor): void
     {
-        $this->assert($r->status === 'approved', 'validate ໄດ້ສະເພาະ approved.');
+        $this->assert($r->status === 'approved', 'validate ໄດ້ສະເພາະ approved.');
         $r->status = 'validated';
         $r->validated_at = now();
         $r->warehouse_staff_user_id = $actor->id;
@@ -210,7 +210,7 @@ class RequestService
 
     private function doDispatch(MaterialRequest $r, $actor, array $opts): void
     {
-        $this->assert($r->status === 'validated', 'dispatch ໄດ້ສະເພาະ validated.');
+        $this->assert($r->status === 'validated', 'dispatch ໄດ້ສະເພາະ validated.');
         $r->status = 'dispatched';
         $r->dispatched_at = now();
         $r->dispatched_by = $actor->id;
@@ -220,7 +220,7 @@ class RequestService
 
     private function doConfirmReceipt(MaterialRequest $r, $actor, array $opts): void
     {
-        $this->assert($r->status === 'dispatched', 'ຮັບເຄື່ອງ ໄດ້ສະເພาະ dispatched.');
+        $this->assert($r->status === 'dispatched', 'ຮັບເຄື່ອງ ໄດ້ສະເພາະ dispatched.');
 
         // Per-item received quantities (absolute). Supports partial receipt:
         // record stays 'dispatched' until every item is fully received.
@@ -263,7 +263,7 @@ class RequestService
 
     private function doClose(MaterialRequest $r, $actor, array $opts): void
     {
-        $this->assert($r->status === 'received', 'close ໄດ້ສະເພາะ received.');
+        $this->assert($r->status === 'received', 'close ໄດ້ສະເພາະ received.');
         $this->assert(! empty($opts['invoice_number']), 'ຕ້ອງໃສ່ເລກ invoice.');
         $this->assert(! empty($opts['sap_reference']), 'ຕ້ອງໃສ່ SAP reference.');
         $r->status = 'completed';
@@ -281,7 +281,7 @@ class RequestService
         $r->cancel_reason = $opts['reason'] ?? null;
     }
 
-    /** ຄິດ total ໃໝ່ຈาก items (ບໍ່ແຕະ VAT snapshot). */
+    /** ຄິດ total ໃໝ່ຈາກ items (ບໍ່ແຕະ VAT snapshot). */
     public function recalcTotals(MaterialRequest $r): void
     {
         $total = (float) $r->items()->get()->sum(fn ($it) => (float) $it->unit_price * (int) $it->quantity);
@@ -291,7 +291,7 @@ class RequestService
         $r->save();
     }
 
-    /** Freeze ອັດຕາ VAT ຕอน submit (supplier ກ່ອນ, ບໍ່ມີ → global). */
+    /** Freeze ອັດຕາ VAT ຕອນ submit (supplier ກ່ອນ, ບໍ່ມີ → global). */
     private function snapshotVat(MaterialRequest $r): void
     {
         $vat = ['rate' => 0.0, 'enabled' => false];

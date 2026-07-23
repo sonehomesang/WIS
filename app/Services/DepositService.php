@@ -21,7 +21,7 @@ use Illuminate\Validation\ValidationException;
  */
 class DepositService
 {
-    /** Counter DP{YYYY}-NNNN (transaction-safe — ເອີ້ນພายใน DB::transaction). */
+    /** Counter DP{YYYY}-NNNN (transaction-safe — ເອີ້ນພາຢໃນ DB::transaction). */
     public function nextNumber(int $year): string
     {
         $prefix = "DP{$year}-";
@@ -108,7 +108,7 @@ class DepositService
         });
     }
 
-    /** In-app notifications ຕอน transition ສຳຄັນ (Phase 6.11). */
+    /** In-app notifications ຕອນ transition ສຳຄັນ (Phase 6.11). */
     private function notify(DepositRecord $r, string $action): void
     {
         $svc = app(NotificationService::class);
@@ -132,7 +132,7 @@ class DepositService
 
     private function doAccept(DepositRecord $r, $actor, array $opts): void
     {
-        $this->assert($r->status === 'submitted', 'ຮັບຝາກໄດ້ສະເພาະ submitted.');
+        $this->assert($r->status === 'submitted', 'ຮັບຝາກໄດ້ສະເພາະ submitted.');
         $loc = trim((string) ($opts['storage_location'] ?? ''));
         $shelf = trim((string) ($opts['storage_shelf_label'] ?? ''));
         $this->assert($loc !== '' || $shelf !== '', 'ຕ້ອງລະບຸ ບ່ອນເກັບ ຫຼື ປ້າຍຊັ້ນວາງ ຢ່າງໜ້ອຍ 1 ຢ່າງ.');
@@ -147,18 +147,18 @@ class DepositService
 
     private function doConfirmStored(DepositRecord $r, $actor): void
     {
-        $this->assert(in_array($r->status, ['accepted', 'needs_fix'], true), 'ຢืนยันເກັບໄດ້ສະເພาະ accepted/needs_fix.');
+        $this->assert(in_array($r->status, ['accepted', 'needs_fix'], true), 'ຢືນຢັນເກັບໄດ້ສະເພາະ accepted/needs_fix.');
         $r->status = 'stored';
         $r->stored_at = now();
         $r->stored_by = $actor->id;
-        // ເຄລียร์ needs_fix ເມື່ອແກ້ແລ້ວ
+        // ເຄລຍ needs_fix ເມື່ອແກ້ແລ້ວ
         $r->needs_fix_reason = null;
     }
 
     private function doFlagIssue(DepositRecord $r, $actor, array $opts): void
     {
         $this->assert($r->status === 'stored', 'flag ໄດ້ສະເພາະ stored.');
-        $this->assert(! empty($opts['reason']), 'ຕ້ອງໃສ່ເຫດผົน.');
+        $this->assert(! empty($opts['reason']), 'ຕ້ອງໃສ່ເຫດຜົນ.');
         $r->status = 'needs_fix';
         $r->needs_fix_reason = $opts['reason'];
         $r->needs_fix_flagged_at = now();
@@ -167,7 +167,7 @@ class DepositService
 
     private function doConfirmClaim(DepositRecord $r, $actor, array $opts): void
     {
-        $this->assert($r->status === 'stored', 'ຮັບคืນໄດ້ສະເພาະ stored.');
+        $this->assert($r->status === 'stored', 'ຮັບຄືນໄດ້ສະເພາະ stored.');
         $r->status = 'claimed';
         $r->claimed_at = now();
         $r->claimed_by = $actor->id;

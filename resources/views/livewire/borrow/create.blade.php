@@ -26,7 +26,7 @@
                 @endif
             </div>
 
-            {{-- ② ລາຍการเครื่อง (ໃສ່ ກ່ອນ ຈຸດປະສົງ) --}}
+            {{-- ② ລາຍການເຄື່ອງ (ໃສ່ ກ່ອນ ຈຸດປະສົງ) --}}
             <div>
                 <div class="font-semibold text-sm mb-2">② ລາຍການເຄື່ອງ</div>
                 @if ($borrow_type === 'new_inventory')

@@ -14,7 +14,7 @@ use Spatie\Permission\Models\Role;
 /**
  * users:import-json — import WIS users + departments → WH (Phase 6.6.7/B).
  *
- * Users imported as is_pre_created (no real password — login ໄດ້ເມื่อ sign-in + match email).
+ * Users imported as is_pre_created (no real password — login ໄດ້ເມື່ອ sign-in + match email).
  * NEVER auto-sets is_super_admin (bypass flag). Roles assigned via Spatie if the role exists.
  * Dedup by email. Then re-links borrow_records.borrower_user_id by email.
  */

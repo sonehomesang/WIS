@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * material:import-images {dir} — import material catalog images ຈาก WIS Storage export.
+ * material:import-images {dir} — import material catalog images ຈາກ WIS Storage export.
  *
  * Source layout: {dir}/{wis_id}/{file.jpg} (dir name = materials.wis_id).
  * Copies into storage/app/public/materials/{wis_id}/{file} + creates material_images rows.

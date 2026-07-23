@@ -206,7 +206,7 @@ class Show extends Component
         }
     }
 
-    // ── confirmReturn (ຮັບคืน) — returnQty (partial) + ຮູບ condition ບັງຄັບ ──
+    // ── confirmReturn (ຮັບຄືນ) — returnQty (partial) + ຮູບ condition ບັງຄັບ ──
     public function openReturn(): void
     {
         $this->reset(['returnCondition', 'returnPhotos']);
@@ -252,7 +252,7 @@ class Show extends Component
         }
     }
 
-    // ── soft delete (admin/borrow.edit; ສະເພาະ draft/cancelled/rejected/returned) ──
+    // ── soft delete (admin/borrow.edit; ສະເພາະ draft/cancelled/rejected/returned) ──
     protected function canDelete(): bool
     {
         return $this->canEdit()

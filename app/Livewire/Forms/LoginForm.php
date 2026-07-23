@@ -46,8 +46,8 @@ class LoginForm extends Form
 
             throw ValidationException::withMessages([
                 'form.email' => $status === 'pending'
-                    ? 'ບັນຊີ ລໍ ການອະນຸมัด — ຕິດຕໍ່ admin.'
-                    : 'ບັນຊີ ຖูกล็อก — ຕິດຕໍ່ admin.',
+                    ? 'ບັນຊີ ລໍ ການອະນຸມັດ — ຕິດຕໍ່ admin.'
+                    : 'ບັນຊີ ຖືກລັອກ — ຕິດຕໍ່ admin.',
             ]);
         }
 

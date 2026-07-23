@@ -31,7 +31,7 @@
                 </select>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-                @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບคืน' : 'Deleted' }}</button>@endif
+                @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
                 @can('deposit.create')<a href="{{ route('deposit.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ Deposit</a>@endcan
             </div>
         </div>
@@ -51,7 +51,7 @@
                         <th class="text-left font-semibold px-4 py-2 w-full">ເຄື່ອງຝາກ <span class="text-gray-400">(Items)</span></th>
                         <th class="text-left font-semibold px-4 py-2">ບ່ອນເກັບ <span class="text-gray-400">(Storage)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ວັນທີຝາກ <span class="text-gray-400">(Date)</span></th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖานะ <span class="text-gray-400">(Status)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖານະ <span class="text-gray-400">(Status)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍລະອຽດ <span class="text-gray-400">(Actions)</span></th>
                     </tr>
                 </thead>
@@ -79,7 +79,7 @@
                             <td class="px-4 py-2 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
                             <td class="px-4 py-2 align-top whitespace-nowrap">
                                 @if ($showDeleted)
-                                    <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืນລາຍการนี้?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50 inline-block">↩ ກູ້คืน</button>
+                                    <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນລາຍການນີ້?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50 inline-block">↩ ກູ້ຄືນ</button>
                                     @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif
                                 @else
                                     <a href="{{ route('deposit.show', $r) }}" wire:navigate class="text-xs text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 inline-block">View Details</a>
@@ -109,7 +109,7 @@
                     @if ($showDeleted)
                         <div class="flex items-center justify-between gap-2 mt-2">
                             @if ($r->deleted_reason)<span class="text-xs text-gray-400 truncate">{{ $r->deleted_reason }}</span>@else<span></span>@endif
-                            <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืນລາຍการนี้?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50 shrink-0">↩ ກູ້คืน</button>
+                            <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນລາຍການນີ້?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50 shrink-0">↩ ກູ້ຄືນ</button>
                         </div>
                     @endif
                 </{{ $tag }}>

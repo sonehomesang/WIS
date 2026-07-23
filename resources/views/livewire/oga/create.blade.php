@@ -15,15 +15,15 @@
                 <select wire:model="ship_via" class="w-full rounded-md border-gray-300 text-sm"><option value="road">Road</option><option value="air">Air</option></select>
             </div>
             <div>
-                <label class="block text-gray-600 mb-1">ມาจาก DA (optional)</label>
+                <label class="block text-gray-600 mb-1">ມາຈາກ DA (optional)</label>
                 <select wire:model="source_da_id" class="w-full rounded-md border-gray-300 text-sm"><option value="">—</option>@foreach ($sourceDas as $d)<option value="{{ $d->id }}">{{ $d->da_number }} · {{ $d->supplier_name }}</option>@endforeach</select>
             </div>
             <div>
-                <label class="block text-gray-600 mb-1">ປลายทาง (Supplier)</label>
+                <label class="block text-gray-600 mb-1">ປາຍທາງ (Supplier)</label>
                 <select wire:model="supplier_id" class="w-full rounded-md border-gray-300 text-sm"><option value="">—</option>@foreach ($suppliers as $s)<option value="{{ $s->id }}">{{ $s->name }}</option>@endforeach</select>
             </div>
             <div><label class="block text-gray-600 mb-1">ຜູ້ຕິດຕໍ່</label><input type="text" wire:model="dispatch_to_contact_person" class="w-full rounded-md border-gray-300 text-sm" /></div>
-            <div class="md:col-span-2"><label class="block text-gray-600 mb-1">ທີ່ຢູ່ ປลายทาง</label><input type="text" wire:model="dispatch_to_address" class="w-full rounded-md border-gray-300 text-sm" /></div>
+            <div class="md:col-span-2"><label class="block text-gray-600 mb-1">ທີ່ຢູ່ ປາຍທາງ</label><input type="text" wire:model="dispatch_to_address" class="w-full rounded-md border-gray-300 text-sm" /></div>
             <div><label class="block text-gray-600 mb-1">ເບີໂທ</label><input type="text" wire:model="dispatch_to_phone" class="w-full rounded-md border-gray-300 text-sm" /></div>
         </div>
 
@@ -31,7 +31,7 @@
             <div class="md:col-span-2"><label class="block text-gray-600 mb-1">ສິນຄ້າ (ສະຫຼຸບ) <span class="text-red-500">*</span></label><input type="text" wire:model="goods_consigned" placeholder="ເຊັ່ນ: 2 x VALVE, SOLENOID" class="w-full rounded-md border-gray-300 text-sm" />@error('goods_consigned')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
             <div><label class="block text-gray-600 mb-1">ຂະໜາດ (Dimension)</label><input type="text" wire:model="dimension" class="w-full rounded-md border-gray-300 text-sm" /></div>
             <div><label class="block text-gray-600 mb-1">ນ້ຳໜັກລວມ (kg)</label><input type="number" step="0.01" min="0" wire:model="gross_weight_kg" class="w-full rounded-md border-gray-300 text-sm" /></div>
-            <div class="md:col-span-2"><label class="block text-gray-600 mb-1">ເຫດผົนการส่ง</label><textarea wire:model="reason_of_despatch" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
+            <div class="md:col-span-2"><label class="block text-gray-600 mb-1">ເຫດຜົນການສົ່ງ</label><textarea wire:model="reason_of_despatch" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
             <div><label class="block text-gray-600 mb-1">ຄົນຂັບ (Driver)</label><input type="text" wire:model="driver_name" class="w-full rounded-md border-gray-300 text-sm" /></div>
             <div><label class="block text-gray-600 mb-1">ປ້າຍລົດ (Truck)</label><input type="text" wire:model="truck_plate_number" class="w-full rounded-md border-gray-300 text-sm" /></div>
         </div>
@@ -56,11 +56,11 @@
 
         {{-- dispatch photos --}}
         <div class="bg-white border border-gray-100 rounded-lg p-4 space-y-3 text-sm">
-            <div class="text-sm font-medium text-gray-700">ຮູບ ຕอนส่ง (dispatch)</div>
+            <div class="text-sm font-medium text-gray-700">ຮູບ ຕອນສົ່ງ (dispatch)</div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div><label class="block text-xs text-gray-500 mb-1">ໂຫຼດขึ้นລົດ (loaded)</label><input type="file" wire:model="photoLoaded" accept="image/*" class="{{ $fileCls }}" />@error('photoLoaded')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
-                <div><label class="block text-xs text-gray-500 mb-1">ປິດผนึก (sealed)</label><input type="file" wire:model="photoSealed" accept="image/*" class="{{ $fileCls }}" /></div>
-                <div><label class="block text-xs text-gray-500 mb-1">เอกสาร (paper/PLI)</label><input type="file" wire:model="photoPaperPli" accept="image/*" class="{{ $fileCls }}" /></div>
+                <div><label class="block text-xs text-gray-500 mb-1">ໂຫຼດຂຶ້ນລົດ (loaded)</label><input type="file" wire:model="photoLoaded" accept="image/*" class="{{ $fileCls }}" />@error('photoLoaded')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
+                <div><label class="block text-xs text-gray-500 mb-1">ປິດຜະນຶກ (sealed)</label><input type="file" wire:model="photoSealed" accept="image/*" class="{{ $fileCls }}" /></div>
+                <div><label class="block text-xs text-gray-500 mb-1">ເອກະສານ (paper/PLI)</label><input type="file" wire:model="photoPaperPli" accept="image/*" class="{{ $fileCls }}" /></div>
             </div>
             <div wire:loading wire:target="photoLoaded,photoSealed,photoPaperPli" class="text-xs text-gray-400">ກຳລັງອັບ…</div>
             <textarea wire:model="comments" rows="2" placeholder="ໝາຍເຫດ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>

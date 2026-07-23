@@ -150,7 +150,7 @@
                     <h3 class="text-lg font-medium text-gray-800">✏️ ແກ້ໄຂ ຂໍ້ມູນງານ</h3>
                     <div><label class="block text-xs text-gray-500 mb-1">ຊື່ງານ *</label><input type="text" wire:model="ef.title" class="w-full rounded-md border-gray-300 text-sm" />@error('ef.title')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div><label class="block text-xs text-gray-500 mb-1">ປະເພດ / ຫົວข้อ</label><input type="text" wire:model="ef.topic" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">ປະເພດ / ຫົວຂໍ້</label><input type="text" wire:model="ef.topic" class="w-full rounded-md border-gray-300 text-sm" /></div>
                         <div><label class="block text-xs text-gray-500 mb-1">ປະຫວັດ / theme</label><input type="text" wire:model="ef.background" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     </div>
                     <div><label class="block text-xs text-gray-500 mb-1">ສະຖານທີ່ (venue)</label><input type="text" wire:model="ef.venue" class="w-full rounded-md border-gray-300 text-sm" /></div>
@@ -161,9 +161,9 @@
                     <div><label class="block text-xs text-gray-500 mb-1">ທີ່ຢູ່ ລະອຽດ</label><input type="text" wire:model="ef.address" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     <div class="grid grid-cols-2 gap-2">
                         <div><label class="block text-xs text-gray-500 mb-1">ວັນທີເລີ່ມ *</label><input type="date" wire:model="ef.start_date" class="w-full rounded-md border-gray-300 text-sm" />@error('ef.start_date')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
-                        <div><label class="block text-xs text-gray-500 mb-1">ວັນທີສິ້ນສຸด</label><input type="date" wire:model="ef.end_date" class="w-full rounded-md border-gray-300 text-sm" />@error('ef.end_date')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
+                        <div><label class="block text-xs text-gray-500 mb-1">ວັນທີສິ້ນສຸດ</label><input type="date" wire:model="ef.end_date" class="w-full rounded-md border-gray-300 text-sm" />@error('ef.end_date')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
                     </div>
-                    <div><label class="block text-xs text-gray-500 mb-1">ມີຈັກບໍລິສັດ ເຂົ້າຮ່ວມ (ທັງໝົด)</label><input type="number" min="0" wire:model="ef.total_companies_at_expo" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">ມີຈັກບໍລິສັດ ເຂົ້າຮ່ວມ (ທັງໝົດ)</label><input type="number" min="0" wire:model="ef.total_companies_at_expo" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     <div class="flex justify-end gap-2 pt-2"><button wire:click="$set('showEvent', false)" class="border rounded px-4 py-2 text-sm">ປິດ</button><button wire:click="saveEvent" wire:loading.attr="disabled" wire:target="saveEvent" class="bg-sky-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ບັນທຶກ</button></div>
                 </div>
             </div>
@@ -183,7 +183,7 @@
                     <div><label class="block text-xs text-gray-500 mb-1">ສິນຄ້າ / ບໍລິການ</label><textarea wire:model="cf.products" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
                     <div><label class="block text-xs text-gray-500 mb-1">ປະໂຫຍດ / ເໝາະກັບເຮົາ</label><textarea wire:model="cf.benefit" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div><label class="block text-xs text-gray-500 mb-1">ລະດັບຄວາມສนใจ</label><select wire:model="cf.interest_level" class="w-full rounded-md border-gray-300 text-sm"><option value="hot">hot</option><option value="warm">warm</option><option value="cold">cold</option></select></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">ລະດັບຄວາມສົນໃຈ</label><select wire:model="cf.interest_level" class="w-full rounded-md border-gray-300 text-sm"><option value="hot">hot</option><option value="warm">warm</option><option value="cold">cold</option></select></div>
                         <div><label class="block text-xs text-gray-500 mb-1">ຄະແນນ (1–5)</label><select wire:model="cf.score" class="w-full rounded-md border-gray-300 text-sm"><option value="">—</option>@for ($i = 1; $i <= 5; $i++)<option value="{{ $i }}">{{ $i }} ★</option>@endfor</select></div>
                     </div>
                     <div>
@@ -213,7 +213,7 @@
                     </div>
                     <div><label class="block text-xs text-gray-500 mb-1">ເບີ app (WhatsApp/WeChat)</label><input type="text" wire:model="kf.app_contact" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     <div><label class="block text-xs text-gray-500 mb-1">ໝາຍເຫດ</label><textarea wire:model="kf.notes" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
-                    <div><label class="block text-xs text-gray-500 mb-1">ນາມบัตร (business card)</label><input type="file" wire:model="businessCard" accept="image/*" class="{{ $fileCls }}" /><div wire:loading wire:target="businessCard" class="text-xs text-gray-400">ກຳລັງອັບ…</div></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">ນາມບັດ (business card)</label><input type="file" wire:model="businessCard" accept="image/*" class="{{ $fileCls }}" /><div wire:loading wire:target="businessCard" class="text-xs text-gray-400">ກຳລັງອັບ…</div></div>
                     <div class="flex justify-end gap-2 pt-2"><button wire:click="$set('showContact', false)" class="border rounded px-4 py-2 text-sm">ປິດ</button><button wire:click="saveContact" wire:loading.attr="disabled" wire:target="saveContact,businessCard" class="bg-sky-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ບັນທຶກ</button></div>
                 </div>
             </div>
@@ -222,9 +222,9 @@
         @if ($showDelete)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
                 <h3 class="font-medium text-red-700">🗑 ລຶບ Expo</h3>
-                <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດผົน…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                 @error('deleteReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยันລຶບ</button></div>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນລຶບ</button></div>
             </div></div>
         @endif
     </div>

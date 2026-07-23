@@ -9,7 +9,7 @@
             <div class="flex items-center justify-between gap-3">
                 <div>
                     <h3 class="font-medium text-gray-800">💾 Backup ຖານຂໍ້ມູນ</h3>
-                    <p class="text-xs text-gray-500">mysqldump (gzip) ເກັບ ໃນ server (ບໍ່ເປີດ public). ดาวน์โหลด ໄປ ເກັບ ນອກ ໄດ້.</p>
+                    <p class="text-xs text-gray-500">mysqldump (gzip) ເກັບ ໃນ server (ບໍ່ເປີດ public). ດາວໂຫລດ ໄປ ເກັບ ນອກ ໄດ້.</p>
                 </div>
                 @if ($canManage)
                     <button wire:click="createBackup" wire:loading.attr="disabled" wire:target="createBackup"
@@ -23,7 +23,7 @@
             <div class="border border-gray-100 rounded-lg overflow-hidden">
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-50 text-gray-500 text-xs">
-                        <tr><th class="text-left px-3 py-2 font-medium">ໄຟລ໌</th><th class="text-left px-3 py-2 font-medium">ຂະໜาด</th><th class="text-left px-3 py-2 font-medium">ວັນທີ</th><th class="px-3 py-2"></th></tr>
+                        <tr><th class="text-left px-3 py-2 font-medium">ໄຟລ໌</th><th class="text-left px-3 py-2 font-medium">ຂະໜາດ</th><th class="text-left px-3 py-2 font-medium">ວັນທີ</th><th class="px-3 py-2"></th></tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
                         @forelse ($backups as $b)
@@ -51,7 +51,7 @@
             <div class="bg-white border border-red-200 rounded-lg p-5 space-y-3">
                 <div>
                     <h3 class="font-medium text-red-700">♻️ Restore (ອັນຕະລາຍ)</h3>
-                    <p class="text-xs text-gray-500">เขียนทับ ຂໍ້ມູນ ปัจจุบัน ດ້ວຍ backup ທີ່ເລືອກ. <b class="text-red-600">ทำในเวลาบำรุงรักษา ເທົ່ານັ້ນ</b> — super_admin ເທົ່ານັ້ນ.</p>
+                    <p class="text-xs text-gray-500">ຂຽນທັບ ຂໍ້ມູນ ປັຈຈຸບັນ ດ້ວຍ backup ທີ່ເລືອກ. <b class="text-red-600">ທຳໃນເວລາບຳລຸງຮັກສາ ເທົ່ານັ້ນ</b> — super_admin ເທົ່ານັ້ນ.</p>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
                     <div class="sm:col-span-2">
@@ -67,7 +67,7 @@
                     </div>
                 </div>
                 <button wire:click="restore" wire:loading.attr="disabled" wire:target="restore"
-                        wire:confirm="ແນ່ໃຈບໍ່? ການ restore ຈะเขียนทับ ຂໍ້ມູນ ปัจจุบัน ທັງໝົด."
+                        wire:confirm="ແນ່ໃຈບໍ່? ການ restore ຈະຂຽນທັບ ຂໍ້ມູນ ປັຈຈຸບັນ ທັງໝົດ."
                         class="text-sm text-white bg-red-600 rounded-md px-4 py-2 hover:bg-red-700 disabled:opacity-50">
                     <span wire:loading.remove wire:target="restore">♻️ Restore</span>
                     <span wire:loading wire:target="restore">⏳ ກຳລັງ restore…</span>

@@ -67,7 +67,7 @@ class BorrowRecord extends Model
         return Carbon::today()->diffInDays($this->planned_return_date, false);
     }
 
-    /** overdue = active + ກາຍ planned_return_date (flag ຕอน query, ບໍ່ບັນທຶກ DB). */
+    /** overdue = active + ກາຍ planned_return_date (flag ຕອນ query, ບໍ່ບັນທຶກ DB). */
     public function getIsOverdueAttribute(): bool
     {
         return $this->status === 'active'

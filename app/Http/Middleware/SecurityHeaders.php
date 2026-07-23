@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * ໃສ່ HTTP security headers ໃຫ້ ທຸກ response (ກັນ clickjacking, MIME-sniffing,
  * referrer leak, ແລະ ບັງຄັບ HTTPS). CSP ໃສ່ ແບບ report-only ກ່ອນ — ບໍ່ ທຳລາຍ
- * ການ ໃຊ້ ງານ (Livewire/Alpine ຕ້ອງ inline+eval) ແຕ່ ສະແດງ ວ່າ ມີ ພื้นฐาน CSP.
+ * ການ ໃຊ້ ງານ (Livewire/Alpine ຕ້ອງ inline+eval) ແຕ່ ສະແດງ ວ່າ ມີ ພື້ນຖານ CSP.
  */
 class SecurityHeaders
 {
@@ -24,7 +24,7 @@ class SecurityHeaders
         $headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $headers->set('Permissions-Policy', 'geolocation=(), microphone=()');
 
-        // HSTS ສະເພาະ ເທິງ HTTPS (ບໍ່ ມີ ຄວາມໝາຍ ເທິງ http)
+        // HSTS ສະເພາະ ເທິງ HTTPS (ບໍ່ ມີ ຄວາມໝາຍ ເທິງ http)
         if ($request->secure()) {
             $headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }

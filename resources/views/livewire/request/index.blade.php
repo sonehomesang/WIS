@@ -29,7 +29,7 @@
                 </select>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-                @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບคืน' : 'Deleted' }}</button>@endif
+                @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
                 @can('request.create')<a href="{{ route('request.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ Request</a>@endcan
             </div>
         </div>
@@ -51,7 +51,7 @@
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">WO <span class="text-gray-400">(ກ່ຽວຂ້ອງ)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ມູນຄ່າ <span class="text-gray-400">(Grand total)</span></th>
                         <th class="text-left font-semibold px-4 py-2">Supplier</th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖานะ <span class="text-gray-400">(Status)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖານະ <span class="text-gray-400">(Status)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">SAP</th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍລະອຽດ</th>
                     </tr>
@@ -71,7 +71,7 @@
                             <td class="px-4 py-2 align-top whitespace-nowrap">@if ($r->sapStatusLabel())<span class="inline-flex items-center text-xs font-medium rounded-full px-2 py-0.5 bg-violet-50 text-violet-700">{{ $r->sapStatusLabel() }}</span>@else<span class="text-gray-300">—</span>@endif</td>
                             <td class="px-4 py-2 align-top whitespace-nowrap">
                                 @if ($showDeleted)
-                                    <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืน?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50">↩ ກູ້คืน</button>
+                                    <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນ?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
                                 @else
                                     <a href="{{ route('request.show', $r) }}" wire:navigate class="text-xs text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 inline-block">View Details</a>
                                 @endif
@@ -99,7 +99,7 @@
                         </div>
                         <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $cls }} shrink-0">{{ $lbl }}</span>
                     </div>
-                    @if ($showDeleted)<div class="mt-2 text-right"><button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืน?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5">↩ ກູ້คืน</button></div>@endif
+                    @if ($showDeleted)<div class="mt-2 text-right"><button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນ?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5">↩ ກູ້ຄືນ</button></div>@endif
                 </{{ $tag }}>
             @empty
                 <div class="text-center text-gray-400 py-6">ຍັງບໍ່ມີໃບເບີກ</div>

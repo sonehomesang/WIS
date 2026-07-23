@@ -79,7 +79,7 @@ class DiscrepancyService
     /** Replace the line items of a DRAFT discrepancy advice. */
     public function replaceItems(DiscrepancyAdvice $r, array $items, $actor): void
     {
-        $this->assert($r->status === 'draft', 'ແກ້ ລາຍການ ໄດ້ສະເພาະ ฮ่าง (draft).');
+        $this->assert($r->status === 'draft', 'ແກ້ ລາຍການ ໄດ້ສະເພາະ ຮ່າງ (draft).');
         DB::transaction(function () use ($r, $items, $actor) {
             $r->items()->delete();
             foreach (array_values($items) as $i => $it) {
@@ -123,7 +123,7 @@ class DiscrepancyService
         });
     }
 
-    /** In-app notifications ຕอน transition ສຳຄັນ (Phase 6.11). */
+    /** In-app notifications ຕອນ transition ສຳຄັນ (Phase 6.11). */
     private function notify(DiscrepancyAdvice $r, string $action, $actor): void
     {
         $svc = app(NotificationService::class);
@@ -139,7 +139,7 @@ class DiscrepancyService
 
     private function doSubmit(DiscrepancyAdvice $r): void
     {
-        $this->assert($r->status === 'draft', 'submit ໄດ້ສະເພาະ draft.');
+        $this->assert($r->status === 'draft', 'submit ໄດ້ສະເພາະ draft.');
         $this->assert($r->items()->exists(), 'ຕ້ອງມີຢ່າງໜ້ອຍ 1 ລາຍການ.');
         $r->status = 'submitted';
         $r->raised_at = now();
@@ -147,13 +147,13 @@ class DiscrepancyService
 
     private function doPurchasingStart(DiscrepancyAdvice $r): void
     {
-        $this->assert($r->status === 'submitted', 'ເລີ່ມ review ໄດ້ສະເພาະ submitted.');
+        $this->assert($r->status === 'submitted', 'ເລີ່ມ review ໄດ້ສະເພາະ submitted.');
         $r->status = 'purchasing_review';
     }
 
     private function doPurchasingDecide(DiscrepancyAdvice $r, $actor, array $opts): void
     {
-        $this->assert($r->status === 'purchasing_review', 'ຕັດສິນໃຈ ໄດ້ສະເພาະ purchasing_review.');
+        $this->assert($r->status === 'purchasing_review', 'ຕັດສິນໃຈ ໄດ້ສະເພາະ purchasing_review.');
         $r->status = 'pending_approval';
         $r->purchasing_decisions = $opts['decisions'] ?? [];
         $r->purchasing_note = $opts['note'] ?? null;
@@ -167,7 +167,7 @@ class DiscrepancyService
 
     private function doApprove(DiscrepancyAdvice $r, $actor, array $opts): void
     {
-        $this->assert($r->status === 'pending_approval', 'approve ໄດ້ສະເພาະ pending_approval.');
+        $this->assert($r->status === 'pending_approval', 'approve ໄດ້ສະເພາະ pending_approval.');
         $r->status = 'resolved';
         $r->resolution_action = $opts['resolution'] ?? null;
         $r->approved_title = $opts['title'] ?? null;
@@ -179,8 +179,8 @@ class DiscrepancyService
 
     private function doReject(DiscrepancyAdvice $r, array $opts): void
     {
-        $this->assert($r->status === 'pending_approval', 'reject ໄດ້ສະເພาະ pending_approval.');
-        $this->assert(! empty($opts['reason']), 'ຕ້ອງໃສ່ເຫດผົน.');
+        $this->assert($r->status === 'pending_approval', 'reject ໄດ້ສະເພາະ pending_approval.');
+        $this->assert(! empty($opts['reason']), 'ຕ້ອງໃສ່ເຫດຜົນ.');
         $r->status = 'purchasing_review';   // loop back
         $r->reject_reason = $opts['reason'];
     }

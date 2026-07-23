@@ -120,7 +120,7 @@ class Create extends Component
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_name' => ['required', 'string', 'max:256'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
-            'itemPhotos.*' => ['nullable', 'image', 'max:4096'],   // ຮູບ ຕໍ່ ລາຍการ (ບໍ່ ບັງຄັບ)
+            'itemPhotos.*' => ['nullable', 'image', 'max:4096'],   // ຮູບ ຕໍ່ ລາຍການ (ບໍ່ ບັງຄັບ)
         ];
         if ($this->borrow_type === 'others') {
             $rules['others_detail'] = ['required', 'string', 'max:500'];
@@ -151,7 +151,7 @@ class Create extends Component
             'items' => $this->items,
         ], auth()->user());
 
-        // ຮູບ ຕໍ່ ລາຍการ (ບໍ່ ບັງຄັບ) → borrow_item_photos kind='request'
+        // ຮູບ ຕໍ່ ລາຍການ (ບໍ່ ບັງຄັບ) → borrow_item_photos kind='request'
         $created = $record->items()->orderBy('sort_order')->get()->values();
         foreach ($this->itemPhotos as $i => $photo) {
             if ($photo && isset($created[$i])) {

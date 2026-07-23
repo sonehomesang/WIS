@@ -322,7 +322,7 @@ class Index extends Component
         return view('livewire.inventory.index', [
             'items' => $items,
             'chips' => [
-                $chip('', 'ທັງໝົด', $sc->sum()),
+                $chip('', 'ທັງໝົດ', $sc->sum()),
                 $chip('available', 'available', $sc['available'] ?? 0),
                 $chip('borrowed', 'borrowed', $sc['borrowed'] ?? 0),
                 $chip('low-stock', 'low-stock', $sc['low-stock'] ?? 0, true),

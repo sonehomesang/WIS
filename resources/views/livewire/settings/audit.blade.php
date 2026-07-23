@@ -9,7 +9,7 @@
         @include('settings._tabs')
 
         <div class="flex flex-wrap items-center gap-2">
-            <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ໝາຍເລກ/ຜູ້ใช้/action…" class="w-60 rounded-md border-gray-300 text-sm" />
+            <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ໝາຍເລກ/ຜູ້ໃຊ້/action…" class="w-60 rounded-md border-gray-300 text-sm" />
             <select wire:model.live="moduleFilter" class="rounded-md border-gray-300 text-sm">
                 <option value="">ທຸກ module</option>
                 <option value="borrow">Borrow</option><option value="request">Request</option><option value="deposit">Deposit</option><option value="da">DA</option><option value="oga">OGA</option>

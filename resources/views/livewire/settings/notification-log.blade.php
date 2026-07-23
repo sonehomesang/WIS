@@ -12,7 +12,7 @@
                 <option value="info">info</option><option value="success">success</option><option value="warning">warning</option><option value="error">error</option>
             </select>
             <select wire:model.live="readFilter" class="rounded-md border-gray-300 text-sm">
-                <option value="">ທັງໝົด</option><option value="unread">ຍັງບໍ່ອ່ານ</option><option value="read">ອ່ານແລ້ວ</option>
+                <option value="">ທັງໝົດ</option><option value="unread">ຍັງບໍ່ອ່ານ</option><option value="read">ອ່ານແລ້ວ</option>
             </select>
             <button wire:click="export" class="ml-auto text-sm text-gray-700 border border-gray-200 rounded-md px-3 py-1.5 hover:bg-gray-50">⬇ Export CSV</button>
         </div>
@@ -34,7 +34,7 @@
                             <td class="px-3 py-2 text-gray-700 whitespace-nowrap">{{ $r->recipient ?? '—' }}</td>
                             <td class="px-3 py-2"><span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full {{ $dot[$r->type] ?? 'bg-gray-300' }}"></span>{{ $r->type }}</span></td>
                             <td class="px-3 py-2"><div class="text-gray-800">{{ $r->title }}</div>@if ($r->message)<div class="text-xs text-gray-400">{{ $r->message }}</div>@endif</td>
-                            <td class="px-3 py-2 text-xs {{ $r->read_at ? 'text-gray-400' : 'text-amber-600 font-medium' }}">{{ $r->read_at ? '✓' : 'ใหม่' }}</td>
+                            <td class="px-3 py-2 text-xs {{ $r->read_at ? 'text-gray-400' : 'text-amber-600 font-medium' }}">{{ $r->read_at ? '✓' : 'ໃໝ່' }}</td>
                             <td class="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">{{ $r->created_at?->format('d/m/Y H:i') }}</td>
                         </tr>
                     @empty

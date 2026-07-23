@@ -23,7 +23,7 @@ class BorrowItem extends Model
         return $this->belongsTo(BorrowRecord::class, 'record_id');
     }
 
-    /** Inventory item ຕົ້ນທาง (null ສຳລັບ free-text). ໃຊ້ສະແດງຮູບ catalog. */
+    /** Inventory item ຕົ້ນທາງ (null ສຳລັບ free-text). ໃຊ້ສະແດງຮູບ catalog. */
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class, 'item_id');

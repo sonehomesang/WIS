@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * OgaService — state machine ໃບສົ່ງເຄື່ອງອອກ (Phase 6.8c, warehouse-only).
  *
- * draft → dispatched → delivered | returned ; cancel ຈาก draft
+ * draft → dispatched → delivered | returned ; cancel ຈາກ draft
  *   confirmDispatch (warehouse) draft → dispatched (+ driver, truck)
  *   confirmDelivery (warehouse) dispatched → delivered
  *   returnRejected  (warehouse) dispatched → returned (+ reason)
@@ -89,7 +89,7 @@ class OgaService
     /** Replace the line items of a DRAFT OGA. */
     public function replaceItems(OutwardsGoodsAdvice $r, array $items, $actor): void
     {
-        $this->assert($r->status === 'draft', 'ແກ້ ລາຍການ ໄດ້ສະເພาະ ฮ่าง (draft).');
+        $this->assert($r->status === 'draft', 'ແກ້ ລາຍການ ໄດ້ສະເພາະ ຮ່າງ (draft).');
         DB::transaction(function () use ($r, $items, $actor) {
             $r->items()->delete();
             foreach (array_values($items) as $i => $it) {
@@ -133,7 +133,7 @@ class OgaService
         });
     }
 
-    /** In-app notifications ຕอน transition ສຳຄັນ (Phase 6.11). */
+    /** In-app notifications ຕອນ transition ສຳຄັນ (Phase 6.11). */
     private function notify(OutwardsGoodsAdvice $r, string $action): void
     {
         $svc = app(NotificationService::class);
@@ -150,7 +150,7 @@ class OgaService
 
     private function doDispatch(OutwardsGoodsAdvice $r, $actor, array $opts): void
     {
-        $this->assert($r->status === 'draft', 'dispatch ໄດ້ສະເພาະ draft.');
+        $this->assert($r->status === 'draft', 'dispatch ໄດ້ສະເພາະ draft.');
         if (! empty($opts['driver_name'])) {
             $r->driver_name = $opts['driver_name'];
         }
@@ -165,7 +165,7 @@ class OgaService
 
     private function doDelivery(OutwardsGoodsAdvice $r, $actor): void
     {
-        $this->assert($r->status === 'dispatched', 'delivery ໄດ້ສະເພາะ dispatched.');
+        $this->assert($r->status === 'dispatched', 'delivery ໄດ້ສະເພາະ dispatched.');
         $r->status = 'delivered';
         $r->completed_by_user_id = $actor->id;
         $r->completed_by_name = $actor->display_name ?? $actor->email;
@@ -174,8 +174,8 @@ class OgaService
 
     private function doReturn(OutwardsGoodsAdvice $r, array $opts): void
     {
-        $this->assert($r->status === 'dispatched', 'return ໄດ້ສະເພาະ dispatched.');
-        $this->assert(! empty($opts['reason']), 'ຕ້ອງໃສ່ເຫດผົน.');
+        $this->assert($r->status === 'dispatched', 'return ໄດ້ສະເພາະ dispatched.');
+        $this->assert(! empty($opts['reason']), 'ຕ້ອງໃສ່ເຫດຜົນ.');
         $r->status = 'returned';
         $r->reject_reason = $opts['reason'];
     }

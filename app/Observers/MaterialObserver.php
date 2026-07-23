@@ -6,7 +6,7 @@ use App\Models\Material;
 use Illuminate\Support\Carbon;
 
 /**
- * ບັນທຶກປະຫວັດລາຄາ ອັດຕະໂນมัด ເມื່อ unit_price ປ່ຽນ (ຫຼື ຕอนสร้างถ้ามีลาคา),
+ * ບັນທຶກປະຫວັດລາຄາ ອັດຕະໂນມັດ ເມື່ອ unit_price ປ່ຽນ (ຫຼື ຕອນສ້າງຖ້າມີລາຄາ),
  * ພ້ອມ ວັນທີ + ເລກສັນຍາ + ໃຜແກ້. ບໍ່ກະທົບ record ເກົ່າ (append-only history).
  */
 class MaterialObserver

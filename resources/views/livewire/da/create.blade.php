@@ -1,6 +1,6 @@
 @php
     $fileCls = 'block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-2 file:rounded file:border-0 file:bg-sky-50 file:text-sky-700';
-    $typeLabel = ['incorrect_supplied' => 'ສົ່ງຜິດ', 'oversupplied' => 'ສົ່ງເກີນ', 'undersupplied' => 'ສົ່ງຂາດ', 'damaged' => 'ເສຍຫາຍ', 'no_paperwork' => 'ບໍ່ມີเอกสาร', 'other' => 'ອື່ນໆ'];
+    $typeLabel = ['incorrect_supplied' => 'ສົ່ງຜິດ', 'oversupplied' => 'ສົ່ງເກີນ', 'undersupplied' => 'ສົ່ງຂາດ', 'damaged' => 'ເສຍຫາຍ', 'no_paperwork' => 'ບໍ່ມີເອກະສານ', 'other' => 'ອື່ນໆ'];
 @endphp
 
 <div class="pb-6">
@@ -57,12 +57,12 @@
             <div>
                 <label class="block text-gray-600 mb-1">ຄຳແນະນຳ Warehouse</label>
                 <select wire:model="warehouse_recommendation_kind" class="w-full md:w-1/2 rounded-md border-gray-300 text-sm">
-                    <option value="">—</option><option value="accept_goods">ຮັບเข้า stock</option><option value="return_supplier">ສົ່ງคืน supplier</option><option value="direct_charge">Direct charge</option><option value="other">ອື່ນໆ</option>
+                    <option value="">—</option><option value="accept_goods">ຮັບເຂົ້າ stock</option><option value="return_supplier">ສົ່ງຄືນ supplier</option><option value="direct_charge">Direct charge</option><option value="other">ອື່ນໆ</option>
                 </select>
                 <textarea wire:model="warehouse_recommendation_text" rows="2" placeholder="ລາຍລະອຽດ…" class="w-full rounded-md border-gray-300 text-sm mt-2"></textarea>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div><label class="block text-xs text-gray-500 mb-1">ຮູບ ພาบรวม (overview)</label><input type="file" wire:model="photoOverview" accept="image/*" class="{{ $fileCls }}" />@error('photoOverview')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
+                <div><label class="block text-xs text-gray-500 mb-1">ຮູບ ພາບຮວມ (overview)</label><input type="file" wire:model="photoOverview" accept="image/*" class="{{ $fileCls }}" />@error('photoOverview')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
                 <div><label class="block text-xs text-gray-500 mb-1">ຮູບ ຈຸດເສຍ (defect)</label><input type="file" wire:model="photoDefect" accept="image/*" class="{{ $fileCls }}" /></div>
                 <div><label class="block text-xs text-gray-500 mb-1">ຮູບ ປຽບທຽບ (comparison)</label><input type="file" wire:model="photoComparison" accept="image/*" class="{{ $fileCls }}" /></div>
             </div>

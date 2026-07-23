@@ -71,8 +71,8 @@
                     </tbody>
                     <tfoot class="text-gray-700">
                         <tr><td class="{{ $bd }} text-right" colspan="5">ລວມ (net)</td><td class="{{ $bd }} text-right">{{ number_format($record->total, 2) }}</td></tr>
-                        <tr><td class="{{ $bd }} text-right" colspan="5">VAT {{ $record->vat_enabled ? rtrim(rtrim(number_format($record->vat_rate, 2), '0'), '.').'%' : '(ปิด)' }}</td><td class="{{ $bd }} text-right">{{ number_format($record->vat_amount, 2) }}</td></tr>
-                        <tr class="font-bold"><td class="{{ $bd }} text-right" colspan="5">ລວມທັງໝົด / Grand total</td><td class="{{ $bd }} text-right">{{ number_format($record->grand_total, 2) }} {{ $record->currency }}</td></tr>
+                        <tr><td class="{{ $bd }} text-right" colspan="5">VAT {{ $record->vat_enabled ? rtrim(rtrim(number_format($record->vat_rate, 2), '0'), '.').'%' : '(ປິດ)' }}</td><td class="{{ $bd }} text-right">{{ number_format($record->vat_amount, 2) }}</td></tr>
+                        <tr class="font-bold"><td class="{{ $bd }} text-right" colspan="5">ລວມທັງໝົດ / Grand total</td><td class="{{ $bd }} text-right">{{ number_format($record->grand_total, 2) }} {{ $record->currency }}</td></tr>
                     </tfoot>
                 </table>
             </div>
@@ -105,7 +105,7 @@
                 @if ($isRequester || $editable)<button wire:click="submit" class="text-white bg-indigo-600 rounded px-3 py-1.5">ສົ່ງຄຳຂໍ</button>@endif
                 <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">ຍົກເລີກ</button>
             @elseif ($record->status === 'submitted')
-                @if ($canApprove)<button wire:click="approve" class="text-white bg-sky-600 rounded px-3 py-1.5">ອະນຸมัด</button><button wire:click="$set('showReject', true)" class="text-red-700 border border-red-200 bg-red-50 rounded px-3 py-1.5">ປະຕິເສດ</button>@endif
+                @if ($canApprove)<button wire:click="approve" class="text-white bg-sky-600 rounded px-3 py-1.5">ອະນຸມັດ</button><button wire:click="$set('showReject', true)" class="text-red-700 border border-red-200 bg-red-50 rounded px-3 py-1.5">ປະຕິເສດ</button>@endif
                 <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">ຍົກເລີກ</button>
             @elseif ($record->status === 'approved')
                 @if ($editable)<button wire:click="validateRequest" class="text-white bg-cyan-600 rounded px-3 py-1.5">Validate (warehouse)</button><button wire:click="$set('showReject', true)" class="text-red-700 border border-red-200 bg-red-50 rounded px-3 py-1.5">ປະຕິເສດ</button>@endif
@@ -128,16 +128,16 @@
         @if ($showCancel)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
                 <h3 class="font-medium text-gray-800">ຍົກເລີກໃບເບີກ</h3>
-                <textarea wire:model="cancelReason" rows="2" placeholder="ເຫດผົน…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showCancel', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="cancel" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยัน</button></div>
+                <textarea wire:model="cancelReason" rows="2" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showCancel', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="cancel" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນ</button></div>
             </div></div>
         @endif
         @if ($showReject)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
                 <h3 class="font-medium text-gray-800">ປະຕິເສດ</h3>
                 @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                <textarea wire:model="rejectReason" rows="3" placeholder="ເຫດผົน…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showReject', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="reject" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยันປະຕິເສດ</button></div>
+                <textarea wire:model="rejectReason" rows="3" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showReject', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="reject" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນປະຕິເສດ</button></div>
             </div></div>
         @endif
         @if ($showDispatch)
@@ -145,7 +145,7 @@
                 <h3 class="font-medium text-gray-800">Dispatch</h3>
                 <div><label class="block text-sm text-gray-600 mb-1">ວິທີສົ່ງ</label><select wire:model="deliveryMethod" class="w-full rounded-md border-gray-300 text-sm"><option value="supplier_delivery">Supplier delivery</option><option value="pickup_at_supplier">Pickup at supplier</option></select></div>
                 <div><label class="block text-sm text-gray-600 mb-1">ວັນທີຄາດສົ່ງ</label><input type="date" wire:model="plannedDeliveryDate" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showDispatch', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="doDispatch" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยัน</button></div>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showDispatch', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="doDispatch" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນ</button></div>
             </div></div>
         @endif
         @if ($showReceive)
@@ -154,7 +154,7 @@
                     <h3 class="font-medium text-gray-800">ຮັບເຄື່ອງ</h3>
                     <button wire:click="receiveAll" class="text-xs text-emerald-700 border border-emerald-200 rounded-md px-2.5 py-1 hover:bg-emerald-50">✓ ຮັບໝົດ ທຸກລາຍການ</button>
                 </div>
-                <p class="text-xs text-gray-400">ໃສ່ ຈຳນວນທີ່ຮັບ ແຕ່ລະລາຍການ (partial ໄດ້ — ໃບຈะ "received" ເມื่อ ຮັບຄົບ ທຸກລາຍການ).</p>
+                <p class="text-xs text-gray-400">ໃສ່ ຈຳນວນທີ່ຮັບ ແຕ່ລະລາຍການ (partial ໄດ້ — ໃບຈະ "received" ເມື່ອ ຮັບຄົບ ທຸກລາຍການ).</p>
                 <div class="border border-gray-100 rounded-lg divide-y divide-gray-50">
                     @foreach ($record->items as $it)
                         <div class="flex items-center gap-3 px-3 py-2">
@@ -171,7 +171,7 @@
                 <label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model="rcDeliveryNote" class="rounded border-gray-300 text-sky-600" /> ໄດ້ຮັບ delivery note</label>
                 <label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model="rcSpecMatch" class="rounded border-gray-300 text-sky-600" /> ກົງ spec</label>
                 @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                <div class="flex justify-end gap-2"><button wire:click="$set('showReceive', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="confirmReceipt" class="bg-emerald-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยันຮັບ</button></div>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showReceive', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="confirmReceipt" class="bg-emerald-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນຮັບ</button></div>
             </div></div>
         @endif
         @if ($showClose)
@@ -186,10 +186,10 @@
         @if ($showDelete)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
                 <h3 class="font-medium text-red-700">🗑 ລຶບໃບເບີກ</h3>
-                <p class="text-xs text-gray-500">ຍ້າຍໄປ Deleted Log (ກູ້คืນໄດ້).</p>
-                <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດผົน…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                <p class="text-xs text-gray-500">ຍ້າຍໄປ Deleted Log (ກູ້ຄືນໄດ້).</p>
+                <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                 @error('deleteReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยันລຶບ</button></div>
+                <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນລຶບ</button></div>
             </div></div>
         @endif
     </div>

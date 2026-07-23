@@ -8,7 +8,7 @@
         'cancelled' => ['CANCELLED', 'bg-gray-100 text-gray-400'],
         default => [strtoupper($s), 'bg-gray-100 text-gray-600'],
     };
-    $typeLabel = ['incorrect_supplied' => 'ສົ່ງຜິດ', 'oversupplied' => 'ເກີນ', 'undersupplied' => 'ຂາດ', 'damaged' => 'ເສຍ', 'no_paperwork' => 'ບໍ່ມີเอกสาร', 'other' => 'ອື່ນ'];
+    $typeLabel = ['incorrect_supplied' => 'ສົ່ງຜິດ', 'oversupplied' => 'ເກີນ', 'undersupplied' => 'ຂາດ', 'damaged' => 'ເສຍ', 'no_paperwork' => 'ບໍ່ມີເອກະສານ', 'other' => 'ອື່ນ'];
 @endphp
 
 <div class="pb-6">
@@ -25,7 +25,7 @@
                 </select>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-                @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບคืน' : 'Deleted' }}</button>@endif
+                @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
                 @can('da.create')<a href="{{ route('da.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ DA</a>@endcan
             </div>
         </div>
@@ -44,7 +44,7 @@
                         <th class="text-left font-semibold px-4 py-2">Supplier</th>
                         <th class="text-left font-semibold px-4 py-2 w-full">ປະເພດຄວາມຜິດ</th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ວັນທີ</th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖานະ</th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖານະ</th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍລະອຽດ</th>
                     </tr>
                 </thead>
@@ -60,7 +60,7 @@
                             <td class="px-4 py-2 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span>@if ($r->next_step === 'oga')<div class="text-xs text-sky-600 mt-1">→ OGA</div>@endif</td>
                             <td class="px-4 py-2 align-top whitespace-nowrap">
                                 @if ($showDeleted)
-                                    <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืน?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50">↩ ກູ້คืน</button>
+                                    <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນ?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
                                 @else
                                     <a href="{{ route('da.show', $r) }}" wire:navigate class="text-xs text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 inline-block">View Details</a>
                                 @endif
@@ -85,7 +85,7 @@
                         </div>
                         <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $cls }} shrink-0">{{ $lbl }}</span>
                     </div>
-                    @if ($showDeleted)<div class="mt-2 text-right"><button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້คืน?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5">↩ ກູ້คืน</button></div>@endif
+                    @if ($showDeleted)<div class="mt-2 text-right"><button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນ?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5">↩ ກູ້ຄືນ</button></div>@endif
                 </{{ $tag }}>
             @empty
                 <div class="text-center text-gray-400 py-6">ຍັງບໍ່ມີ DA</div>

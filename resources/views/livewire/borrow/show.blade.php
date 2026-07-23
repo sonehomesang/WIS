@@ -12,7 +12,7 @@
     $st = $record->display_status;
     $od = $record->days_left !== null && $record->days_left < 0 ? abs($record->days_left) : 0;
     $itemNames = $record->items->pluck('item_name')->implode(', ');
-    $reminding = "{$record->borrower_name} ກະລຸນາສົ່ງ {$record->items->count()} ລາຍການ ({$itemNames}) ກັບคืน ໃນວັນທີ ".($record->planned_return_date?->format('M d, Y') ?? '—').'.';
+    $reminding = "{$record->borrower_name} ກະລຸນາສົ່ງ {$record->items->count()} ລາຍການ ({$itemNames}) ກັບຄືນ ໃນວັນທີ ".($record->planned_return_date?->format('M d, Y') ?? '—').'.';
 @endphp
 
 <div class="pb-6">
@@ -37,7 +37,7 @@
             $d1 = fn ($d) => $d?->format('d/m/Y') ?? '—';
             $statusLao = match ($st) {
                 'draft' => 'Draft (ຮ່າງ)', 'acknowledged' => 'Acknowledged (ລໍ approve)', 'approved' => 'Approved (ລໍຮັບເຄື່ອງ)',
-                'active' => 'Active (ກຳລັງນຳໃຊ້)', 'overdue' => 'Overdue (ເກີນກຳນົດ)', 'returned' => 'Returned (ສົ່ງคืนແລ້ວ)',
+                'active' => 'Active (ກຳລັງນຳໃຊ້)', 'overdue' => 'Overdue (ເກີນກຳນົດ)', 'returned' => 'Returned (ສົ່ງຄືນແລ້ວ)',
                 'cancelled' => 'Cancelled (ຍົກເລີກ)', default => $st,
             };
             $rqty = $record->items->sum(fn ($i) => $i->return_qty ?? 0);
@@ -71,7 +71,7 @@
                 </tr>
                 <tr>
                     <td class="{{ $lbl }}">ກຳນົດວັນທີສົ່ງ / Due</td><td class="{{ $bd }}">{{ $d1($record->planned_return_date) }} <span class="text-gray-500">({{ $record->period_days }} ມື້)</span></td>
-                    <td class="{{ $lbl }}">ສະຖานะ / Status</td><td class="{{ $bd }} font-bold {{ $st === 'overdue' ? 'text-red-600' : ($st === 'returned' ? 'text-gray-600' : 'text-emerald-600') }}">{{ $statusLao }}</td>
+                    <td class="{{ $lbl }}">ສະຖານະ / Status</td><td class="{{ $bd }} font-bold {{ $st === 'overdue' ? 'text-red-600' : ($st === 'returned' ? 'text-gray-600' : 'text-emerald-600') }}">{{ $statusLao }}</td>
                 </tr>
             </table>
 
@@ -125,7 +125,7 @@
                 <div class="font-bold mb-2">ການຕໍ່ເວລາ (Time Extension)</div>
                 <table class="w-full text-sm" style="border-collapse:collapse">
                     <tr>
-                        <td class="{{ $lbl }}" style="width:20%">ສະຖานະຂໍຕໍ່ເວລາ</td>
+                        <td class="{{ $lbl }}" style="width:20%">ສະຖານະຂໍຕໍ່ເວລາ</td>
                         <td class="{{ $bd }}" style="width:30%">@php $em = ['pending' => ['Pending', 'text-amber-600'], 'approved' => ['Approved', 'text-emerald-600'], 'rejected' => ['Rejected', 'text-red-600'], 'none' => ['—', 'text-gray-400']]; [$et, $ec] = $em[$record->extension_status] ?? ['—', '']; @endphp<span class="font-bold {{ $ec }}">{{ $et }}</span></td>
                         <td class="{{ $lbl }}" style="width:20%">ວັນທີຂໍຕໍ່ໄປຫາ</td><td class="{{ $bd }}" style="width:30%">{{ $d1($record->extension_proposed_date) }}</td>
                     </tr>
@@ -138,7 +138,7 @@
                 <div class="text-center bg-gray-200 border border-black p-2 font-bold mb-3">ລາຍລະອຽດການສົ່ງຄືນ (Return Details)</div>
                 <table class="w-full text-sm" style="border-collapse:collapse">
                     <tr>
-                        <td class="{{ $lbl }}" style="width:25%">ສະຖานະສາງຮັບຄືນ / WH Return</td>
+                        <td class="{{ $lbl }}" style="width:25%">ສະຖານະສາງຮັບຄືນ / WH Return</td>
                         <td class="{{ $bd }}" style="width:25%">@if ($record->returned_at)<span class="text-emerald-600 font-bold">✓ ຮັບຄືນແລ້ວ</span> <span class="text-gray-500 text-xs">{{ $dt($record->returned_at) }}</span>@else<span class="text-amber-600 font-bold">ລໍຖ້າຮັບເຄື່ອງ</span>@endif</td>
                         <td class="{{ $lbl }}" style="width:25%">ຈຳນວນທີ່ສົ່ງຄືນ / Return Qty</td><td class="{{ $bd }} font-bold" style="width:25%">{{ $record->returned_at ? $rqty : '—' }}</td>
                     </tr>
@@ -191,7 +191,7 @@
                 @if (! $record->borrower_return_ack)
                     @if ($isBorrower || $editable)<button wire:click="openRequestReturn" class="text-white bg-amber-600 rounded px-3 py-1.5">📩 ແຈ້ງສົ່ງຄືນ</button>@endif
                 @else
-                    <span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded px-2 py-1">📩 ຜູ້ຢືມແຈ້ງສົ່ງຄືນແລ້ວ{{ $record->borrower_return_date ? ' ('.$record->borrower_return_date->format('d/m/Y').')' : '' }} — ລໍ Warehouse ຢืนยัน</span>
+                    <span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded px-2 py-1">📩 ຜູ້ຢືມແຈ້ງສົ່ງຄືນແລ້ວ{{ $record->borrower_return_date ? ' ('.$record->borrower_return_date->format('d/m/Y').')' : '' }} — ລໍ Warehouse ຢືນຢັນ</span>
                 @endif
                 {{-- step 2: Warehouse ຢືນຢັນຮັບຄືນ --}}
                 @if ($editable)<button wire:click="openReturn" class="text-white bg-sky-600 rounded px-3 py-1.5">✅ ຢືນຢັນຮັບຄືນ (confirmReturn)</button>@endif
@@ -234,7 +234,7 @@
                     @endforeach
                     <div class="flex justify-end gap-2 pt-2">
                         <button wire:click="$set('showTake', false)" class="border border-gray-300 rounded px-4 py-2 text-sm">ປິດ</button>
-                        <button wire:click="confirmTake" wire:loading.attr="disabled" wire:target="confirmTake,takePhotos" class="bg-emerald-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ຢືนยันມອບ</button>
+                        <button wire:click="confirmTake" wire:loading.attr="disabled" wire:target="confirmTake,takePhotos" class="bg-emerald-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ຢືນຢັນມອບ</button>
                     </div>
                 </div>
             </div>
@@ -244,13 +244,13 @@
         @if ($showReturn)
             <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
                 <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                    <h3 class="text-lg font-medium text-gray-800">ຮັບคืน — ຈຳນວນ + ຖ່າຍຮູບ (ບັງຄັບ)</h3>
+                    <h3 class="text-lg font-medium text-gray-800">ຮັບຄືນ — ຈຳນວນ + ຖ່າຍຮູບ (ບັງຄັບ)</h3>
                     @error('returnPhotos')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
                     @foreach ($record->items as $it)
                         <div class="border border-gray-200 rounded-md p-3 space-y-2">
                             <div class="flex items-center justify-between">
                                 <div class="text-sm font-medium text-gray-700">{{ $it->item_name }} <span class="text-gray-400">/ ຢືມ {{ $it->qty }}</span></div>
-                                <label class="text-xs text-gray-500 flex items-center gap-1">ຄືน <input type="number" min="0" max="{{ $it->qty }}" wire:model="returnQty.{{ $it->id }}" class="w-16 rounded-md border-gray-300 text-xs" /></label>
+                                <label class="text-xs text-gray-500 flex items-center gap-1">ຄືນ <input type="number" min="0" max="{{ $it->qty }}" wire:model="returnQty.{{ $it->id }}" class="w-16 rounded-md border-gray-300 text-xs" /></label>
                             </div>
                             <input type="file" wire:model="returnPhotos.{{ $it->id }}" multiple accept="image/*" capture="environment" class="{{ $fileCls }}" />
                             <div wire:loading wire:target="returnPhotos.{{ $it->id }}" class="text-xs text-gray-400">ກຳລັງອັບ…</div>
@@ -260,7 +260,7 @@
                     @endforeach
                     <div class="flex justify-end gap-2 pt-2">
                         <button wire:click="$set('showReturn', false)" class="border border-gray-300 rounded px-4 py-2 text-sm">ປິດ</button>
-                        <button wire:click="confirmReturn" wire:loading.attr="disabled" wire:target="confirmReturn,returnPhotos" class="bg-sky-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ຢືนยันຮັບคืน</button>
+                        <button wire:click="confirmReturn" wire:loading.attr="disabled" wire:target="confirmReturn,returnPhotos" class="bg-sky-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ຢືນຢັນຮັບຄືນ</button>
                     </div>
                 </div>
             </div>
@@ -284,11 +284,11 @@
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                 <div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
                     <h3 class="font-medium text-gray-800">📩 ແຈ້ງສົ່ງຄືນ</h3>
-                    <p class="text-xs text-gray-500">ແຈ້ງວ່າຈະສົ່ງเครื່ອງคืน — Warehouse ຈะຢืนยันຮັບคืນ ແລະ ກວດສະພາบອีกครั้ง.</p>
+                    <p class="text-xs text-gray-500">ແຈ້ງວ່າຈະສົ່ງເຄື່ອງຄືນ — Warehouse ຈະຢືນຢັນຮັບຄືນ ແລະ ກວດສະພາບອີກຄັ້ງ.</p>
                     @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
                     <div><label class="block text-sm text-gray-600 mb-1">ວັນທີສົ່ງຄືນ</label><input type="date" wire:model="rrDate" class="w-full rounded-md border-gray-300 text-sm" />@error('rrDate')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
-                    <div><label class="block text-sm text-gray-600 mb-1">ໝາຍເຫດ (optional)</label><textarea wire:model="rrRemarks" rows="2" placeholder="ເຊັ່ນ: ສົ່ງບໍ່ຄົບ, ສະພາบ…" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
-                    <div class="flex justify-end gap-2"><button wire:click="$set('showRequestReturn', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="requestReturn" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢืนยันແຈ້ງສົ່ງຄືນ</button></div>
+                    <div><label class="block text-sm text-gray-600 mb-1">ໝາຍເຫດ (optional)</label><textarea wire:model="rrRemarks" rows="2" placeholder="ເຊັ່ນ: ສົ່ງບໍ່ຄົບ, ສະພາບ…" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
+                    <div class="flex justify-end gap-2"><button wire:click="$set('showRequestReturn', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="requestReturn" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນແຈ້ງສົ່ງຄືນ</button></div>
                 </div>
             </div>
         @endif
@@ -298,10 +298,10 @@
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                 <div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
                     <h3 class="font-medium text-red-700">🗑 ລຶບລາຍການຢືມ</h3>
-                    <p class="text-xs text-gray-500">ລາຍການຈะຖูກຍ້າຍໄປ Deleted Log (ສามารถກູ້คืນໄດ້). ກະລุนาໃສ່ເຫດผົน.</p>
-                    <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດผົนການລຶບ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                    <p class="text-xs text-gray-500">ລາຍການຈະຖູກຍ້າຍໄປ Deleted Log (ສາມາດກູ້ຄືນໄດ້). ກະລຸນາໃສ່ເຫດຜົນ.</p>
+                    <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນການລຶບ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                     @error('deleteReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                    <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm disabled:opacity-50">ຢืนยันລຶບ</button></div>
+                    <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm disabled:opacity-50">ຢືນຢັນລຶບ</button></div>
                 </div>
             </div>
         @endif

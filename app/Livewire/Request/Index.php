@@ -60,7 +60,7 @@ class Index extends Component
                 'action' => 'restore', 'status' => $r->status, 'user_id' => $u->id,
                 'user_name' => $u->display_name ?? $u->email, 'comment' => 'restore', 'created_at' => now(),
             ]);
-            session()->flash('ok', '✓ ກູ້คืນ '.$r->request_number);
+            session()->flash('ok', '✓ ກູ້ຄືນ '.$r->request_number);
         }
     }
 
@@ -113,7 +113,7 @@ class Index extends Component
         $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
 
         return [
-            $chip('', 'ທັງໝົด', $counts->sum()),
+            $chip('', 'ທັງໝົດ', $counts->sum()),
             $chip('submitted', 'ລໍ approve', $counts['submitted'] ?? 0, true),
             $chip('approved', 'approved', $counts['approved'] ?? 0),
             $chip('validated', 'validated', $counts['validated'] ?? 0),

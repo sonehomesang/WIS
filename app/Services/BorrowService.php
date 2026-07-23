@@ -41,7 +41,7 @@ class BorrowService
         return ['acknowledge' => $ack, 'approve' => $c['approve'] === 'required'];
     }
 
-    /** Counter BR{YYYY}-NNNN (transaction-safe — ເອີ້ນພายใน DB::transaction). */
+    /** Counter BR{YYYY}-NNNN (transaction-safe — ເອີ້ນພາຢໃນ DB::transaction). */
     public function nextNumber(int $year): string
     {
         $prefix = "BR{$year}-";
@@ -135,7 +135,7 @@ class BorrowService
         });
     }
 
-    /** In-app notifications ຕอน transition ສຳຄັນ (Phase 6.11). */
+    /** In-app notifications ຕອນ transition ສຳຄັນ (Phase 6.11). */
     private function notify(BorrowRecord $r, string $action): void
     {
         $svc = app(NotificationService::class);
@@ -197,7 +197,7 @@ class BorrowService
                 if ($it->item_id) {
                     $inv = InventoryItem::whereKey($it->item_id)->lockForUpdate()->first();
                     if ($inv) {
-                        $this->assert($inv->quantity >= $it->qty, "ສະຕັອກ ບໍ່ພໍ ສຳລັບ {$it->item_name} (ມີ {$inv->quantity}, ຕ້ອງการ {$it->qty}).");
+                        $this->assert($inv->quantity >= $it->qty, "ສະຕັອກ ບໍ່ພໍ ສຳລັບ {$it->item_name} (ມີ {$inv->quantity}, ຕ້ອງການ {$it->qty}).");
                         $inv->decrement('quantity', $it->qty);
                     }
                 }
@@ -209,10 +209,10 @@ class BorrowService
         $r->warehouse_staff_name = $actor->display_name ?? $actor->email;
     }
 
-    // step 1: borrower ແຈ້ງສົ່ງຄືນ (status ຄ້າງ active ຈนกว่า warehouse ຢືນຢັນ)
+    // step 1: borrower ແຈ້ງສົ່ງຄືນ (status ຄ້າງ active ຈົນກວ່າ warehouse ຢືນຢັນ)
     private function doRequestReturn(BorrowRecord $r, array $opts): void
     {
-        $this->assert(in_array($r->status, ['active', 'overdue'], true), 'ແຈ້ງສົ່ງຄືນໄດ້ຕอนໃຊ້ງານຢູ່ເທົ່ານັ້ນ.');
+        $this->assert(in_array($r->status, ['active', 'overdue'], true), 'ແຈ້ງສົ່ງຄືນໄດ້ຕອນໃຊ້ງານຢູ່ເທົ່ານັ້ນ.');
         $this->assert(! $r->borrower_return_ack, 'ໄດ້ແຈ້ງສົ່ງຄືນແລ້ວ.');
         $r->borrower_return_ack = true;
         $r->borrower_return_date = $opts['return_date'] ?? Carbon::today()->toDateString();
@@ -223,7 +223,7 @@ class BorrowService
 
     private function doConfirmReturn(BorrowRecord $r, $actor, array $opts): void
     {
-        $this->assert(in_array($r->status, ['active', 'overdue'], true), 'confirmReturn ໄດ້ສະເພาະ active.');
+        $this->assert(in_array($r->status, ['active', 'overdue'], true), 'confirmReturn ໄດ້ສະເພາະ active.');
         $returnQtys = $opts['return_qty'] ?? []; // [borrow_item_id => qty]
         if ($r->borrow_type === 'new_inventory') {
             foreach ($r->items as $it) {
@@ -246,7 +246,7 @@ class BorrowService
 
     private function doRequestExtension(BorrowRecord $r, $actor, array $opts): void
     {
-        $this->assert(in_array($r->status, ['active', 'overdue'], true), 'ຂໍຂະຫຍາຍໄດ້ສະເພาະ active/overdue.');
+        $this->assert(in_array($r->status, ['active', 'overdue'], true), 'ຂໍຂະຫຍາຍໄດ້ສະເພາະ active/overdue.');
         $this->assert($r->extension_status !== 'pending', 'ມີຄຳຂໍຂະຫຍາຍຄ້າງຢູ່ແລ້ວ.');
         $this->assert(! empty($opts['proposed_date']), 'ຕ້ອງໃສ່ວັນທີສົ່ງໃໝ່.');
         $r->extension_status = 'pending';

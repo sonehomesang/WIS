@@ -25,7 +25,7 @@ class Index extends Component
 
     public string $toDate = '';
 
-    /** ສະແດງ Deleted Log (onlyTrashed) ແທນລາຍການปົກກะຕิ. */
+    /** ສະແດງ Deleted Log (onlyTrashed) ແທນລາຍການປົກກະຕິ. */
     public bool $showDeleted = false;
 
     public function mount(): void
@@ -67,7 +67,7 @@ class Index extends Component
                 'action' => 'restore', 'status' => $r->status, 'user_id' => $u->id,
                 'user_name' => $u->display_name ?? $u->email, 'comment' => 'restore', 'created_at' => now(),
             ]);
-            session()->flash('ok', '✓ ກູ້คืนລາຍການ '.$r->request_number);
+            session()->flash('ok', '✓ ກູ້ຄືນລາຍການ '.$r->request_number);
         }
     }
 
@@ -82,7 +82,7 @@ class Index extends Component
     }
 
     /**
-     * Daily check — ສ້າງ notification ໃຫ້ຜູ້ຢືມ ສຳລັບລາຍການ ໃກ້/ເກີນ ກຳນົດคืน.
+     * Daily check — ສ້າງ notification ໃຫ້ຜູ້ຢືມ ສຳລັບລາຍການ ໃກ້/ເກີນ ກຳນົດຄືນ.
      * ເຄົາລົບ feature flag `notifications.borrow_reminder` + master switch.
      * ກັນ flood: 1 reminder/record/ມື້ (ກວດ notification ມື້ນີ້).
      */
@@ -144,7 +144,7 @@ class Index extends Component
         ]);
     }
 
-    /** Sub-dashboard: ນັບ ຕໍ່ສະຖานะ (visibility scope, ບໍ່ນັບ deleted). */
+    /** Sub-dashboard: ນັບ ຕໍ່ສະຖານະ (visibility scope, ບໍ່ນັບ deleted). */
     protected function statusChips(): array
     {
         $base = $this->scopedQuery();
@@ -153,11 +153,11 @@ class Index extends Component
         $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
 
         return [
-            $chip('', 'ທັງໝົด', $counts->sum()),
+            $chip('', 'ທັງໝົດ', $counts->sum()),
             $chip('active', 'ໃຊ້ຢູ່', $counts['active'] ?? 0),
             $chip('overdue', 'ເກີນກຳນົດ', $overdue, true),
-            $chip('returned', 'ສົ່ງคืน', $counts['returned'] ?? 0),
-            $chip('approved', 'ອະນຸมัด', $counts['approved'] ?? 0),
+            $chip('returned', 'ສົ່ງຄືນ', $counts['returned'] ?? 0),
+            $chip('approved', 'ອະນຸມັດ', $counts['approved'] ?? 0),
             $chip('draft', 'draft', $counts['draft'] ?? 0),
             $chip('cancelled', 'ຍົກເລີກ', $counts['cancelled'] ?? 0),
         ];

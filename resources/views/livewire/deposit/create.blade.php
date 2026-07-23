@@ -49,11 +49,11 @@
                 </div>
             @endif
             <div>
-                <label class="block text-gray-600 mb-1">ຄາດຈະมาเอົาคืน (Expected claim)</label>
+                <label class="block text-gray-600 mb-1">ຄາດຈະມາເອົາຄືນ (Expected claim)</label>
                 <input type="date" wire:model="expected_claim_date" class="w-full rounded-md border-gray-300 text-sm" />
             </div>
             <div class="md:col-span-2">
-                <label class="block text-gray-600 mb-1">ເຫດผົนการฝาก (Reason) <span class="text-red-500">*</span></label>
+                <label class="block text-gray-600 mb-1">ເຫດຜົນການຝາກ (Reason) <span class="text-red-500">*</span></label>
                 <textarea wire:model="deposit_reason" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                 @error('deposit_reason')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
@@ -92,7 +92,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-500 mb-1">ມູນຄ່າ (ປະມาณ)</label>
+                                <label class="block text-xs text-gray-500 mb-1">ມູນຄ່າ (ປະມານ)</label>
                                 <input type="number" step="0.01" min="0" wire:model="items.{{ $i }}.estimated_value" class="w-full rounded-md border-gray-300 text-sm" />
                             </div>
                             <div class="sm:col-span-3">
@@ -106,7 +106,7 @@
                                 </select>
                             </div>
                             <div class="sm:col-span-2">
-                                <label class="block text-xs text-gray-500 mb-1">ສະພາບຕอนฝาก</label>
+                                <label class="block text-xs text-gray-500 mb-1">ສະພາບຕອນຝາກ</label>
                                 <input type="text" wire:model="items.{{ $i }}.condition_on_deposit" class="w-full rounded-md border-gray-300 text-sm" />
                             </div>
                         </div>

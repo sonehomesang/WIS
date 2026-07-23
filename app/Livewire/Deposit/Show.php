@@ -229,7 +229,7 @@ class Show extends Component
         }
     }
 
-    // ── soft delete (admin/deposit.edit; ສະເພาະ draft/cancelled/claimed) ──
+    // ── soft delete (admin/deposit.edit; ສະເພາະ draft/cancelled/claimed) ──
     protected function canEdit(): bool
     {
         $u = auth()->user();

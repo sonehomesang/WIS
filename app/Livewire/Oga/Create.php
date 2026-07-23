@@ -60,7 +60,7 @@ class Create extends Component
         abort_unless(auth()->user()->can('oga.create'), 403);
         $this->date = Carbon::today()->toDateString();
         $this->items = [$this->blank()];
-        // pre-fill ຈาก DA ຖ້າ link ມາ
+        // pre-fill ຈາກ DA ຖ້າ link ມາ
         if (request('da')) {
             $da = DiscrepancyAdvice::find((int) request('da'));
             if ($da && $da->next_step === 'oga') {

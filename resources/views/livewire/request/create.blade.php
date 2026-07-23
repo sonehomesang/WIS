@@ -57,7 +57,7 @@
             @endif
             @if ($fields['approver'])
             <div>
-                <label class="block text-gray-600 mb-1">Approver <span class="text-red-500">*</span> <span class="text-xs text-gray-400">(ບັງຄັບຕอนสົ່ງ)</span></label>
+                <label class="block text-gray-600 mb-1">Approver <span class="text-red-500">*</span> <span class="text-xs text-gray-400">(ບັງຄັບຕອນສົ່ງ)</span></label>
                 <select wire:model="approver_user_id" class="w-full rounded-md border-gray-300 text-sm">
                     <option value="">— ເລືອກ —</option>
                     @foreach ($users as $u)<option value="{{ $u->id }}">{{ $u->display_name ?? $u->email }}</option>@endforeach
@@ -131,7 +131,7 @@
                             <tr><td colspan="4" class="text-right py-2 text-gray-500">ລວມ (net)</td><td class="text-right py-2 font-semibold text-gray-800">{{ number_format($liveTotal, 2) }} {{ $currency }}</td><td></td></tr>
                         </tfoot>
                     </table>
-                    <p class="text-xs text-gray-400 mt-1">* VAT ຈะคำนวณ+freeze ຕอนสົ່ງ (ຕາມ supplier/global)</p>
+                    <p class="text-xs text-gray-400 mt-1">* VAT ຈະຄຳນວນ+freeze ຕອນສົ່ງ (ຕາມ supplier/global)</p>
                 </div>
             @else
                 <p class="text-sm text-gray-400">ຍັງບໍ່ມີລາຍການ — ຄົ້ນຫາ catalog ຫຼື ກົດ + free-text</p>

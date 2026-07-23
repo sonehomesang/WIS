@@ -7,7 +7,7 @@
         @php $editable = auth()->user()->can('settings.edit'); @endphp
 
         <div class="bg-white border border-gray-100 rounded-lg p-3 text-sm text-gray-600">
-            ແກ້ ຄຳສັບ (ລາວ-ໄທ-ອັງກິດ) ໃນແອັບ ໂດຍບໍ່ຕ້ອງແກ້ code. <b>ແທນຄຳ (replace)</b> = ປ່ຽນ ຄຳ ທົ່ວທຸກໜ້າ — replace ສະເພาະ <b>ຂໍ້ຄວາມທີ່ເຫັນ</b> (ບໍ່ແຕະ class/script/option value). <b>Term key</b> = ຄ່າ ສຳລັບ <code class="bg-gray-100 px-1 rounded">@term('key')</code>.
+            ແກ້ ຄຳສັບ (ລາວ-ໄທ-ອັງກິດ) ໃນແອັບ ໂດຍບໍ່ຕ້ອງແກ້ code. <b>ແທນຄຳ (replace)</b> = ປ່ຽນ ຄຳ ທົ່ວທຸກໜ້າ — replace ສະເພາະ <b>ຂໍ້ຄວາມທີ່ເຫັນ</b> (ບໍ່ແຕະ class/script/option value). <b>Term key</b> = ຄ່າ ສຳລັບ <code class="bg-gray-100 px-1 rounded">@term('key')</code>.
             <span class="text-xs text-gray-400">ການປ່ຽນ ມີຜົນຫຼັງ ໂຫຼດໜ້າໃໝ່.</span>
         </div>
 
@@ -25,7 +25,7 @@
                     <option value="">ທຸກ ໝວດ (ໜ້າ) — {{ $totalReplace }} ຄຳ</option>
                     @foreach ($groups as $g)<option value="{{ $g->group }}">{{ $g->group }} ({{ $g->c }})</option>@endforeach
                 </select>
-                <label class="flex items-center gap-1.5 text-xs text-gray-600"><input type="checkbox" wire:model.live="changedOnly" class="rounded border-gray-300 text-sky-600" /> ສະເພาະ ທີ່ແກ້ແລ້ວ</label>
+                <label class="flex items-center gap-1.5 text-xs text-gray-600"><input type="checkbox" wire:model.live="changedOnly" class="rounded border-gray-300 text-sky-600" /> ສະເພາະ ທີ່ແກ້ແລ້ວ</label>
                 <span class="text-xs text-gray-400">ໜ້າ {{ $repPage }}/{{ $repPages }} · ທັງໝົດ {{ $repTotal }} ຄຳ</span>
             </div>
 
@@ -75,7 +75,7 @@
                         @if ($savedMsg)
                             <span wire:loading.remove wire:target="save" class="text-sm font-medium {{ $savedOk ? 'text-green-700' : 'text-red-600' }}">{{ $savedMsg }}</span>
                         @else
-                            <span class="text-xs text-gray-400">ແກ້ຊ່ອງ "ແກ້ເປັນ" ໃຫ້ຕ່າງຈาก ເດີມ → middleware ປ່ຽນທົ່ວແອັບ</span>
+                            <span class="text-xs text-gray-400">ແກ້ຊ່ອງ "ແກ້ເປັນ" ໃຫ້ຕ່າງຈາກ ເດີມ → middleware ປ່ຽນທົ່ວແອັບ</span>
                         @endif
                     </div>
                 @endif

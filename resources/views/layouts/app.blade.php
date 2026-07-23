@@ -78,7 +78,7 @@
                     $subtitleMap = [
                         'inventory' => 'ສາງເຄື່ອງ & ວັດສະດຸ · ຄົ້ນຫາ / ນຳເຂົ້າ',
                         'borrow' => 'Monitor active loans and return schedules',
-                        'deposit' => 'ຮັບຝາກ-ເກັບຮັກສາ-ສົ່ງคืน ເຄື່ອງຂອງ',
+                        'deposit' => 'ຮັບຝາກ-ເກັບຮັກສາ-ສົ່ງຄືນ ເຄື່ອງຂອງ',
                         'catalog' => 'ບັນຊີສິນຄ້າ supplier · ລາຄາ net (ບໍ່ລວມ VAT)',
                         'equipment' => 'ທະບຽນ ເຄື່ອງມື/ເຄື່ອງຈັກ · ກວດກາ · ບຳລຸງຮັກສາ',
                         'request' => 'ເບີກວັດສະດຸ · approve → validate → dispatch → ຮັບ',
@@ -90,7 +90,7 @@
                         'settings.uom' => 'ໜ່ວຍວັດ (pcs · kg · m …) · ໃຊ້ໃນ Inventory / Materials',
                         'settings.suppliers' => 'ຮ້ານຄ້າ supplier · ໃຊ້ໃນ Materials / supplier users',
                         'settings.notifications' => 'feature flags + ແມ່ແບບ ຂໍ້ຄວາມ',
-                        'settings.notification-log' => 'log ການແຈ້ງເຕືອນ ທັງໝົด + export',
+                        'settings.notification-log' => 'log ການແຈ້ງເຕືອນ ທັງໝົດ + export',
                         'settings.audit' => 'ບັນທຶກການກະທຳ ທຸກ module + export',
                         'settings.reports' => 'ສະຫຼຸບ ຕາມ module + ຊ່ວງວັນທີ + export',
                         'settings.translations' => 'ແກ້ ຄຳສັບ ໃນແອັບ ເອງ (replace + term key)',
@@ -118,7 +118,7 @@
                                 @auth
                                     <button type="button" x-data="{ busy: false }" @click="busy = true; window.updateApp()" :disabled="busy"
                                             class="p-2 text-gray-500 hover:text-sky-600 rounded-md hover:bg-gray-50 disabled:opacity-50"
-                                            title="ອັບເດດ ແອັບ ໃຫ້ເປັນລຸ້ນລ່າສຸด (ລ້າງ cache + ໂຫຼດໃໝ່)" aria-label="ອັບເດດ ແອັບ">
+                                            title="ອັບເດດ ແອັບ ໃຫ້ເປັນລຸ້ນລ່າສຸດ (ລ້າງ cache + ໂຫຼດໃໝ່)" aria-label="ອັບເດດ ແອັບ">
                                         <svg class="w-5 h-5" :class="busy && 'animate-spin'" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
                                     </button>
                                     <livewire:notifications.bell />

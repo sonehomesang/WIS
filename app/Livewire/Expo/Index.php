@@ -55,7 +55,7 @@ class Index extends Component
         if ($r) {
             $r->restore();
             $r->forceFill(['deleted_reason' => null, 'deleted_by' => null])->save();
-            session()->flash('ok', '✓ ກູ້คืນ '.$r->expo_number);
+            session()->flash('ok', '✓ ກູ້ຄືນ '.$r->expo_number);
         }
     }
 
@@ -87,7 +87,7 @@ class Index extends Component
             'records' => $items,
             'canManageDeleted' => $this->canManageDeleted(),
             'chips' => [
-                $chip('', 'ທັງໝົด', $counts->sum()),
+                $chip('', 'ທັງໝົດ', $counts->sum()),
                 $chip('finalized', 'finalized', $counts['finalized'] ?? 0),
                 $chip('draft', 'draft', $counts['draft'] ?? 0),
             ],

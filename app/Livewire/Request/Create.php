@@ -78,7 +78,7 @@ class Create extends Component
         $this->items = array_values($this->items);
     }
 
-    /** ສະຫຼັບ item ໄປໃຊ້ supplier ອື່ນ (ຈาก price comparison). */
+    /** ສະຫຼັບ item ໄປໃຊ້ supplier ອື່ນ (ຈາກ price comparison). */
     public function useOffer(int $i, int $materialId): void
     {
         $m = Material::find($materialId);
@@ -106,7 +106,7 @@ class Create extends Component
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
         ];
-        // approver ບັງຄັບຕอนสົ່ງ ສະເພาะ ຖ້າ admin ເປີດ field ໄວ້
+        // approver ບັງຄັບຕອນສົ່ງ ສະເພາະ ຖ້າ admin ເປີດ field ໄວ້
         if ($submit && $fields['approver']) {
             $rules['approver_user_id'] = ['required', 'exists:users,id'];
         }
@@ -145,7 +145,7 @@ class Create extends Component
 
         $total = collect($this->items)->sum(fn ($it) => (float) ($it['unit_price'] ?? 0) * (int) ($it['quantity'] ?? 0));
 
-        // price comparison ຕໍ່ item ທີ່ມາจาก catalog (supplier ອື່ນ ຂາຍສິນຄ້າດຽວກັນ)
+        // price comparison ຕໍ່ item ທີ່ມາຈາກ catalog (supplier ອື່ນ ຂາຍສິນຄ້າດຽວກັນ)
         $svc = app(RequestService::class);
         $comparisons = [];
         foreach ($this->items as $i => $it) {

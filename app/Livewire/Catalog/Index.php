@@ -264,7 +264,7 @@ class Index extends Component
         return view('livewire.catalog.index', [
             'materials' => $items,
             'chips' => [
-                ['key' => '', 'label' => 'ທັງໝົด', 'count' => $total, 'alert' => false],
+                ['key' => '', 'label' => 'ທັງໝົດ', 'count' => $total, 'alert' => false],
                 ['key' => 'active', 'label' => 'active', 'count' => $total - $inactive, 'alert' => false],
                 ['key' => 'inactive', 'label' => 'inactive', 'count' => $inactive, 'alert' => false],
             ],

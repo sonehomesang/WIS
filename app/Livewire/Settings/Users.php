@@ -135,7 +135,7 @@ class Users extends Component
         $this->supplier_id = $user->supplier_id;
         $this->status = $user->status;
 
-        // ໂຫຼດ ສິດ ເພີ່ມເຕີມ ໂດຍກົງ (ບໍ່ ນັບ ສິດ ທີ່ ມາ ຈาก ບົດບາດ)
+        // ໂຫຼດ ສິດ ເພີ່ມເຕີມ ໂດຍກົງ (ບໍ່ ນັບ ສິດ ທີ່ ມາ ຈາກ ບົດບາດ)
         $direct = $user->getDirectPermissions()->pluck('name')->all();
         $this->initExtraPerms();
         foreach (array_keys(self::grantableMenus()) as $m) {
@@ -170,7 +170,7 @@ class Users extends Component
             'email' => $data['email'],
             'unit_id' => $data['unit_id'] ?: null,
             'department_id' => $data['department_id'] ?: null,
-            // supplier_id ສະເພาະ role=supplier; role ອື່ນ → null (ກັນ scope ຄ້າງ)
+            // supplier_id ສະເພາະ role=supplier; role ອື່ນ → null (ກັນ scope ຄ້າງ)
             'supplier_id' => $this->role === 'supplier' ? ($data['supplier_id'] ?: null) : null,
             'status' => $data['status'],
         ];

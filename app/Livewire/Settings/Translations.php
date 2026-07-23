@@ -182,7 +182,7 @@ class Translations extends Component
             return;
         }
 
-        // ແຖວ ໃໝ່ ທີ່ ຍັງ ບໍ່ ບັນທຶກ → ເອົາ ອອກ ຈาก ໜ່ວຍ ຄວາມ ຈຳ ເທົ່ານັ້ນ
+        // ແຖວ ໃໝ່ ທີ່ ຍັງ ບໍ່ ບັນທຶກ → ເອົາ ອອກ ຈາກ ໜ່ວຍ ຄວາມ ຈຳ ເທົ່ານັ້ນ
         if ($type === 'term') {
             unset($this->term[$i]);
             $this->term = array_values($this->term);

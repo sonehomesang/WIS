@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * borrow:import-photos — import borrow item photos ຈาก WIS export → WH storage (Phase 6.6.9).
+ * borrow:import-photos — import borrow item photos ຈາກ WIS export → WH storage (Phase 6.6.9).
  *
  * Reads borrow_photos_manifest.json (request_number, item_index, kind, file) + the downloaded
  * files, copies into storage/app/public/borrow/{recordId}/{itemId}/, creates borrow_item_photos.
