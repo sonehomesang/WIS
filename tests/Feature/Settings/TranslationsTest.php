@@ -122,3 +122,38 @@ test('the sync button pulls terms for an admin', function () {
         ->assertSet('savedOk', true);
     expect(Translation::where('type', 'replace')->count())->toBeGreaterThan(0);
 });
+
+test('extractor captures dropdown/label text and rejects code leaks', function () {
+    $phrases = new ReflectionMethod(App\Support\TranslationExtractor::class, 'phrases');
+    $phrases->setAccessible(true);
+
+    // A Lao word ending in ດ (e0 ba 94) used to be sheared by the byte-based
+    // trim() char-list (— = e2 80 94) → invalid UTF-8 → dropped. Dropdown
+    // options are lowercase English that the strict label filter also rejected.
+    $html = <<<'BLADE'
+<select wire:model="type">
+    <option value="">ທຸກ ປະເພດ</option>
+    <option value="available">available</option>
+    <option value="low-stock">low-stock</option>
+    <option value="active">active (in use)</option>
+</select>
+<label>transactionScope</label>
+@if($record->deleted_reason)
+    <div>ok</div>
+@endif
+<svg><path d="M6 18L18 6M6 6l12 12"/></svg>
+BLADE;
+
+    $out = $phrases->invoke(null, $html);
+
+    // recovered — Lao ending in ດ, lowercase + kebab options, balanced-paren label
+    expect($out)->toContain('ທຸກ ປະເພດ')
+        ->toContain('available')
+        ->toContain('low-stock')
+        ->toContain('active (in use)');
+
+    // rejected — PHP arrow leak, camelCase identifier, SVG path data
+    expect($out)->not->toContain('deleted_reason)')
+        ->not->toContain('transactionScope')
+        ->not->toContain('M6 18L18 6M6 6l12 12');
+});
