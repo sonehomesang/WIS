@@ -46,6 +46,20 @@ class AppServiceProvider extends ServiceProvider
             return "<?php echo e(\\App\\Models\\Translation::term({$expr})); ?>";
         });
 
+        // Livewire AJAX updates (pagination, filters, live search, saves) return
+        // JSON, so they bypass the ReplaceTerms HTTP middleware and would show the
+        // untranslated wording once the user paginates/filters. Re-apply the
+        // overrides to re-rendered component HTML — but ONLY on update requests,
+        // since the initial full-page load is already covered by the middleware
+        // (avoids double-processing the same HTML twice).
+        \Livewire\on('render', function ($component, $view) {
+            return function ($html) {
+                return request()->routeIs('*livewire.update')
+                    ? \App\Models\Translation::applyReplacements($html)
+                    : $html;
+            };
+        });
+
         // ຄ່າ SMTP ທີ່ admin ຕັ້ງ ໃນ Settings › Email → override config ຕອນ runtime.
         self::applyMailSettings();
     }

@@ -68,6 +68,18 @@ test('the Translations page itself is also translated (chrome, not source cells)
     expect($html)->toContain('>🔄 ໂຫຼດ ຄຳ ໃໝ່');
 });
 
+test('Livewire update responses are translated (pagination/filter fix)', function () {
+    // Livewire AJAX updates return JSON, bypassing the HTTP middleware — so paginated
+    // /filtered content used to show raw wording. The render hook re-applies overrides.
+    Translation::create(['type' => 'replace', 'source' => '🔄 ດຶງ ຄຳ ໃໝ່', 'target' => '🔄 ໂຫຼດ ຄຳ', 'is_active' => true]);
+
+    $html = Livewire::test(TranslationsPage::class)
+        ->set('search', 'x')   // a subsequent (update-route) render
+        ->html();
+
+    expect($html)->toContain('🔄 ໂຫຼດ ຄຳ')->not->toContain('🔄 ດຶງ ຄຳ ໃໝ່');
+});
+
 test('replacement only touches text nodes + safe attrs, never code', function () {
     Translation::create(['type' => 'replace', 'source' => 'Reports', 'target' => 'ລາຍງານ', 'is_active' => true]);
     $html = '<a class="Reports" value="Reports" title="Reports" wire:confirm="Reports">Reports</a><script>var Reports=1;</script>';
