@@ -63,6 +63,10 @@
                 @endif
                 @if ($editable)
                     <div class="flex flex-wrap items-center gap-2 p-3 border-t border-gray-50">
+                        <button wire:click="syncTerms" wire:loading.attr="disabled" wire:target="syncTerms" wire:confirm="ດຶງ ຄຳ hard-coded ໃໝ່ ຈາກ ໜ້າ ຕ່າງໆ ເຂົ້າ catalogue? (ບໍ່ ທັບ ຄຳ ແປ ເກົ່າ)" class="text-sm text-emerald-700 border border-emerald-200 rounded-md px-3 py-1.5 hover:bg-emerald-50 disabled:opacity-50" title="ສະແກນ ໜ້າ ທັງໝົດ → ເພີ່ມ ຄຳ ໃໝ່ ໃຫ້ ແປ">
+                            <span wire:loading.remove wire:target="syncTerms">🔄 ດຶງ ຄຳ ໃໝ່</span>
+                            <span wire:loading wire:target="syncTerms">⏳ ກຳລັງ ດຶງ…</span>
+                        </button>
                         <button wire:click="addRep" class="text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-1.5 hover:bg-sky-50">+ ເພີ່ມ ຄູ່ຄຳ ເອງ</button>
                         <button wire:click="save('replace')" wire:loading.attr="disabled" wire:target="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-1.5 hover:bg-sky-700 disabled:opacity-50">
                             <span wire:loading.remove wire:target="save">💾 ບັນທຶກ</span>

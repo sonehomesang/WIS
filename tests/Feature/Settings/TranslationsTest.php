@@ -104,3 +104,21 @@ test('translations page is forbidden without settings permission', function () {
     $this->actingAs($u);
     Livewire::test(TranslationsPage::class)->assertForbidden();
 });
+
+test('the extractor pulls hardcoded strings into the catalogue, idempotently', function () {
+    $r1 = App\Support\TranslationExtractor::run();
+    expect($r1['created'])->toBeGreaterThan(0);
+    expect($r1['total'])->toBe($r1['created']);                 // fresh DB → all created
+    expect(Translation::where('type', 'replace')->count())->toBe($r1['total']);
+
+    $r2 = App\Support\TranslationExtractor::run();               // again
+    expect($r2['created'])->toBe(0);                            // nothing new
+    expect($r2['total'])->toBe($r1['total']);
+});
+
+test('the sync button pulls terms for an admin', function () {
+    Livewire::test(TranslationsPage::class)
+        ->call('syncTerms')
+        ->assertSet('savedOk', true);
+    expect(Translation::where('type', 'replace')->count())->toBeGreaterThan(0);
+});

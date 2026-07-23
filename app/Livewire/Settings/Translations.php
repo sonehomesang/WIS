@@ -109,6 +109,24 @@ class Translations extends Component
         $this->term[] = ['id' => null, 'group' => 'custom', 'source' => '', 'target' => '', 'note' => '', 'is_active' => true];
     }
 
+    /** ດຶງ ຄຳ hard-coded ໃໝ່ ຈາກ ໜ້າ ຕ່າງໆ ເຂົ້າ catalogue (ບໍ່ ທັບ ຄຳ ແປ ເກົ່າ). */
+    public function syncTerms(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $r = \App\Support\TranslationExtractor::run();
+
+        // ກັບ ໄປ ໜ້າ ທຳອິດ ແລະ ລ້າງ ຟິລເຕີ ເພື່ອ ໃຫ້ ເຫັນ ຄຳ ໃໝ່.
+        $this->reset(['search', 'groupFilter', 'changedOnly']);
+        $this->repPage = 1;
+        $this->loadReplace();
+
+        $this->savedOk = true;
+        $this->savedMsg = $r['created']
+            ? "✓ ດຶງ ຄຳ ໃໝ່ {$r['created']} ຄຳ · ລວມ catalogue {$r['total']} ຄຳ"
+            : "✓ ບໍ່ ມີ ຄຳ ໃໝ່ — catalogue ຄົບ ແລ້ວ ({$r['total']} ຄຳ)";
+        $this->dispatch('saved');
+    }
+
     public function save(string $type): void
     {
         abort_unless(auth()->user()->can('settings.edit'), 403);
