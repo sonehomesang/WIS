@@ -56,6 +56,18 @@ test('middleware replaces wording in rendered HTML', function () {
     $this->get('/dashboard')->assertOk()->assertSee('ໂລກສະບາຍ', false)->assertDontSee('ສະບາຍດີ,', false);
 });
 
+test('the Translations page itself is also translated (chrome, not source cells)', function () {
+    // an override for one of the page's own buttons
+    Translation::create(['type' => 'replace', 'source' => '🔄 ດຶງ ຄຳ ໃໝ່', 'target' => '🔄 ໂຫຼດ ຄຳ ໃໝ່', 'is_active' => true]);
+
+    $html = $this->get(route('settings.translations'))->assertOk()->getContent();
+
+    // the button's visible text node is now replaced (this route was skipped before).
+    // Source/target editor cells are wire:model inputs hydrated from the Livewire
+    // snapshot (unicode-escaped JSON in an attribute), so they are never touched.
+    expect($html)->toContain('>🔄 ໂຫຼດ ຄຳ ໃໝ່');
+});
+
 test('replacement only touches text nodes + safe attrs, never code', function () {
     Translation::create(['type' => 'replace', 'source' => 'Reports', 'target' => 'ລາຍງານ', 'is_active' => true]);
     $html = '<a class="Reports" value="Reports" title="Reports" wire:confirm="Reports">Reports</a><script>var Reports=1;</script>';

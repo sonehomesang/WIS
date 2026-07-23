@@ -13,8 +13,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * HTML responses across the whole app. Targets are Lao/Thai script so a plain
  * strtr() over the HTML can't collide with ASCII tags/attributes/JS.
  *
- * Skips: streamed/binary responses, non-HTML, and the Translations admin page
- * itself (so the editor shows raw source text, not the replaced version).
+ * Skips: streamed/binary responses and non-HTML. The Translations admin page is
+ * NOT skipped — its own chrome (buttons, headers) should reflect overrides like
+ * any other page; the editor's source/target cells are wire:model inputs
+ * hydrated from the Livewire snapshot, which is never a text node or safe attr,
+ * so they always show the raw catalogue text regardless.
  */
 class ReplaceTerms
 {
@@ -28,10 +31,6 @@ class ReplaceTerms
 
         $ct = $response->headers->get('Content-Type', '');
         if (! str_contains($ct, 'text/html')) {
-            return $response;
-        }
-
-        if ($request->routeIs('settings.translations')) {
             return $response;
         }
 
