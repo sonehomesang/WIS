@@ -141,6 +141,15 @@ class Index extends Component
     /** ເຄື່ອງ ທີ່ ເປີດ ໜ້າຕ່າງ ລາຍລະອຽດ (read-only). */
     public ?int $viewingItemId = null;
 
+    /** ສະແດງ Deleted Log (onlyTrashed) ແທນ ລາຍການ ປົກກະຕິ. */
+    public bool $showDeleted = false;
+
+    /** ເຄື່ອງ ທີ່ ກຳລັງ ຈະ ລຶບ (ເປີດ modal ຖາມ ເຫດຜົນ). */
+    public ?int $deletingId = null;
+
+    /** ເຫດຜົນ ການ ລຶບ (ບັງຄັບ). */
+    public string $deleteReason = '';
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('equipment.view'), 403);
@@ -331,11 +340,59 @@ class Index extends Component
         $this->existingPhotos = array_values(array_filter($this->existingPhotos, fn ($x) => $x['id'] !== $photoId));
     }
 
-    public function delete(int $id): void
+    protected function canManageDeleted(): bool
+    {
+        $u = auth()->user();
+
+        return $u->is_super_admin || $u->can('equipment.delete');
+    }
+
+    /** ສະຫຼັບ ລະຫວ່າງ ລາຍການ ປົກກະຕິ ↔ Deleted Log. */
+    public function toggleDeleted(): void
+    {
+        abort_unless($this->canManageDeleted(), 403);
+        $this->showDeleted = ! $this->showDeleted;
+        $this->resetPage();
+    }
+
+    /** ເປີດ modal ຖາມ ເຫດຜົນ ກ່ອນ ລຶບ. */
+    public function openDelete(int $id): void
     {
         abort_unless(auth()->user()->can('equipment.delete'), 403);
         $this->guardDept(Equipment::findOrFail($id));
-        Equipment::whereKey($id)->delete();
+        $this->deletingId = $id;
+        $this->deleteReason = '';
+        $this->resetValidation();
+    }
+
+    /** ຢືນຢັນ ລຶບ — ບັນທຶກ ເຫດຜົນ + ຜູ້ລຶບ ແລ້ວ soft-delete (ຍ້າຍ ໄປ Deleted Log). */
+    public function deleteRecord(): void
+    {
+        abort_unless(auth()->user()->can('equipment.delete'), 403);
+        $this->validate(
+            ['deleteReason' => ['required', 'string', 'max:500']],
+            ['deleteReason.required' => 'ກະລຸນາ ໃສ່ ເຫດຜົນ ການ ລຶບ.']
+        );
+        $e = Equipment::findOrFail($this->deletingId);
+        $this->guardDept($e);
+        $e->forceFill(['deleted_reason' => $this->deleteReason, 'deleted_by' => auth()->id()])->save();
+        $e->delete();
+        $this->deletingId = null;
+        $this->deleteReason = '';
+        session()->flash('ok', '✓ ລຶບ ເຄື່ອງ '.$e->asset_code.' (ຍ້າຍ ໄປ Deleted Log)');
+    }
+
+    /** ກູ້ຄືນ ເຄື່ອງ ຈາກ Deleted Log. */
+    public function restore(int $id): void
+    {
+        abort_unless($this->canManageDeleted(), 403);
+        $e = Equipment::onlyTrashed()->find($id);
+        if ($e) {
+            $this->guardDept($e);
+            $e->restore();
+            $e->forceFill(['deleted_reason' => null, 'deleted_by' => null])->save();
+            session()->flash('ok', '✓ ກູ້ຄືນ ເຄື່ອງ '.$e->asset_code);
+        }
     }
 
     // ─────────── ແທັບ 2: ການ ກວດກາ ───────────
@@ -734,8 +791,10 @@ class Index extends Component
         $deptScoped = $this->deptScoped();
         $deptId = $this->userDeptId();
 
+        $showingDeleted = $this->showDeleted && $this->canManageDeleted();
         $items = Equipment::query()
             ->with(['photos', 'unit', 'department', 'responsibleUser', 'activeBorrowItems.record'])
+            ->when($showingDeleted, fn ($q) => $q->onlyTrashed()->with('deletedBy'))
             ->when($deptScoped, fn ($q) => $q->where('department_id', $deptId))
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
                 ->where('name', 'like', "%{$this->search}%")
@@ -745,7 +804,7 @@ class Index extends Component
             ->when($this->departmentFilter, fn ($q) => $q->where('department_id', $this->departmentFilter))
             // ກັ່ນຕອງ ສະຖານະ: ມີ ≥1 ໜ່ວຍ ໃນ ສະຖານະ ນັ້ນ
             ->when($this->statusFilter, fn ($q) => $q->where('status_counts->'.$this->statusFilter, '>', 0))
-            ->orderBy('asset_code')
+            ->when($showingDeleted, fn ($q) => $q->orderByDesc('deleted_at'), fn ($q) => $q->orderBy('asset_code'))
             ->paginate(8);
 
         $insResults = $this->showInspectionModal && strlen($this->insSearch) >= 2
@@ -787,6 +846,9 @@ class Index extends Component
             ? Equipment::with(['photos', 'unit', 'department', 'responsibleUser', 'activeBorrowItems.record'])->find($this->viewingItemId)
             : null;
 
+        // ເຄື່ອງ ທີ່ ກຳລັງ ຈະ ລຶບ (ສະແດງ ໃນ modal ຖາມ ເຫດຜົນ).
+        $deletingItem = $this->deletingId ? Equipment::find($this->deletingId) : null;
+
         // ປະເພດ ສຳລັບ dropdown ຟອມ (ເປີດ ໃຊ້) — ຮວມ ຄ່າ ປັດຈຸບັນ ຕອນ ແກ້ (ກັນ ຫາຍ ຖ້າ ຖືກ ປິດ).
         $categoryOptions = EquipmentCategory::where('is_active', true)
             ->orderBy('sort_order')->orderBy('name')->pluck('name');
@@ -816,6 +878,8 @@ class Index extends Component
             'historyEquipment' => $historyEquipment,
             'historyInspections' => $historyInspections,
             'viewingItem' => $viewingItem,
+            'deletingItem' => $deletingItem,
+            'canManageDeleted' => $this->canManageDeleted(),
             'deptScoped' => $deptScoped,
         ]);
     }

@@ -129,17 +129,43 @@ test('warehouse staff can edit but cannot delete (delete is admin only)', functi
         ->assertHasNoErrors();
     expect($e->fresh()->statusBreakdown())->toBe(['active' => 3, 'repair' => 2, 'retired' => 0]);
 
-    Livewire::test(Index::class)->call('delete', $e->id)->assertForbidden();
+    Livewire::test(Index::class)->call('openDelete', $e->id)->assertForbidden();
     expect(Equipment::find($e->id))->not->toBeNull();
 });
 
-test('a super_admin can delete equipment', function () {
+test('a super_admin deletes with a required reason (soft-delete to log)', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $e = Equipment::create(['asset_code' => 'EQ-0002', 'name' => 'Pump', 'quantity' => 1]);
 
     actingAs($admin);
-    Livewire::test(Index::class)->call('delete', $e->id);
-    expect(Equipment::find($e->id))->toBeNull();
+
+    // reason is required — empty is rejected, item stays
+    Livewire::test(Index::class)
+        ->call('openDelete', $e->id)
+        ->assertSet('deletingId', $e->id)
+        ->call('deleteRecord')
+        ->assertHasErrors(['deleteReason' => 'required']);
+    expect(Equipment::find($e->id))->not->toBeNull();
+
+    // with a reason → soft-deleted, reason + who stored, and restorable
+    Livewire::test(Index::class)
+        ->call('openDelete', $e->id)
+        ->set('deleteReason', 'ຊຳລຸດ ໃຊ້ ບໍ່ ໄດ້')
+        ->call('deleteRecord')
+        ->assertHasNoErrors()
+        ->assertSet('deletingId', null);
+
+    expect(Equipment::find($e->id))->toBeNull();                 // hidden from normal list
+    $trashed = Equipment::withTrashed()->find($e->id);
+    expect($trashed->trashed())->toBeTrue();
+    expect($trashed->deleted_reason)->toBe('ຊຳລຸດ ໃຊ້ ບໍ່ ໄດ້');
+    expect($trashed->deleted_by)->toBe($admin->id);
+
+    // restore clears the delete metadata
+    Livewire::test(Index::class)->call('restore', $e->id);
+    $restored = Equipment::find($e->id);
+    expect($restored)->not->toBeNull();
+    expect($restored->deleted_reason)->toBeNull();
 });
 
 test('photos can be attached (up to 3) from an upload', function () {

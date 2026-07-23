@@ -24,7 +24,7 @@ class Equipment extends Model
         'asset_code', 'fixed_asset_no', 'name', 'category', 'department_id', 'brand_model', 'serial_no',
         'quantity', 'unit_id', 'status_counts',
         'location', 'loc_bin', 'responsible_name', 'responsible_user_id', 'photo_path', 'purchase_date',
-        'notes', 'created_by', 'updated_by',
+        'notes', 'created_by', 'updated_by', 'deleted_reason', 'deleted_by',
     ];
 
     protected $casts = [
@@ -48,6 +48,12 @@ class Equipment extends Model
     public function responsibleUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'responsible_user_id');
+    }
+
+    /** ຜູ້ ທີ່ ລຶບ ເຄື່ອງ ນີ້ (ສຳລັບ deleted log). */
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 
     /** ຊື່ ຜູ້ຮັບຜິດຊອບ ສະແດງ — ຜູ້ໃຊ້ ທີ່ ລິ້ງ ກ່ອນ, ບໍ່ ດັ່ງນັ້ນ ຄ່າ ຂໍ້ຄວາມ ເກົ່າ. */
