@@ -138,6 +138,9 @@ class Index extends Component
     /** ເຄື່ອງ ທີ່ ເປີດ ໜ້າຕ່າງ ປະຫວັດ ການ ກວດເຊັກ. */
     public ?int $historyEquipmentId = null;
 
+    /** ເຄື່ອງ ທີ່ ເປີດ ໜ້າຕ່າງ ລາຍລະອຽດ (read-only). */
+    public ?int $viewingItemId = null;
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('equipment.view'), 403);
@@ -187,6 +190,7 @@ class Index extends Component
     {
         $e = Equipment::findOrFail($id);
         $this->guardDept($e);
+        $this->viewingItemId = null;   // ປິດ ໜ້າຕ່າງ ລາຍລະອຽດ ຖ້າ ເປີດ ຢູ່
         $this->editingId = $e->id;
         $this->asset_code = $e->asset_code;
         $this->fixed_asset_no = $e->fixed_asset_no ?? '';
@@ -403,6 +407,15 @@ class Index extends Component
         $e = Equipment::findOrFail($id);
         $this->guardDept($e);
         $this->historyEquipmentId = $id;
+    }
+
+    /** ເປີດ ໜ້າຕ່າງ ເບິ່ງ ລາຍລະອຽດ ເຄື່ອງ (read-only). */
+    public function viewItem(int $id): void
+    {
+        abort_unless(auth()->user()->can('equipment.view'), 403);
+        $e = Equipment::findOrFail($id);
+        $this->guardDept($e);
+        $this->viewingItemId = $id;
     }
 
     /** ຈາກ ໜ້າ ປະຫວັດ → ເລີ່ມ ກວດ ໃໝ່ ໃຫ້ ເຄື່ອງ ນີ້ ເລີຍ (ໃສ່ ເຄື່ອງ ໃຫ້ ອັດຕະໂນມັດ). */
@@ -769,6 +782,11 @@ class Index extends Component
                 ->orderByDesc('inspected_at')->orderByDesc('id')->limit(50)->get()
             : collect();
 
+        // ລາຍລະອຽດ ເຄື່ອງ (ໜ້າຕ່າງ ຈາກ ໄອຄ່ອນ ດວງຕາ ໃນ ຄໍລັມ "ຈັດການ").
+        $viewingItem = $this->viewingItemId
+            ? Equipment::with(['photos', 'unit', 'department', 'responsibleUser', 'activeBorrowItems.record'])->find($this->viewingItemId)
+            : null;
+
         // ປະເພດ ສຳລັບ dropdown ຟອມ (ເປີດ ໃຊ້) — ຮວມ ຄ່າ ປັດຈຸບັນ ຕອນ ແກ້ (ກັນ ຫາຍ ຖ້າ ຖືກ ປິດ).
         $categoryOptions = EquipmentCategory::where('is_active', true)
             ->orderBy('sort_order')->orderBy('name')->pluck('name');
@@ -797,6 +815,7 @@ class Index extends Component
             'viewingInspection' => $viewingInspection,
             'historyEquipment' => $historyEquipment,
             'historyInspections' => $historyInspections,
+            'viewingItem' => $viewingItem,
             'deptScoped' => $deptScoped,
         ]);
     }

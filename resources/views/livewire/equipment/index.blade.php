@@ -63,7 +63,7 @@
                             <th class="text-left font-semibold px-3 py-2 w-28">ສະຖານະ</th>
                             <th class="text-left font-semibold px-3 py-2 w-24">ຜູ້ຢືມ</th>
                             <th class="text-center font-semibold px-2 py-2 w-20">ການ ກວດເຊັກ</th>
-                            <th class="px-3 py-2 w-16"></th>
+                            <th class="text-center font-semibold px-3 py-2 w-24">ຈັດການ</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -110,7 +110,10 @@
                                         <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
                                     </button>
                                 </td>
-                                <td class="px-3 py-2 pr-5 text-right whitespace-nowrap text-gray-500">
+                                <td class="px-3 py-2 text-center whitespace-nowrap text-gray-500">
+                                    <button wire:click="viewItem({{ $e->id }})" class="hover:text-sky-700 p-1" title="ເບິ່ງ ລາຍລະອຽດ">
+                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                                    </button>
                                     @can('equipment.edit')
                                         <button wire:click="editItem({{ $e->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
                                             <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
@@ -149,6 +152,7 @@
                         @php $bwsM = $e->currentBorrowers(); @endphp
                         @if (count($bwsM))<div class="text-xs text-amber-700 mt-0.5">ຜູ້ຢືມ: {{ $bwsM[0] }}@if (count($bwsM) > 1) +{{ count($bwsM) - 1 }}@endif</div>@endif
                         <div class="flex gap-2 mt-2">
+                            <button wire:click="viewItem({{ $e->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px] text-sky-700">ເບິ່ງ</button>
                             @can('equipment.edit')<button wire:click="editItem({{ $e->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">ແກ້ໄຂ</button>@endcan
                             @can('equipment.delete')<button wire:click="delete({{ $e->id }})" wire:confirm="ລຶບ ເຄື່ອງ ນີ້?" class="text-xs border rounded px-2 py-1 min-h-[36px] text-red-600">ລຶບ</button>@endcan
                         </div>
@@ -761,6 +765,71 @@
 
                 <div class="flex justify-end pt-1">
                     <button wire:click="$set('historyEquipmentId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ລາຍລະອຽດ ເຄື່ອງ (ຈາກ ໄອຄ່ອນ ດວງຕາ ໃນ ຄໍລັມ "ຈັດການ") --}}
+    @if ($viewingItem)
+        <div class="fixed inset-0 z-[55] flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="item-view-modal">
+            <div class="bg-white w-full md:max-w-md rounded-t-lg md:rounded-lg p-4 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <h3 class="text-base font-semibold text-gray-900 truncate">{{ $viewingItem->name }}</h3>
+                        <div class="text-xs text-gray-500 font-mono">{{ $viewingItem->asset_code }}@if ($viewingItem->fixed_asset_no) · FA: {{ $viewingItem->fixed_asset_no }}@endif</div>
+                    </div>
+                    <button wire:click="$set('viewingItemId', null)" class="text-gray-400 hover:text-gray-700 p-1 shrink-0" aria-label="ປິດ">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                @if ($viewingItem->photos->count())
+                    <div class="flex gap-1.5 flex-wrap">
+                        @foreach ($viewingItem->photos as $p)
+                            <img src="{{ \Illuminate\Support\Facades\Storage::url($p->path) }}" @click="bigImg='{{ \Illuminate\Support\Facades\Storage::url($p->path) }}'"
+                                 class="w-20 h-20 rounded object-cover border border-gray-200 cursor-pointer hover:ring-2 hover:ring-sky-400" alt="ຮູບ" />
+                        @endforeach
+                    </div>
+                @endif
+
+                @php $vbd = $viewingItem->statusBreakdown(); $vbw = $viewingItem->currentBorrowers(); @endphp
+                <dl class="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                    <div><dt class="text-xs text-gray-500">ປະເພດ</dt><dd class="text-gray-800">{{ $viewingItem->category ?: '—' }}</dd></div>
+                    <div><dt class="text-xs text-gray-500">ຍີ່ຫໍ້ / ລຸ້ນ</dt><dd class="text-gray-800">{{ $viewingItem->brand_model ?: '—' }}</dd></div>
+                    <div><dt class="text-xs text-gray-500">Serial</dt><dd class="text-gray-800 break-words">{{ $viewingItem->serial_no ?: '—' }}</dd></div>
+                    <div><dt class="text-xs text-gray-500">Owner (ພະແນກ)</dt><dd class="text-gray-800">{{ $viewingItem->department?->name ?? '—' }}</dd></div>
+                    <div><dt class="text-xs text-gray-500">Loc-Bin</dt><dd class="text-gray-800 break-words">{{ $viewingItem->loc_bin ?: '—' }}</dd></div>
+                    <div><dt class="text-xs text-gray-500">ສະຖານທີ່</dt><dd class="text-gray-800">{{ $viewingItem->location ?: '—' }}</dd></div>
+                    <div><dt class="text-xs text-gray-500">ຜູ້ຮັບຜິດຊອບ</dt><dd class="text-gray-800">{{ $viewingItem->responsibleLabel() ?? '—' }}</dd></div>
+                    <div><dt class="text-xs text-gray-500">ຈຳນວນ</dt><dd class="text-gray-800">{{ $viewingItem->quantity }} {{ $viewingItem->unit?->name }}</dd></div>
+                    @if ($viewingItem->purchase_date)
+                        <div><dt class="text-xs text-gray-500">ວັນທີ ຊື້</dt><dd class="text-gray-800">{{ $viewingItem->purchase_date->format('d/m/Y') }}</dd></div>
+                    @endif
+                </dl>
+
+                <div>
+                    <div class="text-xs text-gray-500 mb-1">ສະຖານະ</div>
+                    <div class="flex flex-wrap gap-1">
+                        @foreach (['active', 'repair', 'retired'] as $s)
+                            @if ($vbd[$s] > 0)<span class="text-xs rounded px-1.5 py-0.5 {{ $badge($s) }}">{{ $vbd[$s] }} {{ $statusLabel[$s] }}</span>@endif
+                        @endforeach
+                    </div>
+                </div>
+
+                @if (count($vbw))
+                    <div class="text-sm"><span class="text-xs text-gray-500">ຜູ້ຢືມ ປັດຈຸບັນ:</span> <span class="text-amber-700">{{ implode(', ', $vbw) }}</span></div>
+                @endif
+
+                @if ($viewingItem->notes)
+                    <div class="text-sm"><span class="text-xs text-gray-500 block mb-0.5">ໝາຍເຫດ</span>{{ $viewingItem->notes }}</div>
+                @endif
+
+                <div class="flex flex-wrap justify-end gap-2 pt-2 border-t">
+                    @can('equipment.edit')
+                        <button wire:click="editItem({{ $viewingItem->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-50">ແກ້ໄຂ</button>
+                    @endcan
+                    <button wire:click="$set('viewingItemId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
                 </div>
             </div>
         </div>

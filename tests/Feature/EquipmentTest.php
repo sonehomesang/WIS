@@ -33,6 +33,28 @@ test('warehouse staff can create equipment with the code they enter', function (
     expect($e->statusBreakdown())->toBe(['active' => 1, 'repair' => 0, 'retired' => 0]);
 });
 
+test('viewItem opens a read-only detail modal (register manage column)', function () {
+    $e = Equipment::create([
+        'asset_code' => 'EL-T001-1', 'name' => 'Megger Insulation Tester',
+        'category' => 'Power tool', 'brand_model' => 'Megger MIT510/2', 'quantity' => 1,
+    ]);
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+
+    Livewire::test(Index::class)
+        ->assertSee('ຈັດການ')                     // actions column now has a header
+        ->call('viewItem', $e->id)
+        ->assertSet('viewingItemId', $e->id)
+        ->assertSee('Megger Insulation Tester')    // detail modal shows the item
+        ->assertSee('Megger MIT510/2');            // brand/model detail
+
+    // opening edit closes the detail modal (no overlap)
+    Livewire::test(Index::class)
+        ->call('viewItem', $e->id)
+        ->call('editItem', $e->id)
+        ->assertSet('viewingItemId', null)
+        ->assertSet('showModal', true);
+});
+
 test('asset code must be unique', function () {
     Equipment::create(['asset_code' => 'DUP-1', 'name' => 'A', 'quantity' => 1]);
     $u = User::factory()->create(['is_super_admin' => true]);
