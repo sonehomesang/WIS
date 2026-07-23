@@ -189,6 +189,11 @@
             <div class="flex items-center justify-between mb-2 gap-2">
                 <span class="text-xs text-gray-400">ບັນທຶກ ການ ກວດ ສະພາບ ເຄື່ອງ · ຮູບ ຝັງ ວັນທີ+ເວລາ · ກຳນົດ ກວດ ຄັ້ງ ໜ້າ</span>
                 <div class="flex items-center gap-2 shrink-0">
+                    @if ($canManageDeleted)
+                        <button wire:click="toggleDeletedInspections" class="text-sm border rounded-md px-3 py-2 min-h-[40px] whitespace-nowrap {{ $showDeletedInspections ? 'bg-gray-700 text-white border-gray-700' : 'text-gray-600 border-gray-300 hover:bg-gray-50' }}">
+                            {{ $showDeletedInspections ? '← ໃບ ກວດ ປົກກະຕິ' : '🗑 ບັນທຶກ ການ ລຶບ' }}
+                        </button>
+                    @endif
                     @can('equipment.edit')
                         @unless ($deptScoped)
                             <a href="{{ route('equipment.templates') }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
@@ -207,8 +212,8 @@
                 <table class="w-full text-sm">
                     <thead class="bg-gray-50 text-gray-600 text-xs border-b border-gray-200">
                         <tr>
-                            <th class="text-left px-3 py-2 font-semibold">ວັນທີ/ເວລາ</th>
                             <th class="text-left px-3 py-2 font-semibold">ເຄື່ອງ</th>
+                            <th class="text-left px-3 py-2 font-semibold">ວັນທີ/ເວລາ</th>
                             <th class="text-left px-3 py-2 font-semibold">ຜູ້ກວດ</th>
                             <th class="text-left px-3 py-2 font-semibold">ຜົນ</th>
                             <th class="text-left px-3 py-2 font-semibold">ກວດ ຄັ້ງ ໜ້າ</th>
@@ -220,8 +225,13 @@
                         @php $rb = ['pass' => 'bg-green-50 text-green-700', 'fail' => 'bg-red-50 text-red-700', 'follow_up' => 'bg-amber-50 text-amber-700']; $rl = ['pass' => 'ຜ່ານ', 'fail' => 'ບໍ່ຜ່ານ', 'follow_up' => 'ຕ້ອງຕິດຕາມ']; @endphp
                         @forelse ($inspections as $ins)
                             <tr wire:key="ins-{{ $ins->id }}">
+                                <td class="px-3 py-2">
+                                    {{ $ins->equipment?->asset_code }} · {{ $ins->equipment?->name }}
+                                    @if ($showDeletedInspections)
+                                        <div class="text-[11px] text-red-600 mt-0.5">🗑 ລຶບ: {{ $ins->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $ins->deletedBy?->display_name ?? '—' }}@if ($ins->deleted_reason) · ເຫດຜົນ: {{ $ins->deleted_reason }}@endif</div>
+                                    @endif
+                                </td>
                                 <td class="px-3 py-2 whitespace-nowrap">{{ $ins->inspected_at?->format('d/m/Y H:i') }}</td>
-                                <td class="px-3 py-2">{{ $ins->equipment?->asset_code }} · {{ $ins->equipment?->name }}</td>
                                 <td class="px-3 py-2">{{ $ins->inspector_name ?? '—' }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap">
                                     <span class="text-xs rounded px-2 py-0.5 {{ $rb[$ins->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $rl[$ins->result] ?? $ins->result }}</span>
@@ -244,18 +254,27 @@
                                     @endif
                                 </td>
                                 <td class="px-3 py-2 pr-4 text-right whitespace-nowrap text-gray-500">
-                                    <button wire:click="viewInspection({{ $ins->id }})" class="hover:text-sky-700 p-1" title="ເບິ່ງ ລາຍລະອຽດ">
-                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
-                                    </button>
-                                    @can('equipment.edit')
-                                        <button wire:click="editInspection({{ $ins->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
-                                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
+                                    @if ($showDeletedInspections)
+                                        <button wire:click="restoreInspection({{ $ins->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                                    @else
+                                        <button wire:click="viewInspection({{ $ins->id }})" class="hover:text-sky-700 p-1" title="ເບິ່ງ ລາຍລະອຽດ">
+                                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
                                         </button>
-                                    @endcan
+                                        @can('equipment.edit')
+                                            <button wire:click="editInspection({{ $ins->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
+                                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
+                                            </button>
+                                        @endcan
+                                        @can('equipment.delete')
+                                            <button wire:click="openDeleteInspection({{ $ins->id }})" class="hover:text-red-600 p-1" title="ລຶບ">
+                                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                        @endcan
+                                    @endif
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ການ ກວດກາ — ກົດ "+ ບັນທຶກ ການ ກວດກາ"</td></tr>
+                            <tr><td colspan="7" class="px-3 py-6 text-center text-gray-400">{{ $showDeletedInspections ? 'ບໍ່ ມີ ໃບ ກວດ ທີ່ ຖືກ ລຶບ' : 'ຍັງບໍ່ມີ ການ ກວດກາ' }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -876,6 +895,33 @@
                 <div class="flex justify-end gap-2 pt-2 border-t">
                     <button wire:click="$set('deletingId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
                     <button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="text-sm text-white bg-red-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-red-700 disabled:opacity-50">🗑 ຢືນຢັນ ລຶບ</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ຢືນຢັນ ລຶບ ໃບ ກວດ + ເຫດຜົນ (ບັງຄັບ) → soft-delete ໄປ Deleted Log --}}
+    @if ($deletingInsId)
+        <div class="fixed inset-0 z-[56] flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="del-ins-modal">
+            <div class="bg-white w-full md:max-w-sm rounded-t-lg md:rounded-lg p-4 space-y-3">
+                <div class="flex items-start gap-3">
+                    <div class="shrink-0 w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-base font-semibold text-gray-900">ລຶບ ໃບ ກວດ ນີ້?</h3>
+                        <p class="text-sm text-gray-500 truncate">{{ $deletingInspection?->equipment?->asset_code }} · {{ $deletingInspection?->inspected_at?->format('d/m/Y H:i') }}</p>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">ເຫດຜົນ ການ ລຶບ <span class="text-red-500">*</span></label>
+                    <textarea wire:model="insDeleteReason" rows="3" class="w-full rounded-md border-gray-300 text-sm focus:border-red-400 focus:ring-red-400" placeholder="ເຊັ່ນ: ບັນທຶກ ຊ້ຳ, ໃສ່ ຂໍ້ມູນ ຜິດ…"></textarea>
+                    @error('insDeleteReason')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                </div>
+                <div class="text-xs text-gray-400">ຈະ ຍ້າຍ ໄປ ບັນທຶກ ການ ລຶບ (ກູ້ຄືນ ໄດ້) ພ້ອມ ຈົດ ຜູ້ລຶບ + ວັນ​ເວລາ.</div>
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button wire:click="$set('deletingInsId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="deleteInspectionRecord" wire:loading.attr="disabled" wire:target="deleteInspectionRecord" class="text-sm text-white bg-red-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-red-700 disabled:opacity-50">🗑 ຢືນຢັນ ລຶບ</button>
                 </div>
             </div>
         </div>

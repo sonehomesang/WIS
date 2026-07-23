@@ -150,6 +150,15 @@ class Index extends Component
     /** ເຫດຜົນ ການ ລຶບ (ບັງຄັບ). */
     public string $deleteReason = '';
 
+    /** Deleted Log ສຳລັບ ໃບ ກວດ (tab 2). */
+    public bool $showDeletedInspections = false;
+
+    /** ໃບ ກວດ ທີ່ ກຳລັງ ຈະ ລຶບ (ເປີດ modal ຖາມ ເຫດຜົນ). */
+    public ?int $deletingInsId = null;
+
+    /** ເຫດຜົນ ການ ລຶບ ໃບ ກວດ (ບັງຄັບ). */
+    public string $insDeleteReason = '';
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('equipment.view'), 403);
@@ -392,6 +401,62 @@ class Index extends Component
             $e->restore();
             $e->forceFill(['deleted_reason' => null, 'deleted_by' => null])->save();
             session()->flash('ok', '✓ ກູ້ຄືນ ເຄື່ອງ '.$e->asset_code);
+        }
+    }
+
+    // ─── ໃບ ກວດ (tab 2): ລຶບ-ດ້ວຍ-ເຫດຜົນ + Deleted Log ───
+
+    /** ສະຫຼັບ ໃບ ກວດ ປົກກະຕິ ↔ Deleted Log. */
+    public function toggleDeletedInspections(): void
+    {
+        abort_unless($this->canManageDeleted(), 403);
+        $this->showDeletedInspections = ! $this->showDeletedInspections;
+    }
+
+    /** ເປີດ modal ຖາມ ເຫດຜົນ ກ່ອນ ລຶບ ໃບ ກວດ. */
+    public function openDeleteInspection(int $id): void
+    {
+        abort_unless(auth()->user()->can('equipment.delete'), 403);
+        $ins = EquipmentInspection::with('equipment')->findOrFail($id);
+        if ($ins->equipment) {
+            $this->guardDept($ins->equipment);
+        }
+        $this->deletingInsId = $id;
+        $this->insDeleteReason = '';
+        $this->resetValidation();
+    }
+
+    /** ຢືນຢັນ ລຶບ ໃບ ກວດ — ບັນທຶກ ເຫດຜົນ + ຜູ້ລຶບ ແລ້ວ soft-delete. */
+    public function deleteInspectionRecord(): void
+    {
+        abort_unless(auth()->user()->can('equipment.delete'), 403);
+        $this->validate(
+            ['insDeleteReason' => ['required', 'string', 'max:500']],
+            ['insDeleteReason.required' => 'ກະລຸນາ ໃສ່ ເຫດຜົນ ການ ລຶບ.']
+        );
+        $ins = EquipmentInspection::with('equipment')->findOrFail($this->deletingInsId);
+        if ($ins->equipment) {
+            $this->guardDept($ins->equipment);
+        }
+        $ins->forceFill(['deleted_reason' => $this->insDeleteReason, 'deleted_by' => auth()->id()])->save();
+        $ins->delete();
+        $this->deletingInsId = null;
+        $this->insDeleteReason = '';
+        session()->flash('ok', '✓ ລຶບ ໃບ ກວດ (ຍ້າຍ ໄປ Deleted Log)');
+    }
+
+    /** ກູ້ຄືນ ໃບ ກວດ ຈາກ Deleted Log. */
+    public function restoreInspection(int $id): void
+    {
+        abort_unless($this->canManageDeleted(), 403);
+        $ins = EquipmentInspection::onlyTrashed()->with('equipment')->find($id);
+        if ($ins) {
+            if ($ins->equipment) {
+                $this->guardDept($ins->equipment);
+            }
+            $ins->restore();
+            $ins->forceFill(['deleted_reason' => null, 'deleted_by' => null])->save();
+            session()->flash('ok', '✓ ກູ້ຄືນ ໃບ ກວດ');
         }
     }
 
@@ -849,6 +914,11 @@ class Index extends Component
         // ເຄື່ອງ ທີ່ ກຳລັງ ຈະ ລຶບ (ສະແດງ ໃນ modal ຖາມ ເຫດຜົນ).
         $deletingItem = $this->deletingId ? Equipment::find($this->deletingId) : null;
 
+        // ໃບ ກວດ ທີ່ ກຳລັງ ຈະ ລຶບ (modal ຖາມ ເຫດຜົນ).
+        $deletingInspection = $this->deletingInsId
+            ? EquipmentInspection::with('equipment')->find($this->deletingInsId)
+            : null;
+
         // ປະເພດ ສຳລັບ dropdown ຟອມ (ເປີດ ໃຊ້) — ຮວມ ຄ່າ ປັດຈຸບັນ ຕອນ ແກ້ (ກັນ ຫາຍ ຖ້າ ຖືກ ປິດ).
         $categoryOptions = EquipmentCategory::where('is_active', true)
             ->orderBy('sort_order')->orderBy('name')->pluck('name');
@@ -869,8 +939,10 @@ class Index extends Component
             // filter dropdown ← ອ່ານ master ດຽວກັນກັບ ຟອມ (EquipmentCategory ທີ່ເປີດ), ບໍ່ແມ່ນ distinct ຈາກ record.
             'categories' => EquipmentCategory::where('is_active', true)->orderBy('sort_order')->orderBy('name')->pluck('name'),
             'inspections' => EquipmentInspection::with('equipment')
+                ->when($this->showDeletedInspections && $this->canManageDeleted(), fn ($q) => $q->onlyTrashed()->with('deletedBy'))
                 ->when($deptScoped, fn ($q) => $q->whereHas('equipment', fn ($w) => $w->where('department_id', $deptId)))
                 ->orderByDesc('inspected_at')->orderByDesc('id')->limit(50)->get(),
+            'deletingInspection' => $deletingInspection,
             'insResults' => $insResults,
             'insTemplateNeedsFuel' => $insTemplateNeedsFuel,
             'insTemplateNeedsFreq' => $insTemplateNeedsFreq,

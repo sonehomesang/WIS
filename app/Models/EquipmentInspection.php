@@ -4,12 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EquipmentInspection extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'equipment_id', 'template_id', 'fuel_type', 'frequency', 'inspected_at', 'inspector_name', 'result', 'score',
-        'checklist', 'notes', 'next_due_date', 'photo_path', 'photos', 'created_by',
+        'checklist', 'notes', 'next_due_date', 'photo_path', 'photos', 'created_by', 'deleted_reason', 'deleted_by',
     ];
 
     protected $casts = [
@@ -38,5 +41,11 @@ class EquipmentInspection extends Model
     public function template(): BelongsTo
     {
         return $this->belongsTo(InspectionTemplate::class, 'template_id');
+    }
+
+    /** ຜູ້ ທີ່ ລຶບ ໃບ ກວດ ນີ້ (ສຳລັບ deleted log). */
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 }
