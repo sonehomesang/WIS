@@ -733,7 +733,7 @@ class Index extends Component
             // ກັ່ນຕອງ ສະຖານະ: ມີ ≥1 ໜ່ວຍ ໃນ ສະຖານະ ນັ້ນ
             ->when($this->statusFilter, fn ($q) => $q->where('status_counts->'.$this->statusFilter, '>', 0))
             ->orderBy('asset_code')
-            ->paginate(10);
+            ->paginate(8);
 
         $insResults = $this->showInspectionModal && strlen($this->insSearch) >= 2
             ? Equipment::where(fn ($q) => $q->where('name', 'like', "%{$this->insSearch}%")
