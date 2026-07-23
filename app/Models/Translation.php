@@ -65,8 +65,12 @@ class Translation extends Model
         return static::termMap()[$key] ?? $default;
     }
 
-    /** Attributes whose values are display text and safe to translate. */
-    public const SAFE_ATTRS = ['title', 'placeholder', 'alt', 'aria-label'];
+    /**
+     * Attributes whose values are display text and safe to translate.
+     * wire:confirm is the Livewire confirmation-dialog prompt shown to the user,
+     * so it belongs here alongside the standard HTML display attributes.
+     */
+    public const SAFE_ATTRS = ['title', 'placeholder', 'alt', 'aria-label', 'wire:confirm'];
 
     /**
      * Apply active replace pairs — but only inside visible text nodes and a

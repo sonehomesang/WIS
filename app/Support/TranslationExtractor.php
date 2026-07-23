@@ -70,10 +70,16 @@ class TranslationExtractor
         //    The (?<!-) lookbehind stops a PHP arrow "->" from opening a bogus
         //    text node (eg. "@if($r->deleted_reason)" would otherwise leak the
         //    code fragment "deleted_reason)" into the catalogue).
-        if (preg_match_all('/(?<!-)>([^<>{}@]+)</u', $content, $m)) {
+        if (preg_match_all('/(?<!-)>([^<>@]+)</u', $content, $m)) {
             foreach ($m[1] as $raw) {
-                if (($text = self::clean($raw)) !== null && (self::hasLao($text) || self::isDisplayValue($text))) {
-                    $out[$text] = true;
+                // A text node may interleave static text with {{ }} bindings, eg.
+                // a filter header "ທຸກ ໝວດ (ໜ້າ) — {{ $total }} ຄຳ". Split on the
+                // bindings so the static Lao/English fragments around them are
+                // still captured (clean() drops any residual { } from {!! !!}/JS).
+                foreach (preg_split('/\{\{.*?\}\}/us', $raw) as $part) {
+                    if (($text = self::clean($part)) !== null && (self::hasLao($text) || self::isDisplayValue($text))) {
+                        $out[$text] = true;
+                    }
                 }
             }
         }
@@ -102,7 +108,8 @@ class TranslationExtractor
         $text = trim(preg_replace('/\s+/u', ' ', $raw));
         $text = preg_replace('/^[·•—–|*\s]+|[·•—–|*\s]+$/u', '', $text);
 
-        if ($text === '' || str_contains($text, '{{') || str_contains($text, '}}') || str_contains($text, '<?')) {
+        // Reject leftover template braces ({!! !!}, JS/CSS { }, stray {{ }}) or PHP tags.
+        if ($text === '' || str_contains($text, '{') || str_contains($text, '}') || str_contains($text, '<?')) {
             return null;
         }
         if (mb_strlen($text) < 2 || mb_strlen($text) > 480) {

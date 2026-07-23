@@ -58,13 +58,15 @@ test('middleware replaces wording in rendered HTML', function () {
 
 test('replacement only touches text nodes + safe attrs, never code', function () {
     Translation::create(['type' => 'replace', 'source' => 'Reports', 'target' => 'ລາຍງານ', 'is_active' => true]);
-    $html = '<a class="Reports" title="Reports">Reports</a><script>var Reports=1;</script>';
+    $html = '<a class="Reports" value="Reports" title="Reports" wire:confirm="Reports">Reports</a><script>var Reports=1;</script>';
     $r = Translation::applyReplacements($html);
 
-    expect($r)->toContain('class="Reports"');     // class untouched
-    expect($r)->toContain('title="ລາຍງານ"');       // safe attr translated
-    expect($r)->toContain('>ລາຍງານ<');             // text node translated
-    expect($r)->toContain('var Reports=1;');       // <script> untouched
+    expect($r)->toContain('class="Reports"')           // class untouched
+        ->toContain('value="Reports"')                 // value untouched (option/form values safe)
+        ->toContain('title="ລາຍງານ"')                   // safe attr translated
+        ->toContain('wire:confirm="ລາຍງານ"')            // confirm dialog translated
+        ->toContain('>ລາຍງານ<')                         // text node translated
+        ->toContain('var Reports=1;');                 // <script> untouched
 });
 
 test('admin can add + save a replace pair via the page', function () {
@@ -132,6 +134,7 @@ test('extractor captures dropdown/label text and rejects code leaks', function (
     // options are lowercase English that the strict label filter also rejected.
     $html = <<<'BLADE'
 <select wire:model="type">
+    <option value="">ທຸກ ໝວດ (ໜ້າ) — {{ $total }} ຄຳ</option>
     <option value="">ທຸກ ປະເພດ</option>
     <option value="available">available</option>
     <option value="low-stock">low-stock</option>
@@ -146,8 +149,10 @@ BLADE;
 
     $out = $phrases->invoke(null, $html);
 
-    // recovered — Lao ending in ດ, lowercase + kebab options, balanced-paren label
-    expect($out)->toContain('ທຸກ ປະເພດ')
+    // recovered — static text either side of a {{ }} binding, Lao ending in ດ,
+    // lowercase + kebab options, balanced-paren label
+    expect($out)->toContain('ທຸກ ໝວດ (ໜ້າ)')
+        ->toContain('ທຸກ ປະເພດ')
         ->toContain('available')
         ->toContain('low-stock')
         ->toContain('active (in use)');
