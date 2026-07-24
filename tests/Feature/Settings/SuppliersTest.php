@@ -34,3 +34,34 @@ test('non-permitted user cannot open suppliers', function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => false]));
     Livewire::test(Suppliers::class)->assertForbidden();
 });
+
+test('deleting a supplier requires a reason and moves it to the deleted log', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $s = Supplier::create(['slug' => 'zed', 'name' => 'Zed Co', 'default_currency' => 'LAK', 'is_active' => true]);
+
+    Livewire::test(Suppliers::class)
+        ->call('openDelete', $s->id)
+        ->call('deleteRecord')
+        ->assertHasErrors('deleteReason');
+
+    expect(Supplier::whereKey($s->id)->exists())->toBeTrue();
+
+    Livewire::test(Suppliers::class)
+        ->call('openDelete', $s->id)
+        ->set('deleteReason', 'ບໍ່ ຮ່ວມ ງານ ແລ້ວ')
+        ->call('deleteRecord')
+        ->assertHasNoErrors();
+
+    $s->refresh();
+    expect($s->trashed())->toBeTrue();
+    expect($s->deleted_reason)->toBe('ບໍ່ ຮ່ວມ ງານ ແລ້ວ');
+    expect($s->deleted_by)->toBe($admin->id);
+
+    Livewire::test(Suppliers::class)
+        ->call('toggleDeleted')
+        ->assertSee('Zed Co')
+        ->call('restore', $s->id);
+
+    expect(Supplier::whereKey($s->id)->first()->trashed())->toBeFalse();
+});

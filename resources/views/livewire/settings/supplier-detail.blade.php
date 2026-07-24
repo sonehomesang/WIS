@@ -57,7 +57,14 @@
         <div class="bg-white border border-gray-100 rounded-lg overflow-hidden">
             <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                 <span class="font-medium text-sm text-gray-700">Contracts</span>
-                @can('supplier.create')<button wire:click="newContract" class="text-sm text-white bg-sky-600 rounded-md px-3 py-1.5 min-h-[36px] hover:bg-sky-700">+ Add contract</button>@endcan
+                <div class="flex items-center gap-2">
+                    @if ($canManageDeleted)
+                        <button wire:click="toggleDeleted" class="text-sm border rounded-md px-3 py-1.5 min-h-[36px] whitespace-nowrap {{ $showDeleted ? 'bg-gray-700 text-white border-gray-700' : 'text-gray-600 border-gray-300 bg-white hover:bg-gray-50' }}">
+                            {{ $showDeleted ? '← ລາຍການ ປົກກະຕິ' : '🗑 ບັນທຶກ ການ ລຶບ' }}
+                        </button>
+                    @endif
+                    @can('supplier.create')<button wire:click="newContract" class="text-sm text-white bg-sky-600 rounded-md px-3 py-1.5 min-h-[36px] hover:bg-sky-700" @if ($showDeleted) style="display:none" @endif>+ Add contract</button>@endcan
+                </div>
             </div>
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 text-gray-500">
@@ -71,21 +78,33 @@
                 <tbody>
                     @forelse ($contracts as $c)
                         <tr wire:key="ct-{{ $c->id }}" class="border-t border-gray-100">
-                            <td class="px-4 py-2 font-medium text-gray-800">{{ $c->contract_number }}</td>
+                            <td class="px-4 py-2 font-medium text-gray-800">
+                                {{ $c->contract_number }}
+                                @if ($showDeleted)
+                                    <div class="text-[11px] font-normal text-red-600 mt-0.5">🗑 ລຶບ: {{ $c->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $c->deletedBy?->display_name ?? '—' }}@if ($c->deleted_reason) · ເຫດຜົນ: {{ $c->deleted_reason }}@endif</div>
+                                @endif
+                            </td>
                             <td class="px-4 py-2 text-gray-600 text-xs">{{ $c->effective_date?->toDateString() ?? '—' }} → {{ $c->expiry_date?->toDateString() ?? '—' }}</td>
                             <td class="px-4 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $cBadge($c->status) }}">{{ $c->status }}</span></td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
-                                @can('supplier.edit')<button wire:click="editContract({{ $c->id }})" class="p-1 hover:text-gray-800" aria-label="Edit"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
-                                @can('supplier.delete')<button wire:click="deleteContract({{ $c->id }})" wire:confirm="ລຶບ contract ນີ້?" class="p-1 hover:text-red-600" aria-label="Delete"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
+                                @if ($showDeleted)
+                                    <button wire:click="restore({{ $c->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                                @else
+                                    @can('supplier.edit')<button wire:click="editContract({{ $c->id }})" class="p-1 hover:text-gray-800" aria-label="Edit"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
+                                    @can('supplier.delete')<button wire:click="openDelete({{ $c->id }})" class="p-1 hover:text-red-600" aria-label="Delete"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
+                                @endif
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີ contract</td></tr>
+                        <tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">{{ $showDeleted ? 'ບໍ່ ມີ contract ທີ່ ຖືກ ລຶບ' : 'ຍັງບໍ່ມີ contract' }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
+
+    {{-- ຢືນຢັນ ລຶບ + ເຫດຜົນ (shared partial + trait SoftDeletesWithReason) --}}
+    @include('partials._delete-modal', ['title' => 'ລຶບ contract ນີ້?', 'subtitle' => $this->deletingRecord?->contract_number])
 
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="ct-modal">

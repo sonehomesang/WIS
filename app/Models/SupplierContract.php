@@ -12,7 +12,7 @@ class SupplierContract extends Model
 
     protected $fillable = [
         'supplier_id', 'contract_number', 'sign_date', 'effective_date', 'expiry_date', 'renewal_date',
-        'status', 'notes', 'created_by', 'updated_by',
+        'status', 'notes', 'created_by', 'updated_by', 'deleted_reason', 'deleted_by',
     ];
 
     protected $casts = [
@@ -25,5 +25,11 @@ class SupplierContract extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    /** ຜູ້ ທີ່ ລຶບ ສັນຍາ ນີ້ (ສຳລັບ deleted log). */
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 }

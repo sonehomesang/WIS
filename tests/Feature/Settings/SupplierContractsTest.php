@@ -4,6 +4,7 @@ use App\Livewire\Settings\SupplierDetail;
 use App\Livewire\Settings\Suppliers;
 use App\Models\Setting;
 use App\Models\Supplier;
+use App\Models\SupplierContract;
 use App\Models\SupplierVatChange;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -54,6 +55,51 @@ test('resolveVat falls back to global when supplier rate is null', function () {
     $vat = $s->resolveVat();
     expect($vat['rate'])->toEqual(10.0);
     expect($vat['source'])->toBe('global');
+});
+
+test('deleting a contract requires a reason and can be restored', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $s = aSupplier();
+    $c = $s->contracts()->create(['contract_number' => 'CT-1', 'status' => 'active']);
+
+    Livewire::test(SupplierDetail::class, ['supplier' => $s])
+        ->call('openDelete', $c->id)
+        ->call('deleteRecord')
+        ->assertHasErrors('deleteReason');
+
+    Livewire::test(SupplierDetail::class, ['supplier' => $s])
+        ->call('openDelete', $c->id)
+        ->set('deleteReason', 'ຍົກເລີກ ສັນຍາ')
+        ->call('deleteRecord')
+        ->assertHasNoErrors();
+
+    $c->refresh();
+    expect($c->trashed())->toBeTrue();
+    expect($c->deleted_reason)->toBe('ຍົກເລີກ ສັນຍາ');
+    expect($c->deleted_by)->toBe($admin->id);
+
+    Livewire::test(SupplierDetail::class, ['supplier' => $s])
+        ->call('toggleDeleted')
+        ->assertSee('CT-1')
+        ->call('restore', $c->id);
+
+    expect(SupplierContract::whereKey($c->id)->first()->trashed())->toBeFalse();
+});
+
+test('a contract from another supplier cannot be deleted through the wrong page', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $a = aSupplier();
+    $b = Supplier::create(['slug' => 'bee', 'name' => 'Bee', 'default_currency' => 'LAK', 'is_active' => true]);
+    $foreign = $a->contracts()->create(['contract_number' => 'A-1', 'status' => 'active']);
+
+    // opening supplier B's page and trying to delete A's contract is blocked by the scope guard
+    Livewire::test(SupplierDetail::class, ['supplier' => $b])
+        ->call('openDelete', $foreign->id)
+        ->assertForbidden();
+
+    expect(SupplierContract::whereKey($foreign->id)->first()->trashed())->toBeFalse();
 });
 
 test('changing supplier VAT requires a reason and logs the change', function () {

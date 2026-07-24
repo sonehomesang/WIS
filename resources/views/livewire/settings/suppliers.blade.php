@@ -10,7 +10,12 @@
         <div class="sticky top-16 z-30 bg-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
             <div class="flex items-center gap-2">
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ຊື່/ຜູ້ຕິດຕໍ່…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
-                @can('supplier.create')<button wire:click="newItem" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">+ Create</button>@endcan
+                @if ($canManageDeleted)
+                    <button wire:click="toggleDeleted" class="text-sm border rounded-md px-3 py-2 min-h-[40px] whitespace-nowrap {{ $showDeleted ? 'bg-gray-700 text-white border-gray-700' : 'text-gray-600 border-gray-300 bg-white hover:bg-gray-50' }}">
+                        {{ $showDeleted ? '← ລາຍການ ປົກກະຕິ' : '🗑 ບັນທຶກ ການ ລຶບ' }}
+                    </button>
+                @endif
+                @can('supplier.create')<button wire:click="newItem" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap" @if ($showDeleted) style="display:none" @endif>+ Create</button>@endcan
             </div>
         </div>
 
@@ -32,19 +37,29 @@
                 <tbody>
                     @forelse ($items as $s)
                         <tr wire:key="sup-{{ $s->id }}" class="border-t border-gray-100">
-                            <td class="px-4 py-2 w-full"><div class="font-medium text-gray-800 {{ $s->is_active ? '' : 'opacity-50' }}">{{ $s->name }}</div>@if ($s->name_en)<div class="text-xs text-gray-400">{{ $s->name_en }}</div>@endif</td>
+                            <td class="px-4 py-2 w-full">
+                                <div class="font-medium text-gray-800 {{ $s->is_active ? '' : 'opacity-50' }}">{{ $s->name }}</div>
+                                @if ($s->name_en)<div class="text-xs text-gray-400">{{ $s->name_en }}</div>@endif
+                                @if ($showDeleted)
+                                    <div class="text-[11px] text-red-600 mt-0.5">🗑 ລຶບ: {{ $s->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $s->deletedBy?->display_name ?? '—' }}@if ($s->deleted_reason) · ເຫດຜົນ: {{ $s->deleted_reason }}@endif</div>
+                                @endif
+                            </td>
                             <td class="px-4 py-2 text-gray-600">{{ $s->contact_person ?: '—' }}@if ($s->contact_phone)<div class="text-xs text-gray-400">{{ $s->contact_phone }}</div>@endif</td>
                             <td class="px-4 py-2 text-gray-600 whitespace-nowrap">{{ $s->default_currency }}</td>
                             <td class="px-4 py-2 whitespace-nowrap"><span class="text-xs rounded px-2 py-0.5 {{ $s->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $s->is_active ? 'active' : 'inactive' }}</span></td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
-                                <a href="{{ route('settings.suppliers.show', $s->id) }}" wire:navigate class="p-1 hover:text-sky-700 inline-block" title="Contracts / VAT"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></a>
-                                @canany(['supplier.activate', 'supplier.deactivate'])<button wire:click="toggle({{ $s->id }})" class="p-1 {{ $s->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $s->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany
-                                @can('supplier.edit')<button wire:click="editItem({{ $s->id }})" class="p-1 hover:text-gray-800" aria-label="Edit"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
-                                @can('supplier.delete')<button wire:click="delete({{ $s->id }})" wire:confirm="ລຶບ supplier ນີ້?" class="p-1 hover:text-red-600" aria-label="Delete"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
+                                @if ($showDeleted)
+                                    <button wire:click="restore({{ $s->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                                @else
+                                    <a href="{{ route('settings.suppliers.show', $s->id) }}" wire:navigate class="p-1 hover:text-sky-700 inline-block" title="Contracts / VAT"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></a>
+                                    @canany(['supplier.activate', 'supplier.deactivate'])<button wire:click="toggle({{ $s->id }})" class="p-1 {{ $s->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $s->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany
+                                    @can('supplier.edit')<button wire:click="editItem({{ $s->id }})" class="p-1 hover:text-gray-800" aria-label="Edit"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
+                                    @can('supplier.delete')<button wire:click="openDelete({{ $s->id }})" class="p-1 hover:text-red-600" aria-label="Delete"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
+                                @endif
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີ supplier — ກົດ + Create</td></tr>
+                        <tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">{{ $showDeleted ? 'ບໍ່ ມີ supplier ທີ່ ຖືກ ລຶບ' : 'ຍັງບໍ່ມີ supplier — ກົດ + Create' }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -59,18 +74,28 @@
                         <span class="text-xs rounded px-2 py-0.5 {{ $s->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $s->is_active ? 'active' : 'inactive' }}</span>
                     </div>
                     <div class="text-xs text-gray-500 mt-1">{{ $s->contact_person ?: '—' }} @if($s->contact_phone)· {{ $s->contact_phone }}@endif · {{ $s->default_currency }}</div>
-                    <div class="flex gap-2 mt-2">
-                        <a href="{{ route('settings.suppliers.show', $s->id) }}" wire:navigate class="text-xs border rounded px-2 py-1 min-h-[36px] inline-flex items-center">Contracts</a>
-                        @canany(['supplier.activate', 'supplier.deactivate'])<button wire:click="toggle({{ $s->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">{{ $s->is_active ? 'Disable' : 'Enable' }}</button>@endcanany
-                        @can('supplier.edit')<button wire:click="editItem({{ $s->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Edit</button>@endcan
-                        @can('supplier.delete')<button wire:click="delete({{ $s->id }})" wire:confirm="ລຶບ supplier ນີ້?" class="text-xs border rounded px-2 py-1 min-h-[36px]">Delete</button>@endcan
-                    </div>
+                    @if ($showDeleted)
+                        <div class="text-[11px] text-red-600 mt-1">🗑 ລຶບ: {{ $s->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $s->deletedBy?->display_name ?? '—' }}@if ($s->deleted_reason) · {{ $s->deleted_reason }}@endif</div>
+                        <div class="flex gap-2 mt-2">
+                            <button wire:click="restore({{ $s->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 min-h-[36px] hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                        </div>
+                    @else
+                        <div class="flex gap-2 mt-2">
+                            <a href="{{ route('settings.suppliers.show', $s->id) }}" wire:navigate class="text-xs border rounded px-2 py-1 min-h-[36px] inline-flex items-center">Contracts</a>
+                            @canany(['supplier.activate', 'supplier.deactivate'])<button wire:click="toggle({{ $s->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">{{ $s->is_active ? 'Disable' : 'Enable' }}</button>@endcanany
+                            @can('supplier.edit')<button wire:click="editItem({{ $s->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Edit</button>@endcan
+                            @can('supplier.delete')<button wire:click="openDelete({{ $s->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Delete</button>@endcan
+                        </div>
+                    @endif
                 </div>
             @empty
-                <div class="text-center text-gray-400 py-6">ຍັງບໍ່ມີ supplier</div>
+                <div class="text-center text-gray-400 py-6">{{ $showDeleted ? 'ບໍ່ ມີ supplier ທີ່ ຖືກ ລຶບ' : 'ຍັງບໍ່ມີ supplier' }}</div>
             @endforelse
         </div>
     </div>
+
+    {{-- ຢືນຢັນ ລຶບ + ເຫດຜົນ (shared partial + trait SoftDeletesWithReason) --}}
+    @include('partials._delete-modal', ['title' => 'ລຶບ supplier ນີ້?', 'subtitle' => $this->deletingRecord?->name])
 
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="sup-modal">

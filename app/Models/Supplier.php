@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -13,7 +14,7 @@ class Supplier extends Model
     protected $fillable = [
         'wis_id', 'slug', 'name', 'name_en', 'contact_person', 'contact_phone', 'contact_email',
         'address', 'tax_id', 'payment_terms', 'default_currency', 'vat_rate', 'notes',
-        'is_active', 'created_by', 'updated_by',
+        'is_active', 'created_by', 'updated_by', 'deleted_reason', 'deleted_by',
     ];
 
     protected $casts = ['is_active' => 'boolean', 'vat_rate' => 'decimal:2'];
@@ -21,6 +22,12 @@ class Supplier extends Model
     public function contracts(): HasMany
     {
         return $this->hasMany(SupplierContract::class);
+    }
+
+    /** ຜູ້ ທີ່ ລຶບ ຜູ້ສະໜອງ ນີ້ (ສຳລັບ deleted log). */
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 
     public function vatChanges(): HasMany

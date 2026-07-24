@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Settings;
 
+use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\Supplier;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -13,6 +15,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Suppliers extends Component
 {
+    use SoftDeletesWithReason;
+
     public string $search = '';
 
     public bool $showModal = false;
@@ -154,10 +158,25 @@ class Suppliers extends Component
         $m->update(['is_active' => ! $m->is_active, 'updated_by' => auth()->id()]);
     }
 
-    public function delete(int $id): void
+    // ── ລຶບ-ດ້ວຍ-ເຫດຜົນ + Deleted Log (trait SoftDeletesWithReason) ──
+    protected function deleteModelClass(): string
     {
-        abort_unless(auth()->user()->can('supplier.delete'), 403);
-        Supplier::findOrFail($id)->delete();
+        return Supplier::class;
+    }
+
+    protected function deletePermission(): string
+    {
+        return 'supplier.delete';
+    }
+
+    protected function deleteLabel(Model $record): string
+    {
+        return $record->name;
+    }
+
+    protected function deleteNoun(): string
+    {
+        return 'ຜູ້ສະໜອງ';
     }
 
     protected function resetForm(): void
@@ -194,11 +213,16 @@ class Suppliers extends Component
 
     public function render(): View
     {
-        $items = Supplier::when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%")
-            ->orWhere('name_en', 'like', "%{$this->search}%")
-            ->orWhere('contact_person', 'like', "%{$this->search}%"))
+        $items = Supplier::query()
+            ->when($this->showDeleted && $this->canManageDeleted(), fn ($q) => $q->onlyTrashed()->with('deletedBy'))
+            ->when($this->search, fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$this->search}%")
+                ->orWhere('name_en', 'like', "%{$this->search}%")
+                ->orWhere('contact_person', 'like', "%{$this->search}%")))
             ->orderBy('name')->get();
 
-        return view('livewire.settings.suppliers', ['items' => $items]);
+        return view('livewire.settings.suppliers', [
+            'items' => $items,
+            'canManageDeleted' => $this->canManageDeleted(),
+        ]);
     }
 }

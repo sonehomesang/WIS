@@ -2,7 +2,10 @@
 
 namespace App\Livewire\Settings;
 
+use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\Supplier;
+use App\Models\SupplierContract;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -10,6 +13,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class SupplierDetail extends Component
 {
+    use SoftDeletesWithReason;
+
     public Supplier $supplier;
 
     public bool $showModal = false;
@@ -98,10 +103,31 @@ class SupplierDetail extends Component
         $this->dispatch('saved');
     }
 
-    public function deleteContract(int $id): void
+    // ── ລຶບ-ດ້ວຍ-ເຫດຜົນ + Deleted Log (trait SoftDeletesWithReason) ──
+    protected function deleteModelClass(): string
     {
-        abort_unless(auth()->user()->can('supplier.delete'), 403);
-        $this->supplier->contracts()->findOrFail($id)->delete();
+        return SupplierContract::class;
+    }
+
+    protected function deletePermission(): string
+    {
+        return 'supplier.delete';
+    }
+
+    /** ລຶບ/ກູ້ຄືນ ໄດ້ ສະເພາະ ສັນຍາ ຂອງ supplier ນີ້. */
+    protected function deleteGuard(Model $record): void
+    {
+        abort_unless($record->supplier_id === $this->supplier->id, 403);
+    }
+
+    protected function deleteLabel(Model $record): string
+    {
+        return $record->contract_number;
+    }
+
+    protected function deleteNoun(): string
+    {
+        return 'ສັນຍາ';
     }
 
     protected function resetForm(): void
@@ -120,9 +146,12 @@ class SupplierDetail extends Component
     public function render(): View
     {
         return view('livewire.settings.supplier-detail', [
-            'contracts' => $this->supplier->contracts()->orderByDesc('effective_date')->orderByDesc('id')->get(),
+            'contracts' => $this->supplier->contracts()
+                ->when($this->showDeleted && $this->canManageDeleted(), fn ($q) => $q->onlyTrashed()->with('deletedBy'))
+                ->orderByDesc('effective_date')->orderByDesc('id')->get(),
             'vat' => $this->supplier->resolveVat(),
             'vatChanges' => $this->supplier->vatChanges()->with('changedBy')->limit(20)->get(),
+            'canManageDeleted' => $this->canManageDeleted(),
         ]);
     }
 }
