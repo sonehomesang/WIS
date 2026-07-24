@@ -296,3 +296,14 @@ test('an inspection template can be previewed read-only (view button)', function
         ->assertSee('Preview me')
         ->assertSee('Check brakes');
 });
+
+test('inspection templates list is narrowed by search + category filter', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+    InspectionTemplate::create(['name' => 'Forklift Check', 'category' => 'Forklift', 'items' => [], 'is_active' => true]);
+    InspectionTemplate::create(['name' => 'Sling Check', 'category' => 'Sling', 'items' => [], 'is_active' => true]);
+
+    Livewire::test(InspectionTemplates::class)->set('search', 'Sling')
+        ->assertViewHas('templates', fn ($t) => $t->count() === 1 && $t->first()->name === 'Sling Check');
+    Livewire::test(InspectionTemplates::class)->set('categoryFilter', 'Forklift')
+        ->assertViewHas('templates', fn ($t) => $t->count() === 1 && $t->first()->category === 'Forklift');
+});

@@ -12,6 +12,11 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class MaintenanceTemplates extends Component
 {
+    /** ຄົ້ນຫາ + filter ລາຍການ ແມ່ແບບ (ຄື ແທັບ ທະບຽນເຄື່ອງ). */
+    public string $search = '';
+
+    public string $categoryFilter = '';
+
     public bool $showModal = false;
 
     public ?int $editingId = null;
@@ -212,7 +217,14 @@ class MaintenanceTemplates extends Component
 
         return view('livewire.equipment.maintenance-templates', [
             'categories' => $categories,
-            'templates' => MaintenanceTemplate::with('equipment')->orderBy('name')->get(),
+            'templates' => MaintenanceTemplate::with('equipment')
+                ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
+                    ->where('name', 'like', "%{$this->search}%")
+                    ->orWhereHas('equipment', fn ($e) => $e
+                        ->where('name', 'like', "%{$this->search}%")
+                        ->orWhere('asset_code', 'like', "%{$this->search}%"))))
+                ->when($this->categoryFilter, fn ($q) => $q->where('category', $this->categoryFilter))
+                ->orderBy('name')->get(),
             'equipmentOptions' => $equipmentOptions,
             'selectedCategory' => $selectedCategory,
             'viewing' => $viewing,

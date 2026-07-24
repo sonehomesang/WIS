@@ -225,3 +225,14 @@ test('category scope requires a category', function () {
         ->set('tName', 'No cat')->set('tScope', 'category')->set('tCategory', '')
         ->call('save')->assertHasErrors('tCategory');
 });
+
+test('maintenance templates list is narrowed by search + category filter', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+    MaintenanceTemplate::create(['name' => 'PM Forklift', 'category' => 'Forklift', 'items' => [], 'is_active' => true]);
+    MaintenanceTemplate::create(['name' => 'PM Sling', 'category' => 'Sling', 'items' => [], 'is_active' => true]);
+
+    Livewire::test(MaintenanceTemplates::class)->set('search', 'Sling')
+        ->assertViewHas('templates', fn ($t) => $t->count() === 1 && $t->first()->name === 'PM Sling');
+    Livewire::test(MaintenanceTemplates::class)->set('categoryFilter', 'Forklift')
+        ->assertViewHas('templates', fn ($t) => $t->count() === 1 && $t->first()->category === 'Forklift');
+});

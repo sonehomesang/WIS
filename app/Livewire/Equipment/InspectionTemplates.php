@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Equipment;
 
+use App\Models\EquipmentCategory;
 use App\Models\InspectionTemplate;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -10,6 +11,11 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class InspectionTemplates extends Component
 {
+    /** ຄົ້ນຫາ + filter ລາຍການ ແມ່ແບບ (ຄື ແທັບ ທະບຽນເຄື່ອງ). */
+    public string $search = '';
+
+    public string $categoryFilter = '';
+
     public bool $showModal = false;
 
     public ?int $editingId = null;
@@ -150,7 +156,11 @@ class InspectionTemplates extends Component
     public function render(): View
     {
         return view('livewire.equipment.inspection-templates', [
-            'templates' => InspectionTemplate::orderBy('name')->get(),
+            'templates' => InspectionTemplate::query()
+                ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
+                ->when($this->categoryFilter, fn ($q) => $q->where('category', $this->categoryFilter))
+                ->orderBy('name')->get(),
+            'categories' => EquipmentCategory::where('is_active', true)->orderBy('sort_order')->orderBy('name')->pluck('name'),
             'viewing' => $this->viewingId ? InspectionTemplate::find($this->viewingId) : null,
         ]);
     }

@@ -3,16 +3,26 @@
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
              class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
-        <div class="flex items-center justify-between">
-            <a href="{{ route('equipment') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບ ໄປ ທະບຽນ ເຄື່ອງ</a>
-            @can('equipment.create')
-                <button wire:click="newTemplate" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700">+ ແມ່ແບບ ໃໝ່</button>
-            @endcan
+        {{-- frozen header group: back + ຄົ້ນຫາ/filter (ຄື ແທັບ ທະບຽນເຄື່ອງ) --}}
+        <div class="sticky top-16 z-30 bg-gray-100 py-2 space-y-2">
+            <a href="{{ route('equipment') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700 inline-block">← ກັບ ໄປ ທະບຽນ ເຄື່ອງ</a>
+            <div class="flex flex-wrap items-center gap-2">
+                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ຊື່ ແມ່ແບບ…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm w-56" />
+                <select wire:model.live="categoryFilter" class="rounded-md border-gray-300 shadow-sm text-sm">
+                    <option value="">ທຸກ ປະເພດ</option>
+                    @foreach ($categories as $c)<option value="{{ $c }}">{{ $c }}</option>@endforeach
+                </select>
+                <div class="flex-1"></div>
+                <span class="text-xs text-gray-400">{{ $templates->count() }} ແມ່ແບບ</span>
+                @can('equipment.create')
+                    <button wire:click="newTemplate" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">+ ແມ່ແບບ ໃໝ່</button>
+                @endcan
+            </div>
         </div>
 
-        <div class="bg-white border border-gray-100 rounded-lg overflow-hidden">
+        <div class="bg-white border border-gray-100 rounded-lg overflow-x-hidden overflow-y-auto max-h-[calc(100vh-15rem)]">
             <table class="w-full text-sm">
-                <thead class="bg-gray-50 text-gray-600 text-xs border-b border-gray-200">
+                <thead class="sticky top-0 z-10 bg-gray-50 text-gray-600 text-xs border-b border-gray-200 shadow-sm">
                     <tr>
                         <th class="text-left px-3 py-2 font-semibold">ຊື່ ແມ່ແບບ</th>
                         <th class="text-left px-3 py-2 font-semibold">ປະເພດ ເຄື່ອງ</th>
