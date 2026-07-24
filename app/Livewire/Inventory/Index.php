@@ -3,12 +3,14 @@
 namespace App\Livewire\Inventory;
 
 use App\Imports\InventoryCsvImporter;
+use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\Building;
 use App\Models\InventoryItem;
 use App\Models\InventoryItemPhoto;
 use App\Models\Location;
 use App\Models\Room;
 use App\Models\Uom;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -22,7 +24,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
-    use WithFileUploads, WithPagination;
+    use SoftDeletesWithReason, WithFileUploads, WithPagination;
 
     public const MAX_PHOTOS = 6;
 
@@ -261,10 +263,25 @@ class Index extends Component
         $m->update(['is_active' => ! $m->is_active, 'updated_by' => auth()->id()]);
     }
 
-    public function delete(int $id): void
+    // ── ລຶບ-ດ້ວຍ-ເຫດຜົນ + Deleted Log (trait SoftDeletesWithReason) ──
+    protected function deleteModelClass(): string
     {
-        abort_unless(auth()->user()->can('inventory.delete'), 403);
-        InventoryItem::findOrFail($id)->delete();
+        return InventoryItem::class;
+    }
+
+    protected function deletePermission(): string
+    {
+        return 'inventory.delete';
+    }
+
+    protected function deleteLabel(Model $record): string
+    {
+        return $record->name;
+    }
+
+    protected function deleteNoun(): string
+    {
+        return 'item';
     }
 
     protected function resetForm(): void
@@ -305,6 +322,7 @@ class Index extends Component
     public function render(): View
     {
         $items = InventoryItem::with(['location', 'building', 'room', 'primaryPhoto'])
+            ->when($this->showDeleted && $this->canManageDeleted(), fn ($q) => $q->onlyTrashed()->with('deletedBy'))
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w->where('slug', 'like', "%{$this->search}%")
                 ->orWhere('name', 'like', "%{$this->search}%")
                 ->orWhere('description', 'like', "%{$this->search}%")
@@ -321,6 +339,7 @@ class Index extends Component
 
         return view('livewire.inventory.index', [
             'items' => $items,
+            'canManageDeleted' => $this->canManageDeleted(),
             'chips' => [
                 $chip('', 'ທັງໝົດ', $sc->sum()),
                 $chip('available', 'available', $sc['available'] ?? 0),

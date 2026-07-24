@@ -16,7 +16,7 @@ class InventoryItem extends Model
         'slug', 'name', 'description', 'category', 'brand', 'model', 'serial_number',
         'quantity', 'min_quantity', 'unit',
         'location_id', 'building_id', 'room_id', 'shelf_label',
-        'status', 'is_active', 'qr_code', 'created_by', 'updated_by',
+        'status', 'is_active', 'qr_code', 'created_by', 'updated_by', 'deleted_reason', 'deleted_by',
     ];
 
     protected $casts = [
@@ -38,6 +38,12 @@ class InventoryItem extends Model
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
+    }
+
+    /** ຜູ້ ທີ່ ລຶບ item ນີ້ (ສຳລັບ deleted log). */
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 
     public function photos(): HasMany

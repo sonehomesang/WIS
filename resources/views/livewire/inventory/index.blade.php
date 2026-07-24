@@ -56,8 +56,13 @@
                         @endforeach
                     </div>
                 </div>
-                @can('inventory.create')<button wire:click="openImport" class="text-sm text-sky-700 border border-sky-300 bg-white rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">↥ Import CSV</button>@endcan
-                @can('inventory.create')<button wire:click="newItem" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">+ Add</button>@endcan
+                @if ($canManageDeleted)
+                    <button wire:click="toggleDeleted" class="text-sm border rounded-md px-3 py-2 min-h-[40px] whitespace-nowrap {{ $showDeleted ? 'bg-gray-700 text-white border-gray-700' : 'text-gray-600 border-gray-300 bg-white hover:bg-gray-50' }}">
+                        {{ $showDeleted ? '← ລາຍການ ປົກກະຕິ' : '🗑 ບັນທຶກ ການ ລຶບ' }}
+                    </button>
+                @endif
+                @can('inventory.create')<button wire:click="openImport" class="text-sm text-sky-700 border border-sky-300 bg-white rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap" @if ($showDeleted) style="display:none" @endif>↥ Import CSV</button>@endcan
+                @can('inventory.create')<button wire:click="newItem" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap" @if ($showDeleted) style="display:none" @endif>+ Add</button>@endcan
             </div>
         </div>
 
@@ -91,7 +96,12 @@
                                     @if ($photo = $it->primaryPhoto->first())
                                         <img src="{{ $photo->url }}" alt="" class="w-9 h-9 rounded object-cover border border-gray-200 shrink-0" />
                                     @endif
-                                    <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
+                                    <div>
+                                        <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
+                                        @if ($showDeleted)
+                                            <div class="text-[11px] text-red-600 mt-0.5">🗑 ລຶບ: {{ $it->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $it->deletedBy?->display_name ?? '—' }}@if ($it->deleted_reason) · ເຫດຜົນ: {{ $it->deleted_reason }}@endif</div>
+                                        @endif
+                                    </div>
                                 </div>
                             </td>
                             <td x-show="cols.brand" x-cloak class="px-4 py-2 text-xs text-gray-600 whitespace-nowrap">{{ $it->brand ?: '—' }}</td>
@@ -100,13 +110,17 @@
                             <td x-show="cols.location" x-cloak class="px-4 py-2 text-gray-600 text-xs whitespace-nowrap">{{ collect([$it->location?->name, $it->building?->name, $it->room?->name, $it->shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
                             <td x-show="cols.status" x-cloak class="px-4 py-2 whitespace-nowrap"><span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span></td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
-                                @canany(['inventory.activate', 'inventory.deactivate'])<button wire:click="toggle({{ $it->id }})" class="p-1 {{ $it->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $it->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany
-                                @can('inventory.edit')<button wire:click="editItem({{ $it->id }})" class="p-1 hover:text-gray-800" aria-label="Edit"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
-                                @can('inventory.delete')<button wire:click="delete({{ $it->id }})" wire:confirm="ລຶບ item ນີ້?" class="p-1 hover:text-red-600" aria-label="Delete"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
+                                @if ($showDeleted)
+                                    <button wire:click="restore({{ $it->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                                @else
+                                    @canany(['inventory.activate', 'inventory.deactivate'])<button wire:click="toggle({{ $it->id }})" class="p-1 {{ $it->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $it->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany
+                                    @can('inventory.edit')<button wire:click="editItem({{ $it->id }})" class="p-1 hover:text-gray-800" aria-label="Edit"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
+                                    @can('inventory.delete')<button wire:click="openDelete({{ $it->id }})" class="p-1 hover:text-red-600" aria-label="Delete"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
+                                @endif
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="px-4 py-6 text-center text-gray-400">ບໍ່ມີ item</td></tr>
+                        <tr><td colspan="8" class="px-4 py-6 text-center text-gray-400">{{ $showDeleted ? 'ບໍ່ ມີ item ທີ່ ຖືກ ລຶບ' : 'ບໍ່ມີ item' }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -126,19 +140,29 @@
                         <span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>
                     </div>
                     <div class="text-xs text-gray-500 mt-1"><span class="font-mono text-gray-400">{{ $it->slug }}</span> · Qty {{ $it->quantity }} {{ $it->unit }} · {{ collect([$it->location?->name, $it->building?->name])->filter()->implode(' / ') ?: '—' }}</div>
-                    <div class="flex gap-2 mt-2">
-                        @canany(['inventory.activate', 'inventory.deactivate'])<button wire:click="toggle({{ $it->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">{{ $it->is_active ? 'Disable' : 'Enable' }}</button>@endcanany
-                        @can('inventory.edit')<button wire:click="editItem({{ $it->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Edit</button>@endcan
-                        @can('inventory.delete')<button wire:click="delete({{ $it->id }})" wire:confirm="ລຶບ item ນີ້?" class="text-xs border rounded px-2 py-1 min-h-[36px]">Delete</button>@endcan
-                    </div>
+                    @if ($showDeleted)
+                        <div class="text-[11px] text-red-600 mt-1">🗑 ລຶບ: {{ $it->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $it->deletedBy?->display_name ?? '—' }}@if ($it->deleted_reason) · {{ $it->deleted_reason }}@endif</div>
+                        <div class="flex gap-2 mt-2">
+                            <button wire:click="restore({{ $it->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 min-h-[36px] hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                        </div>
+                    @else
+                        <div class="flex gap-2 mt-2">
+                            @canany(['inventory.activate', 'inventory.deactivate'])<button wire:click="toggle({{ $it->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">{{ $it->is_active ? 'Disable' : 'Enable' }}</button>@endcanany
+                            @can('inventory.edit')<button wire:click="editItem({{ $it->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Edit</button>@endcan
+                            @can('inventory.delete')<button wire:click="openDelete({{ $it->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Delete</button>@endcan
+                        </div>
+                    @endif
                 </div>
             @empty
-                <div class="text-center text-gray-400 py-6">ບໍ່ມີ item</div>
+                <div class="text-center text-gray-400 py-6">{{ $showDeleted ? 'ບໍ່ ມີ item ທີ່ ຖືກ ລຶບ' : 'ບໍ່ມີ item' }}</div>
             @endforelse
         </div>
 
         <div class="mt-4">{{ $items->links() }}</div>
     </div>
+
+    {{-- ຢືນຢັນ ລຶບ + ເຫດຜົນ (shared partial + trait SoftDeletesWithReason) --}}
+    @include('partials._delete-modal', ['title' => 'ລຶບ item ນີ້?', 'subtitle' => $this->deletingRecord?->name])
 
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="inv-modal">
