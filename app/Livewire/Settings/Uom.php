@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Settings;
 
+use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\Uom as UomModel;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -13,6 +15,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Uom extends Component
 {
+    use SoftDeletesWithReason;
+
     public string $search = '';
 
     public bool $showModal = false;
@@ -84,10 +88,25 @@ class Uom extends Component
         $m->update(['is_active' => ! $m->is_active, 'updated_by' => auth()->id()]);
     }
 
-    public function delete(int $id): void
+    // ── ລຶບ-ດ້ວຍ-ເຫດຜົນ + Deleted Log (trait SoftDeletesWithReason) ──
+    protected function deleteModelClass(): string
     {
-        abort_unless(auth()->user()->can('units.delete'), 403);
-        UomModel::findOrFail($id)->delete();
+        return UomModel::class;
+    }
+
+    protected function deletePermission(): string
+    {
+        return 'units.delete';
+    }
+
+    protected function deleteLabel(Model $record): string
+    {
+        return $record->name;
+    }
+
+    protected function deleteNoun(): string
+    {
+        return 'ໜ່ວຍວັດ';
     }
 
     protected function resetForm(): void
@@ -113,9 +132,14 @@ class Uom extends Component
 
     public function render(): View
     {
-        $items = UomModel::when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('name_en', 'like', "%{$this->search}%"))
+        $items = UomModel::query()
+            ->when($this->showDeleted && $this->canManageDeleted(), fn ($q) => $q->onlyTrashed()->with('deletedBy'))
+            ->when($this->search, fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$this->search}%")->orWhere('name_en', 'like', "%{$this->search}%")))
             ->orderBy('name')->get();
 
-        return view('livewire.settings.uom', ['items' => $items]);
+        return view('livewire.settings.uom', [
+            'items' => $items,
+            'canManageDeleted' => $this->canManageDeleted(),
+        ]);
     }
 }
