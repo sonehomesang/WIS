@@ -186,31 +186,42 @@
 
         {{-- ═══ TAB 2: ການ ກວດກາ ═══ --}}
         <div x-show="tab==='inspection'" x-cloak class="mt-4">
-            <div class="flex items-center justify-between mb-2 gap-2">
-                <span class="text-xs text-gray-400">ບັນທຶກ ການ ກວດ ສະພາບ ເຄື່ອງ · ຮູບ ຝັງ ວັນທີ+ເວລາ · ກຳນົດ ກວດ ຄັ້ງ ໜ້າ</span>
-                <div class="flex items-center gap-2 shrink-0">
-                    @if ($canManageDeleted)
-                        <button wire:click="toggleDeletedInspections" class="text-sm border rounded-md px-3 py-2 min-h-[40px] whitespace-nowrap {{ $showDeletedInspections ? 'bg-gray-700 text-white border-gray-700' : 'text-gray-600 border-gray-300 hover:bg-gray-50' }}">
-                            {{ $showDeletedInspections ? '← ໃບ ກວດ ປົກກະຕິ' : '🗑 ບັນທຶກ ການ ລຶບ' }}
-                        </button>
-                    @endif
-                    @can('equipment.edit')
-                        @unless ($deptScoped)
-                            <a href="{{ route('equipment.templates') }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" /></svg>
-                                ເບິ່ງ/ສ້າງ ເທມເພລດ ກວດ ເຄື່ອງ
-                            </a>
-                        @endunless
-                        <button wire:click="newInspection" class="inline-flex items-center gap-1.5 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                            ລົງມື ກວດເຄື່ອງ
-                        </button>
-                    @endcan
-                </div>
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+                <input type="text" wire:model.live.debounce.300ms="inspSearch" placeholder="ຄົ້ນຫາ ເຄື່ອງ/ຜູ້ກວດ…"
+                       class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm w-56" />
+                <select wire:model.live="inspResultFilter" class="rounded-md border-gray-300 shadow-sm text-sm">
+                    <option value="">ທຸກ ຜົນ</option>
+                    <option value="pass">ຜ່ານ</option>
+                    <option value="fail">ບໍ່ຜ່ານ</option>
+                    <option value="follow_up">ຕ້ອງຕິດຕາມ</option>
+                </select>
+                <select wire:model.live="inspCategoryFilter" class="rounded-md border-gray-300 shadow-sm text-sm max-w-[12rem]">
+                    <option value="">ທຸກ ປະເພດ</option>
+                    @foreach ($categories as $c)<option value="{{ $c }}">{{ $c }}</option>@endforeach
+                </select>
+                <div class="flex-1"></div>
+                <span class="text-xs text-gray-400">{{ $inspections->count() }} ລາຍການ</span>
+                @if ($canManageDeleted)
+                    <button wire:click="toggleDeletedInspections" class="text-sm border rounded-md px-3 py-2 min-h-[40px] whitespace-nowrap {{ $showDeletedInspections ? 'bg-gray-700 text-white border-gray-700' : 'text-gray-600 border-gray-300 hover:bg-gray-50' }}">
+                        {{ $showDeletedInspections ? '← ໃບ ກວດ ປົກກະຕິ' : '🗑 ບັນທຶກ ການ ລຶບ' }}
+                    </button>
+                @endif
+                @can('equipment.edit')
+                    @unless ($deptScoped)
+                        <a href="{{ route('equipment.templates') }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" /></svg>
+                            ເບິ່ງ/ສ້າງ ເທມເພລດ ກວດ ເຄື່ອງ
+                        </a>
+                    @endunless
+                    <button wire:click="newInspection" class="inline-flex items-center gap-1.5 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                        ລົງມື ກວດເຄື່ອງ
+                    </button>
+                @endcan
             </div>
-            <div class="bg-white border border-gray-100 rounded-lg overflow-auto">
+            <div class="bg-white border border-gray-100 rounded-lg overflow-x-hidden overflow-y-auto max-h-[calc(100vh-16rem)]">
                 <table class="w-full text-sm">
-                    <thead class="bg-gray-50 text-gray-600 text-xs border-b border-gray-200">
+                    <thead class="sticky top-0 z-10 bg-gray-50 text-gray-600 text-xs border-b border-gray-200 shadow-sm">
                         <tr>
                             <th class="text-left px-3 py-2 font-semibold">ເຄື່ອງ</th>
                             <th class="text-left px-3 py-2 font-semibold">ວັນທີ/ເວລາ</th>

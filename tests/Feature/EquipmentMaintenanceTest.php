@@ -299,3 +299,18 @@ test('the PM template picker matches by equipment, category, or general (+ show 
         ->set('mShowAllTemplates', true)
         ->assertViewHas('templateOptions', fn ($o) => $o->pluck('name')->contains('Sling PM'));   // show all
 });
+
+test('maintenance list search + type + status filters narrow the records', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+    $e1 = Equipment::create(['asset_code' => 'FORK-1', 'name' => 'Forklift', 'quantity' => 1]);
+    $e2 = Equipment::create(['asset_code' => 'DRILL-1', 'name' => 'Drill', 'quantity' => 1]);
+    EquipmentMaintenance::create(['equipment_id' => $e1->id, 'maintenance_date' => now(), 'type' => 'preventive', 'status' => 'done', 'title' => 'Oil change']);
+    EquipmentMaintenance::create(['equipment_id' => $e2->id, 'maintenance_date' => now(), 'type' => 'repair', 'status' => 'planned', 'title' => 'Fix motor']);
+
+    Livewire::test(Maintenance::class)->set('search', 'Forklift')
+        ->assertViewHas('records', fn ($r) => $r->count() === 1 && $r->first()->equipment_id === $e1->id);
+    Livewire::test(Maintenance::class)->set('typeFilter', 'repair')
+        ->assertViewHas('records', fn ($r) => $r->count() === 1 && $r->first()->type === 'repair');
+    Livewire::test(Maintenance::class)->set('statusFilter', 'planned')
+        ->assertViewHas('records', fn ($r) => $r->count() === 1 && $r->first()->status === 'planned');
+});

@@ -10,32 +10,41 @@
     <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
          class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
-    <div class="flex items-center justify-between mb-2 gap-2">
-        <span class="text-xs text-gray-400">ບັນທຶກ ການ ບຳລຸງຮັກສາ/ຊ່ອມແປງ · ຄ່າ ໃຊ້ຈ່າຍ · ກຳນົດ service ຄັ້ງ ໜ້າ</span>
+    <div class="flex flex-wrap items-center gap-2 mb-2">
+        <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ເຄື່ອງ/ວຽກ/ຜູ້ເຮັດ…"
+               class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm w-56" />
+        <select wire:model.live="typeFilter" class="rounded-md border-gray-300 shadow-sm text-sm">
+            <option value="">ທຸກ ປະເພດ</option>
+            @foreach ($tLabels as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach
+        </select>
+        <select wire:model.live="statusFilter" class="rounded-md border-gray-300 shadow-sm text-sm">
+            <option value="">ທຸກ ສະຖານະ</option>
+            @foreach ($sLabels as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach
+        </select>
+        <div class="flex-1"></div>
+        <span class="text-xs text-gray-400">ທັງໝົດ {{ $records->total() }} ລາຍການ</span>
         @can('equipment.edit')
-            <div class="flex items-center gap-2 shrink-0">
-                @unless ($deptScoped)
-                    <a href="{{ route('equipment.maintenance-templates') }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" /></svg>
-                        ເບິ່ງ/ສ້າງ ເທມເພລດ ບຳລຸງ
-                    </a>
-                @endunless
-                <button wire:click="newPlan" class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008Z" /></svg>
-                    ວາງແຜນ ບຳລຸງ
-                </button>
-                <button wire:click="newMaintenance" class="inline-flex items-center gap-1.5 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" /></svg>
-                    ລົງມື ບຳລຸງ
-                </button>
-            </div>
+            @unless ($deptScoped)
+                <a href="{{ route('equipment.maintenance-templates') }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" /></svg>
+                    ເບິ່ງ/ສ້າງ ເທມເພລດ ບຳລຸງ
+                </a>
+            @endunless
+            <button wire:click="newPlan" class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008Z" /></svg>
+                ວາງແຜນ ບຳລຸງ
+            </button>
+            <button wire:click="newMaintenance" class="inline-flex items-center gap-1.5 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" /></svg>
+                ລົງມື ບຳລຸງ
+            </button>
         @endcan
     </div>
 
-    {{-- Desktop table --}}
-    <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-x-auto">
+    {{-- Desktop table (freeze: internal scroll + sticky thead ຄື ແທັບ ທະບຽນເຄື່ອງ) --}}
+    <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-x-hidden overflow-y-auto max-h-[calc(100vh-16rem)]">
         <table class="w-full text-sm">
-            <thead class="bg-gray-50 text-gray-600 text-xs border-b border-gray-200">
+            <thead class="sticky top-0 z-10 bg-gray-50 text-gray-600 text-xs border-b border-gray-200 shadow-sm">
                 <tr>
                     <th class="text-left px-3 py-2 font-semibold w-24">ວັນທີ</th>
                     <th class="text-left px-3 py-2 font-semibold">ເຄື່ອງ · ວຽກ</th>
@@ -43,7 +52,7 @@
                     <th class="text-right px-3 py-2 font-semibold w-28">ຄ່າ (ກີບ)</th>
                     <th class="text-left px-3 py-2 font-semibold w-24">ສະຖານະ</th>
                     <th class="text-left px-3 py-2 font-semibold w-28">Service ໜ້າ</th>
-                    <th class="px-3 py-2 w-24"></th>
+                    <th class="px-3 py-2 w-24 text-center font-semibold">ຈັດການ</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">

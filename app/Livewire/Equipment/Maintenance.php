@@ -26,6 +26,13 @@ class Maintenance extends Component
     /** ເປີດ ຟອມ ໃນ ໂໝດ ວາງແຜນ ລ່ວງໜ້າ (ບໍ່ ແມ່ນ ລົງມື ແລ້ວ). */
     public bool $planning = false;
 
+    // ── ຄົ້ນຫາ + filter ລາຍການ (ຄື ແທັບ ທະບຽນເຄື່ອງ) ──
+    public string $search = '';
+
+    public string $typeFilter = '';
+
+    public string $statusFilter = '';
+
     // ເລືອກ ເຄື່ອງ
     public string $mSearch = '';
 
@@ -378,6 +385,21 @@ class Maintenance extends Component
         $this->viewingId = $id;
     }
 
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTypeFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function render(): View
     {
         $deptScoped = $this->deptScoped();
@@ -392,6 +414,14 @@ class Maintenance extends Component
 
         $records = EquipmentMaintenance::with('equipment')
             ->when($deptScoped, fn ($q) => $q->whereHas('equipment', fn ($w) => $w->where('department_id', $deptId)))
+            ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
+                ->where('title', 'like', "%{$this->search}%")
+                ->orWhere('performed_by', 'like', "%{$this->search}%")
+                ->orWhereHas('equipment', fn ($e) => $e
+                    ->where('name', 'like', "%{$this->search}%")
+                    ->orWhere('asset_code', 'like', "%{$this->search}%"))))
+            ->when($this->typeFilter, fn ($q) => $q->where('type', $this->typeFilter))
+            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->orderByDesc('maintenance_date')->orderByDesc('id')
             ->paginate(10);
 

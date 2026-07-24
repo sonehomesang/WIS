@@ -150,6 +150,13 @@ class Index extends Component
     /** ເຫດຜົນ ການ ລຶບ (ບັງຄັບ). */
     public string $deleteReason = '';
 
+    // ── ຄົ້ນຫາ + filter ໃບ ກວດ (tab 2, ຄື ແທັບ ທະບຽນເຄື່ອງ) ──
+    public string $inspSearch = '';
+
+    public string $inspResultFilter = '';
+
+    public string $inspCategoryFilter = '';
+
     /** Deleted Log ສຳລັບ ໃບ ກວດ (tab 2). */
     public bool $showDeletedInspections = false;
 
@@ -941,6 +948,13 @@ class Index extends Component
             'inspections' => EquipmentInspection::with('equipment')
                 ->when($this->showDeletedInspections && $this->canManageDeleted(), fn ($q) => $q->onlyTrashed()->with('deletedBy'))
                 ->when($deptScoped, fn ($q) => $q->whereHas('equipment', fn ($w) => $w->where('department_id', $deptId)))
+                ->when($this->inspSearch, fn ($q) => $q->where(fn ($w) => $w
+                    ->where('inspector_name', 'like', "%{$this->inspSearch}%")
+                    ->orWhereHas('equipment', fn ($e) => $e
+                        ->where('name', 'like', "%{$this->inspSearch}%")
+                        ->orWhere('asset_code', 'like', "%{$this->inspSearch}%"))))
+                ->when($this->inspResultFilter, fn ($q) => $q->where('result', $this->inspResultFilter))
+                ->when($this->inspCategoryFilter, fn ($q) => $q->whereHas('equipment', fn ($e) => $e->where('category', $this->inspCategoryFilter)))
                 ->orderByDesc('inspected_at')->orderByDesc('id')->limit(50)->get(),
             'deletingInspection' => $deletingInspection,
             'insResults' => $insResults,

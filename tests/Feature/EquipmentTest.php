@@ -89,6 +89,21 @@ test('an inspection is deleted with a required reason and can be restored', func
     expect(App\Models\EquipmentInspection::find($ins->id)?->deleted_reason)->toBeNull();
 });
 
+test('inspection list search + result + category filters narrow the list', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+    $e1 = Equipment::create(['asset_code' => 'A-1', 'name' => 'Alpha', 'category' => 'Power tool', 'quantity' => 1]);
+    $e2 = Equipment::create(['asset_code' => 'B-1', 'name' => 'Beta', 'category' => 'Vehicle', 'quantity' => 1]);
+    App\Models\EquipmentInspection::create(['equipment_id' => $e1->id, 'inspected_at' => now(), 'result' => 'pass', 'inspector_name' => 'Sam']);
+    App\Models\EquipmentInspection::create(['equipment_id' => $e2->id, 'inspected_at' => now(), 'result' => 'fail', 'inspector_name' => 'Lee']);
+
+    Livewire::test(Index::class)->set('inspSearch', 'Alpha')
+        ->assertViewHas('inspections', fn ($i) => $i->count() === 1 && $i->first()->equipment_id === $e1->id);
+    Livewire::test(Index::class)->set('inspResultFilter', 'fail')
+        ->assertViewHas('inspections', fn ($i) => $i->count() === 1 && $i->first()->result === 'fail');
+    Livewire::test(Index::class)->set('inspCategoryFilter', 'Vehicle')
+        ->assertViewHas('inspections', fn ($i) => $i->count() === 1 && $i->first()->equipment_id === $e2->id);
+});
+
 test('asset code must be unique', function () {
     Equipment::create(['asset_code' => 'DUP-1', 'name' => 'A', 'quantity' => 1]);
     $u = User::factory()->create(['is_super_admin' => true]);
