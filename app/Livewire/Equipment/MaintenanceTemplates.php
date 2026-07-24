@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Equipment;
 
+use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\Equipment;
 use App\Models\MaintenanceTemplate;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -12,6 +14,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class MaintenanceTemplates extends Component
 {
+    use SoftDeletesWithReason;
+
     /** ຄົ້ນຫາ + filter ລາຍການ ແມ່ແບບ (ຄື ແທັບ ທະບຽນເຄື່ອງ). */
     public string $search = '';
 
@@ -179,10 +183,25 @@ class MaintenanceTemplates extends Component
         $this->dispatch('saved');
     }
 
-    public function delete(int $id): void
+    // ── ລຶບ-ດ້ວຍ-ເຫດຜົນ + Deleted Log (trait SoftDeletesWithReason) ──
+    protected function deleteModelClass(): string
     {
-        abort_unless(auth()->user()->can('equipment.delete'), 403);
-        MaintenanceTemplate::whereKey($id)->delete();
+        return MaintenanceTemplate::class;
+    }
+
+    protected function deletePermission(): string
+    {
+        return 'equipment.delete';
+    }
+
+    protected function deleteLabel(Model $record): string
+    {
+        return $record->name;
+    }
+
+    protected function deleteNoun(): string
+    {
+        return 'ແມ່ແບບ';
     }
 
     protected function resetForm(): void
@@ -217,7 +236,9 @@ class MaintenanceTemplates extends Component
 
         return view('livewire.equipment.maintenance-templates', [
             'categories' => $categories,
+            'canManageDeleted' => $this->canManageDeleted(),
             'templates' => MaintenanceTemplate::with('equipment')
+                ->when($this->showDeleted && $this->canManageDeleted(), fn ($q) => $q->onlyTrashed()->with('deletedBy'))
                 ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
                     ->where('name', 'like', "%{$this->search}%")
                     ->orWhereHas('equipment', fn ($e) => $e

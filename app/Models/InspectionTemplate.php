@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -13,8 +14,14 @@ class InspectionTemplate extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name', 'category', 'method', 'items', 'is_active', 'created_by', 'updated_by',
+        'name', 'category', 'method', 'items', 'is_active', 'created_by', 'updated_by', 'deleted_reason', 'deleted_by',
     ];
+
+    /** ຜູ້ ທີ່ ລຶບ ແມ່ແບບ ນີ້ (ສຳລັບ deleted log). */
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
 
     protected $casts = [
         'items' => 'array',

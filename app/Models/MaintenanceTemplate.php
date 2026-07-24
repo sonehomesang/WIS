@@ -14,8 +14,14 @@ class MaintenanceTemplate extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name', 'equipment_id', 'category', 'method', 'items', 'is_active', 'created_by', 'updated_by',
+        'name', 'equipment_id', 'category', 'method', 'items', 'is_active', 'created_by', 'updated_by', 'deleted_reason', 'deleted_by',
     ];
+
+    /** ຜູ້ ທີ່ ລຶບ ແມ່ແບບ ນີ້ (ສຳລັບ deleted log). */
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
 
     protected $casts = [
         'items' => 'array',

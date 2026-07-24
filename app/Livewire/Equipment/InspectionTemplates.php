@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Equipment;
 
+use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\EquipmentCategory;
 use App\Models\InspectionTemplate;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -11,6 +13,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class InspectionTemplates extends Component
 {
+    use SoftDeletesWithReason;
+
     /** ຄົ້ນຫາ + filter ລາຍການ ແມ່ແບບ (ຄື ແທັບ ທະບຽນເຄື່ອງ). */
     public string $search = '';
 
@@ -135,10 +139,25 @@ class InspectionTemplates extends Component
         $this->dispatch('saved');
     }
 
-    public function delete(int $id): void
+    // ── ລຶບ-ດ້ວຍ-ເຫດຜົນ + Deleted Log (trait SoftDeletesWithReason) ──
+    protected function deleteModelClass(): string
     {
-        abort_unless(auth()->user()->can('equipment.delete'), 403);
-        InspectionTemplate::whereKey($id)->delete();
+        return InspectionTemplate::class;
+    }
+
+    protected function deletePermission(): string
+    {
+        return 'equipment.delete';
+    }
+
+    protected function deleteLabel(Model $record): string
+    {
+        return $record->name;
+    }
+
+    protected function deleteNoun(): string
+    {
+        return 'ແມ່ແບບ';
     }
 
     protected function resetForm(): void
@@ -157,10 +176,12 @@ class InspectionTemplates extends Component
     {
         return view('livewire.equipment.inspection-templates', [
             'templates' => InspectionTemplate::query()
+                ->when($this->showDeleted && $this->canManageDeleted(), fn ($q) => $q->onlyTrashed()->with('deletedBy'))
                 ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
                 ->when($this->categoryFilter, fn ($q) => $q->where('category', $this->categoryFilter))
                 ->orderBy('name')->get(),
             'categories' => EquipmentCategory::where('is_active', true)->orderBy('sort_order')->orderBy('name')->pluck('name'),
+            'canManageDeleted' => $this->canManageDeleted(),
             'viewing' => $this->viewingId ? InspectionTemplate::find($this->viewingId) : null,
         ]);
     }

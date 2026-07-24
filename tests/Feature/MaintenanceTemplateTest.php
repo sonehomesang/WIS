@@ -170,14 +170,31 @@ test('the TCM seeder loads the standard forklift checklist and links a forklift 
     expect(MaintenanceTemplate::where('name', 'like', 'TCM FD30T3Z%')->count())->toBe(1);
 });
 
-test('an admin can delete a maintenance template', function () {
-    actingAs(User::factory()->create(['is_super_admin' => true]));
+test('a maintenance template is deleted with a required reason and can be restored', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    actingAs($admin);
     $t = MaintenanceTemplate::create(['name' => 'Doomed', 'items' => [], 'is_active' => true]);
 
+    // reason required
     Livewire::test(MaintenanceTemplates::class)
-        ->call('delete', $t->id);
+        ->call('openDelete', $t->id)
+        ->call('deleteRecord')
+        ->assertHasErrors(['deleteReason' => 'required']);
+    expect(MaintenanceTemplate::find($t->id))->not->toBeNull();
 
+    // delete with reason → soft-deleted + metadata, restorable
+    Livewire::test(MaintenanceTemplates::class)
+        ->call('openDelete', $t->id)
+        ->set('deleteReason', 'ບໍ່ ໃຊ້ ແລ້ວ')
+        ->call('deleteRecord')
+        ->assertHasNoErrors();
     expect(MaintenanceTemplate::find($t->id))->toBeNull();
+    $trashed = MaintenanceTemplate::withTrashed()->find($t->id);
+    expect($trashed->deleted_reason)->toBe('ບໍ່ ໃຊ້ ແລ້ວ');
+    expect($trashed->deleted_by)->toBe($admin->id);
+
+    Livewire::test(MaintenanceTemplates::class)->call('restore', $t->id);
+    expect(MaintenanceTemplate::find($t->id))->not->toBeNull();
 });
 
 test('a requester cannot access the maintenance template manager', function () {

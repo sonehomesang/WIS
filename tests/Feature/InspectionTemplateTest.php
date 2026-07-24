@@ -307,3 +307,26 @@ test('inspection templates list is narrowed by search + category filter', functi
     Livewire::test(InspectionTemplates::class)->set('categoryFilter', 'Forklift')
         ->assertViewHas('templates', fn ($t) => $t->count() === 1 && $t->first()->category === 'Forklift');
 });
+
+test('an inspection template is deleted with a required reason and can be restored', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    actingAs($admin);
+    $t = InspectionTemplate::create(['name' => 'Doomed', 'items' => [], 'is_active' => true]);
+
+    Livewire::test(InspectionTemplates::class)
+        ->call('openDelete', $t->id)
+        ->call('deleteRecord')
+        ->assertHasErrors(['deleteReason' => 'required']);
+    expect(InspectionTemplate::find($t->id))->not->toBeNull();
+
+    Livewire::test(InspectionTemplates::class)
+        ->call('openDelete', $t->id)
+        ->set('deleteReason', 'ບໍ່ ໃຊ້ ແລ້ວ')
+        ->call('deleteRecord')
+        ->assertHasNoErrors();
+    expect(InspectionTemplate::find($t->id))->toBeNull();
+    expect(InspectionTemplate::withTrashed()->find($t->id)->deleted_by)->toBe($admin->id);
+
+    Livewire::test(InspectionTemplates::class)->call('restore', $t->id);
+    expect(InspectionTemplate::find($t->id))->not->toBeNull();
+});

@@ -19,8 +19,13 @@
                 </select>
                 <div class="flex-1"></div>
                 <span class="text-xs text-gray-400">{{ $templates->count() }} ແມ່ແບບ</span>
+                @if ($canManageDeleted)
+                    <button wire:click="toggleDeleted" class="text-sm border rounded-md px-3 py-2 min-h-[40px] whitespace-nowrap {{ $showDeleted ? 'bg-gray-700 text-white border-gray-700' : 'text-gray-600 border-gray-300 hover:bg-gray-50' }}">
+                        {{ $showDeleted ? '← ລາຍການ ປົກກະຕິ' : '🗑 ບັນທຶກ ການ ລຶບ' }}
+                    </button>
+                @endif
                 @can('equipment.create')
-                    <button wire:click="newTemplate" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">+ ແມ່ແບບ ໃໝ່</button>
+                    <button wire:click="newTemplate" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap" @if ($showDeleted) style="display:none" @endif>+ ແມ່ແບບ ໃໝ່</button>
                 @endcan
             </div>
         </div>
@@ -39,7 +44,12 @@
                 <tbody class="divide-y divide-gray-50">
                     @forelse ($templates as $t)
                         <tr wire:key="mtpl-{{ $t->id }}">
-                            <td class="px-3 py-2 font-medium text-gray-800">{{ $t->name }}</td>
+                            <td class="px-3 py-2 font-medium text-gray-800">
+                                {{ $t->name }}
+                                @if ($showDeleted)
+                                    <div class="text-[11px] font-normal text-red-600 mt-0.5">🗑 ລຶບ: {{ $t->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $t->deletedBy?->display_name ?? '—' }}@if ($t->deleted_reason) · ເຫດຜົນ: {{ $t->deleted_reason }}@endif</div>
+                                @endif
+                            </td>
                             <td class="px-3 py-2 text-gray-600">
                                 @if ($t->equipment)
                                     <div class="text-gray-800">{{ $t->equipment->asset_code }} · {{ $t->equipment->name }}</div>
@@ -51,28 +61,35 @@
                             <td class="px-3 py-2 text-gray-600">{{ count($t->items ?? []) }}</td>
                             <td class="px-3 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $t->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $t->is_active ? 'ເປີດ' : 'ປິດ' }}</span></td>
                             <td class="px-3 py-2 pr-5 text-right whitespace-nowrap text-gray-500">
-                                <button wire:click="viewTemplate({{ $t->id }})" class="hover:text-sky-700 p-1" title="ເບິ່ງ">
-                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
-                                </button>
-                                @can('equipment.edit')
-                                    <button wire:click="editTemplate({{ $t->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
-                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
+                                @if ($showDeleted)
+                                    <button wire:click="restore({{ $t->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                                @else
+                                    <button wire:click="viewTemplate({{ $t->id }})" class="hover:text-sky-700 p-1" title="ເບິ່ງ">
+                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
                                     </button>
-                                @endcan
-                                @can('equipment.delete')
-                                    <button wire:click="delete({{ $t->id }})" wire:confirm="ລຶບ ແມ່ແບບ ນີ້?" class="hover:text-red-600 p-1" title="ລຶບ">
-                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    </button>
-                                @endcan
+                                    @can('equipment.edit')
+                                        <button wire:click="editTemplate({{ $t->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
+                                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
+                                        </button>
+                                    @endcan
+                                    @can('equipment.delete')
+                                        <button wire:click="openDelete({{ $t->id }})" class="hover:text-red-600 p-1" title="ລຶບ">
+                                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    @endcan
+                                @endif
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ແມ່ແບບ — ກົດ "+ ແມ່ແບບ ໃໝ່"</td></tr>
+                        <tr><td colspan="5" class="px-3 py-6 text-center text-gray-400">{{ $showDeleted ? 'ບໍ່ ມີ ແມ່ແບບ ທີ່ ຖືກ ລຶບ' : 'ຍັງບໍ່ມີ ແມ່ແບບ — ກົດ "+ ແມ່ແບບ ໃໝ່"' }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
+
+    {{-- ຢືນຢັນ ລຶບ + ເຫດຜົນ (shared partial + trait SoftDeletesWithReason) --}}
+    @include('partials._delete-modal', ['title' => 'ລຶບ ແມ່ແບບ ນີ້?', 'subtitle' => $this->deletingRecord?->name])
 
     {{-- Modal --}}
     @if ($showModal)
