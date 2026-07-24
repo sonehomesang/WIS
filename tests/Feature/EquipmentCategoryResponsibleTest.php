@@ -84,6 +84,58 @@ test('a department_admin cannot manage equipment categories', function () {
     Livewire::test(Categories::class)->assertForbidden();
 });
 
+test('deleting a category requires a reason and moves it to the deleted log', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    actingAs($admin);
+    $cat = EquipmentCategory::create(['name' => 'Scaffold', 'is_active' => true]);
+
+    // reason is required
+    Livewire::test(Categories::class)
+        ->call('openDelete', $cat->id)
+        ->call('deleteRecord')
+        ->assertHasErrors('deleteReason');
+
+    expect(EquipmentCategory::whereKey($cat->id)->exists())->toBeTrue();
+
+    // with a reason → soft-deleted + audit stored
+    Livewire::test(Categories::class)
+        ->call('openDelete', $cat->id)
+        ->set('deleteReason', 'ບໍ່ ໃຊ້ ແລ້ວ')
+        ->call('deleteRecord')
+        ->assertHasNoErrors();
+
+    $cat->refresh();
+    expect($cat->trashed())->toBeTrue();
+    expect($cat->deleted_reason)->toBe('ບໍ່ ໃຊ້ ແລ້ວ');
+    expect($cat->deleted_by)->toBe($admin->id);
+});
+
+test('the deleted log lists trashed categories and restore brings them back', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    actingAs($admin);
+    $cat = EquipmentCategory::create(['name' => 'Scaffold', 'is_active' => true]);
+    $cat->forceFill(['deleted_reason' => 'x', 'deleted_by' => $admin->id])->save();
+    $cat->delete();
+
+    Livewire::test(Categories::class)
+        ->assertViewHas('categories', fn ($c) => ! $c->contains('id', $cat->id))   // hidden from normal list
+        ->call('toggleDeleted')
+        ->assertViewHas('categories', fn ($c) => $c->contains('id', $cat->id))     // shows in deleted log
+        ->call('restore', $cat->id);
+
+    expect(EquipmentCategory::whereKey($cat->id)->exists())->toBeTrue();
+    expect(EquipmentCategory::whereKey($cat->id)->first()->trashed())->toBeFalse();
+});
+
+test('a department_admin cannot open the category delete modal', function () {
+    $u = User::factory()->create();
+    $u->syncRoles(['department_admin']);
+    actingAs($u);
+
+    // mount itself is forbidden for non-managers, so guard is enforced up-front
+    Livewire::test(Categories::class)->assertForbidden();
+});
+
 test('linking a responsible user copies the user name onto the equipment', function () {
     $staff = User::factory()->create();
     $staff->syncRoles(['warehouse_staff']);

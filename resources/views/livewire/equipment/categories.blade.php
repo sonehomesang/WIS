@@ -3,9 +3,15 @@
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
              class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route('equipment') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບ ໄປ ທະບຽນ ເຄື່ອງ</a>
-            <button wire:click="newCategory" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700">+ ປະເພດ ໃໝ່</button>
+            <div class="flex-1"></div>
+            @if ($canManageDeleted)
+                <button wire:click="toggleDeleted" class="text-sm border rounded-md px-3 py-2 min-h-[40px] whitespace-nowrap {{ $showDeleted ? 'bg-gray-700 text-white border-gray-700' : 'text-gray-600 border-gray-300 hover:bg-gray-50' }}">
+                    {{ $showDeleted ? '← ລາຍການ ປົກກະຕິ' : '🗑 ບັນທຶກ ການ ລຶບ' }}
+                </button>
+            @endif
+            <button wire:click="newCategory" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700" @if ($showDeleted) style="display:none" @endif>+ ປະເພດ ໃໝ່</button>
         </div>
 
         <div class="bg-white border border-gray-100 rounded-lg overflow-hidden">
@@ -22,25 +28,37 @@
                     @forelse ($categories as $c)
                         <tr wire:key="cat-{{ $c->id }}">
                             <td class="px-3 py-2 text-gray-400">{{ $c->sort_order }}</td>
-                            <td class="px-3 py-2 font-medium text-gray-800">{{ $c->name }}</td>
+                            <td class="px-3 py-2 font-medium text-gray-800">
+                                {{ $c->name }}
+                                @if ($showDeleted)
+                                    <div class="text-[11px] font-normal text-red-600 mt-0.5">🗑 ລຶບ: {{ $c->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $c->deletedBy?->display_name ?? '—' }}@if ($c->deleted_reason) · ເຫດຜົນ: {{ $c->deleted_reason }}@endif</div>
+                                @endif
+                            </td>
                             <td class="px-3 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $c->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $c->is_active ? 'ເປີດ' : 'ປິດ' }}</span></td>
                             <td class="px-3 py-2 pr-5 text-right whitespace-nowrap text-gray-500">
-                                <button wire:click="editCategory({{ $c->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
-                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
-                                </button>
-                                <button wire:click="delete({{ $c->id }})" wire:confirm="ລຶບ ປະເພດ ນີ້? (ເຄື່ອງ ທີ່ ໃຊ້ ຢູ່ ຈະ ບໍ່ ຖືກ ລຶບ)" class="hover:text-red-600 p-1" title="ລຶບ">
-                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                </button>
+                                @if ($showDeleted)
+                                    <button wire:click="restore({{ $c->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                                @else
+                                    <button wire:click="editCategory({{ $c->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
+                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
+                                    </button>
+                                    <button wire:click="openDelete({{ $c->id }})" class="hover:text-red-600 p-1" title="ລຶບ">
+                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                @endif
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ປະເພດ — ກົດ "+ ປະເພດ ໃໝ່"</td></tr>
+                        <tr><td colspan="4" class="px-3 py-6 text-center text-gray-400">{{ $showDeleted ? 'ບໍ່ ມີ ປະເພດ ທີ່ ຖືກ ລຶບ' : 'ຍັງບໍ່ມີ ປະເພດ — ກົດ "+ ປະເພດ ໃໝ່"' }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
         <p class="text-xs text-gray-400">ປະເພດ ທີ່ "ເປີດ" ຈະ ຂຶ້ນ ໃນ dropdown ຕອນ ເພີ່ມ/ແກ້ ເຄື່ອງ. ລຳດັບ ໜ້ອຍ ຂຶ້ນ ກ່ອນ.</p>
     </div>
+
+    {{-- ຢືນຢັນ ລຶບ + ເຫດຜົນ (shared partial + trait SoftDeletesWithReason) --}}
+    @include('partials._delete-modal', ['title' => 'ລຶບ ປະເພດ ນີ້?', 'subtitle' => $this->deletingRecord?->name])
 
     {{-- Modal --}}
     @if ($showModal)

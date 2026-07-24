@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Equipment;
 
+use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\Equipment;
 use App\Models\EquipmentCategory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -12,6 +14,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Categories extends Component
 {
+    use SoftDeletesWithReason;
+
     public bool $showModal = false;
 
     public ?int $editingId = null;
@@ -89,16 +93,35 @@ class Categories extends Component
         $this->dispatch('saved');
     }
 
-    public function delete(int $id): void
+    // ── ລຶບ-ດ້ວຍ-ເຫດຜົນ + Deleted Log (trait SoftDeletesWithReason) ──
+    protected function deleteModelClass(): string
     {
-        abort_unless($this->canManage(), 403);
-        EquipmentCategory::whereKey($id)->delete();
+        return EquipmentCategory::class;
+    }
+
+    /** role-based (ບໍ່ ໃຊ້ permission): ຈັດການ ການ ລຶບ = super_admin ຫຼື admin. */
+    protected function canManageDeleted(): bool
+    {
+        return $this->canManage();
+    }
+
+    protected function deleteLabel(Model $record): string
+    {
+        return $record->name;
+    }
+
+    protected function deleteNoun(): string
+    {
+        return 'ປະເພດ';
     }
 
     public function render(): View
     {
         return view('livewire.equipment.categories', [
-            'categories' => EquipmentCategory::orderBy('sort_order')->orderBy('name')->get(),
+            'canManageDeleted' => $this->canManageDeleted(),
+            'categories' => EquipmentCategory::query()
+                ->when($this->showDeleted && $this->canManageDeleted(), fn ($q) => $q->onlyTrashed()->with('deletedBy'))
+                ->orderBy('sort_order')->orderBy('name')->get(),
         ]);
     }
 }

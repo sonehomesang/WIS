@@ -17,9 +17,10 @@ use Livewire\Attributes\Computed;
  *   - a list query that adds ->onlyTrashed()->with('deletedBy') when
  *     ($this->showDeleted && $this->canManageDeleted()).
  *
- * The component MUST implement deleteModelClass() + deletePermission(); it MAY
- * override deleteGuard() (extra scope), deleteLabel() (modal/flash text) and
- * deleteNoun() (flash noun).
+ * The component MUST implement deleteModelClass(). Permission-based modules also
+ * implement deletePermission(); role-based modules instead override
+ * canManageDeleted(). It MAY override deleteGuard() (extra scope),
+ * deleteLabel() (modal/flash text) and deleteNoun() (flash noun).
  */
 trait SoftDeletesWithReason
 {
@@ -32,8 +33,11 @@ trait SoftDeletesWithReason
     /** FQCN of the soft-deletable model. */
     abstract protected function deleteModelClass(): string;
 
-    /** Permission required to delete / restore / view the log. */
-    abstract protected function deletePermission(): string;
+    /** Permission required to delete / restore / view the log. Return '' for role-based modules that override canManageDeleted(). */
+    protected function deletePermission(): string
+    {
+        return '';
+    }
 
     /** Hook for extra authorization (e.g. department scope). Override as needed. */
     protected function deleteGuard(Model $record): void {}
@@ -53,8 +57,9 @@ trait SoftDeletesWithReason
     protected function canManageDeleted(): bool
     {
         $u = auth()->user();
+        $perm = $this->deletePermission();
 
-        return $u->is_super_admin || $u->can($this->deletePermission());
+        return $u->is_super_admin || ($perm !== '' && $u->can($perm));
     }
 
     /** ສະຫຼັບ ລາຍການ ປົກກະຕິ ↔ Deleted Log. */
@@ -70,7 +75,7 @@ trait SoftDeletesWithReason
     /** ເປີດ modal ຖາມ ເຫດຜົນ ກ່ອນ ລຶບ. */
     public function openDelete(int $id): void
     {
-        abort_unless(auth()->user()->can($this->deletePermission()), 403);
+        abort_unless($this->canManageDeleted(), 403);
         $model = $this->deleteModelClass();
         $this->deleteGuard($model::findOrFail($id));
         $this->deletingId = $id;
@@ -81,7 +86,7 @@ trait SoftDeletesWithReason
     /** ຢືນຢັນ ລຶບ — ບັນທຶກ ເຫດຜົນ + ຜູ້ລຶບ ແລ້ວ soft-delete. */
     public function deleteRecord(): void
     {
-        abort_unless(auth()->user()->can($this->deletePermission()), 403);
+        abort_unless($this->canManageDeleted(), 403);
         $this->validate(
             ['deleteReason' => ['required', 'string', 'max:500']],
             ['deleteReason.required' => 'ກະລຸນາ ໃສ່ ເຫດຜົນ ການ ລຶບ.']
