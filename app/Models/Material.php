@@ -27,6 +27,12 @@ class Material extends Model
         return $this->belongsTo(Supplier::class);
     }
 
+    /** ຜູ້ ທີ່ ລຶບ ສິນຄ້າ ນີ້ (ສຳລັບ deleted log). */
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
+
     public function images(): HasMany
     {
         return $this->hasMany(MaterialImage::class)->orderBy('sort_order')->orderBy('id');

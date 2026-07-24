@@ -134,3 +134,55 @@ test('viewer without create permission cannot open create', function () {
 
     Livewire::test(Index::class)->call('newItem')->assertForbidden();
 });
+
+test('deleting a material requires a reason and moves it to the deleted log', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $s = aCatalogSupplier();
+    $m = Material::create(['supplier_id' => $s->id, 'category' => 'X', 'description' => 'Gasket', 'material_nbr' => 'MN-9']);
+
+    // reason is required
+    Livewire::test(Index::class)
+        ->call('openDelete', $m->id)
+        ->call('deleteRecord')
+        ->assertHasErrors('deleteReason');
+
+    expect(Material::whereKey($m->id)->exists())->toBeTrue();
+
+    // with a reason → soft-deleted + audit stored
+    Livewire::test(Index::class)
+        ->call('openDelete', $m->id)
+        ->set('deleteReason', 'ຊ້ຳ ກັບ MN-8')
+        ->call('deleteRecord')
+        ->assertHasNoErrors();
+
+    $m->refresh();
+    expect($m->trashed())->toBeTrue();
+    expect($m->deleted_reason)->toBe('ຊ້ຳ ກັບ MN-8');
+    expect($m->deleted_by)->toBe($admin->id);
+
+    // deleted log lists it + restore
+    Livewire::test(Index::class)
+        ->call('toggleDeleted')
+        ->assertSee('Gasket')
+        ->call('restore', $m->id);
+
+    expect(Material::whereKey($m->id)->first()->trashed())->toBeFalse();
+});
+
+test('a supplier-scoped user cannot delete another supplier material', function () {
+    $own = aCatalogSupplier('Own');
+    $other = aCatalogSupplier('Other');
+    $foreign = Material::create(['supplier_id' => $other->id, 'category' => 'X', 'description' => 'Foreign']);
+
+    $sup = User::factory()->create(['is_super_admin' => false, 'supplier_id' => $own->id]);
+    $sup->assignRole('supplier');
+    $sup->givePermissionTo('catalog.delete');
+    $this->actingAs($sup);
+
+    Livewire::test(Index::class)
+        ->call('openDelete', $foreign->id)
+        ->assertForbidden();
+
+    expect(Material::whereKey($foreign->id)->first()->trashed())->toBeFalse();
+});

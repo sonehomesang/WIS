@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Catalog;
 
+use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\Material;
 use App\Models\MaterialImage;
 use App\Models\Supplier;
 use App\Models\Uom;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -17,7 +19,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
-    use WithFileUploads, WithPagination;
+    use SoftDeletesWithReason, WithFileUploads, WithPagination;
 
     public const MAX_PHOTOS = 10;
 
@@ -201,11 +203,31 @@ class Index extends Component
         $m->update(['is_active' => $target, 'updated_by' => auth()->id()]);
     }
 
-    public function delete(int $id): void
+    // ── ລຶບ-ດ້ວຍ-ເຫດຜົນ + Deleted Log (trait SoftDeletesWithReason) ──
+    protected function deleteModelClass(): string
     {
-        abort_unless(auth()->user()->can('catalog.delete'), 403);
-        $this->scopedQuery()->findOrFail($id)->delete();
-        session()->flash('ok', '✓ ລຶບສິນຄ້າແລ້ວ');
+        return Material::class;
+    }
+
+    protected function deletePermission(): string
+    {
+        return 'catalog.delete';
+    }
+
+    /** supplier-scoped user ລຶບ ໄດ້ ສະເພາະ ສິນຄ້າ ຂອງ ຕົນ. */
+    protected function deleteGuard(Model $record): void
+    {
+        abort_if($this->isSupplierScoped() && $record->supplier_id !== auth()->user()->supplier_id, 403);
+    }
+
+    protected function deleteLabel(Model $record): string
+    {
+        return $record->material_nbr ?: $record->description;
+    }
+
+    protected function deleteNoun(): string
+    {
+        return 'ສິນຄ້າ';
     }
 
     public function removePhoto(int $photoId): void
@@ -248,6 +270,7 @@ class Index extends Component
     public function render(): View
     {
         $items = $this->scopedQuery()
+            ->when($this->showDeleted && $this->canManageDeleted(), fn ($q) => $q->onlyTrashed()->with('deletedBy'))
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w->where('description', 'like', "%{$this->search}%")
                 ->orWhere('material_nbr', 'like', "%{$this->search}%")
                 ->orWhere('category', 'like', "%{$this->search}%")))
@@ -272,6 +295,7 @@ class Index extends Component
             'categories' => $this->scopedQuery()->distinct()->orderBy('category')->pluck('category')->filter()->values(),
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(),
             'canManage' => auth()->user()->can('catalog.create') || auth()->user()->can('catalog.edit'),
+            'canManageDeleted' => $this->canManageDeleted(),
         ]);
     }
 }

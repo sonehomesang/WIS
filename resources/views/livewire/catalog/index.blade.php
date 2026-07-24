@@ -22,7 +22,12 @@
                 <span class="text-xs text-gray-400 whitespace-nowrap">{{ number_format($materials->total()) }} ລາຍການ</span>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-                @can('catalog.create')<button wire:click="newItem" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">+ Add</button>@endcan
+                @if ($canManageDeleted)
+                    <button wire:click="toggleDeleted" class="text-sm border rounded-md px-3 py-2 min-h-[40px] whitespace-nowrap {{ $showDeleted ? 'bg-gray-700 text-white border-gray-700' : 'text-gray-600 border-gray-300 bg-white hover:bg-gray-50' }}">
+                        {{ $showDeleted ? '← ລາຍການ ປົກກະຕິ' : '🗑 ບັນທຶກ ການ ລຶບ' }}
+                    </button>
+                @endif
+                @can('catalog.create')<button wire:click="newItem" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap" @if ($showDeleted) style="display:none" @endif>+ Add</button>@endcan
             </div>
         </div>
 
@@ -56,6 +61,9 @@
                                     <div class="min-w-0">
                                         <div class="font-medium text-gray-800 truncate max-w-xs {{ $m->is_active ? '' : 'opacity-50' }}">{{ Str::limit($m->description, 60) }}</div>
                                         <div class="text-xs text-gray-400">{{ $m->category }}@if ($m->unit) · {{ $m->unit }}@endif</div>
+                                        @if ($showDeleted)
+                                            <div class="text-[11px] text-red-600 mt-0.5">🗑 ລຶບ: {{ $m->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $m->deletedBy?->display_name ?? '—' }}@if ($m->deleted_reason) · ເຫດຜົນ: {{ $m->deleted_reason }}@endif</div>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -69,14 +77,18 @@
                             </td>
                             <td class="px-4 py-2.5"><span class="text-xs rounded px-2 py-0.5 {{ $m->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $m->is_active ? 'active' : 'inactive' }}</span></td>
                             <td class="px-4 py-2.5 text-right whitespace-nowrap text-gray-500">
-                                <button wire:click="openHistory({{ $m->id }})" class="p-1 hover:text-sky-600" title="ປະຫວັດລາຄາ">🕑</button>
-                                @canany(['catalog.activate', 'catalog.deactivate'])<button wire:click="toggle({{ $m->id }})" class="p-1 {{ $m->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $m->is_active ? 'Disable' : 'Enable' }}">⏻</button>@endcanany
-                                @can('catalog.edit')<button wire:click="editItem({{ $m->id }})" class="p-1 hover:text-gray-800" title="Edit">✏️</button>@endcan
-                                @can('catalog.delete')<button wire:click="delete({{ $m->id }})" wire:confirm="ລຶບສິນຄ້ານີ້?" class="p-1 hover:text-red-600" title="Delete">🗑</button>@endcan
+                                @if ($showDeleted)
+                                    <button wire:click="restore({{ $m->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                                @else
+                                    <button wire:click="openHistory({{ $m->id }})" class="p-1 hover:text-sky-600" title="ປະຫວັດລາຄາ">🕑</button>
+                                    @canany(['catalog.activate', 'catalog.deactivate'])<button wire:click="toggle({{ $m->id }})" class="p-1 {{ $m->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $m->is_active ? 'Disable' : 'Enable' }}">⏻</button>@endcanany
+                                    @can('catalog.edit')<button wire:click="editItem({{ $m->id }})" class="p-1 hover:text-gray-800" title="Edit">✏️</button>@endcan
+                                    @can('catalog.delete')<button wire:click="openDelete({{ $m->id }})" class="p-1 hover:text-red-600" title="Delete">🗑</button>@endcan
+                                @endif
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີສິນຄ້າ</td></tr>
+                        <tr><td colspan="7" class="px-4 py-6 text-center text-gray-400">{{ $showDeleted ? 'ບໍ່ ມີ ສິນຄ້າ ທີ່ ຖືກ ລຶບ' : 'ຍັງບໍ່ມີສິນຄ້າ' }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -98,19 +110,30 @@
                         </div>
                         <span class="text-xs rounded px-2 py-0.5 shrink-0 {{ $m->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $m->is_active ? 'active' : 'inactive' }}</span>
                     </div>
-                    <div class="flex gap-2 mt-2">
-                        <button wire:click="openHistory({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">ປະຫວັດລາຄາ</button>
-                        @can('catalog.edit')<button wire:click="editItem({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Edit</button>@endcan
-                        @canany(['catalog.activate', 'catalog.deactivate'])<button wire:click="toggle({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">{{ $m->is_active ? 'Disable' : 'Enable' }}</button>@endcanany
-                    </div>
+                    @if ($showDeleted)
+                        <div class="text-[11px] text-red-600 mt-1">🗑 ລຶບ: {{ $m->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $m->deletedBy?->display_name ?? '—' }}@if ($m->deleted_reason) · {{ $m->deleted_reason }}@endif</div>
+                        <div class="flex gap-2 mt-2">
+                            <button wire:click="restore({{ $m->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 min-h-[36px] hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                        </div>
+                    @else
+                        <div class="flex gap-2 mt-2">
+                            <button wire:click="openHistory({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">ປະຫວັດລາຄາ</button>
+                            @can('catalog.edit')<button wire:click="editItem({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Edit</button>@endcan
+                            @canany(['catalog.activate', 'catalog.deactivate'])<button wire:click="toggle({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">{{ $m->is_active ? 'Disable' : 'Enable' }}</button>@endcanany
+                            @can('catalog.delete')<button wire:click="openDelete({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">Delete</button>@endcan
+                        </div>
+                    @endif
                 </div>
             @empty
-                <div class="text-center text-gray-400 py-6">ຍັງບໍ່ມີສິນຄ້າ</div>
+                <div class="text-center text-gray-400 py-6">{{ $showDeleted ? 'ບໍ່ ມີ ສິນຄ້າ ທີ່ ຖືກ ລຶບ' : 'ຍັງບໍ່ມີສິນຄ້າ' }}</div>
             @endforelse
         </div>
 
         <div class="mt-4">{{ $materials->links() }}</div>
     </div>
+
+    {{-- ຢືນຢັນ ລຶບ + ເຫດຜົນ (shared partial + trait SoftDeletesWithReason) --}}
+    @include('partials._delete-modal', ['title' => 'ລຶບ ສິນຄ້າ ນີ້?', 'subtitle' => $this->deletingRecord?->description])
 
     {{-- Create / Edit modal --}}
     @if ($showModal)
