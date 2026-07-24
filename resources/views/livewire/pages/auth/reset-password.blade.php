@@ -54,6 +54,9 @@ new #[Layout('layouts.guest')] class extends Component
                 $user->forceFill([
                     'password' => Hash::make($this->password),
                     'remember_token' => Str::random(60),
+                    // ຜູ້ໃຊ້ ຕັ້ງ ລະຫັດ ເອງ ຜ່ານ ລິ້ງ ແລ້ວ → ບໍ່ ຕ້ອງ ບັງຄັບ ປ່ຽນ ອີກ (ກັນ ປ່ຽນ ຊ້ຳ 2 ຮອບ
+                    // ສຳລັບ ບັນຊີ ທີ່ ເຄີຍ ໄດ້ ລະຫັດ ຊົ່ວຄາວ ຈາກ users:temp-password).
+                    'must_change_password' => false,
                 ])->save();
 
                 event(new PasswordReset($user));
