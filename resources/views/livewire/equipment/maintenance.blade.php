@@ -23,6 +23,11 @@
         </select>
         <div class="flex-1"></div>
         <span class="text-xs text-gray-400">ທັງໝົດ {{ $records->total() }} ລາຍການ</span>
+        @if ($canManageDeleted)
+            <button wire:click="toggleDeleted" class="text-sm border rounded-md px-3 py-2 min-h-[40px] whitespace-nowrap {{ $showDeleted ? 'bg-gray-700 text-white border-gray-700' : 'text-gray-600 border-gray-300 hover:bg-gray-50' }}">
+                {{ $showDeleted ? '← ລາຍການ ປົກກະຕິ' : '🗑 ບັນທຶກ ການ ລຶບ' }}
+            </button>
+        @endif
         @can('equipment.edit')
             @unless ($deptScoped)
                 <a href="{{ route('equipment.maintenance-templates') }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-50 whitespace-nowrap">
@@ -66,6 +71,9 @@
                                 @php $ck = collect($m->checklist); $ng = $ck->where('status', 'ng')->count(); @endphp
                                 <div class="text-[11px] mt-0.5"><span class="text-gray-500">☑ ເຊັກລິສ {{ $ck->count() }} ຂໍ້</span>@if ($ng) <span class="text-red-600 font-medium">· {{ $ng }} ບັນຫາ</span>@endif</div>
                             @endif
+                            @if ($showDeleted)
+                                <div class="text-[11px] text-red-600 mt-0.5">🗑 ລຶບ: {{ $m->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $m->deletedBy?->display_name ?? '—' }}@if ($m->deleted_reason) · ເຫດຜົນ: {{ $m->deleted_reason }}@endif</div>
+                            @endif
                         </td>
                         <td class="px-3 py-2"><span class="text-xs rounded px-1.5 py-0.5 {{ $tBadge[$m->type] ?? 'bg-gray-100 text-gray-600' }}">{{ $tLabels[$m->type] ?? $m->type }}</span></td>
                         <td class="px-3 py-2 text-right whitespace-nowrap text-gray-700">{{ $m->cost !== null ? number_format($m->cost) : '—' }}</td>
@@ -78,34 +86,38 @@
                             @endif
                         </td>
                         <td class="px-3 py-2 pr-4 text-right whitespace-nowrap text-gray-500">
-                            <button wire:click="viewRecord({{ $m->id }})" class="hover:text-sky-700 p-1" title="ເບິ່ງ">
-                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
-                            </button>
-                            @php $ngc = collect($m->checklist ?? [])->where('status', 'ng')->count(); @endphp
-                            @if ($ngc && $m->type !== 'repair')
-                                @can('equipment.create')
-                                    <button wire:click="createRepairsFromNg({{ $m->id }})" wire:confirm="ສ້າງ ໃບ ສ້ອມ (CM) ຈາກ {{ $ngc }} ຂໍ້ ບັນຫາ (NG)?" class="text-amber-600 hover:text-amber-700 p-1" title="ສ້າງ ໃບ ສ້ອມ (CM) ຈາກ NG">
-                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z" /></svg>
+                            @if ($showDeleted)
+                                <button wire:click="restore({{ $m->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                            @else
+                                <button wire:click="viewRecord({{ $m->id }})" class="hover:text-sky-700 p-1" title="ເບິ່ງ">
+                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                                </button>
+                                @php $ngc = collect($m->checklist ?? [])->where('status', 'ng')->count(); @endphp
+                                @if ($ngc && $m->type !== 'repair')
+                                    @can('equipment.create')
+                                        <button wire:click="createRepairsFromNg({{ $m->id }})" wire:confirm="ສ້າງ ໃບ ສ້ອມ (CM) ຈາກ {{ $ngc }} ຂໍ້ ບັນຫາ (NG)?" class="text-amber-600 hover:text-amber-700 p-1" title="ສ້າງ ໃບ ສ້ອມ (CM) ຈາກ NG">
+                                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z" /></svg>
+                                        </button>
+                                    @endcan
+                                @endif
+                                <button wire:click="viewHistory({{ $m->equipment_id }})" class="hover:text-sky-700 p-1" title="ປະຫວັດ ບຳລຸງ ຂອງ ເຄື່ອງ ນີ້">
+                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                </button>
+                                @can('equipment.edit')
+                                    <button wire:click="editMaintenance({{ $m->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
+                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
+                                    </button>
+                                @endcan
+                                @can('equipment.delete')
+                                    <button wire:click="openDelete({{ $m->id }})" class="hover:text-red-600 p-1" title="ລຶບ">
+                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
                                 @endcan
                             @endif
-                            <button wire:click="viewHistory({{ $m->equipment_id }})" class="hover:text-sky-700 p-1" title="ປະຫວັດ ບຳລຸງ ຂອງ ເຄື່ອງ ນີ້">
-                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                            </button>
-                            @can('equipment.edit')
-                                <button wire:click="editMaintenance({{ $m->id }})" class="hover:text-gray-800 p-1" title="ແກ້ໄຂ">
-                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
-                                </button>
-                            @endcan
-                            @can('equipment.delete')
-                                <button wire:click="delete({{ $m->id }})" wire:confirm="ລຶບ ບັນທຶກ ນີ້?" class="hover:text-red-600 p-1" title="ລຶບ">
-                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                </button>
-                            @endcan
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="px-3 py-6 text-center text-gray-400">ຍັງບໍ່ມີ ບັນທຶກ ບຳລຸງ — ກົດ "ວາງແຜນ ບຳລຸງ" ຫຼື "ລົງມື ບຳລຸງ"</td></tr>
+                    <tr><td colspan="7" class="px-3 py-6 text-center text-gray-400">{{ $showDeleted ? 'ບໍ່ ມີ ບັນທຶກ ທີ່ ຖືກ ລຶບ' : 'ຍັງບໍ່ມີ ບັນທຶກ ບຳລຸງ — ກົດ "ວາງແຜນ ບຳລຸງ" ຫຼື "ລົງມື ບຳລຸງ"' }}</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -125,18 +137,25 @@
                     @php $ckM = collect($m->checklist); $ngM = $ckM->where('status', 'ng')->count(); @endphp
                     <div class="text-[11px] mt-0.5"><span class="text-gray-500">☑ ເຊັກລິສ {{ $ckM->count() }} ຂໍ້</span>@if ($ngM) <span class="text-red-600 font-medium">· {{ $ngM }} ບັນຫາ</span>@endif</div>
                 @endif
+                @if ($showDeleted)
+                    <div class="text-[11px] text-red-600 mt-1">🗑 ລຶບ: {{ $m->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $m->deletedBy?->display_name ?? '—' }}@if ($m->deleted_reason) · ເຫດຜົນ: {{ $m->deleted_reason }}@endif</div>
+                @endif
                 <div class="flex gap-2 mt-2">
-                    <button wire:click="viewRecord({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">👁 ເບິ່ງ</button>
-                    @php $ngc = collect($m->checklist ?? [])->where('status', 'ng')->count(); @endphp
-                    @if ($ngc && $m->type !== 'repair')
-                        @can('equipment.create')<button wire:click="createRepairsFromNg({{ $m->id }})" wire:confirm="ສ້າງ ໃບ ສ້ອມ (CM) ຈາກ {{ $ngc }} ຂໍ້ NG?" class="text-xs border border-amber-300 text-amber-700 rounded px-2 py-1 min-h-[36px]">🔧 ສ້າງ CM ({{ $ngc }})</button>@endcan
+                    @if ($showDeleted)
+                        <button wire:click="restore({{ $m->id }})" class="text-xs border border-emerald-200 rounded px-2 py-1 min-h-[36px] text-emerald-700">↩ ກູ້ຄືນ</button>
+                    @else
+                        <button wire:click="viewRecord({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">👁 ເບິ່ງ</button>
+                        @php $ngc = collect($m->checklist ?? [])->where('status', 'ng')->count(); @endphp
+                        @if ($ngc && $m->type !== 'repair')
+                            @can('equipment.create')<button wire:click="createRepairsFromNg({{ $m->id }})" wire:confirm="ສ້າງ ໃບ ສ້ອມ (CM) ຈາກ {{ $ngc }} ຂໍ້ NG?" class="text-xs border border-amber-300 text-amber-700 rounded px-2 py-1 min-h-[36px]">🔧 ສ້າງ CM ({{ $ngc }})</button>@endcan
+                        @endif
+                        @can('equipment.edit')<button wire:click="editMaintenance({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">ແກ້ໄຂ</button>@endcan
+                        @can('equipment.delete')<button wire:click="openDelete({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px] text-red-600">ລຶບ</button>@endcan
                     @endif
-                    @can('equipment.edit')<button wire:click="editMaintenance({{ $m->id }})" class="text-xs border rounded px-2 py-1 min-h-[36px]">ແກ້ໄຂ</button>@endcan
-                    @can('equipment.delete')<button wire:click="delete({{ $m->id }})" wire:confirm="ລຶບ ບັນທຶກ ນີ້?" class="text-xs border rounded px-2 py-1 min-h-[36px] text-red-600">ລຶບ</button>@endcan
                 </div>
             </div>
         @empty
-            <div class="text-center text-gray-400 py-6">ຍັງບໍ່ມີ ບັນທຶກ ບຳລຸງ</div>
+            <div class="text-center text-gray-400 py-6">{{ $showDeleted ? 'ບໍ່ ມີ ບັນທຶກ ທີ່ ຖືກ ລຶບ' : 'ຍັງບໍ່ມີ ບັນທຶກ ບຳລຸງ' }}</div>
         @endforelse
     </div>
 
@@ -406,6 +425,9 @@
             </div>
         </div>
     @endif
+
+    {{-- ຢືນຢັນ ລຶບ + ເຫດຜົນ (shared partial + trait SoftDeletesWithReason) --}}
+    @include('partials._delete-modal', ['title' => 'ລຶບ ບັນທຶກ ບຳລຸງ ນີ້?', 'subtitle' => $this->deletingRecord?->title])
 
     {{-- Lightbox --}}
     <div x-show="big" @click="big=null" @keydown.escape.window="big=null" class="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4" style="display:none">

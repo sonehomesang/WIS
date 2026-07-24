@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Equipment;
 
+use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\Equipment;
 use App\Models\EquipmentMaintenance;
 use App\Models\MaintenanceTemplate;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -15,7 +17,7 @@ use Livewire\WithPagination;
 /** ແທັບ ບຳລຸງຮັກສາ — ຝັງ ໃນ Equipment › ບຳລຸງຮັກສາ. */
 class Maintenance extends Component
 {
-    use WithFileUploads, WithPagination;
+    use SoftDeletesWithReason, WithFileUploads, WithPagination;
 
     public const MAX_PHOTOS = 4;
 
@@ -357,14 +359,32 @@ class Maintenance extends Component
         $this->dispatch('saved');
     }
 
-    public function delete(int $id): void
+    // ── ລຶບ-ດ້ວຍ-ເຫດຜົນ + Deleted Log (trait SoftDeletesWithReason) ──
+    protected function deleteModelClass(): string
     {
-        abort_unless(auth()->user()->can('equipment.delete'), 403);
-        $m = EquipmentMaintenance::with('equipment')->findOrFail($id);
-        if ($m->equipment) {
-            $this->guardDept($m->equipment);
+        return EquipmentMaintenance::class;
+    }
+
+    protected function deletePermission(): string
+    {
+        return 'equipment.delete';
+    }
+
+    protected function deleteGuard(Model $record): void
+    {
+        if ($record->equipment) {
+            $this->guardDept($record->equipment);
         }
-        $m->delete();
+    }
+
+    protected function deleteLabel(Model $record): string
+    {
+        return $record->title ?: ('#'.$record->getKey());
+    }
+
+    protected function deleteNoun(): string
+    {
+        return 'ບັນທຶກ ບຳລຸງ';
     }
 
     public function viewHistory(int $equipmentId): void
@@ -413,6 +433,7 @@ class Maintenance extends Component
             : collect();
 
         $records = EquipmentMaintenance::with('equipment')
+            ->when($this->showDeleted && $this->canManageDeleted(), fn ($q) => $q->onlyTrashed()->with('deletedBy'))
             ->when($deptScoped, fn ($q) => $q->whereHas('equipment', fn ($w) => $w->where('department_id', $deptId)))
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
                 ->where('title', 'like', "%{$this->search}%")
@@ -454,6 +475,7 @@ class Maintenance extends Component
             'deptScoped' => $deptScoped,
             'templateOptions' => $templateOptions,
             'viewing' => $this->viewingId ? EquipmentMaintenance::with('equipment')->find($this->viewingId) : null,
+            'canManageDeleted' => $this->canManageDeleted(),
         ]);
     }
 }

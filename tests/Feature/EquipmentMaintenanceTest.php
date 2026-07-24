@@ -199,11 +199,28 @@ test('an admin can delete a maintenance record', function () {
     ]);
 
     actingAs($admin);
+    // reason required
     Livewire::test(Maintenance::class)
-        ->call('delete', $m->id);
+        ->call('openDelete', $m->id)
+        ->call('deleteRecord')
+        ->assertHasErrors(['deleteReason' => 'required']);
+    expect(EquipmentMaintenance::find($m->id))->not->toBeNull();
+
+    // delete with reason → soft-deleted + metadata, then restorable
+    Livewire::test(Maintenance::class)
+        ->call('openDelete', $m->id)
+        ->set('deleteReason', 'ບັນທຶກ ຊ້ຳ')
+        ->call('deleteRecord')
+        ->assertHasNoErrors();
 
     expect(EquipmentMaintenance::find($m->id))->toBeNull();
-    expect($e->maintenances()->count())->toBe(0);
+    $trashed = EquipmentMaintenance::withTrashed()->find($m->id);
+    expect($trashed->trashed())->toBeTrue();
+    expect($trashed->deleted_reason)->toBe('ບັນທຶກ ຊ້ຳ');
+    expect($trashed->deleted_by)->toBe($admin->id);
+
+    Livewire::test(Maintenance::class)->call('restore', $m->id);
+    expect(EquipmentMaintenance::find($m->id))->not->toBeNull();
 });
 
 test('warehouse staff without delete permission cannot delete a maintenance', function () {
@@ -214,7 +231,7 @@ test('warehouse staff without delete permission cannot delete a maintenance', fu
 
     actingAs($this->staff);
     Livewire::test(Maintenance::class)
-        ->call('delete', $m->id)
+        ->call('openDelete', $m->id)
         ->assertForbidden();
 
     expect($e->maintenances()->count())->toBe(1);

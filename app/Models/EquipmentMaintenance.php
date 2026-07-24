@@ -40,7 +40,14 @@ class EquipmentMaintenance extends Model
     protected $fillable = [
         'equipment_id', 'template_id', 'source_maintenance_id', 'maintenance_date', 'type', 'title', 'description',
         'performed_by', 'cost', 'frequency', 'next_service_date', 'status', 'checklist', 'notes', 'photos', 'created_by',
+        'deleted_reason', 'deleted_by',
     ];
+
+    /** ຜູ້ ທີ່ ລຶບ ບັນທຶກ ນີ້ (ສຳລັບ deleted log). */
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
 
     /** ໃບ ສ້ອມ (CM) ທີ່ ຍັງ ບໍ່ ແລ້ວ (planned/in_progress). ໃຊ້ dashboard queue (C3). */
     public function scopeOpenRepairs(Builder $q): Builder
