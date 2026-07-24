@@ -14,8 +14,8 @@
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
              class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
-        {{-- Tabs --}}
-        <div class="flex gap-1 border-b border-gray-200 mt-3">
+        {{-- Tabs (frozen ໃຫ້ ຄ້າງ ຢູ່ ໃຕ້ app-header ຕອນ scroll/ສະຫຼັບ ແທັບ) --}}
+        <div class="sticky top-16 z-30 bg-gray-100 flex gap-1 border-b border-gray-200">
             <button @click="tab='register'" :class="tab==='register' ? 'border-sky-600 text-sky-700 font-medium' : 'border-transparent text-gray-500'" class="px-4 py-2 text-sm border-b-2 -mb-px">ທະບຽນ ເຄື່ອງ</button>
             <button @click="tab='inspection'" :class="tab==='inspection' ? 'border-sky-600 text-sky-700 font-medium' : 'border-transparent text-gray-500'" class="px-4 py-2 text-sm border-b-2 -mb-px">ການ ກວດກາ</button>
             <button @click="tab='maintenance'" :class="tab==='maintenance' ? 'border-sky-600 text-sky-700 font-medium' : 'border-transparent text-gray-500'" class="px-4 py-2 text-sm border-b-2 -mb-px">ບຳລຸງຮັກສາ</button>
@@ -23,8 +23,8 @@
 
         {{-- ═══ TAB 1: Register ═══ --}}
         <div x-show="tab==='register'">
-            {{-- toolbar --}}
-            <div class="flex flex-wrap items-center gap-2 py-3">
+            {{-- toolbar (frozen ໃຕ້ ແທັບ) --}}
+            <div class="sticky top-[6.5rem] z-20 bg-gray-100 flex flex-wrap items-center gap-2 py-2">
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ຊື່/ລະຫັດ/serial…"
                        class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm w-56" />
                 <select wire:model.live="categoryFilter" class="rounded-md border-gray-300 shadow-sm text-sm">
@@ -185,8 +185,8 @@
         </div>
 
         {{-- ═══ TAB 2: ການ ກວດກາ ═══ --}}
-        <div x-show="tab==='inspection'" x-cloak class="mt-4">
-            <div class="flex flex-wrap items-center gap-2 mb-2">
+        <div x-show="tab==='inspection'" x-cloak>
+            <div class="sticky top-[6.5rem] z-20 bg-gray-100 flex flex-wrap items-center gap-2 py-2">
                 <input type="text" wire:model.live.debounce.300ms="inspSearch" placeholder="ຄົ້ນຫາ ເຄື່ອງ/ຜູ້ກວດ…"
                        class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm w-56" />
                 <select wire:model.live="inspResultFilter" class="rounded-md border-gray-300 shadow-sm text-sm">
@@ -291,7 +291,7 @@
                 </table>
             </div>
         </div>
-        <div x-show="tab==='maintenance'" x-cloak class="mt-4">
+        <div x-show="tab==='maintenance'" x-cloak>
             <livewire:equipment.maintenance />
         </div>
     </div>

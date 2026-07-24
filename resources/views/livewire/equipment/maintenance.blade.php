@@ -10,7 +10,7 @@
     <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
          class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
-    <div class="flex flex-wrap items-center gap-2 mb-2">
+    <div class="sticky top-[6.5rem] z-20 bg-gray-100 flex flex-wrap items-center gap-2 py-2">
         <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ເຄື່ອງ/ວຽກ/ຜູ້ເຮັດ…"
                class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm w-56" />
         <select wire:model.live="typeFilter" class="rounded-md border-gray-300 shadow-sm text-sm">
