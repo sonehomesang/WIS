@@ -256,3 +256,16 @@ test('more than 3 photos is rejected', function () {
 
     expect(Equipment::count())->toBe(0);
 });
+
+test('the equipment page opens on the tab given by ?tab= (invalid falls back)', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+
+    $this->get(route('equipment', ['tab' => 'maintenance']))
+        ->assertOk()->assertSee("tab: 'maintenance'", false);
+
+    $this->get(route('equipment', ['tab' => 'inspection']))
+        ->assertSee("tab: 'inspection'", false);
+
+    $this->get(route('equipment', ['tab' => 'bogus']))
+        ->assertSee("tab: 'register'", false);
+});

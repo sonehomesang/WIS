@@ -3,11 +3,16 @@
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
              class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
-        {{-- frozen header group: back + ຄົ້ນຫາ/filter (ຄື ແທັບ ທະບຽນເຄື່ອງ) --}}
-        <div class="sticky top-16 z-30 bg-gray-100 py-2 space-y-2">
-            <a href="{{ route('equipment') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700 inline-block">← ກັບ ໄປ ທະບຽນ ເຄື່ອງ</a>
-            <div class="flex flex-wrap items-center gap-2">
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ຊື່ ແມ່ແບບ/ເຄື່ອງ…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm w-56" />
+        {{-- frozen: ແທັບ ຫຼັກ 3 ອັນ (ໜ້າ ນີ້ ຢູ່ ໃຕ້ "ບຳລຸງຮັກສາ") + toolbar --}}
+        <div class="sticky top-16 z-30 bg-gray-100">
+            <div class="flex gap-1 border-b border-gray-200">
+                <a href="{{ route('equipment', ['tab' => 'register']) }}" wire:navigate class="px-4 py-2 text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700">ທະບຽນ ເຄື່ອງ</a>
+                <a href="{{ route('equipment', ['tab' => 'inspection']) }}" wire:navigate class="px-4 py-2 text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700">ການ ກວດກາ</a>
+                <a href="{{ route('equipment', ['tab' => 'maintenance']) }}" wire:navigate class="px-4 py-2 text-sm border-b-2 border-sky-600 text-sky-700 font-medium">ບຳລຸງຮັກສາ</a>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 py-2">
+                <span class="text-xs text-gray-500 mr-1 whitespace-nowrap">ແມ່ແບບ ບຳລຸງ:</span>
+                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ຊື່ ແມ່ແບບ/ເຄື່ອງ…" class="rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm w-52" />
                 <select wire:model.live="categoryFilter" class="rounded-md border-gray-300 shadow-sm text-sm">
                     <option value="">ທຸກ ປະເພດ</option>
                     @foreach ($categories as $c)<option value="{{ $c }}">{{ $c }}</option>@endforeach

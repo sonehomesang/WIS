@@ -8,7 +8,7 @@
     $statusLabel = ['active' => 'ໃຊ້ງານ', 'repair' => 'ຊ່ອມແປງ', 'retired' => 'ຢຸດໃຊ້'];
 @endphp
 
-<div class="pb-6" x-data="{ tab: 'register', bigImg: null }" @wh-lightbox.window="bigImg = $event.detail">
+<div class="pb-6" x-data="{ tab: '{{ in_array(request('tab'), ['register', 'inspection', 'maintenance'], true) ? request('tab') : 'register' }}', bigImg: null }" @wh-lightbox.window="bigImg = $event.detail">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
