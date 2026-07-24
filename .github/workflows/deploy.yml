@@ -1,0 +1,44 @@
+name: Deploy to UAT
+
+# Auto-deploy: every push to main (or a manual run from the Actions tab) SSHes into
+# the VPS and runs the same commands we used by hand. Requires 4 repo secrets:
+#   VPS_HOST      — server IP or domain (e.g. 123.45.67.89 or wh.homesang.pro)
+#   VPS_USER      — SSH user (e.g. root, or the deploy user)
+#   VPS_SSH_KEY   — the PRIVATE SSH key whose public half is in the VPS authorized_keys
+#   VPS_APP_PATH  — the app directory on the server (e.g. /var/www/wh)
+# Optional: VPS_PORT (defaults to 22).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}   # lets you trigger a deploy by hand from the Actions tab
+
+concurrency:
+  group: deploy-uat
+  cancel-in-progress: false   # never interrupt a deploy that's mid-flight
+
+jobs:
+  deploy:
+    name: SSH deploy to the VPS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run deploy commands over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          script_stop: true   # stop on the first failed command
+          command_timeout: 10m
+          script: |
+            cd "${{ secrets.VPS_APP_PATH }}"
+            echo "→ git pull origin main"
+            git pull origin main
+            echo "→ php artisan migrate --force"
+            php artisan migrate --force
+            echo "→ rebuild caches"
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            echo "✓ deployed $(git rev-parse --short HEAD)"
