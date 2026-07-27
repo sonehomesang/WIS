@@ -215,35 +215,7 @@
                 @endif
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">{{ $planning ? 'ວັນທີ ນັດ ບຳລຸງ' : 'ວັນທີ' }} <span class="text-red-500">*</span></label>
-                        <input type="date" wire:model="mDate" class="w-full rounded-md border-gray-300 text-sm" />
-                        @error('mDate')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">ປະເພດ <span class="text-red-500">*</span></label>
-                        <select wire:model="mType" class="w-full rounded-md border-gray-300 text-sm">
-                            @foreach ($tLabels as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm text-gray-600 mb-1">ຫົວຂໍ້ ວຽກ <span class="text-red-500">*</span></label>
-                        <input type="text" wire:model="mTitle" placeholder="ເຊັ່ນ ປ່ຽນ ນ້ຳມັນ ເຄື່ອງ" class="w-full rounded-md border-gray-300 text-sm" />
-                        @error('mTitle')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm text-gray-600 mb-1">ລາຍລະອຽດ ວຽກ</label>
-                        <textarea wire:model="mDescription" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">ຊ່າງ/ຮ້ານ <span class="text-xs text-gray-400">(ຖ້າ ມີ)</span></label>
-                        <input type="text" wire:model="mPerformedBy" class="w-full rounded-md border-gray-300 text-sm" />
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">ຄ່າ ໃຊ້ຈ່າຍ (ກີບ) <span class="text-xs text-gray-400">(ຖ້າ ມີ)</span></label>
-                        <input type="number" min="0" step="1000" wire:model="mCost" class="w-full rounded-md border-gray-300 text-sm" />
-                        @error('mCost')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-                    </div>
+                    {{-- ແຖວ 1: ຮອບ Service · ວັນທີ ນັດ ບຳລຸງ --}}
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">ຮອບ Service</label>
                         <select wire:model.live="mFrequency" class="w-full rounded-md border-gray-300 text-sm">
@@ -252,14 +224,51 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-600 mb-1">Service ຄັ້ງ ໜ້າ</label>
-                        <input type="date" wire:model="mNextService" class="w-full rounded-md border-gray-300 text-sm" />
+                        <label class="block text-sm text-gray-600 mb-1">{{ $planning ? 'ວັນທີ ນັດ ບຳລຸງ' : 'ວັນທີ' }} <span class="text-red-500">*</span></label>
+                        <input type="date" wire:model="mDate" class="w-full rounded-md border-gray-300 text-sm" />
+                        @error('mDate')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+
+                    {{-- ແຖວ 2: ປະເພດ · ສະຖານະ --}}
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ປະເພດ <span class="text-red-500">*</span></label>
+                        <select wire:model="mType" class="w-full rounded-md border-gray-300 text-sm">
+                            @foreach ($tLabels as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">ສະຖານະ <span class="text-red-500">*</span></label>
                         <select wire:model="mStatus" class="w-full rounded-md border-gray-300 text-sm">
                             @foreach ($sLabels as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach
                         </select>
+                    </div>
+
+                    {{-- ແຖວ 3: ຜູ້ໃຫ້ ບໍລິການ · ລາຄາ · Service ຄັ້ງ ໜ້າ --}}
+                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">ຜູ້ໃຫ້ ບໍລິການ <span class="text-xs text-gray-400">(ຖ້າ ມີ)</span></label>
+                            <input type="text" wire:model="mPerformedBy" class="w-full rounded-md border-gray-300 text-sm" />
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">ລາຄາ (ກີບ) <span class="text-xs text-gray-400">(ຖ້າ ມີ)</span></label>
+                            <input type="number" min="0" step="1000" wire:model="mCost" class="w-full rounded-md border-gray-300 text-sm" />
+                            @error('mCost')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Service ຄັ້ງ ໜ້າ</label>
+                            <input type="date" wire:model="mNextService" class="w-full rounded-md border-gray-300 text-sm" />
+                        </div>
+                    </div>
+
+                    {{-- ຂໍ້ມູນ ອື່ນໆ --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm text-gray-600 mb-1">ຫົວຂໍ້ ວຽກ <span class="text-red-500">*</span></label>
+                        <input type="text" wire:model="mTitle" placeholder="ເຊັ່ນ ປ່ຽນ ນ້ຳມັນ ເຄື່ອງ" class="w-full rounded-md border-gray-300 text-sm" />
+                        @error('mTitle')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm text-gray-600 mb-1">ລາຍລະອຽດ ວຽກ</label>
+                        <textarea wire:model="mDescription" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-sm text-gray-600 mb-1">ໝາຍເຫດ</label>
