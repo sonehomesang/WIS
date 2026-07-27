@@ -378,13 +378,11 @@
                                                 <input type="text" wire:model="mChecklist.{{ $i }}.note" placeholder="ໝາຍເຫດ/ອ້າງອີງ ການປະຕິບັດ (ຖ້າ ມີ)…" class="w-full rounded border border-gray-200 text-[11px] px-2 py-1 text-gray-600 focus:border-sky-400 focus:ring-0" />
                                             </div>
 
-                                            {{-- ຫຼັກຖານ ຮູບ/ຄລິບ ຕາມ ສະຖານະ: ✗ ບັນຫາ → 1 ຊ່ອງ · X ✓ (ປ່ຽນແລ້ວ) → ກ່ອນ/ຫຼັງ --}}
+                                            {{-- ຫຼັກຖານ ຮູບ/ຄລິບ — ຂຶ້ນ ສະເພາະ ຕອນ ໝາຍ ✗ (ມີ ບັນຫາ) ເທົ່ານັ້ນ --}}
                                             @php $st = $c['status'] ?? 'na'; @endphp
-                                            @if ($st === 'ng' || ($st === 'ok' && ($c['action'] ?? '') === 'X'))
+                                            @if ($st === 'ng')
                                                 @php
-                                                    $slots = $st === 'ng'
-                                                        ? ['problem' => ['label' => 'ຫຼັກຖານ ບັນຫາ', 'model' => 'itemPhotoProblem']]
-                                                        : ['before' => ['label' => 'ກ່ອນ', 'model' => 'itemPhotoBefore'], 'after' => ['label' => 'ຫຼັງ', 'model' => 'itemPhotoAfter']];
+                                                    $slots = ['problem' => ['label' => 'ຫຼັກຖານ ບັນຫາ', 'model' => 'itemPhotoProblem']];
                                                     $isVid = fn ($p) => in_array(strtolower(pathinfo((string) $p, PATHINFO_EXTENSION)), ['mp4', 'mov', 'webm', '3gp', 'm4v']);
                                                 @endphp
                                                 <div class="flex flex-wrap gap-2 mt-1.5 pl-7">
@@ -434,7 +432,7 @@
                             <div class="px-3 py-6 text-center text-xs text-gray-400">ບໍ່ ມີ ຂໍ້ ກົງ ກັບ ຕົວ ຄັດ — <button type="button" wire:click="resetChecklistFilter" class="text-sky-600 hover:underline">ລ້າງ ຕົວ ຄັດ</button></div>
                         @endforelse
 
-                        <p class="text-[11px] text-gray-400 px-3 py-1.5 border-t border-gray-100">ໝາຍ ✓ (ແລ້ວ) / ✗ (ບັນຫາ) ຕໍ່ ຂໍ້ · ຄ່າ ຕັ້ງຕົ້ນ = ຍັງ ບໍ່ ໝາຍ. ໝາຍ ✗ → ຖ່າຍ ຮູບ/ຄລິບ ຫຼັກຖານ · ຂໍ້ ປ່ຽນ(X) ໝາຍ ✓ → ຮູບ ກ່ອນ/ຫຼັງ. ກົດ ຫົວ ໝວດ ເພື່ອ ຍໍ່/ຂະຫຍາຍ.</p>
+                        <p class="text-[11px] text-gray-400 px-3 py-1.5 border-t border-gray-100">ໝາຍ ✓ (ແລ້ວ) / ✗ (ບັນຫາ) ຕໍ່ ຂໍ້ · ຄ່າ ຕັ້ງຕົ້ນ = ຍັງ ບໍ່ ໝາຍ. ໝາຍ **✗ ບັນຫາ** ເທົ່ານັ້ນ → ຖ່າຍ ຮູບ/ຄລິບ ຫຼັກຖານ. ກົດ ຫົວ ໝວດ ເພື່ອ ຍໍ່/ຂະຫຍາຍ.</p>
                     </div>
                 @endif
 
