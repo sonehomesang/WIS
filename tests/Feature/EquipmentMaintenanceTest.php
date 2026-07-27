@@ -212,12 +212,14 @@ test('before/after photos on a replace (X) item are stored on the checklist', fu
         ->set('mFrequency', 'monthly')
         ->assertCount('mChecklist', 2)                              // ຂໍ້ 0 = X (ປ່ຽນ), ຂໍ້ 1 = C
         ->call('toggleMaintChecklist', 0, 'ok')                    // ໝາຍ X ວ່າ ປ່ຽນແລ້ວ → ຮູບ ກ່ອນ/ຫຼັງ
+        ->set('mChecklist.0.note', 'ໃຊ້ ອາໄຫຼ່ OEM')               // ໝາຍເຫດ/ອ້າງອີງ ຕໍ່ ຂໍ້
         ->set('itemPhotoBefore.0', UploadedFile::fake()->image('before.jpg', 400, 300))
         ->set('itemPhotoAfter.0', UploadedFile::fake()->image('after.jpg', 400, 300))
         ->call('save')
         ->assertHasNoErrors();
 
     $m = $e->maintenances()->first();
+    expect($m->checklist[0]['note'] ?? null)->toBe('ໃຊ້ ອາໄຫຼ່ OEM');   // ໝາຍເຫດ ຖືກ ເກັບ
     expect($m->checklist[0]['photo_before'] ?? null)->not->toBeNull();
     expect($m->checklist[0]['photo_after'] ?? null)->not->toBeNull();
     Storage::disk('public')->assertExists($m->checklist[0]['photo_before']);

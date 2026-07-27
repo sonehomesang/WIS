@@ -373,6 +373,11 @@
                                                 </div>
                                             </div>
 
+                                            {{-- ໝາຍເຫດ/ອ້າງອີງ ການປະຕິບັດ (ທຸກ ຂໍ້, ທາງເລືອກ) --}}
+                                            <div class="pl-7 mt-1">
+                                                <input type="text" wire:model="mChecklist.{{ $i }}.note" placeholder="ໝາຍເຫດ/ອ້າງອີງ ການປະຕິບັດ (ຖ້າ ມີ)…" class="w-full rounded border border-gray-200 text-[11px] px-2 py-1 text-gray-600 focus:border-sky-400 focus:ring-0" />
+                                            </div>
+
                                             {{-- ຫຼັກຖານ ຮູບ/ຄລິບ ຕາມ ສະຖານະ: ✗ ບັນຫາ → 1 ຊ່ອງ · X ✓ (ປ່ຽນແລ້ວ) → ກ່ອນ/ຫຼັງ --}}
                                             @php $st = $c['status'] ?? 'na'; @endphp
                                             @if ($st === 'ng' || ($st === 'ok' && ($c['action'] ?? '') === 'X'))
@@ -522,6 +527,7 @@
                                 <div class="min-w-0">
                                     <div class="text-gray-700 leading-tight">{{ $c['label'] ?? '' }}@if (! empty($c['action'])) <span class="text-[10px] rounded px-1 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $c['action'] }}</span>@endif</div>
                                     @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
+                                    @if (! empty($c['note']))<div class="text-[11px] text-sky-700 mt-0.5">📝 {{ $c['note'] }}</div>@endif
                                     @if (! empty($c['photo_problem']) || ! empty($c['photo_before']) || ! empty($c['photo_after']))
                                         @php $isVidV = fn ($p) => in_array(strtolower(pathinfo((string) $p, PATHINFO_EXTENSION)), ['mp4', 'mov', 'webm', '3gp', 'm4v']); @endphp
                                         <div class="flex gap-2 mt-1">

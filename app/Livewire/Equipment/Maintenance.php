@@ -80,7 +80,7 @@ class Maintenance extends Component
     // ── ເຊັກລິສ ຈາກ ແມ່ແບບ (ຄັດ ຕາມ ຮອບ = mFrequency) ──
     public ?int $mTemplateId = null;
 
-    /** @var array<int,array{label:string,remark:string,action:string,group:string,status:string,photo_before?:string,photo_after?:string}> */
+    /** @var array<int,array{label:string,remark:string,action:string,group:string,note:string,status:string,photo_before?:string,photo_after?:string,photo_problem?:string}> */
     public array $mChecklist = [];
 
     /** ຮູບ/ຄລິບ ຫຼັກຖານ ຕໍ່ ຂໍ້ — key = index ຂໍ້ ໃນ mChecklist → TemporaryUploadedFile.
@@ -241,7 +241,7 @@ class Maintenance extends Component
             return;
         }
         $this->mChecklist = collect($t->itemsForCycle($this->mFrequency, $this->mFuelType))
-            ->map(fn ($x) => ['label' => $x['label'], 'remark' => $x['remark'], 'action' => $x['action'], 'group' => $x['group'] ?? 'other', 'status' => 'na'])
+            ->map(fn ($x) => ['label' => $x['label'], 'remark' => $x['remark'], 'action' => $x['action'], 'group' => $x['group'] ?? 'other', 'note' => '', 'status' => 'na'])
             ->values()
             ->all();
     }
