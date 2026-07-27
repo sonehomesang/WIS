@@ -174,25 +174,25 @@ test('legacy freqs items are read as check actions', function () {
     ]);
 });
 
-test('the TCM seeder loads the standard forklift checklist and links a forklift when present', function () {
-    $fl = Equipment::create(['asset_code' => 'FLT-1', 'name' => 'TCM Forklift FD30T3Z', 'category' => 'Forklift', 'quantity' => 1]);
-
+test('the seeder loads the forklift checklist as an unlinked Vehicles-category master', function () {
     (new Database\Seeders\MaintenanceTemplateSeeder)->run();
 
-    $t = MaintenanceTemplate::where('name', 'like', 'TCM FD30T3Z%')->first();
+    $t = MaintenanceTemplate::where('name', \Database\Seeders\MaintenanceTemplateSeeder::NAME)->first();
     expect($t)->not->toBeNull();
-    expect($t->equipment_id)->toBe($fl->id);          // ຜູກ ກັບ forklift ທີ່ ພົບ
-    expect($t->category)->toBe('Forklift');
+    expect($t->equipment_id)->toBeNull();             // master — ບໍ່ ຜູກ ເຄື່ອງ
+    expect($t->category)->toBe('Vehicles');           // ຂຶ້ນ ຕາມ ປະເພດ ລົດ
 
     $items = $t->normalizedItems();
     expect(count($items))->toBeGreaterThanOrEqual(40);
     // ທຸກ ຂໍ້ ຕ້ອງ ມີ ຢ່າງໜ້ອຍ 1 ຮອບ, ແລະ ຄ່າ ຕ້ອງ ເປັນ C ຫຼື X ເທົ່ານັ້ນ
     expect(collect($items)->every(fn ($x) => count($x['cycles']) > 0))->toBeTrue();
     expect(collect($items)->flatMap(fn ($x) => array_values($x['cycles']))->unique()->sort()->values()->all())->toBe(['C', 'X']);
+    // ມີ ຂໍ້ ຕິດ ປະເພດ ລົດ (engine) → ຟອມ ໃຫ້ ເລືອກ EV/Engine
+    expect($t->hasFuelTypes())->toBeTrue();
 
     // ຣັນ ຊ້ຳ ບໍ່ ຊ້ຳ ຂໍ້ມູນ
     (new Database\Seeders\MaintenanceTemplateSeeder)->run();
-    expect(MaintenanceTemplate::where('name', 'like', 'TCM FD30T3Z%')->count())->toBe(1);
+    expect(MaintenanceTemplate::where('name', \Database\Seeders\MaintenanceTemplateSeeder::NAME)->count())->toBe(1);
 });
 
 test('a maintenance template is deleted with a required reason and can be restored', function () {

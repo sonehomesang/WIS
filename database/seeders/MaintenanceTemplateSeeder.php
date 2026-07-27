@@ -2,19 +2,25 @@
 
 namespace Database\Seeders;
 
-use App\Models\Equipment;
 use App\Models\MaintenanceTemplate;
 use Illuminate\Database\Seeder;
 
 /**
- * ແມ່ແບບ ບຳລຸງ ມາດຕະຖານ — TCM FD30T3Z Forklift.
- * ຖອດ ຈາກ Preventive Maintenance Service Schedule ຂອງ TCM + ໃບ ກວດ ປະຈຳວັນ,
- * ທຽບກວດ ກັບ OSHA / ໂຮງງານ. C = ກວດ · X = ປ່ຽນ · ຮອບ 8/200/600/1200/2400h.
+ * ແມ່ແບບ ບຳລຸງ ມາດຕະຖານ ຟ໋ອກລິບ — master (ບໍ່ ຜູກ ເຄື່ອງ ໜຶ່ງ ໜ່ວຍ, ຂຶ້ນ ຕາມ ປະເພດ Vehicles).
+ * ຖອດ ຈາກ ໃບ ບຳລຸງ ມາດຕະຖານ forklift + ໃບ ກວດ ປະຈຳວັນ, ທຽບກວດ OSHA / ໂຮງງານ.
+ * C = ກວດ · X = ປ່ຽນ · ຮອບ 8/200/600/1200/2400h.
  *
  * firstOrCreate ຕາມ ຊື່ — ຣັນ ຊ້ຳ ບໍ່ ຊ້ຳ ຂໍ້ມູນ ແລະ ບໍ່ ທັບ ການ ແກ້ໄຂ ຂອງ ຜູ້ໃຊ້.
  */
 class MaintenanceTemplateSeeder extends Seeder
 {
+    /** ຊື່ ປັດຈຸບັນ (master) ແລະ ຊື່ ເກົ່າ (ໃຫ້ migration ຫາ record ເກົ່າ ມາ rename). */
+    public const NAME = 'VC-FLPMCM · ແບບຟອມ ກວດ ບຳລຸງຮັກສາ ຟ໋ອກລິບ (ມາສເຕີ້)';
+
+    public const OLD_NAME = 'TCM FD30T3Z — ບຳລຸງ ຕາມ ຮອບ';
+
+    /** ປະເພດ ເຄື່ອງ ທີ່ ແມ່ແບບ ນີ້ ຂຶ້ນ (master scope). */
+    public const CATEGORY = 'Vehicles';
     /**
      * ລາຍການ ເຊັກລິສ ມາດຕະຖານ (label · remark · cycles · group).
      * static ເພື່ອ ໃຫ້ migration backfill ໃຊ້ ນິຍາມ ດຽວກັນ (ບໍ່ ຊ້ຳ).
@@ -95,28 +101,13 @@ class MaintenanceTemplateSeeder extends Seeder
 
     public function run(): void
     {
-        $items = self::items();
-
-        // ຫາ ລົດ forklift ໃນ ທະບຽນ ເພື່ອ ຜູກ ໃຫ້ (ຖ້າ ບໍ່ ມີ → ປະ ວ່າງ ໃຫ້ ຜູ້ໃຊ້ ເລືອກ ພາຍຫຼັງ).
-        $eq = Equipment::query()
-            ->where(fn ($q) => $q->where('name', 'like', '%FD30%')
-                ->orWhere('brand_model', 'like', '%FD30%')
-                ->orWhere('serial_no', 'like', '%FD30%'))
-            ->orderBy('id')->first()
-            ?? Equipment::query()
-                ->where(fn ($q) => $q->where('name', 'like', '%forklift%')
-                    ->orWhere('brand_model', 'like', '%forklift%')
-                    ->orWhere('category', 'like', '%forklift%')
-                    ->orWhere('name', 'like', '%ຍົກ%'))
-                ->orderBy('id')->first();
-
         MaintenanceTemplate::firstOrCreate(
-            ['name' => 'TCM FD30T3Z — ບຳລຸງ ຕາມ ຮອບ'],
+            ['name' => self::NAME],
             [
-                'equipment_id' => $eq?->id,
-                'category' => $eq?->category,
-                'method' => 'ໃບ ບຳລຸງ ຕາມ ຮອບ ຊົ່ວໂມງ (Daily/8h · 200h · 600h · 1200h · 2400h). C = ກວດ · X = ປ່ຽນ. ຖອດ ຈາກ ໃບ TCM FD30T3Z, ທຽບກວດ OSHA/ໂຮງງານ.',
-                'items' => $items,
+                'equipment_id' => null,        // master — ບໍ່ ຜູກ ເຄື່ອງ ໜຶ່ງ ໜ່ວຍ
+                'category' => self::CATEGORY,  // ຂຶ້ນ ຕາມ ປະເພດ ເຄື່ອງ (ລົດ)
+                'method' => 'ໃບ ບຳລຸງ ຕາມ ຮອບ ຊົ່ວໂມງ (Daily/8h · 200h · 600h · 1200h · 2400h). C = ກວດ · X = ປ່ຽນ. ຖອດ ຈາກ ໃບ ບຳລຸງ ມາດຕະຖານ forklift, ທຽບກວດ OSHA/ໂຮງງານ.',
+                'items' => self::items(),
                 'is_active' => true,
             ]
         );
