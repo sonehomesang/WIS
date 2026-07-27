@@ -192,6 +192,39 @@ test('the recording checklist is grouped by work-section and the filters narrow 
         ->assertViewHas('checklistGroups', fn ($g) => count($g['engine']) === 2 && count($g['hydraulic']) === 1);
 });
 
+test('before/after photos on a replace (X) item are stored on the checklist', function () {
+    Storage::fake('public');
+    $e = Equipment::create(['asset_code' => 'MT-PH', 'name' => 'Forklift', 'quantity' => 1]);
+    $t = MaintenanceTemplate::create([
+        'name' => 'PM ph', 'equipment_id' => $e->id, 'is_active' => true,
+        'items' => [
+            ['group' => 'engine', 'label' => 'ປ່ຽນ ນ້ຳມັນ', 'remark' => '', 'cycles' => ['monthly' => 'X']],
+            ['group' => 'other', 'label' => 'ກວດ ຢາງ', 'remark' => '', 'cycles' => ['monthly' => 'C']],
+        ],
+    ]);
+
+    actingAs($this->staff);
+    Livewire::test(Maintenance::class)
+        ->call('newMaintenance')
+        ->call('pickEquipment', $e->id)
+        ->set('mTitle', 'Service')
+        ->set('mTemplateId', $t->id)
+        ->set('mFrequency', 'monthly')
+        ->assertCount('mChecklist', 2)                              // ຂໍ້ 0 = X (ປ່ຽນ), ຂໍ້ 1 = C
+        ->set('itemPhotoBefore.0', UploadedFile::fake()->image('before.jpg', 400, 300))
+        ->set('itemPhotoAfter.0', UploadedFile::fake()->image('after.jpg', 400, 300))
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $m = $e->maintenances()->first();
+    expect($m->checklist[0]['photo_before'] ?? null)->not->toBeNull();
+    expect($m->checklist[0]['photo_after'] ?? null)->not->toBeNull();
+    Storage::disk('public')->assertExists($m->checklist[0]['photo_before']);
+    Storage::disk('public')->assertExists($m->checklist[0]['photo_after']);
+    // the C item keeps no photos
+    expect($m->checklist[1]['photo_before'] ?? null)->toBeNull();
+});
+
 test('a fuel-typed template requires choosing EV/Engine and filters the checklist by it', function () {
     $e = Equipment::create(['asset_code' => 'MT-FUEL', 'name' => 'Forklift', 'quantity' => 1]);
     $t = MaintenanceTemplate::create([

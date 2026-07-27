@@ -359,17 +359,53 @@
                                 <div x-show="open" class="divide-y divide-gray-50">
                                     @foreach ($rows as $c)
                                         @php $i = $c['i']; @endphp
-                                        <div wire:key="mck-{{ $i }}" class="flex items-start gap-2 px-2 py-1.5">
-                                            <span class="text-gray-400 w-5 text-right text-xs pt-0.5 shrink-0">{{ $i + 1 }}</span>
-                                            <span class="shrink-0 text-[10px] font-bold rounded px-1 py-0.5 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $c['action'] ?? '' }}</span>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="text-gray-700 leading-tight text-xs">{{ $c['label'] }}</div>
-                                                @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
+                                        <div wire:key="mck-{{ $i }}" class="px-2 py-1.5">
+                                            <div class="flex items-start gap-2">
+                                                <span class="text-gray-400 w-5 text-right text-xs pt-0.5 shrink-0">{{ $i + 1 }}</span>
+                                                <span class="shrink-0 text-[10px] font-bold rounded px-1 py-0.5 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $c['action'] ?? '' }}</span>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="text-gray-700 leading-tight text-xs">{{ $c['label'] }}</div>
+                                                    @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
+                                                </div>
+                                                <div class="flex gap-1 shrink-0">
+                                                    <button type="button" wire:click="toggleMaintChecklist({{ $i }}, 'ok')" class="w-8 rounded border py-0.5 text-xs {{ ($c['status'] ?? '') === 'ok' ? 'bg-green-50 text-green-700 border-green-300 font-medium' : 'border-gray-300 text-gray-400' }}" title="ແລ້ວ">✓</button>
+                                                    <button type="button" wire:click="toggleMaintChecklist({{ $i }}, 'ng')" class="w-8 rounded border py-0.5 text-xs {{ ($c['status'] ?? '') === 'ng' ? 'bg-red-50 text-red-700 border-red-300 font-medium' : 'border-gray-300 text-gray-400' }}" title="ມີ ບັນຫາ">✗</button>
+                                                </div>
                                             </div>
-                                            <div class="flex gap-1 shrink-0">
-                                                <button type="button" wire:click="toggleMaintChecklist({{ $i }}, 'ok')" class="w-8 rounded border py-0.5 text-xs {{ ($c['status'] ?? '') === 'ok' ? 'bg-green-50 text-green-700 border-green-300 font-medium' : 'border-gray-300 text-gray-400' }}" title="ແລ້ວ">✓</button>
-                                                <button type="button" wire:click="toggleMaintChecklist({{ $i }}, 'ng')" class="w-8 rounded border py-0.5 text-xs {{ ($c['status'] ?? '') === 'ng' ? 'bg-red-50 text-red-700 border-red-300 font-medium' : 'border-gray-300 text-gray-400' }}" title="ມີ ບັນຫາ">✗</button>
-                                            </div>
+
+                                            {{-- ຂໍ້ ປ່ຽນ (X) → ຮູບ ຫຼັກຖານ ກ່ອນ/ຫຼັງ --}}
+                                            @if (($c['action'] ?? '') === 'X')
+                                                <div class="flex gap-2 mt-1.5 pl-7">
+                                                    @foreach (['before' => 'ກ່ອນ', 'after' => 'ຫຼັງ'] as $slot => $slotLabel)
+                                                        @php
+                                                            $savedPath = $c['photo_'.$slot] ?? null;
+                                                            $store = $slot === 'after' ? ($itemPhotoAfter[$i] ?? null) : ($itemPhotoBefore[$i] ?? null);
+                                                        @endphp
+                                                        <div class="w-20">
+                                                            <div class="text-[10px] text-gray-400 mb-0.5">ຮູບ {{ $slotLabel }}</div>
+                                                            @if ($savedPath)
+                                                                <div class="relative">
+                                                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($savedPath) }}" @click="big='{{ \Illuminate\Support\Facades\Storage::url($savedPath) }}'" class="w-full h-16 rounded object-cover border border-gray-200 cursor-pointer" alt="ຮູບ {{ $slotLabel }}" />
+                                                                    <button type="button" wire:click="clearItemPhoto({{ $i }}, '{{ $slot }}')" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[10px] leading-none flex items-center justify-center">×</button>
+                                                                </div>
+                                                            @elseif ($store)
+                                                                <div class="relative">
+                                                                    <img src="{{ $store->temporaryUrl() }}" class="w-full h-16 rounded object-cover border border-sky-300" alt="ຮູບ {{ $slotLabel }} ໃໝ່" />
+                                                                    <button type="button" wire:click="clearItemPhoto({{ $i }}, '{{ $slot }}')" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[10px] leading-none flex items-center justify-center">×</button>
+                                                                </div>
+                                                            @else
+                                                                <label class="flex flex-col items-center justify-center h-16 rounded border border-dashed border-gray-300 cursor-pointer text-gray-400 hover:border-sky-400 hover:text-sky-500">
+                                                                    <span class="text-base leading-none">📷</span>
+                                                                    <span class="text-[10px] mt-0.5">{{ $slotLabel }}</span>
+                                                                    <input type="file" wire:model="itemPhoto{{ $slot === 'after' ? 'After' : 'Before' }}.{{ $i }}" accept="image/*" class="hidden" />
+                                                                </label>
+                                                            @endif
+                                                            <div wire:loading wire:target="itemPhoto{{ $slot === 'after' ? 'After' : 'Before' }}.{{ $i }}" class="text-[10px] text-gray-400 mt-0.5">ອັບ…</div>
+                                                            @error('itemPhoto'.($slot === 'after' ? 'After' : 'Before').'.'.$i)<div class="text-[10px] text-red-600 mt-0.5">{{ $message }}</div>@enderror
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>
@@ -471,6 +507,18 @@
                                 <div class="min-w-0">
                                     <div class="text-gray-700 leading-tight">{{ $c['label'] ?? '' }}@if (! empty($c['action'])) <span class="text-[10px] rounded px-1 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $c['action'] }}</span>@endif</div>
                                     @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
+                                    @if (! empty($c['photo_before']) || ! empty($c['photo_after']))
+                                        <div class="flex gap-2 mt-1">
+                                            @foreach (['before' => 'ກ່ອນ', 'after' => 'ຫຼັງ'] as $slot => $slotLabel)
+                                                @if (! empty($c['photo_'.$slot]))
+                                                    <div class="text-center">
+                                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($c['photo_'.$slot]) }}" @click="big='{{ \Illuminate\Support\Facades\Storage::url($c['photo_'.$slot]) }}'" class="w-16 h-16 rounded object-cover border border-gray-200 cursor-pointer" alt="ຮູບ {{ $slotLabel }}" />
+                                                        <div class="text-[10px] text-gray-400">{{ $slotLabel }}</div>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach
