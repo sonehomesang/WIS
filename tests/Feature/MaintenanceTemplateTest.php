@@ -36,8 +36,8 @@ test('admin can create a maintenance template with per-cycle check/replace actio
     // ຂໍ້ ວ່າງ ຖືກ ຕັດ · cycles ຮຽງ ຕາມ ລຳດັບ ຮອບ (daily→annual) · action C/X ຮັກສາ ໄວ້
     expect($t->normalizedItems())->toBe([
         ['label' => 'ປ່ຽນ ນ້ຳມັນ ເຄື່ອງ', 'remark' => 'SAE15W-40',
-            'cycles' => ['daily' => 'C', 'monthly' => 'X', 'quarterly' => 'X', 'semi_annual' => 'X', 'annual' => 'X'], 'group' => 'other'],
-        ['label' => 'ກວດ ລົມ ຢາງ', 'remark' => '', 'cycles' => ['daily' => 'C'], 'group' => 'other'],
+            'cycles' => ['daily' => 'C', 'monthly' => 'X', 'quarterly' => 'X', 'semi_annual' => 'X', 'annual' => 'X'], 'group' => 'other', 'applies' => 'both'],
+        ['label' => 'ກວດ ລົມ ຢາງ', 'remark' => '', 'cycles' => ['daily' => 'C'], 'group' => 'other', 'applies' => 'both'],
     ]);
 });
 
@@ -52,13 +52,38 @@ test('itemsForCycle returns only items due that cycle with their action', functi
     ]);
 
     expect($t->itemsForCycle('daily'))->toBe([
-        ['label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => '', 'action' => 'C', 'group' => 'other'],
+        ['label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => '', 'action' => 'C', 'group' => 'other', 'applies' => 'both'],
     ]);
     expect($t->itemsForCycle('annual'))->toBe([
-        ['label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => '', 'action' => 'X', 'group' => 'other'],
-        ['label' => 'return filter', 'remark' => '271A7', 'action' => 'X', 'group' => 'other'],
+        ['label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => '', 'action' => 'X', 'group' => 'other', 'applies' => 'both'],
+        ['label' => 'return filter', 'remark' => '271A7', 'action' => 'X', 'group' => 'other', 'applies' => 'both'],
     ]);
     expect($t->itemsForCycle('quarterly'))->toBe([]);
+});
+
+test('itemsForCycle filters by fuel type and hasFuelTypes detects typed items', function () {
+    $e = Equipment::create(['asset_code' => 'FL-F', 'name' => 'Forklift', 'quantity' => 1]);
+    $t = MaintenanceTemplate::create([
+        'name' => 'Fuel PM', 'equipment_id' => $e->id, 'is_active' => true,
+        'items' => [
+            ['label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => '', 'cycles' => ['monthly' => 'X'], 'applies' => 'engine'],
+            ['label' => 'ຢາງ', 'remark' => '', 'cycles' => ['monthly' => 'C'], 'applies' => 'both'],
+            ['label' => 'ແບັດ traction', 'remark' => '', 'cycles' => ['monthly' => 'C'], 'applies' => 'ev'],
+        ],
+    ]);
+
+    expect($t->hasFuelTypes())->toBeTrue();
+    // no fuel type → only 'both'
+    expect(collect($t->itemsForCycle('monthly'))->pluck('label')->all())->toBe(['ຢາງ']);
+    // engine → both + engine
+    expect(collect($t->itemsForCycle('monthly', 'engine'))->pluck('label')->all())->toBe(['ນ້ຳມັນ ເຄື່ອງ', 'ຢາງ']);
+    // ev → both + ev
+    expect(collect($t->itemsForCycle('monthly', 'ev'))->pluck('label')->all())->toBe(['ຢາງ', 'ແບັດ traction']);
+
+    // an all-"both" template has no fuel types
+    $plain = MaintenanceTemplate::create(['name' => 'Plain', 'equipment_id' => $e->id, 'is_active' => true,
+        'items' => [['label' => 'x', 'remark' => '', 'cycles' => ['monthly' => 'C']]]]);
+    expect($plain->hasFuelTypes())->toBeFalse();
 });
 
 test('bumpCycle rotates a cell through none, check, replace', function () {
@@ -145,7 +170,7 @@ test('legacy freqs items are read as check actions', function () {
     ]);
 
     expect($t->normalizedItems())->toBe([
-        ['label' => 'old item', 'remark' => '', 'cycles' => ['monthly' => 'C', 'annual' => 'C'], 'group' => 'other'],
+        ['label' => 'old item', 'remark' => '', 'cycles' => ['monthly' => 'C', 'annual' => 'C'], 'group' => 'other', 'applies' => 'both'],
     ]);
 });
 
@@ -249,17 +274,20 @@ test('the template builder stores and reloads the group per item', function () {
     Livewire::test(MaintenanceTemplates::class)
         ->call('newTemplate')
         ->set('tName', 'Grouped')->set('tScope', 'general')
-        ->set('tItems', [['label' => 'ນ້ຳມັນ', 'remark' => '', 'cycles' => ['monthly' => 'X'], 'group' => 'hydraulic']])
+        ->set('tItems', [['label' => 'ນ້ຳມັນ', 'remark' => '', 'cycles' => ['monthly' => 'X'], 'group' => 'hydraulic', 'applies' => 'engine']])
         ->call('save')->assertHasNoErrors();
 
     $t = MaintenanceTemplate::where('name', 'Grouped')->first();
     expect($t->items[0]['group'])->toBe('hydraulic');
+    expect($t->items[0]['applies'])->toBe('engine');
     expect($t->normalizedItems()[0]['group'])->toBe('hydraulic');
+    expect($t->normalizedItems()[0]['applies'])->toBe('engine');
 
-    // reopening the editor reloads the stored group
+    // reopening the editor reloads the stored group + applies
     Livewire::test(MaintenanceTemplates::class)
         ->call('editTemplate', $t->id)
-        ->assertSet('tItems.0.group', 'hydraulic');
+        ->assertSet('tItems.0.group', 'hydraulic')
+        ->assertSet('tItems.0.applies', 'engine');
 
     // an unknown group falls back to 'other' on save
     Livewire::test(MaintenanceTemplates::class)

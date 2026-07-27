@@ -192,6 +192,39 @@ test('the recording checklist is grouped by work-section and the filters narrow 
         ->assertViewHas('checklistGroups', fn ($g) => count($g['engine']) === 2 && count($g['hydraulic']) === 1);
 });
 
+test('a fuel-typed template requires choosing EV/Engine and filters the checklist by it', function () {
+    $e = Equipment::create(['asset_code' => 'MT-FUEL', 'name' => 'Forklift', 'quantity' => 1]);
+    $t = MaintenanceTemplate::create([
+        'name' => 'PM fuel', 'equipment_id' => $e->id, 'is_active' => true,
+        'items' => [
+            ['group' => 'engine', 'label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => '', 'cycles' => ['monthly' => 'X'], 'applies' => 'engine'],
+            ['group' => 'other', 'label' => 'ຢາງ', 'remark' => '', 'cycles' => ['monthly' => 'C'], 'applies' => 'both'],
+        ],
+    ]);
+
+    actingAs($this->staff);
+    $c = Livewire::test(Maintenance::class)
+        ->call('newMaintenance')
+        ->call('pickEquipment', $e->id)
+        ->set('mTitle', 'Service')
+        ->set('mTemplateId', $t->id)
+        ->set('mFrequency', 'monthly')
+        ->assertViewHas('mTemplateHasFuelTypes', true)
+        ->assertCount('mChecklist', 0);       // ຍັງ ບໍ່ ເລືອກ ປະເພດ ລົດ → ວ່າງ
+
+    // saving without a fuel type is blocked
+    $c->call('save')->assertHasErrors('mFuelType');
+
+    // engine → both + engine (2), ev → only both (1)
+    $c->set('mFuelType', 'engine')->assertCount('mChecklist', 2);
+    $c->set('mFuelType', 'ev')->assertCount('mChecklist', 1);
+
+    $c->call('save')->assertHasNoErrors();
+    $m = $e->maintenances()->first();
+    expect($m->checklist)->toHaveCount(1);    // ບັນທຶກ ສະເພາະ ຂໍ້ ຂອງ EV (ຢາງ)
+    expect($m->checklist[0]['label'])->toBe('ຢາງ');
+});
+
 test('changing the cycle re-filters the checklist and clearing the template empties it', function () {
     $e = Equipment::create(['asset_code' => 'MT-CK3', 'name' => 'Loader', 'quantity' => 1]);
     $t = MaintenanceTemplate::create([

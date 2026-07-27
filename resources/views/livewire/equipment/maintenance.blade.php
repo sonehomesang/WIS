@@ -300,6 +300,21 @@
                     </div>
                 </div>
 
+                {{-- ຊັ້ນ 1: ປະເພດ ລົດ (EV/Engine) — ຄັດ ເຊັກລິສ ໃຫ້ ຖືກ ກັບ ລົດ --}}
+                @if ($mTemplateId && $mTemplateHasFuelTypes)
+                    <div class="rounded-md border border-sky-200 bg-sky-50 px-3 py-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-sm text-sky-800 font-medium">ປະເພດ ລົດ <span class="text-red-500">*</span></span>
+                            <button type="button" wire:click="$set('mFuelType', 'ev')" class="text-sm border rounded-md px-3 py-1.5 min-h-[36px] {{ $mFuelType === 'ev' ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-700 border-gray-300' }}">ໄຟຟ້າ (EV)</button>
+                            <button type="button" wire:click="$set('mFuelType', 'engine')" class="text-sm border rounded-md px-3 py-1.5 min-h-[36px] {{ $mFuelType === 'engine' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-gray-700 border-gray-300' }}">ນ້ຳມັນ (Engine)</button>
+                        </div>
+                        @error('mFuelType')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        @if ($mFuelType === '' && ! count($mChecklist))
+                            <p class="text-xs text-amber-700 mt-1">ເລືອກ ປະເພດ ລົດ ກ່ອນ ເພື່ອ ໃຫ້ ເຊັກລິສ ຂຶ້ນ ຕາມ ລົດ</p>
+                        @endif
+                    </div>
+                @endif
+
                 {{-- ເຊັກລິສ ຈາກ ແມ່ແບບ — ຄັດ ຕາມ ຮອບ (mFrequency), ແຍກ ໝວດ + filter --}}
                 @if (count($mChecklist))
                     @php

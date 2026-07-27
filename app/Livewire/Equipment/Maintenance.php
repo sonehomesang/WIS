@@ -63,6 +63,9 @@ class Maintenance extends Component
 
     public string $mFrequency = '';
 
+    /** ຊັ້ນ 1: ປະເພດ ລົດ — '' | 'ev' | 'engine' (ຄັດ ເຊັກລິສ ໃຫ້ ຖືກ ກັບ ລົດ). */
+    public string $mFuelType = '';
+
     public ?string $mNextService = null;
 
     public string $mStatus = 'done';
@@ -122,7 +125,7 @@ class Maintenance extends Component
         $this->reset([
             'editingId', 'mSearch', 'mEquipmentId', 'mEquipmentLabel', 'mDescription',
             'mPerformedBy', 'mCost', 'mFrequency', 'mNextService', 'mNotes', 'mPhotos', 'mExistingPhotos', 'mTitle',
-            'mTemplateId', 'mChecklist', 'ckAction', 'ckNg',
+            'mTemplateId', 'mChecklist', 'ckAction', 'ckNg', 'mFuelType',
         ]);
         $this->mDate = now()->toDateString();
         $this->mType = 'preventive';
@@ -204,10 +207,17 @@ class Maintenance extends Component
     /** ເລືອກ ແມ່ແບບ → ຄັດ ເຊັກລິສ ໃໝ່ (ຕາມ ຮອບ ທີ່ ເລືອກ ຢູ່). */
     public function updatedMTemplateId($value): void
     {
+        $this->mFuelType = '';   // ແມ່ແບບ ໃໝ່ → ເລືອກ ປະເພດ ລົດ ຄືນ
         $this->rebuildChecklist();
     }
 
-    /** ຄັດ ລາຍການ ຈາກ ແມ່ແບບ ຕາມ ຮອບ (mFrequency) — ວ່າງ ຖ້າ ຍັງ ບໍ່ ເລືອກ ຄົບ. */
+    /** ເລືອກ ປະເພດ ລົດ (EV/Engine) → ຄັດ ເຊັກລິສ ໃໝ່. */
+    public function updatedMFuelType($value): void
+    {
+        $this->rebuildChecklist();
+    }
+
+    /** ຄັດ ລາຍການ ຈາກ ແມ່ແບບ ຕາມ ຮອບ (mFrequency) + ປະເພດ ລົດ (mFuelType) — ວ່າງ ຖ້າ ຍັງ ບໍ່ ເລືອກ ຄົບ. */
     protected function rebuildChecklist(): void
     {
         $t = $this->mTemplateId ? MaintenanceTemplate::find($this->mTemplateId) : null;
@@ -216,7 +226,13 @@ class Maintenance extends Component
 
             return;
         }
-        $this->mChecklist = collect($t->itemsForCycle($this->mFrequency))
+        // ຖ້າ ແມ່ແບບ ມີ ຂໍ້ ຕິດ ປະເພດ ລົດ → ຕ້ອງ ເລືອກ EV/Engine ກ່ອນ.
+        if ($t->hasFuelTypes() && $this->mFuelType === '') {
+            $this->mChecklist = [];
+
+            return;
+        }
+        $this->mChecklist = collect($t->itemsForCycle($this->mFrequency, $this->mFuelType))
             ->map(fn ($x) => ['label' => $x['label'], 'remark' => $x['remark'], 'action' => $x['action'], 'group' => $x['group'] ?? 'other', 'status' => 'ok'])
             ->values()
             ->all();
@@ -280,6 +296,7 @@ class Maintenance extends Component
             'mPerformedBy' => ['nullable', 'string', 'max:256'],
             'mCost' => ['nullable', 'numeric', 'min:0'],
             'mFrequency' => ['nullable', 'in:'.implode(',', EquipmentMaintenance::FREQUENCIES)],
+            'mFuelType' => ['nullable', 'in:ev,engine'],
             'mNextService' => ['nullable', 'date'],
             'mStatus' => ['required', 'in:'.implode(',', array_keys(EquipmentMaintenance::STATUSES))],
             'mNotes' => ['nullable', 'string', 'max:2000'],
@@ -290,6 +307,14 @@ class Maintenance extends Component
 
         $e = Equipment::findOrFail($this->mEquipmentId);
         $this->guardDept($e);
+
+        // ຖ້າ ໃຊ້ ແມ່ແບບ ທີ່ ຂໍ້ ຕິດ ປະເພດ ລົດ → ຕ້ອງ ເລືອກ EV/Engine ກ່ອນ ບັນທຶກ.
+        $tpl = $this->mTemplateId ? MaintenanceTemplate::find($this->mTemplateId) : null;
+        if ($tpl && $tpl->hasFuelTypes() && $this->mFuelType === '') {
+            $this->addError('mFuelType', 'ກະລຸນາ ເລືອກ ປະເພດ ລົດ (ໄຟຟ້າ/ນ້ຳມັນ) ກ່ອນ.');
+
+            return;
+        }
 
         if (count($this->mExistingPhotos) + count($this->mPhotos) > self::MAX_PHOTOS) {
             $this->addError('mPhotos', 'ຮູບ ໄດ້ ສູງສຸດ '.self::MAX_PHOTOS.' ໃບ.');
@@ -517,6 +542,7 @@ class Maintenance extends Component
             'checklistGroups' => $checklistGroups,
             'checklistTotal' => count($this->mChecklist),
             'checklistNgCount' => $ckNgCount,
+            'mTemplateHasFuelTypes' => $this->mTemplateId ? (MaintenanceTemplate::find($this->mTemplateId)?->hasFuelTypes() ?? false) : false,
         ]);
     }
 }

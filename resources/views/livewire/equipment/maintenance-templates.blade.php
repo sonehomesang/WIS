@@ -158,33 +158,71 @@
                         <label class="block text-sm text-gray-600">ລາຍການ ເຊັກລິສ ບຳລຸງ</label>
                         <span class="text-[11px] text-gray-400">ກົດ ຮອບ ເພື່ອ ສະຫຼັບ: — → <b class="text-sky-700">C ກວດ</b> → <b class="text-amber-700">X ປ່ຽນ</b></span>
                     </div>
-                    <div class="space-y-1.5">
-                        @foreach ($tItems as $i => $item)
-                            <div wire:key="mtit-{{ $i }}" class="border border-gray-100 rounded-md p-1.5">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-xs text-gray-400 w-5 text-right shrink-0">{{ $i + 1 }}.</span>
-                                    <input type="text" wire:model="tItems.{{ $i }}.label" placeholder="ວຽກ ບຳລຸງ…" class="flex-1 min-w-0 rounded-md border-gray-300 text-xs py-1" />
-                                    <input type="text" wire:model="tItems.{{ $i }}.remark" placeholder="ໝາຍເຫດ/ອາໄຫຼ່…" class="w-28 shrink-0 rounded-md border-gray-200 text-xs py-1 text-gray-500" />
-                                    <button type="button" wire:click="removeChecklistItem({{ $i }})" class="text-red-500 px-1 shrink-0" title="ລຶບ ຂໍ້">×</button>
+                    @php
+                        $tGroupLabels = \App\Models\MaintenanceTemplate::GROUPS;
+                        $tGroupTone = [
+                            'engine' => 'bg-amber-50 text-amber-800',
+                            'powertrain' => 'bg-violet-50 text-violet-800',
+                            'steering' => 'bg-sky-50 text-sky-800',
+                            'mast' => 'bg-emerald-50 text-emerald-800',
+                            'hydraulic' => 'bg-teal-50 text-teal-800',
+                            'electrical' => 'bg-rose-50 text-rose-800',
+                            'other' => 'bg-gray-100 text-gray-700',
+                        ];
+                        // ຈັດ index ຂໍ້ ຕາມ ໝວດ ປັດຈຸບັນ (ຮຽງ ຕາມ ລຳດັບ GROUPS; ຂໍ້ ໃໝ່/ບໍ່ ຮັບຮອງ → ອື່ນໆ)
+                        $tByGroup = [];
+                        foreach ($tItems as $i => $it) {
+                            $g = $it['group'] ?? 'other';
+                            if (! array_key_exists($g, $tGroupLabels)) { $g = 'other'; }
+                            $tByGroup[$g][] = $i;
+                        }
+                    @endphp
+                    <div class="space-y-2">
+                        @foreach ($tGroupLabels as $gk => $gl)
+                            @if (! empty($tByGroup[$gk]))
+                                <div wire:key="tgrp-{{ $gk }}">
+                                    <div class="flex items-center gap-2 px-2 py-1 rounded-t-md text-xs {{ $tGroupTone[$gk] }}">
+                                        <span class="font-medium">{{ $gl }}</span>
+                                        <span class="opacity-70">· {{ count($tByGroup[$gk]) }} ຂໍ້</span>
+                                    </div>
+                                    <div class="space-y-1.5 border border-t-0 border-gray-100 rounded-b-md p-1.5">
+                                        @foreach ($tByGroup[$gk] as $i)
+                                            @php $item = $tItems[$i]; @endphp
+                                            <div wire:key="mtit-{{ $i }}" class="border border-gray-100 rounded-md p-1.5">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="text-xs text-gray-400 w-5 text-right shrink-0">{{ $i + 1 }}.</span>
+                                                    <input type="text" wire:model="tItems.{{ $i }}.label" placeholder="ວຽກ ບຳລຸງ…" class="flex-1 min-w-0 rounded-md border-gray-300 text-xs py-1" />
+                                                    <input type="text" wire:model="tItems.{{ $i }}.remark" placeholder="ໝາຍເຫດ/ອາໄຫຼ່…" class="w-28 shrink-0 rounded-md border-gray-200 text-xs py-1 text-gray-500" />
+                                                    <button type="button" wire:click="removeChecklistItem({{ $i }})" class="text-red-500 px-1 shrink-0" title="ລຶບ ຂໍ້">×</button>
+                                                </div>
+                                                <div class="flex items-center gap-1.5 flex-wrap mt-1 pl-6">
+                                                    <span class="text-[11px] text-gray-400 mr-0.5">ໝວດ:</span>
+                                                    <select wire:model="tItems.{{ $i }}.group" class="rounded-md border-gray-200 text-[11px] py-1 text-gray-600">
+                                                        @foreach ($tGroupLabels as $ggk => $ggl)<option value="{{ $ggk }}">{{ $ggl }}</option>@endforeach
+                                                    </select>
+                                                    <span class="text-[11px] text-gray-400 mr-0.5">ໃຊ້ກັບ:</span>
+                                                    <select wire:model="tItems.{{ $i }}.applies" class="rounded-md border-gray-200 text-[11px] py-1 text-gray-600 mr-1" title="ໃຊ້ ກັບ ປະເພດ ລົດ ໃດ">
+                                                        <option value="both">ທັງ 2</option>
+                                                        <option value="engine">ນ້ຳມັນ</option>
+                                                        <option value="ev">ໄຟຟ້າ</option>
+                                                    </select>
+                                                    <span class="text-[11px] text-gray-400 mr-0.5">ຮອບ:</span>
+                                                    @foreach (\App\Models\MaintenanceTemplate::FREQ_LABELS as $fk => $fl)
+                                                        @php $st = $item['cycles'][$fk] ?? ''; @endphp
+                                                        <button type="button" wire:click="bumpCycle({{ $i }}, '{{ $fk }}')"
+                                                                class="inline-flex flex-col items-center leading-none px-2 py-1 rounded border text-[10px] transition-colors
+                                                                {{ $st === 'C' ? 'bg-sky-50 border-sky-300 text-sky-700' : ($st === 'X' ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300') }}"
+                                                                title="{{ $fl }} · {{ \App\Models\MaintenanceTemplate::FREQ_HOURS[$fk] }}">
+                                                            <span>{{ $fl }}</span>
+                                                            <span class="font-bold text-xs mt-0.5">{{ $st ?: '—' }}</span>
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-1.5 flex-wrap mt-1 pl-6">
-                                    <span class="text-[11px] text-gray-400 mr-0.5">ໝວດ:</span>
-                                    <select wire:model="tItems.{{ $i }}.group" class="rounded-md border-gray-200 text-[11px] py-1 text-gray-600 mr-1">
-                                        @foreach (\App\Models\MaintenanceTemplate::GROUPS as $gk => $gl)<option value="{{ $gk }}">{{ $gl }}</option>@endforeach
-                                    </select>
-                                    <span class="text-[11px] text-gray-400 mr-0.5">ຮອບ:</span>
-                                    @foreach (\App\Models\MaintenanceTemplate::FREQ_LABELS as $fk => $fl)
-                                        @php $st = $item['cycles'][$fk] ?? ''; @endphp
-                                        <button type="button" wire:click="bumpCycle({{ $i }}, '{{ $fk }}')"
-                                                class="inline-flex flex-col items-center leading-none px-2 py-1 rounded border text-[10px] transition-colors
-                                                {{ $st === 'C' ? 'bg-sky-50 border-sky-300 text-sky-700' : ($st === 'X' ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300') }}"
-                                                title="{{ $fl }} · {{ \App\Models\MaintenanceTemplate::FREQ_HOURS[$fk] }}">
-                                            <span>{{ $fl }}</span>
-                                            <span class="font-bold text-xs mt-0.5">{{ $st ?: '—' }}</span>
-                                        </button>
-                                    @endforeach
-                                </div>
-                            </div>
+                            @endif
                         @endforeach
                     </div>
                     <p class="text-xs text-gray-400 mt-1">ໃສ່ <b>ໝົດທຸກ ລາຍການ</b> ແລ້ວ ໝາຍ ແຕ່ລະ ຮອບ ວ່າ <b class="text-sky-700">C</b>=ກວດ ຫຼື <b class="text-amber-700">X</b>=ປ່ຽນ (ວ່າງ = ບໍ່ ເຮັດ ຮອບ ນັ້ນ). ຕອນ ບຳລຸງ ຈິງ ຈະ ຄັດ ລິສ ຕາມ ຮອບ ທີ່ ເລືອກ ພ້ອມ ສະແດງ C/X.</p>

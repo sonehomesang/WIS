@@ -56,7 +56,7 @@ class MaintenanceTemplates extends Component
     /** ຂໍ້ ເປົ່າ ໃໝ່. */
     protected function blankItem(): array
     {
-        return ['label' => '', 'remark' => '', 'cycles' => [], 'group' => 'other'];
+        return ['label' => '', 'remark' => '', 'cycles' => [], 'group' => 'other', 'applies' => 'both'];
     }
 
     public function newTemplate(): void
@@ -136,7 +136,7 @@ class MaintenanceTemplates extends Component
         $items = collect($this->tItems)
             ->map(function ($it) {
                 if (is_string($it)) {
-                    return ['label' => trim($it), 'remark' => '', 'cycles' => [], 'group' => 'other'];
+                    return ['label' => trim($it), 'remark' => '', 'cycles' => [], 'group' => 'other', 'applies' => 'both'];
                 }
                 $cycles = [];
                 foreach (MaintenanceTemplate::FREQUENCIES as $f) {
@@ -146,12 +146,14 @@ class MaintenanceTemplates extends Component
                     }
                 }
                 $group = (isset($it['group']) && array_key_exists($it['group'], MaintenanceTemplate::GROUPS)) ? $it['group'] : 'other';
+                $applies = (isset($it['applies']) && in_array($it['applies'], MaintenanceTemplate::APPLIES, true)) ? $it['applies'] : 'both';
 
                 return [
                     'label' => trim((string) ($it['label'] ?? '')),
                     'remark' => trim((string) ($it['remark'] ?? '')),
                     'cycles' => $cycles,
                     'group' => $group,
+                    'applies' => $applies,
                 ];
             })
             ->filter(fn ($x) => $x['label'] !== '')

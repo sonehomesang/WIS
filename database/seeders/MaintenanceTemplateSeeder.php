@@ -24,7 +24,7 @@ class MaintenanceTemplateSeeder extends Seeder
     public static function items(): array
     {
         // C = ກວດ, X = ປ່ຽນ. ຮອບ: daily·monthly·quarterly·semi_annual·annual.
-        return [
+        $items = [
             // ── ເຄື່ອງຈັກ · Engine ──
             ['group' => 'engine', 'label' => 'ກວດ ລະດັບ/ຮົ່ວ ນ້ຳມັນ ເຄື່ອງ · ປ່ຽນ', 'remark' => 'SAE 15W-40 · 1.4 gal · I:50h', 'cycles' => ['daily' => 'C', 'monthly' => 'X', 'quarterly' => 'X', 'semi_annual' => 'X', 'annual' => 'X']],
             ['group' => 'engine', 'label' => 'ປ່ຽນ ໝໍ້ກອງ ນ້ຳມັນ ເຄື່ອງ', 'remark' => '20801-01271 · 1pc', 'cycles' => ['monthly' => 'X', 'quarterly' => 'X', 'semi_annual' => 'X', 'annual' => 'X']],
@@ -81,6 +81,16 @@ class MaintenanceTemplateSeeder extends Seeder
             ['group' => 'other', 'label' => 'ກວດ ລົມ ຢາງ (tire pressure)', 'remark' => '', 'cycles' => ['daily' => 'C', 'monthly' => 'C', 'quarterly' => 'C', 'semi_annual' => 'C', 'annual' => 'C']],
             ['group' => 'other', 'label' => 'ຍ່າງ ກວດ ຮອບ ຄັນ (walk-around)', 'remark' => '', 'cycles' => ['daily' => 'C', 'monthly' => 'C', 'quarterly' => 'C', 'semi_annual' => 'C', 'annual' => 'C']],
         ];
+
+        // ປະເພດ ລົດ: ໝວດ ເຄື່ອງຈັກ/ສົ່ງກຳລັງ = engine (ດີເຊລ) · ອື່ນໆ = both. ຍົກເວັ້ນ ລູກປືນລໍ້ = both (ມີ ທັງ 2).
+        return array_map(function ($it) {
+            $applies = in_array($it['group'], ['engine', 'powertrain'], true) ? 'engine' : 'both';
+            if (str_contains($it['label'], 'ລູກປືນລໍ້')) {
+                $applies = 'both';
+            }
+
+            return $it + ['applies' => $applies];
+        }, $items);
     }
 
     public function run(): void
