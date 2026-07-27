@@ -83,10 +83,13 @@ class Maintenance extends Component
     /** @var array<int,array{label:string,remark:string,action:string,group:string,status:string,photo_before?:string,photo_after?:string}> */
     public array $mChecklist = [];
 
-    /** ຮູບ ຫຼັກຖານ ກ່ອນ/ຫຼັງ ຕໍ່ ຂໍ້ ປ່ຽນ (X) — key = index ຂໍ້ ໃນ mChecklist → TemporaryUploadedFile. */
+    /** ຮູບ/ຄລິບ ຫຼັກຖານ ຕໍ່ ຂໍ້ — key = index ຂໍ້ ໃນ mChecklist → TemporaryUploadedFile.
+     * before/after = ຂໍ້ ປ່ຽນ (X) ທີ່ ໝາຍ ✓ · problem = ຂໍ້ ທີ່ ໝາຍ ✗ (ບັນຫາ). */
     public array $itemPhotoBefore = [];
 
     public array $itemPhotoAfter = [];
+
+    public array $itemPhotoProblem = [];
 
     // ── ຄັດ ເຊັກລິສ ໃນ ຟອມ (ໃຫ້ 38+ ຂໍ້ ສັ້ນ ລົງ) ──
     public string $ckAction = '';   // '' | 'C' | 'X'
@@ -130,7 +133,7 @@ class Maintenance extends Component
         $this->reset([
             'editingId', 'mSearch', 'mEquipmentId', 'mEquipmentLabel', 'mDescription',
             'mPerformedBy', 'mCost', 'mFrequency', 'mNextService', 'mNotes', 'mPhotos', 'mExistingPhotos', 'mTitle',
-            'mTemplateId', 'mChecklist', 'ckAction', 'ckNg', 'mFuelType', 'itemPhotoBefore', 'itemPhotoAfter',
+            'mTemplateId', 'mChecklist', 'ckAction', 'ckNg', 'mFuelType', 'itemPhotoBefore', 'itemPhotoAfter', 'itemPhotoProblem',
         ]);
         $this->mDate = now()->toDateString();
         $this->mType = 'preventive';
@@ -163,7 +166,7 @@ class Maintenance extends Component
         if ($m->equipment) {
             $this->guardDept($m->equipment);
         }
-        $this->reset(['mSearch', 'mPhotos', 'itemPhotoBefore', 'itemPhotoAfter']);
+        $this->reset(['mSearch', 'mPhotos', 'itemPhotoBefore', 'itemPhotoAfter', 'itemPhotoProblem']);
         $this->planning = false;
         $this->editingId = $m->id;
         $this->mEquipmentId = $m->equipment_id;
@@ -238,7 +241,7 @@ class Maintenance extends Component
             return;
         }
         $this->mChecklist = collect($t->itemsForCycle($this->mFrequency, $this->mFuelType))
-            ->map(fn ($x) => ['label' => $x['label'], 'remark' => $x['remark'], 'action' => $x['action'], 'group' => $x['group'] ?? 'other', 'status' => 'ok'])
+            ->map(fn ($x) => ['label' => $x['label'], 'remark' => $x['remark'], 'action' => $x['action'], 'group' => $x['group'] ?? 'other', 'status' => 'na'])
             ->values()
             ->all();
     }
@@ -288,13 +291,14 @@ class Maintenance extends Component
         }
     }
 
-    /** ລຶບ ຮູບ ກ່ອນ/ຫຼັງ ຂອງ ຂໍ້ ໜຶ່ງ ($slot = 'before'|'after'). ລຶບ ທັງ temp ອັບ + ຮູບ ທີ່ ບັນທຶກ ໄວ້. */
+    /** ລຶບ ຮູບ/ຄລິບ ຂອງ ຂໍ້ ($slot = 'before'|'after'|'problem'). ລຶບ ທັງ temp ອັບ + ໄຟລ໌ ທີ່ ບັນທຶກ ໄວ້. */
     public function clearItemPhoto(int $i, string $slot): void
     {
-        $store = $slot === 'after' ? 'itemPhotoAfter' : 'itemPhotoBefore';
+        $slot = in_array($slot, ['before', 'after', 'problem'], true) ? $slot : 'before';
+        $store = ['before' => 'itemPhotoBefore', 'after' => 'itemPhotoAfter', 'problem' => 'itemPhotoProblem'][$slot];
         unset($this->{$store}[$i]);
 
-        $key = 'photo_'.($slot === 'after' ? 'after' : 'before');
+        $key = 'photo_'.$slot;
         if (isset($this->mChecklist[$i][$key])) {
             if ($this->editingId) {
                 Storage::disk('public')->delete($this->mChecklist[$i][$key]);
@@ -323,8 +327,10 @@ class Maintenance extends Component
             'mTemplateId' => ['nullable', 'exists:maintenance_templates,id'],
             'mPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
             'mPhotos.*' => ['image', 'max:8192'],
-            'itemPhotoBefore.*' => ['nullable', 'image', 'max:8192'],
-            'itemPhotoAfter.*' => ['nullable', 'image', 'max:8192'],
+            // ຮູບ ຫຼື ຄລິບ ສັ້ນ (≤30MB) ຕໍ່ ຂໍ້
+            'itemPhotoBefore.*' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif,mp4,mov,webm,3gp,m4v', 'max:30720'],
+            'itemPhotoAfter.*' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif,mp4,mov,webm,3gp,m4v', 'max:30720'],
+            'itemPhotoProblem.*' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif,mp4,mov,webm,3gp,m4v', 'max:30720'],
         ]);
 
         $e = Equipment::findOrFail($this->mEquipmentId);
@@ -350,19 +356,20 @@ class Maintenance extends Component
 
         $nextService = $this->mNextService ?: $this->nextServiceFor($this->mFrequency);
 
-        // ຮູບ ຫຼັກຖານ ກ່ອນ/ຫຼັງ ຕໍ່ ຂໍ້ ປ່ຽນ (X) → ເກັບ ໄຟລ໌ + ຝັງ path ໃສ່ ຂໍ້.
+        // ຮູບ/ຄລິບ ຫຼັກຖານ ຕໍ່ ຂໍ້ → ເກັບ ໄຟລ໌ + ຝັງ path ໃສ່ ຂໍ້ (ຂໍ້ X ✓ = ກ່ອນ/ຫຼັງ · ຂໍ້ ✗ = problem).
+        $itemDir = 'equipment/maintenance/'.$e->id.'/items';
         foreach ($this->mChecklist as $i => $c) {
-            if (($c['action'] ?? '') !== 'X') {
-                continue;
-            }
             if (isset($this->itemPhotoBefore[$i]) && $this->itemPhotoBefore[$i]) {
-                $this->mChecklist[$i]['photo_before'] = $this->itemPhotoBefore[$i]->store('equipment/maintenance/'.$e->id.'/items', 'public');
+                $this->mChecklist[$i]['photo_before'] = $this->itemPhotoBefore[$i]->store($itemDir, 'public');
             }
             if (isset($this->itemPhotoAfter[$i]) && $this->itemPhotoAfter[$i]) {
-                $this->mChecklist[$i]['photo_after'] = $this->itemPhotoAfter[$i]->store('equipment/maintenance/'.$e->id.'/items', 'public');
+                $this->mChecklist[$i]['photo_after'] = $this->itemPhotoAfter[$i]->store($itemDir, 'public');
+            }
+            if (isset($this->itemPhotoProblem[$i]) && $this->itemPhotoProblem[$i]) {
+                $this->mChecklist[$i]['photo_problem'] = $this->itemPhotoProblem[$i]->store($itemDir, 'public');
             }
         }
-        $this->reset(['itemPhotoBefore', 'itemPhotoAfter']);
+        $this->reset(['itemPhotoBefore', 'itemPhotoAfter', 'itemPhotoProblem']);
 
         // ເກັບ ເຊັກລິສ ສະເພາະ ເມື່ອ ຜູກ ແມ່ແບບ + ມີ ຮອບ (ຄັດ ໄດ້).
         $checklist = ($this->mTemplateId && count($this->mChecklist)) ? $this->mChecklist : null;

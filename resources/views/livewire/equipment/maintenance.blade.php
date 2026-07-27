@@ -373,35 +373,50 @@
                                                 </div>
                                             </div>
 
-                                            {{-- ຂໍ້ ປ່ຽນ (X) → ຮູບ ຫຼັກຖານ ກ່ອນ/ຫຼັງ --}}
-                                            @if (($c['action'] ?? '') === 'X')
-                                                <div class="flex gap-2 mt-1.5 pl-7">
-                                                    @foreach (['before' => 'ກ່ອນ', 'after' => 'ຫຼັງ'] as $slot => $slotLabel)
+                                            {{-- ຫຼັກຖານ ຮູບ/ຄລິບ ຕາມ ສະຖານະ: ✗ ບັນຫາ → 1 ຊ່ອງ · X ✓ (ປ່ຽນແລ້ວ) → ກ່ອນ/ຫຼັງ --}}
+                                            @php $st = $c['status'] ?? 'na'; @endphp
+                                            @if ($st === 'ng' || ($st === 'ok' && ($c['action'] ?? '') === 'X'))
+                                                @php
+                                                    $slots = $st === 'ng'
+                                                        ? ['problem' => ['label' => 'ຫຼັກຖານ ບັນຫາ', 'model' => 'itemPhotoProblem']]
+                                                        : ['before' => ['label' => 'ກ່ອນ', 'model' => 'itemPhotoBefore'], 'after' => ['label' => 'ຫຼັງ', 'model' => 'itemPhotoAfter']];
+                                                    $isVid = fn ($p) => in_array(strtolower(pathinfo((string) $p, PATHINFO_EXTENSION)), ['mp4', 'mov', 'webm', '3gp', 'm4v']);
+                                                @endphp
+                                                <div class="flex flex-wrap gap-2 mt-1.5 pl-7">
+                                                    @foreach ($slots as $slot => $meta)
                                                         @php
                                                             $savedPath = $c['photo_'.$slot] ?? null;
-                                                            $store = $slot === 'after' ? ($itemPhotoAfter[$i] ?? null) : ($itemPhotoBefore[$i] ?? null);
+                                                            $store = data_get($this, $meta['model'].'.'.$i);
                                                         @endphp
-                                                        <div class="w-20">
-                                                            <div class="text-[10px] text-gray-400 mb-0.5">ຮູບ {{ $slotLabel }}</div>
+                                                        <div class="w-24">
+                                                            <div class="text-[10px] {{ $st === 'ng' ? 'text-red-500' : 'text-gray-400' }} mb-0.5">📷 {{ $meta['label'] }}</div>
                                                             @if ($savedPath)
                                                                 <div class="relative">
-                                                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($savedPath) }}" @click="big='{{ \Illuminate\Support\Facades\Storage::url($savedPath) }}'" class="w-full h-16 rounded object-cover border border-gray-200 cursor-pointer" alt="ຮູບ {{ $slotLabel }}" />
+                                                                    @if ($isVid($savedPath))
+                                                                        <video src="{{ \Illuminate\Support\Facades\Storage::url($savedPath) }}" class="w-full h-16 rounded object-cover border border-gray-200 bg-black" controls preload="metadata"></video>
+                                                                    @else
+                                                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($savedPath) }}" @click="big='{{ \Illuminate\Support\Facades\Storage::url($savedPath) }}'" class="w-full h-16 rounded object-cover border border-gray-200 cursor-pointer" alt="{{ $meta['label'] }}" />
+                                                                    @endif
                                                                     <button type="button" wire:click="clearItemPhoto({{ $i }}, '{{ $slot }}')" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[10px] leading-none flex items-center justify-center">×</button>
                                                                 </div>
                                                             @elseif ($store)
                                                                 <div class="relative">
-                                                                    <img src="{{ $store->temporaryUrl() }}" class="w-full h-16 rounded object-cover border border-sky-300" alt="ຮູບ {{ $slotLabel }} ໃໝ່" />
+                                                                    @if ($store->isPreviewable())
+                                                                        <img src="{{ $store->temporaryUrl() }}" class="w-full h-16 rounded object-cover border border-sky-300" alt="{{ $meta['label'] }}" />
+                                                                    @else
+                                                                        <div class="w-full h-16 rounded border border-sky-300 bg-sky-50 text-sky-600 text-[10px] flex flex-col items-center justify-center"><span class="text-base leading-none">🎬</span>ຄລິບ ພ້ອມ</div>
+                                                                    @endif
                                                                     <button type="button" wire:click="clearItemPhoto({{ $i }}, '{{ $slot }}')" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[10px] leading-none flex items-center justify-center">×</button>
                                                                 </div>
                                                             @else
-                                                                <label class="flex flex-col items-center justify-center h-16 rounded border border-dashed border-gray-300 cursor-pointer text-gray-400 hover:border-sky-400 hover:text-sky-500">
+                                                                <label class="flex flex-col items-center justify-center h-16 rounded border border-dashed {{ $st === 'ng' ? 'border-red-300 text-red-400 hover:border-red-500' : 'border-gray-300 text-gray-400 hover:border-sky-400 hover:text-sky-500' }} cursor-pointer">
                                                                     <span class="text-base leading-none">📷</span>
-                                                                    <span class="text-[10px] mt-0.5">{{ $slotLabel }}</span>
-                                                                    <input type="file" wire:model="itemPhoto{{ $slot === 'after' ? 'After' : 'Before' }}.{{ $i }}" accept="image/*" class="hidden" />
+                                                                    <span class="text-[10px] mt-0.5">ຖ່າຍ/ອັບ</span>
+                                                                    <input type="file" wire:model="{{ $meta['model'] }}.{{ $i }}" accept="image/*,video/*" capture="environment" class="hidden" />
                                                                 </label>
                                                             @endif
-                                                            <div wire:loading wire:target="itemPhoto{{ $slot === 'after' ? 'After' : 'Before' }}.{{ $i }}" class="text-[10px] text-gray-400 mt-0.5">ອັບ…</div>
-                                                            @error('itemPhoto'.($slot === 'after' ? 'After' : 'Before').'.'.$i)<div class="text-[10px] text-red-600 mt-0.5">{{ $message }}</div>@enderror
+                                                            <div wire:loading wire:target="{{ $meta['model'] }}.{{ $i }}" class="text-[10px] text-gray-400 mt-0.5">ອັບ…</div>
+                                                            @error($meta['model'].'.'.$i)<div class="text-[10px] text-red-600 mt-0.5">{{ $message }}</div>@enderror
                                                         </div>
                                                     @endforeach
                                                 </div>
@@ -414,7 +429,7 @@
                             <div class="px-3 py-6 text-center text-xs text-gray-400">ບໍ່ ມີ ຂໍ້ ກົງ ກັບ ຕົວ ຄັດ — <button type="button" wire:click="resetChecklistFilter" class="text-sky-600 hover:underline">ລ້າງ ຕົວ ຄັດ</button></div>
                         @endforelse
 
-                        <p class="text-[11px] text-gray-400 px-3 py-1.5 border-t border-gray-100">ກົດ ✓/✗ ຕໍ່ ຂໍ້ (ກົດ ຊ້ຳ = N/A). ຄ່າ ຕັ້ງຕົ້ນ ✓. ກົດ ຫົວ ໝວດ ເພື່ອ ຍໍ່/ຂະຫຍາຍ. ຈະ ເກັບ ໄວ້ ກັບ ບັນທຶກ ບຳລຸງ.</p>
+                        <p class="text-[11px] text-gray-400 px-3 py-1.5 border-t border-gray-100">ໝາຍ ✓ (ແລ້ວ) / ✗ (ບັນຫາ) ຕໍ່ ຂໍ້ · ຄ່າ ຕັ້ງຕົ້ນ = ຍັງ ບໍ່ ໝາຍ. ໝາຍ ✗ → ຖ່າຍ ຮູບ/ຄລິບ ຫຼັກຖານ · ຂໍ້ ປ່ຽນ(X) ໝາຍ ✓ → ຮູບ ກ່ອນ/ຫຼັງ. ກົດ ຫົວ ໝວດ ເພື່ອ ຍໍ່/ຂະຫຍາຍ.</p>
                     </div>
                 @endif
 
@@ -507,13 +522,18 @@
                                 <div class="min-w-0">
                                     <div class="text-gray-700 leading-tight">{{ $c['label'] ?? '' }}@if (! empty($c['action'])) <span class="text-[10px] rounded px-1 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $c['action'] }}</span>@endif</div>
                                     @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
-                                    @if (! empty($c['photo_before']) || ! empty($c['photo_after']))
+                                    @if (! empty($c['photo_problem']) || ! empty($c['photo_before']) || ! empty($c['photo_after']))
+                                        @php $isVidV = fn ($p) => in_array(strtolower(pathinfo((string) $p, PATHINFO_EXTENSION)), ['mp4', 'mov', 'webm', '3gp', 'm4v']); @endphp
                                         <div class="flex gap-2 mt-1">
-                                            @foreach (['before' => 'ກ່ອນ', 'after' => 'ຫຼັງ'] as $slot => $slotLabel)
+                                            @foreach (['problem' => 'ຫຼັກຖານ', 'before' => 'ກ່ອນ', 'after' => 'ຫຼັງ'] as $slot => $slotLabel)
                                                 @if (! empty($c['photo_'.$slot]))
                                                     <div class="text-center">
-                                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($c['photo_'.$slot]) }}" @click="big='{{ \Illuminate\Support\Facades\Storage::url($c['photo_'.$slot]) }}'" class="w-16 h-16 rounded object-cover border border-gray-200 cursor-pointer" alt="ຮູບ {{ $slotLabel }}" />
-                                                        <div class="text-[10px] text-gray-400">{{ $slotLabel }}</div>
+                                                        @if ($isVidV($c['photo_'.$slot]))
+                                                            <video src="{{ \Illuminate\Support\Facades\Storage::url($c['photo_'.$slot]) }}" class="w-16 h-16 rounded object-cover border border-gray-200 bg-black" controls preload="metadata"></video>
+                                                        @else
+                                                            <img src="{{ \Illuminate\Support\Facades\Storage::url($c['photo_'.$slot]) }}" @click="big='{{ \Illuminate\Support\Facades\Storage::url($c['photo_'.$slot]) }}'" class="w-16 h-16 rounded object-cover border border-gray-200 cursor-pointer" alt="{{ $slotLabel }}" />
+                                                        @endif
+                                                        <div class="text-[10px] {{ $slot === 'problem' ? 'text-red-500' : 'text-gray-400' }}">{{ $slotLabel }}</div>
                                                     </div>
                                                 @endif
                                             @endforeach

@@ -147,7 +147,7 @@ test('recording with a template + cycle loads the checklist filtered by cycle an
     expect($m->frequency)->toBe('monthly');
     expect($m->checklist)->toHaveCount(2);
     expect($m->checklist[0]['action'])->toBe('X');    // ນ້ຳມັນ = ປ່ຽນ
-    expect($m->checklist[0]['status'])->toBe('ok');   // ຄ່າ ຕັ້ງຕົ້ນ
+    expect($m->checklist[0]['status'])->toBe('na');   // ຄ່າ ຕັ້ງຕົ້ນ = ຍັງ ບໍ່ ໝາຍ
     expect($m->checklist[1]['status'])->toBe('ng');   // ລົມ ຢາງ = ມີ ບັນຫາ
 });
 
@@ -211,6 +211,7 @@ test('before/after photos on a replace (X) item are stored on the checklist', fu
         ->set('mTemplateId', $t->id)
         ->set('mFrequency', 'monthly')
         ->assertCount('mChecklist', 2)                              // ຂໍ້ 0 = X (ປ່ຽນ), ຂໍ້ 1 = C
+        ->call('toggleMaintChecklist', 0, 'ok')                    // ໝາຍ X ວ່າ ປ່ຽນແລ້ວ → ຮູບ ກ່ອນ/ຫຼັງ
         ->set('itemPhotoBefore.0', UploadedFile::fake()->image('before.jpg', 400, 300))
         ->set('itemPhotoAfter.0', UploadedFile::fake()->image('after.jpg', 400, 300))
         ->call('save')
@@ -223,6 +224,39 @@ test('before/after photos on a replace (X) item are stored on the checklist', fu
     Storage::disk('public')->assertExists($m->checklist[0]['photo_after']);
     // the C item keeps no photos
     expect($m->checklist[1]['photo_before'] ?? null)->toBeNull();
+});
+
+test('a checklist item marked NG stores a problem evidence photo or video clip', function () {
+    Storage::fake('public');
+    $e = Equipment::create(['asset_code' => 'MT-NG', 'name' => 'Forklift', 'quantity' => 1]);
+    $t = MaintenanceTemplate::create([
+        'name' => 'PM ng', 'equipment_id' => $e->id, 'is_active' => true,
+        'items' => [
+            ['group' => 'other', 'label' => 'ກວດ ໄຟ', 'remark' => '', 'cycles' => ['monthly' => 'C']],
+            ['group' => 'engine', 'label' => 'ກວດ ສາຍພານ', 'remark' => '', 'cycles' => ['monthly' => 'C']],
+        ],
+    ]);
+
+    actingAs($this->staff);
+    Livewire::test(Maintenance::class)
+        ->call('newMaintenance')
+        ->call('pickEquipment', $e->id)
+        ->set('mTitle', 'Inspect')
+        ->set('mTemplateId', $t->id)
+        ->set('mFrequency', 'monthly')
+        ->call('toggleMaintChecklist', 0, 'ng')                   // ຂໍ້ 0 ມີ ບັນຫາ → ຮູບ
+        ->set('itemPhotoProblem.0', UploadedFile::fake()->image('problem.jpg', 400, 300))
+        ->call('toggleMaintChecklist', 1, 'ng')                   // ຂໍ້ 1 ມີ ບັນຫາ → ຄລິບ
+        ->set('itemPhotoProblem.1', UploadedFile::fake()->create('clip.mp4', 500, 'video/mp4'))
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $m = $e->maintenances()->first();
+    expect($m->checklist[0]['photo_problem'] ?? null)->not->toBeNull();
+    expect($m->checklist[1]['photo_problem'] ?? null)->not->toBeNull();
+    expect(str_ends_with($m->checklist[1]['photo_problem'], '.mp4'))->toBeTrue();   // ຄລິບ ວິດີໂອ ຮັບ ໄດ້
+    Storage::disk('public')->assertExists($m->checklist[0]['photo_problem']);
+    Storage::disk('public')->assertExists($m->checklist[1]['photo_problem']);
 });
 
 test('a fuel-typed template requires choosing EV/Engine and filters the checklist by it', function () {
