@@ -5,7 +5,7 @@
     ];
 @endphp
 <div class="pb-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         @include('settings._tabs')
 
         <div class="flex flex-wrap items-center gap-2">

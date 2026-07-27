@@ -6,7 +6,7 @@
 @endphp
 
 <div class="pb-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
         {{-- frozen header group: toolbar + chips freeze together --}}
         <div class="sticky top-16 z-30 bg-gray-100">
         {{-- toolbar --}}

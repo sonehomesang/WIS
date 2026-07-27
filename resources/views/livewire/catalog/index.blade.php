@@ -1,7 +1,7 @@
 @php $fileCls = 'block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-2 file:rounded file:border-0 file:bg-sky-50 file:text-sky-700'; @endphp
 
 <div class="pb-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
         {{-- toolbar --}}
         <div class="sticky top-16 z-20 bg-gray-100 flex flex-col gap-2 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3 lg:flex-nowrap">
             <div class="flex flex-wrap items-center gap-2 min-w-0">
