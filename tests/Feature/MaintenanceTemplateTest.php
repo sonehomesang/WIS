@@ -36,8 +36,8 @@ test('admin can create a maintenance template with per-cycle check/replace actio
     // ຂໍ້ ວ່າງ ຖືກ ຕັດ · cycles ຮຽງ ຕາມ ລຳດັບ ຮອບ (daily→annual) · action C/X ຮັກສາ ໄວ້
     expect($t->normalizedItems())->toBe([
         ['label' => 'ປ່ຽນ ນ້ຳມັນ ເຄື່ອງ', 'remark' => 'SAE15W-40',
-            'cycles' => ['daily' => 'C', 'monthly' => 'X', 'quarterly' => 'X', 'semi_annual' => 'X', 'annual' => 'X']],
-        ['label' => 'ກວດ ລົມ ຢາງ', 'remark' => '', 'cycles' => ['daily' => 'C']],
+            'cycles' => ['daily' => 'C', 'monthly' => 'X', 'quarterly' => 'X', 'semi_annual' => 'X', 'annual' => 'X'], 'group' => 'other'],
+        ['label' => 'ກວດ ລົມ ຢາງ', 'remark' => '', 'cycles' => ['daily' => 'C'], 'group' => 'other'],
     ]);
 });
 
@@ -52,11 +52,11 @@ test('itemsForCycle returns only items due that cycle with their action', functi
     ]);
 
     expect($t->itemsForCycle('daily'))->toBe([
-        ['label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => '', 'action' => 'C'],
+        ['label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => '', 'action' => 'C', 'group' => 'other'],
     ]);
     expect($t->itemsForCycle('annual'))->toBe([
-        ['label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => '', 'action' => 'X'],
-        ['label' => 'return filter', 'remark' => '271A7', 'action' => 'X'],
+        ['label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => '', 'action' => 'X', 'group' => 'other'],
+        ['label' => 'return filter', 'remark' => '271A7', 'action' => 'X', 'group' => 'other'],
     ]);
     expect($t->itemsForCycle('quarterly'))->toBe([]);
 });
@@ -145,7 +145,7 @@ test('legacy freqs items are read as check actions', function () {
     ]);
 
     expect($t->normalizedItems())->toBe([
-        ['label' => 'old item', 'remark' => '', 'cycles' => ['monthly' => 'C', 'annual' => 'C']],
+        ['label' => 'old item', 'remark' => '', 'cycles' => ['monthly' => 'C', 'annual' => 'C'], 'group' => 'other'],
     ]);
 });
 
@@ -241,6 +241,33 @@ test('category scope requires a category', function () {
         ->call('newTemplate')
         ->set('tName', 'No cat')->set('tScope', 'category')->set('tCategory', '')
         ->call('save')->assertHasErrors('tCategory');
+});
+
+test('the template builder stores and reloads the group per item', function () {
+    actingAs(User::factory()->create(['is_super_admin' => true]));
+
+    Livewire::test(MaintenanceTemplates::class)
+        ->call('newTemplate')
+        ->set('tName', 'Grouped')->set('tScope', 'general')
+        ->set('tItems', [['label' => 'ນ້ຳມັນ', 'remark' => '', 'cycles' => ['monthly' => 'X'], 'group' => 'hydraulic']])
+        ->call('save')->assertHasNoErrors();
+
+    $t = MaintenanceTemplate::where('name', 'Grouped')->first();
+    expect($t->items[0]['group'])->toBe('hydraulic');
+    expect($t->normalizedItems()[0]['group'])->toBe('hydraulic');
+
+    // reopening the editor reloads the stored group
+    Livewire::test(MaintenanceTemplates::class)
+        ->call('editTemplate', $t->id)
+        ->assertSet('tItems.0.group', 'hydraulic');
+
+    // an unknown group falls back to 'other' on save
+    Livewire::test(MaintenanceTemplates::class)
+        ->call('newTemplate')
+        ->set('tName', 'Bad group')->set('tScope', 'general')
+        ->set('tItems', [['label' => 'x', 'remark' => '', 'cycles' => ['daily' => 'C'], 'group' => 'nonsense']])
+        ->call('save')->assertHasNoErrors();
+    expect(MaintenanceTemplate::where('name', 'Bad group')->first()->items[0]['group'])->toBe('other');
 });
 
 test('maintenance templates list is narrowed by search + category filter', function () {

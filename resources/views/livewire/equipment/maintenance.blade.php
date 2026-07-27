@@ -300,36 +300,70 @@
                     </div>
                 </div>
 
-                {{-- ເຊັກລິສ ຈາກ ແມ່ແບບ — ຄັດ ຕາມ ຮອບ (mFrequency) --}}
+                {{-- ເຊັກລິສ ຈາກ ແມ່ແບບ — ຄັດ ຕາມ ຮອບ (mFrequency), ແຍກ ໝວດ + filter --}}
                 @if (count($mChecklist))
+                    @php
+                        $groupLabels = \App\Models\MaintenanceTemplate::GROUPS;
+                        $groupTone = [
+                            'engine' => 'bg-amber-50 text-amber-800',
+                            'powertrain' => 'bg-violet-50 text-violet-800',
+                            'steering' => 'bg-sky-50 text-sky-800',
+                            'mast' => 'bg-emerald-50 text-emerald-800',
+                            'hydraulic' => 'bg-teal-50 text-teal-800',
+                            'electrical' => 'bg-rose-50 text-rose-800',
+                            'other' => 'bg-gray-100 text-gray-700',
+                        ];
+                        $ckShown = collect($checklistGroups)->sum(fn ($r) => count($r));
+                        $chipBase = 'px-2 py-1 rounded-full text-[11px] border min-h-[30px] whitespace-nowrap';
+                    @endphp
                     <div class="border border-gray-200 rounded-md overflow-hidden">
-                        <div class="bg-gray-50 px-3 py-1.5 text-xs border-b border-gray-200 flex items-center justify-between gap-2">
+                        <div class="bg-gray-50 px-3 py-1.5 text-xs border-b border-gray-200 flex items-center justify-between gap-2 flex-wrap">
                             <span class="text-gray-600 font-medium">ເຊັກລິສ ບຳລຸງ — ຮອບ {{ $fLabels[$mFrequency] ?? $mFrequency }}</span>
                             <span class="text-gray-400 whitespace-nowrap">C=ກວດ · X=ປ່ຽນ · ✓=ແລ້ວ · ✗=ບັນຫາ</span>
                         </div>
-                        <table class="w-full text-xs">
-                            <tbody>
-                                @foreach ($mChecklist as $i => $c)
-                                    <tr wire:key="mck-{{ $i }}" class="border-b border-gray-50 last:border-0">
-                                        <td class="px-2 py-1 text-gray-400 w-6 text-right align-top">{{ $i + 1 }}</td>
-                                        <td class="px-1 py-1 w-9 text-center align-top">
-                                            <span class="text-[10px] font-bold rounded px-1 py-0.5 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $c['action'] ?? '' }}</span>
-                                        </td>
-                                        <td class="px-1 py-1 align-top">
-                                            <div class="text-gray-700 leading-tight">{{ $c['label'] }}</div>
-                                            @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
-                                        </td>
-                                        <td class="px-1 py-1 pr-2 w-[74px] align-top">
-                                            <div class="flex gap-1 justify-center">
-                                                <button type="button" wire:click="toggleMaintChecklist({{ $i }}, 'ok')" class="w-8 rounded border py-0.5 {{ ($c['status'] ?? '') === 'ok' ? 'bg-green-50 text-green-700 border-green-300 font-medium' : 'border-gray-300 text-gray-400' }}" title="ແລ້ວ">✓</button>
-                                                <button type="button" wire:click="toggleMaintChecklist({{ $i }}, 'ng')" class="w-8 rounded border py-0.5 {{ ($c['status'] ?? '') === 'ng' ? 'bg-red-50 text-red-700 border-red-300 font-medium' : 'border-gray-300 text-gray-400' }}" title="ມີ ບັນຫາ">✗</button>
+
+                        {{-- filter chips --}}
+                        <div class="flex flex-wrap items-center gap-1.5 px-3 py-2 bg-white border-b border-gray-100">
+                            <span class="text-[11px] text-gray-400 mr-0.5">ຄັດ:</span>
+                            <button type="button" wire:click="$set('ckAction', '')" class="{{ $chipBase }} {{ $ckAction === '' ? 'bg-sky-600 text-white border-sky-600' : 'bg-white text-gray-600 border-gray-300' }}">ທັງໝົດ</button>
+                            <button type="button" wire:click="$set('ckAction', 'C')" class="{{ $chipBase }} {{ $ckAction === 'C' ? 'bg-sky-600 text-white border-sky-600' : 'bg-white text-gray-600 border-gray-300' }}">C ກວດ</button>
+                            <button type="button" wire:click="$set('ckAction', 'X')" class="{{ $chipBase }} {{ $ckAction === 'X' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-gray-600 border-gray-300' }}">X ປ່ຽນ</button>
+                            <button type="button" wire:click="$toggle('ckNg')" class="{{ $chipBase }} {{ $ckNg ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-600 border-gray-300' }}">✗ ບັນຫາ@if ($checklistNgCount) ({{ $checklistNgCount }})@endif</button>
+                            <div class="flex-1"></div>
+                            <span class="text-[11px] text-gray-400">ສະແດງ {{ $ckShown }}/{{ $checklistTotal }}</span>
+                        </div>
+
+                        {{-- grouped rows --}}
+                        @forelse ($checklistGroups as $gk => $rows)
+                            <div x-data="{ open: true }" wire:key="ckg-{{ $gk }}" class="border-b border-gray-100 last:border-0">
+                                <button type="button" @click="open = ! open" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs {{ $groupTone[$gk] ?? $groupTone['other'] }}">
+                                    <svg class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-90' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                                    <span class="font-medium">{{ $groupLabels[$gk] ?? $gk }}</span>
+                                    <span class="opacity-70">· {{ count($rows) }} ຂໍ້</span>
+                                </button>
+                                <div x-show="open" class="divide-y divide-gray-50">
+                                    @foreach ($rows as $c)
+                                        @php $i = $c['i']; @endphp
+                                        <div wire:key="mck-{{ $i }}" class="flex items-start gap-2 px-2 py-1.5">
+                                            <span class="text-gray-400 w-5 text-right text-xs pt-0.5 shrink-0">{{ $i + 1 }}</span>
+                                            <span class="shrink-0 text-[10px] font-bold rounded px-1 py-0.5 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $c['action'] ?? '' }}</span>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-gray-700 leading-tight text-xs">{{ $c['label'] }}</div>
+                                                @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
                                             </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                        <p class="text-[11px] text-gray-400 px-3 py-1.5 border-t border-gray-100">ກົດ ✓/✗ ຕໍ່ ຂໍ້ (ກົດ ຊ້ຳ = N/A). ຄ່າ ຕັ້ງຕົ້ນ ✓. ຈະ ເກັບ ໄວ້ ກັບ ບັນທຶກ ບຳລຸງ.</p>
+                                            <div class="flex gap-1 shrink-0">
+                                                <button type="button" wire:click="toggleMaintChecklist({{ $i }}, 'ok')" class="w-8 rounded border py-0.5 text-xs {{ ($c['status'] ?? '') === 'ok' ? 'bg-green-50 text-green-700 border-green-300 font-medium' : 'border-gray-300 text-gray-400' }}" title="ແລ້ວ">✓</button>
+                                                <button type="button" wire:click="toggleMaintChecklist({{ $i }}, 'ng')" class="w-8 rounded border py-0.5 text-xs {{ ($c['status'] ?? '') === 'ng' ? 'bg-red-50 text-red-700 border-red-300 font-medium' : 'border-gray-300 text-gray-400' }}" title="ມີ ບັນຫາ">✗</button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @empty
+                            <div class="px-3 py-6 text-center text-xs text-gray-400">ບໍ່ ມີ ຂໍ້ ກົງ ກັບ ຕົວ ຄັດ — <button type="button" wire:click="resetChecklistFilter" class="text-sky-600 hover:underline">ລ້າງ ຕົວ ຄັດ</button></div>
+                        @endforelse
+
+                        <p class="text-[11px] text-gray-400 px-3 py-1.5 border-t border-gray-100">ກົດ ✓/✗ ຕໍ່ ຂໍ້ (ກົດ ຊ້ຳ = N/A). ຄ່າ ຕັ້ງຕົ້ນ ✓. ກົດ ຫົວ ໝວດ ເພື່ອ ຍໍ່/ຂະຫຍາຍ. ຈະ ເກັບ ໄວ້ ກັບ ບັນທຶກ ບຳລຸງ.</p>
                     </div>
                 @endif
 

@@ -77,8 +77,13 @@ class Maintenance extends Component
     // ── ເຊັກລິສ ຈາກ ແມ່ແບບ (ຄັດ ຕາມ ຮອບ = mFrequency) ──
     public ?int $mTemplateId = null;
 
-    /** @var array<int,array{label:string,remark:string,action:string,status:string}> */
+    /** @var array<int,array{label:string,remark:string,action:string,group:string,status:string}> */
     public array $mChecklist = [];
+
+    // ── ຄັດ ເຊັກລິສ ໃນ ຟອມ (ໃຫ້ 38+ ຂໍ້ ສັ້ນ ລົງ) ──
+    public string $ckAction = '';   // '' | 'C' | 'X'
+
+    public bool $ckNg = false;       // ໂຊ ສະເພາະ ຂໍ້ ບັນຫາ (NG)
 
     // ── ໜ້າຕ່າງ ປະຫວັດ ຕໍ່ ເຄື່ອງ ──
     public ?int $historyEquipmentId = null;
@@ -117,7 +122,7 @@ class Maintenance extends Component
         $this->reset([
             'editingId', 'mSearch', 'mEquipmentId', 'mEquipmentLabel', 'mDescription',
             'mPerformedBy', 'mCost', 'mFrequency', 'mNextService', 'mNotes', 'mPhotos', 'mExistingPhotos', 'mTitle',
-            'mTemplateId', 'mChecklist',
+            'mTemplateId', 'mChecklist', 'ckAction', 'ckNg',
         ]);
         $this->mDate = now()->toDateString();
         $this->mType = 'preventive';
@@ -212,9 +217,16 @@ class Maintenance extends Component
             return;
         }
         $this->mChecklist = collect($t->itemsForCycle($this->mFrequency))
-            ->map(fn ($x) => ['label' => $x['label'], 'remark' => $x['remark'], 'action' => $x['action'], 'status' => 'ok'])
+            ->map(fn ($x) => ['label' => $x['label'], 'remark' => $x['remark'], 'action' => $x['action'], 'group' => $x['group'] ?? 'other', 'status' => 'ok'])
             ->values()
             ->all();
+    }
+
+    /** ລ້າງ ຕົວ ຄັດ ເຊັກລິສ (ໝວດ/C/X/NG). */
+    public function resetChecklistFilter(): void
+    {
+        $this->ckAction = '';
+        $this->ckNg = false;
     }
 
     /** ຕິກ ສະຖານະ ຂໍ້: ✓ ok / ✗ ng (ກົດ ຊ້ຳ = ກັບ ໄປ N/A). */
@@ -467,6 +479,32 @@ class Maintenance extends Component
                 ->orderByDesc('maintenance_date')->orderByDesc('id')->limit(50)->get()
             : collect();
 
+        // ຈັດ ເຊັກລິສ ເປັນ ໝວດ + ຄັດ ຕາມ filter (ຮັກສາ index ເດີມ ໄວ້ ສຳລັບ toggle).
+        $ckNgCount = 0;
+        $ckGroups = [];
+        foreach ($this->mChecklist as $i => $c) {
+            if (($c['status'] ?? '') === 'ng') {
+                $ckNgCount++;
+            }
+            if ($this->ckAction !== '' && ($c['action'] ?? '') !== $this->ckAction) {
+                continue;
+            }
+            if ($this->ckNg && ($c['status'] ?? '') !== 'ng') {
+                continue;
+            }
+            $g = $c['group'] ?? 'other';
+            if (! array_key_exists($g, MaintenanceTemplate::GROUPS)) {
+                $g = 'other';
+            }
+            $ckGroups[$g][] = ['i' => $i] + $c;
+        }
+        $checklistGroups = [];
+        foreach (array_keys(MaintenanceTemplate::GROUPS) as $gk) {
+            if (! empty($ckGroups[$gk])) {
+                $checklistGroups[$gk] = $ckGroups[$gk];
+            }
+        }
+
         return view('livewire.equipment.maintenance', [
             'searchResults' => $searchResults,
             'records' => $records,
@@ -476,6 +514,9 @@ class Maintenance extends Component
             'templateOptions' => $templateOptions,
             'viewing' => $this->viewingId ? EquipmentMaintenance::with('equipment')->find($this->viewingId) : null,
             'canManageDeleted' => $this->canManageDeleted(),
+            'checklistGroups' => $checklistGroups,
+            'checklistTotal' => count($this->mChecklist),
+            'checklistNgCount' => $ckNgCount,
         ]);
     }
 }

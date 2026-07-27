@@ -168,6 +168,10 @@
                                     <button type="button" wire:click="removeChecklistItem({{ $i }})" class="text-red-500 px-1 shrink-0" title="ລຶບ ຂໍ້">×</button>
                                 </div>
                                 <div class="flex items-center gap-1.5 flex-wrap mt-1 pl-6">
+                                    <span class="text-[11px] text-gray-400 mr-0.5">ໝວດ:</span>
+                                    <select wire:model="tItems.{{ $i }}.group" class="rounded-md border-gray-200 text-[11px] py-1 text-gray-600 mr-1">
+                                        @foreach (\App\Models\MaintenanceTemplate::GROUPS as $gk => $gl)<option value="{{ $gk }}">{{ $gl }}</option>@endforeach
+                                    </select>
                                     <span class="text-[11px] text-gray-400 mr-0.5">ຮອບ:</span>
                                     @foreach (\App\Models\MaintenanceTemplate::FREQ_LABELS as $fk => $fl)
                                         @php $st = $item['cycles'][$fk] ?? ''; @endphp

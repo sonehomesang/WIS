@@ -151,6 +151,47 @@ test('recording with a template + cycle loads the checklist filtered by cycle an
     expect($m->checklist[1]['status'])->toBe('ng');   // ລົມ ຢາງ = ມີ ບັນຫາ
 });
 
+test('the recording checklist is grouped by work-section and the filters narrow it', function () {
+    $e = Equipment::create(['asset_code' => 'MT-GRP', 'name' => 'Forklift', 'quantity' => 1]);
+    $t = MaintenanceTemplate::create([
+        'name' => 'PM grouped', 'equipment_id' => $e->id, 'is_active' => true,
+        'items' => [
+            ['group' => 'engine', 'label' => 'ນ້ຳມັນ ເຄື່ອງ', 'remark' => '', 'cycles' => ['monthly' => 'X']],
+            ['group' => 'engine', 'label' => 'ກວດ ສາຍພານ', 'remark' => '', 'cycles' => ['monthly' => 'C']],
+            ['group' => 'hydraulic', 'label' => 'ນ້ຳມັນ ໄຮໂດຼລິກ', 'remark' => '', 'cycles' => ['monthly' => 'X']],
+        ],
+    ]);
+
+    actingAs($this->staff);
+    $c = Livewire::test(Maintenance::class)
+        ->call('newMaintenance')
+        ->call('pickEquipment', $e->id)
+        ->set('mTemplateId', $t->id)
+        ->set('mFrequency', 'monthly')
+        ->assertCount('mChecklist', 3);
+
+    // group is carried onto every checklist item
+    expect($c->get('mChecklist')[0]['group'])->toBe('engine');
+
+    // grouped for the view: engine 2 · hydraulic 1
+    $c->assertViewHas('checklistGroups', fn ($g) => count($g['engine']) === 2 && count($g['hydraulic']) === 1);
+
+    // action filter X → engine 1 (ນ້ຳມັນ) + hydraulic 1
+    $c->set('ckAction', 'X')
+        ->assertViewHas('checklistGroups', fn ($g) => count($g['engine'] ?? []) === 1 && count($g['hydraulic'] ?? []) === 1);
+
+    // NG filter → only the item flagged ng
+    $c->set('ckAction', '')
+        ->call('toggleMaintChecklist', 0, 'ng')   // ນ້ຳມັນ ເຄື່ອງ = ng
+        ->set('ckNg', true)
+        ->assertViewHas('checklistNgCount', 1)
+        ->assertViewHas('checklistGroups', fn ($g) => count($g) === 1 && count($g['engine']) === 1);
+
+    // clearing the filter restores every item
+    $c->call('resetChecklistFilter')
+        ->assertViewHas('checklistGroups', fn ($g) => count($g['engine']) === 2 && count($g['hydraulic']) === 1);
+});
+
 test('changing the cycle re-filters the checklist and clearing the template empties it', function () {
     $e = Equipment::create(['asset_code' => 'MT-CK3', 'name' => 'Loader', 'quantity' => 1]);
     $t = MaintenanceTemplate::create([

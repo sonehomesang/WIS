@@ -55,6 +55,17 @@ class MaintenanceTemplate extends Model
         'X' => 'ປ່ຽນ',
     ];
 
+    /** ໝວດ ງານ (ກຸ່ມ ຊິ້ນ ສ່ວນ) — ໃຊ້ ຈັດ ເຊັກລິສ ໃຫ້ ເປັນ ສັດສ່ວນ. key => ປ້າຍ ລາວ. */
+    public const GROUPS = [
+        'engine' => 'ເຄື່ອງຈັກ',
+        'powertrain' => 'ລະບົບ ສົ່ງກຳລັງ',
+        'steering' => 'ບັງຄັບລ້ຽວ',
+        'mast' => 'ລະບົບ ຍົກ',
+        'hydraulic' => 'ໄຮໂດຼລິກ',
+        'electrical' => 'ໄຟຟ້າ',
+        'other' => 'ອື່ນໆ',
+    ];
+
     public function equipment(): BelongsTo
     {
         return $this->belongsTo(Equipment::class);
@@ -71,7 +82,7 @@ class MaintenanceTemplate extends Model
         return collect($this->items ?? [])
             ->map(function ($it) {
                 if (is_string($it)) {
-                    return ['label' => trim($it), 'remark' => '', 'cycles' => []];
+                    return ['label' => trim($it), 'remark' => '', 'cycles' => [], 'group' => 'other'];
                 }
 
                 $raw = [];
@@ -93,10 +104,14 @@ class MaintenanceTemplate extends Model
                     }
                 }
 
+                // ໝວດ ງານ — ຄ່າ ທີ່ ຮັບຮອງ ເທົ່ານັ້ນ, ບໍ່ ຮັບຮອງ → 'other'.
+                $group = (is_array($it) && isset($it['group']) && array_key_exists($it['group'], self::GROUPS)) ? $it['group'] : 'other';
+
                 return [
                     'label' => trim((string) ($it['label'] ?? '')),
                     'remark' => trim((string) ($it['remark'] ?? '')),
                     'cycles' => $cycles,
+                    'group' => $group,
                 ];
             })
             ->filter(fn ($x) => $x['label'] !== '')
@@ -109,7 +124,7 @@ class MaintenanceTemplate extends Model
     {
         return collect($this->normalizedItems())
             ->filter(fn ($x) => isset($x['cycles'][$cycle]))
-            ->map(fn ($x) => ['label' => $x['label'], 'remark' => $x['remark'], 'action' => $x['cycles'][$cycle]])
+            ->map(fn ($x) => ['label' => $x['label'], 'remark' => $x['remark'], 'action' => $x['cycles'][$cycle], 'group' => $x['group'] ?? 'other'])
             ->values()
             ->all();
     }
