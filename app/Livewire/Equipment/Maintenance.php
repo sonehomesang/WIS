@@ -28,6 +28,9 @@ class Maintenance extends Component
     /** ເປີດ ຟອມ ໃນ ໂໝດ ວາງແຜນ ລ່ວງໜ້າ (ບໍ່ ແມ່ນ ລົງມື ແລ້ວ). */
     public bool $planning = false;
 
+    /** modal ຖາມ ຕອນ "ລົງມື ບຳລຸງ": ຕາມ ແຜນ ທີ່ ວາງໄວ້ ຫຼື ໃໝ່ ຕາມ ໜ້າງານ. */
+    public bool $showRecordChoice = false;
+
     // ── ຄົ້ນຫາ + filter ລາຍການ (ຄື ແທັບ ທະບຽນເຄື່ອງ) ──
     public string $search = '';
 
@@ -137,17 +140,33 @@ class Maintenance extends Component
         ]);
         $this->mDate = now()->toDateString();
         $this->mType = 'preventive';
+        $this->showRecordChoice = false;
         $this->resetValidation();
         $this->showModal = true;
     }
 
-    /** ລົງມື ບຳລຸງ — ບັນທຶກ ວຽກ ທີ່ ເຮັດ ແລ້ວ (ສະຖານະ = ແລ້ວ). */
+    /** ກົດ "ລົງມື ບຳລຸງ" → ຖາມ ກ່ອນ: ຕາມ ແຜນ ທີ່ ວາງໄວ້ ຫຼື ໃໝ່ ຕາມ ໜ້າງານ. */
+    public function openRecordChoice(): void
+    {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+        $this->showRecordChoice = true;
+    }
+
+    /** ລົງມື ບຳລຸງ — ບັນທຶກ ວຽກ ທີ່ ເຮັດ ແລ້ວ (ສະຖານະ = ແລ້ວ). ໃໝ່ ຕາມ ໜ້າງານ. */
     public function newMaintenance(): void
     {
         abort_unless(auth()->user()->can('equipment.edit'), 403);
         $this->resetForm();
         $this->mStatus = 'done';
         $this->planning = false;
+    }
+
+    /** ລົງມື ຕາມ ແຜນ ທີ່ ວາງໄວ້ — ເປີດ ບັນທຶກ planned ມາ ຕິກ/ຖ່າຍຮູບ ໃຫ້ ຄົບ (ບໍ່ ສ້າງ ໃໝ່). */
+    public function executeFromPlan(int $id): void
+    {
+        $this->showRecordChoice = false;
+        $this->editMaintenance($id);
+        $this->mStatus = 'done';   // ລົງມື → ຕັ້ງ ເປັນ ແລ້ວ (ປັບ ໄດ້ ໃນ ຟອມ)
     }
 
     /** ວາງແຜນ ບຳລຸງ ລ່ວງໜ້າ — ຕັ້ງ ນັດ ໄວ້ ກ່ອນ (ສະຖານະ = ວາງແຜນ). */
@@ -336,9 +355,10 @@ class Maintenance extends Component
         $e = Equipment::findOrFail($this->mEquipmentId);
         $this->guardDept($e);
 
-        // ຖ້າ ໃຊ້ ແມ່ແບບ ທີ່ ຂໍ້ ຕິດ ປະເພດ ລົດ → ຕ້ອງ ເລືອກ EV/Engine ກ່ອນ ບັນທຶກ.
+        // ຖ້າ ໃຊ້ ແມ່ແບບ ທີ່ ຂໍ້ ຕິດ ປະເພດ ລົດ + ຍັງ ບໍ່ ໄດ້ ກຽມ checklist → ຕ້ອງ ເລືອກ EV/Engine ກ່ອນ.
+        // (ຕອນ ລົງມື ຕາມ ແຜນ / ແກ້ໄຂ — checklist ໂຫຼດ ມາ ແລ້ວ → ບໍ່ ຕ້ອງ ຖາມ ຄືນ.)
         $tpl = $this->mTemplateId ? MaintenanceTemplate::find($this->mTemplateId) : null;
-        if ($tpl && $tpl->hasFuelTypes() && $this->mFuelType === '') {
+        if ($tpl && $tpl->hasFuelTypes() && $this->mFuelType === '' && count($this->mChecklist) === 0) {
             $this->addError('mFuelType', 'ກະລຸນາ ເລືອກ ປະເພດ ລົດ (ໄຟຟ້າ/ນ້ຳມັນ) ກ່ອນ.');
 
             return;
@@ -573,9 +593,18 @@ class Maintenance extends Component
             }
         }
 
+        // ແຜນ ທີ່ ວາງໄວ້ (planned) ໃຫ້ ເລືອກ ຕອນ "ລົງມື ຕາມ ແຜນ".
+        $plannedRecords = $this->showRecordChoice
+            ? EquipmentMaintenance::with('equipment')
+                ->where('status', 'planned')
+                ->when($deptScoped, fn ($q) => $q->whereHas('equipment', fn ($w) => $w->where('department_id', $deptId)))
+                ->orderBy('maintenance_date')->orderByDesc('id')->limit(50)->get()
+            : collect();
+
         return view('livewire.equipment.maintenance', [
             'searchResults' => $searchResults,
             'records' => $records,
+            'plannedRecords' => $plannedRecords,
             'historyEquipment' => $historyEquipment,
             'history' => $history,
             'deptScoped' => $deptScoped,

@@ -259,6 +259,49 @@ test('a checklist item marked NG stores a problem evidence photo or video clip',
     Storage::disk('public')->assertExists($m->checklist[1]['photo_problem']);
 });
 
+test('planning schedules a checklist, then recording from the plan completes the same record', function () {
+    $e = Equipment::create(['asset_code' => 'MT-PLAN', 'name' => 'Forklift', 'quantity' => 1]);
+    $t = MaintenanceTemplate::create([
+        'name' => 'PM plan', 'equipment_id' => $e->id, 'is_active' => true,
+        'items' => [['group' => 'other', 'label' => 'ກວດ ຢາງ', 'remark' => '', 'cycles' => ['monthly' => 'C']]],
+    ]);
+
+    actingAs($this->staff);
+    // ① ວາງແຜນ — ບໍ່ ຕິກ, ບັນທຶກ ເປັນ planned (checklist ກຽມ ໄວ້ ຍັງ ບໍ່ ໝາຍ)
+    Livewire::test(Maintenance::class)
+        ->call('newPlan')
+        ->assertSet('planning', true)
+        ->call('pickEquipment', $e->id)
+        ->set('mTitle', 'ນັດ ບຳລຸງ ຮອບ ເດືອນ')
+        ->set('mTemplateId', $t->id)
+        ->set('mFrequency', 'monthly')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $plan = $e->maintenances()->where('status', 'planned')->first();
+    expect($plan)->not->toBeNull();
+    expect($plan->checklist)->toHaveCount(1);
+    expect($plan->checklist[0]['status'])->toBe('na');       // ຍັງ ບໍ່ ຕິກ
+
+    $countBefore = EquipmentMaintenance::count();
+
+    // ② ລົງມື ຕາມ ແຜນ — ດຶງ record ເກົ່າ ມາ ຕິກ → done (ບໍ່ ສ້າງ ໃໝ່)
+    Livewire::test(Maintenance::class)
+        ->call('openRecordChoice')
+        ->assertViewHas('plannedRecords', fn ($p) => $p->contains('id', $plan->id))
+        ->call('executeFromPlan', $plan->id)
+        ->assertSet('editingId', $plan->id)
+        ->assertSet('mStatus', 'done')
+        ->call('toggleMaintChecklist', 0, 'ok')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(EquipmentMaintenance::count())->toBe($countBefore);   // ບໍ່ ສ້າງ ໃໝ່
+    $plan->refresh();
+    expect($plan->status)->toBe('done');
+    expect($plan->checklist[0]['status'])->toBe('ok');
+});
+
 test('a fuel-typed template requires choosing EV/Engine and filters the checklist by it', function () {
     $e = Equipment::create(['asset_code' => 'MT-FUEL', 'name' => 'Forklift', 'quantity' => 1]);
     $t = MaintenanceTemplate::create([

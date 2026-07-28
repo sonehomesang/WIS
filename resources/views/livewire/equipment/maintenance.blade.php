@@ -39,7 +39,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008Z" /></svg>
                 ວາງແຜນ ບຳລຸງ
             </button>
-            <button wire:click="newMaintenance" class="inline-flex items-center gap-1.5 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">
+            <button wire:click="openRecordChoice" class="inline-flex items-center gap-1.5 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700 whitespace-nowrap">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" /></svg>
                 ລົງມື ບຳລຸງ
             </button>
@@ -160,6 +160,50 @@
     </div>
 
     <div class="mt-4">{{ $records->links() }}</div>
+
+    {{-- ຖາມ ຕອນ "ລົງມື ບຳລຸງ": ຕາມ ແຜນ ທີ່ ວາງໄວ້ ຫຼື ໃໝ່ ຕາມ ໜ້າງານ --}}
+    @if ($showRecordChoice)
+        <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="m-choice">
+            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-800">ລົງມື ບຳລຸງ — ເລືອກ ວິທີ</h3>
+                    <button wire:click="$set('showRecordChoice', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                {{-- ໃໝ່ ຕາມ ໜ້າງານ --}}
+                <button wire:click="newMaintenance" class="w-full flex items-start gap-3 text-left border border-gray-200 rounded-md p-3 hover:border-sky-400 hover:bg-sky-50">
+                    <svg class="w-5 h-5 text-sky-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    <div>
+                        <div class="text-sm font-medium text-gray-800">ໃໝ່ ຕາມ ໜ້າງານ</div>
+                        <div class="text-xs text-gray-500">ເລືອກ ເຄື່ອງ ຈາກ ທະບຽນ + ແມ່ແບບ ແລ້ວ ລົງມື ເລີຍ (ຖ້າ ເຄື່ອງ ບໍ່ ມີ → ໄປ ສ້າງ ໃນ ທະບຽນເຄື່ອງ ກ່ອນ)</div>
+                    </div>
+                </button>
+
+                {{-- ຕາມ ແຜນ ທີ່ ວາງໄວ້ --}}
+                <div class="border border-gray-200 rounded-md">
+                    <div class="px-3 py-2 border-b border-gray-100 text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                        ຕາມ ແຜນ ທີ່ ວາງໄວ້ ({{ $plannedRecords->count() }})
+                    </div>
+                    <div class="divide-y divide-gray-50 max-h-64 overflow-y-auto">
+                        @forelse ($plannedRecords as $p)
+                            <button wire:click="executeFromPlan({{ $p->id }})" wire:key="plan-{{ $p->id }}" class="w-full flex items-center justify-between gap-2 px-3 py-2 text-left hover:bg-amber-50">
+                                <div class="min-w-0">
+                                    <div class="text-sm text-gray-800 truncate">{{ $p->title }}</div>
+                                    <div class="text-xs text-gray-400 truncate">{{ $p->equipment?->asset_code }} · {{ $p->equipment?->name }} · ນັດ {{ $p->maintenance_date?->format('d/m/Y') }}</div>
+                                </div>
+                                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                            </button>
+                        @empty
+                            <div class="px-3 py-6 text-center text-xs text-gray-400">ຍັງ ບໍ່ ມີ ແຜນ ທີ່ ວາງໄວ້ — ໃຊ້ "ໃໝ່ ຕາມ ໜ້າງານ" ຫຼື ໄປ "ວາງແຜນ ບຳລຸງ" ກ່ອນ</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- Record modal --}}
     @if ($showModal)
@@ -300,8 +344,8 @@
                     </div>
                 </div>
 
-                {{-- ຊັ້ນ 1: ປະເພດ ລົດ (EV/Engine) — ຄັດ ເຊັກລິສ ໃຫ້ ຖືກ ກັບ ລົດ --}}
-                @if ($mTemplateId && $mTemplateHasFuelTypes)
+                {{-- ຊັ້ນ 1: ປະເພດ ລົດ (EV/Engine) — ຄັດ ເຊັກລິສ ໃຫ້ ຖືກ ກັບ ລົດ (ເຊື່ອງ ຕອນ ແກ້ໄຂ/ລົງມື ຕາມ ແຜນ: checklist ຖືກ ກຽມ ໄວ້ ແລ້ວ) --}}
+                @if (! $editingId && $mTemplateId && $mTemplateHasFuelTypes)
                     <div class="rounded-md border border-sky-200 bg-sky-50 px-3 py-2">
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="text-sm text-sky-800 font-medium">ປະເພດ ລົດ <span class="text-red-500">*</span></span>
@@ -315,8 +359,16 @@
                     </div>
                 @endif
 
-                {{-- ເຊັກລິສ ຈາກ ແມ່ແບບ — ຄັດ ຕາມ ຮອບ (mFrequency), ແຍກ ໝວດ + filter --}}
-                @if (count($mChecklist))
+                {{-- ໂໝດ ວາງແຜນ: ບໍ່ ຕິກ checklist ຕອນນີ້ — ພຽງ ກຽມ ໄວ້ ໃຫ້ ລົງມື ພາຍຫຼັງ --}}
+                @if ($planning && count($mChecklist))
+                    <div class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-sky-700 flex items-center gap-2">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                        <span>ຈະ ກຽມ ເຊັກລິສ <b>{{ count($mChecklist) }} ຂໍ້</b> ໄວ້ — ຕິກ ✓/✗ + ຖ່າຍ ຮູບ/ຄລິບ ຕອນ <b>"ລົງມື ບຳລຸງ ຕາມ ແຜນ"</b>.</span>
+                    </div>
+                @endif
+
+                {{-- ເຊັກລິສ ຈາກ ແມ່ແບບ — ຄັດ ຕາມ ຮອບ (mFrequency), ແຍກ ໝວດ + filter (ໂໝດ ລົງມື ເທົ່ານັ້ນ) --}}
+                @if (count($mChecklist) && ! $planning)
                     @php
                         $groupLabels = \App\Models\MaintenanceTemplate::GROUPS;
                         $groupTone = [
