@@ -219,11 +219,12 @@
                     </button>
                 @endcan
             </div>
-            <div class="bg-white border border-gray-100 rounded-lg overflow-x-hidden overflow-y-auto max-h-[calc(100vh-16rem)]">
-                <table class="w-full text-sm">
+            <div class="bg-white border border-gray-100 rounded-lg overflow-x-auto overflow-y-auto max-h-[calc(100vh-16rem)]">
+                <table class="w-full min-w-[680px] text-sm">
                     <thead class="sticky top-0 z-10 bg-gray-50 text-gray-600 text-xs border-b border-gray-200 shadow-sm">
                         <tr>
-                            <th class="text-left px-3 py-2 font-semibold w-full">ເຄື່ອງ</th>
+                            {{-- ຄໍລັມ ເຄື່ອງ = ໜ້າ ຄ້າງ ຊ້າຍ (ມືຖື swipe ເບິ່ງ ຄໍລັມ ອື່ນ) --}}
+                            <th class="text-left px-3 py-2 font-semibold w-full sticky left-0 z-20 bg-gray-50 min-w-[170px]">ເຄື່ອງ</th>
                             <th class="text-left px-2 py-2 font-semibold w-14">ວັນທີ</th>
                             <th class="text-left px-3 py-2 font-semibold">ຜູ້ກວດ</th>
                             <th class="text-left px-3 py-2 font-semibold">ຜົນ</th>
@@ -236,7 +237,7 @@
                         @php $rb = ['pass' => 'bg-green-50 text-green-700', 'fail' => 'bg-red-50 text-red-700', 'follow_up' => 'bg-amber-50 text-amber-700']; $rl = ['pass' => 'ຜ່ານ', 'fail' => 'ບໍ່ຜ່ານ', 'follow_up' => 'ຕ້ອງຕິດຕາມ']; @endphp
                         @forelse ($inspections as $ins)
                             <tr wire:key="ins-{{ $ins->id }}">
-                                <td class="px-3 py-2 w-full">
+                                <td class="px-3 py-2 w-full sticky left-0 z-10 bg-white min-w-[170px]">
                                     {{ $ins->equipment?->asset_code }} · {{ $ins->equipment?->name }}
                                     @if ($showDeletedInspections)
                                         <div class="text-[11px] text-red-600 mt-0.5">🗑 ລຶບ: {{ $ins->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $ins->deletedBy?->display_name ?? '—' }}@if ($ins->deleted_reason) · ເຫດຜົນ: {{ $ins->deleted_reason }}@endif</div>
