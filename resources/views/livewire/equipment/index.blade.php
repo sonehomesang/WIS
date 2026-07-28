@@ -223,8 +223,8 @@
                 <table class="w-full text-sm">
                     <thead class="sticky top-0 z-10 bg-gray-50 text-gray-600 text-xs border-b border-gray-200 shadow-sm">
                         <tr>
-                            <th class="text-left px-3 py-2 font-semibold">ເຄື່ອງ</th>
-                            <th class="text-left px-3 py-2 font-semibold">ວັນທີ/ເວລາ</th>
+                            <th class="text-left px-3 py-2 font-semibold w-full">ເຄື່ອງ</th>
+                            <th class="text-left px-3 py-2 font-semibold w-20">ວັນທີ/ເວລາ</th>
                             <th class="text-left px-3 py-2 font-semibold">ຜູ້ກວດ</th>
                             <th class="text-left px-3 py-2 font-semibold">ຜົນ</th>
                             <th class="text-left px-3 py-2 font-semibold">ກວດ ຄັ້ງ ໜ້າ</th>
@@ -236,13 +236,13 @@
                         @php $rb = ['pass' => 'bg-green-50 text-green-700', 'fail' => 'bg-red-50 text-red-700', 'follow_up' => 'bg-amber-50 text-amber-700']; $rl = ['pass' => 'ຜ່ານ', 'fail' => 'ບໍ່ຜ່ານ', 'follow_up' => 'ຕ້ອງຕິດຕາມ']; @endphp
                         @forelse ($inspections as $ins)
                             <tr wire:key="ins-{{ $ins->id }}">
-                                <td class="px-3 py-2">
+                                <td class="px-3 py-2 w-full">
                                     {{ $ins->equipment?->asset_code }} · {{ $ins->equipment?->name }}
                                     @if ($showDeletedInspections)
                                         <div class="text-[11px] text-red-600 mt-0.5">🗑 ລຶບ: {{ $ins->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $ins->deletedBy?->display_name ?? '—' }}@if ($ins->deleted_reason) · ເຫດຜົນ: {{ $ins->deleted_reason }}@endif</div>
                                     @endif
                                 </td>
-                                <td class="px-3 py-2 whitespace-nowrap">{{ $ins->inspected_at?->format('d/m/Y H:i') }}</td>
+                                <td class="px-3 py-2 text-xs text-gray-600 w-20">{{ $ins->inspected_at?->format('d/m/Y') }}<div class="text-gray-400">{{ $ins->inspected_at?->format('H:i') }}</div></td>
                                 <td class="px-3 py-2">{{ $ins->inspector_name ?? '—' }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap">
                                     <span class="text-xs rounded px-2 py-0.5 {{ $rb[$ins->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $rl[$ins->result] ?? $ins->result }}</span>
