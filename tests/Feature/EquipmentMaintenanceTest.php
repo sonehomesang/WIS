@@ -501,6 +501,32 @@ test('the PM template picker matches by equipment, category, or general (+ show 
         ->assertViewHas('templateOptions', fn ($o) => $o->pluck('name')->contains('Sling PM'));   // show all
 });
 
+test('the maintenance record PDF renders (SCU-WID header + grouped checklist)', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $e = Equipment::create(['asset_code' => 'PDF-1', 'name' => 'Forklift', 'quantity' => 1]);
+    $m = $e->maintenances()->create([
+        'maintenance_date' => '2026-07-28', 'type' => 'preventive', 'title' => 'ບຳລຸງ 6 ເດືອນ',
+        'frequency' => 'semi_annual', 'status' => 'done', 'performed_by' => 'ຊ່າງ ກ', 'created_by' => $admin->id,
+        'checklist' => [
+            ['group' => 'engine', 'label' => 'ນ້ຳມັນ ເຄື່ອງ', 'action' => 'X', 'status' => 'ok', 'note' => 'OEM'],
+            ['group' => 'other', 'label' => 'ຢາງ', 'action' => 'C', 'status' => 'ng', 'note' => '', 'photo_problem' => 'x.jpg'],
+        ],
+    ]);
+
+    $res = $this->actingAs($admin)->get(route('equipment.maintenance.pdf', $m->id));
+    $res->assertOk();
+    expect($res->headers->get('content-type'))->toContain('application/pdf');
+});
+
+test('a requester cannot download another department maintenance PDF', function () {
+    $e = Equipment::create(['asset_code' => 'PDF-2', 'name' => 'Forklift', 'quantity' => 1]);
+    $m = $e->maintenances()->create(['maintenance_date' => '2026-07-28', 'type' => 'preventive', 'title' => 'x', 'status' => 'done']);
+
+    $u = User::factory()->create();
+    $u->syncRoles(['requester']);
+    $this->actingAs($u)->get(route('equipment.maintenance.pdf', $m->id))->assertForbidden();
+});
+
 test('maintenance list search + type + status filters narrow the records', function () {
     actingAs(User::factory()->create(['is_super_admin' => true]));
     $e1 = Equipment::create(['asset_code' => 'FORK-1', 'name' => 'Forklift', 'quantity' => 1]);

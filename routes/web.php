@@ -216,6 +216,16 @@ Route::get('equipment/categories', Categories::class)
     ->middleware(['auth', 'verified'])
     ->name('equipment.categories');
 
+Route::get('equipment/maintenance/{record}/pdf', function (App\Models\EquipmentMaintenance $record) {
+    $u = auth()->user();
+    abort_unless($u->can('equipment.view'), 403);
+    // ພະແນກ scope — department_admin ດຶງ ໄດ້ ສະເພາະ ເຄື່ອງ ພະແນກ ຕົນ (ກັນ IDOR).
+    $record->load('equipment');
+    abort_if($u->equipmentDepartmentScoped() && $record->equipment?->department_id !== $u->department_id, 403);
+
+    return \App\Support\PdfExport::download('equipment.maintenance-pdf', ['record' => $record], "maintenance-{$record->id}.pdf");
+})->middleware(['auth', 'verified'])->name('equipment.maintenance.pdf');
+
 // ── Expo Info (mini-CRM) — Phase 6.9 ──
 Route::get('expo', App\Livewire\Expo\Index::class)
     ->middleware(['auth', 'verified'])
