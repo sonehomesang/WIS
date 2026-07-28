@@ -226,6 +226,15 @@ Route::get('equipment/maintenance/{record}/pdf', function (App\Models\EquipmentM
     return \App\Support\PdfExport::download('equipment.maintenance-pdf', ['record' => $record], "maintenance-{$record->id}.pdf");
 })->middleware(['auth', 'verified'])->name('equipment.maintenance.pdf');
 
+Route::get('equipment/inspection/{record}/pdf', function (App\Models\EquipmentInspection $record) {
+    $u = auth()->user();
+    abort_unless($u->can('equipment.view'), 403);
+    $record->load(['equipment', 'template']);
+    abort_if($u->equipmentDepartmentScoped() && $record->equipment?->department_id !== $u->department_id, 403);
+
+    return \App\Support\PdfExport::download('equipment.inspection-pdf', ['record' => $record], "inspection-{$record->id}.pdf");
+})->middleware(['auth', 'verified'])->name('equipment.inspection.pdf');
+
 // ── Expo Info (mini-CRM) — Phase 6.9 ──
 Route::get('expo', App\Livewire\Expo\Index::class)
     ->middleware(['auth', 'verified'])

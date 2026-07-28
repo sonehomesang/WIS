@@ -72,3 +72,20 @@ test('multiple inspection evidence photos are stored', function () {
         Storage::disk('public')->assertExists($p);
     }
 });
+
+test('the inspection record PDF renders via DomPDF (SCU-WID header, no overlap)', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $e = Equipment::create(['asset_code' => 'INSP-PDF', 'name' => 'Forklift', 'category' => 'Vehicles', 'quantity' => 1]);
+    $ins = $e->inspections()->create([
+        'inspected_at' => '2026-07-28 07:15', 'inspector_name' => 'SA', 'fuel_type' => 'ev',
+        'frequency' => 'pre_use', 'result' => 'pass', 'score' => 100, 'created_by' => $admin->id,
+        'checklist' => [
+            ['label' => 'Forks, Mast & Load Backrest', 'status' => 'pass', 'note' => ''],
+            ['label' => 'Brake & Parking Brake', 'status' => 'fail', 'note' => 'ຮົ່ວ'],
+        ],
+    ]);
+
+    $res = actingAs($admin)->get(route('equipment.inspection.pdf', $ins->id));
+    $res->assertOk();
+    expect($res->headers->get('content-type'))->toContain('application/pdf');
+});

@@ -744,7 +744,7 @@
                 </div>{{-- /#ins-detail-card --}}
 
                 <div class="flex flex-wrap justify-end gap-2 pt-2 border-t">
-                    <button type="button" onclick="window.exportPdf('ins-detail-card', '{{ $vfn }}.pdf')" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">⬇ PDF</button>
+                    <a href="{{ route('equipment.inspection.pdf', $viewingInspection->id) }}" target="_blank" class="inline-flex items-center text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">⬇ PDF</a>
                     <button type="button" onclick="window.exportJpg('ins-detail-card', '{{ $vfn }}.jpg')" class="text-sm text-sky-700 border border-sky-200 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-50">⬇ JPG</button>
                     @can('equipment.edit')
                         <button wire:click="editInspection({{ $viewingInspection->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-50">ແກ້ໄຂ</button>
