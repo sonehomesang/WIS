@@ -84,7 +84,7 @@
                             <th class="{{ $bd }}" style="width:5%">#</th>
                             <th class="{{ $bd }}" style="width:16%">ລະຫັດເຄື່ອງ<br><span class="text-[10px] font-normal">Item ID</span></th>
                             <th class="{{ $bd }} text-left">ລາຍລະອຽດອຸປະກອນ<br><span class="text-[10px] font-normal">Description</span></th>
-                            <th class="{{ $bd }}" style="width:18%">ຮູບພາບ<br><span class="text-[10px] font-normal">Photo</span></th>
+                            <th class="{{ $bd }}" style="width:20%">ຮູບພາບ<br><span class="text-[10px] font-normal">Photo</span></th>
                             <th class="{{ $bd }}" style="width:9%">ຈຳນວນ<br><span class="text-[10px] font-normal">Qty</span></th>
                             <th class="{{ $bd }}" style="width:9%">ໜ່ວຍ<br><span class="text-[10px] font-normal">Unit</span></th>
                         </tr>
@@ -96,7 +96,7 @@
                                 <td class="{{ $bd }} align-top">{{ $loop->iteration }}</td>
                                 <td class="{{ $bd }} align-top font-mono">{{ $it->inventoryItem?->slug ?? '—' }}</td>
                                 <td class="{{ $bd }} align-top text-left">{{ $it->item_name }}</td>
-                                <td class="{{ $bd }} align-top"><div class="flex gap-1 justify-center flex-wrap">@if ($photo)<img src="{{ $photo->url }}" alt="" class="w-10 h-10 object-cover border border-gray-300" />@endif @foreach ($take as $p)<img src="{{ $p->url }}" alt="" class="w-10 h-10 object-cover border border-gray-300" />@endforeach</div></td>
+                                <td class="{{ $bd }} align-top"><div class="flex gap-1 justify-center flex-wrap">@if ($photo)<img src="{{ $photo->url }}" alt="" class="w-10 h-10 shrink-0 object-cover border border-gray-300 rounded" />@endif @foreach ($take as $p)<img src="{{ $p->url }}" alt="" class="w-10 h-10 shrink-0 object-cover border border-gray-300 rounded" />@endforeach</div></td>
                                 <td class="{{ $bd }} align-top font-bold">{{ $it->qty }}</td>
                                 <td class="{{ $bd }} align-top">{{ $it->inventoryItem?->unit ?? '—' }}</td>
                             </tr>

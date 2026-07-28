@@ -35,4 +35,54 @@ class PdfExport
 
         return max(1, $dom->getCanvas()->get_page_count());
     }
+
+    /**
+     * Base64 data-URI of a public-disk image, centre-cropped to a square.
+     *
+     * DomPDF ignores `object-fit`, so a portrait photo forced into a square
+     * <img> box gets squished (distorted). We crop to a centred square and
+     * downscale here so the embedded thumbnail is undistorted (matching the
+     * web's object-cover) and the PDF stays small. Falls back to the raw
+     * bytes if GD is unavailable, so it degrades to the previous behaviour
+     * instead of breaking.
+     */
+    public static function thumb(?string $path, int $box = 160): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        try {
+            $abs = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
+            if (! is_file($abs)) {
+                return null;
+            }
+
+            $data = file_get_contents($abs);
+
+            if (function_exists('imagecreatefromstring') && ($src = @imagecreatefromstring($data))) {
+                $w = imagesx($src);
+                $h = imagesy($src);
+                $side = min($w, $h);
+                $dst = imagecreatetruecolor($box, $box);
+                imagecopyresampled(
+                    $dst, $src,
+                    0, 0,
+                    (int) (($w - $side) / 2), (int) (($h - $side) / 2),
+                    $box, $box, $side, $side
+                );
+                ob_start();
+                imagejpeg($dst, null, 82);
+                $out = ob_get_clean();
+                imagedestroy($src);
+                imagedestroy($dst);
+
+                return 'data:image/jpeg;base64,'.base64_encode($out);
+            }
+
+            return 'data:image/jpeg;base64,'.base64_encode($data);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
 }

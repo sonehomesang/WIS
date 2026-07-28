@@ -1,16 +1,7 @@
 @php
-    // base64-embed a public-disk photo (DomPDF ບໍ່ໂຫລດ URL — ໃຊ້ data URI).
-    $img = function ($path) {
-        try {
-            $abs = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
-            if (is_file($abs)) {
-                return 'data:image/jpeg;base64,'.base64_encode(file_get_contents($abs));
-            }
-        } catch (\Throwable $e) {
-        }
-
-        return null;
-    };
+    // base64-embed a public-disk photo, centre-cropped square (DomPDF ບໍ່ຮອງຮັບ
+    // object-fit → ຮູບ portrait ຈະຖືກ ບີບ ບ້ຽວ; crop ໃຫ້ ເປັນ ຈັດຕຸລັດ ກ່ອນ).
+    $img = fn ($path) => \App\Support\PdfExport::thumb($path);
     $fmt = fn ($d) => $d?->format('d/m/Y') ?? '—';
     $storage = collect([$record->storage_location, $record->storage_shelf_label])->filter()->implode(' / ') ?: '—';
 @endphp
@@ -26,10 +17,11 @@
         .info td { border: 1px solid #555; padding: 2px 5px; font-size: 9px; vertical-align: top; }
         .info td.lbl { white-space: nowrap; width: 1%; }
         .lbl { background: #f3f4f6; font-weight: bold; width: 18%; }
-        .items th { border: 1px solid #555; background: #f3f4f6; padding: 4px; }
-        .items td { border: 1px solid #555; padding: 4px; vertical-align: top; }
+        .items { table-layout: fixed; }
+        .items th { border: 1px solid #555; background: #f3f4f6; padding: 4px; word-wrap: break-word; }
+        .items td { border: 1px solid #555; padding: 4px; vertical-align: top; word-wrap: break-word; }
         .center { text-align: center; }
-        .ph { width: 40px; height: 40px; object-fit: cover; border: 1px solid #999; margin: 1px; }
+        .ph { width: 40px; height: 40px; border: 1px solid #999; margin: 1px; display: inline-block; vertical-align: top; }
         .sig { margin-top: 34px; width: 100%; }
         .sig td { width: 50%; text-align: center; vertical-align: top; padding: 0 14px; }
         .sigbox { border: 1px solid #555; height: 80px; margin-top: 4px; }
@@ -63,7 +55,7 @@
 
     <table class="items" style="margin-top:10px">
         <thead><tr>
-            <th style="width:5%">#</th><th>ລາຍລະອຽດເຄື່ອງ</th>
+            <th style="width:5%">#</th><th style="width:39%">ລາຍລະອຽດເຄື່ອງ</th>
             <th style="width:24%">ຮູບ</th><th style="width:9%">ຈຳນວນ</th><th style="width:9%">ໜ່ວຍ</th><th style="width:14%">ມູນຄ່າ</th>
         </tr></thead>
         <tbody>
