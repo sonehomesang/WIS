@@ -84,6 +84,12 @@
                                 <div class="font-medium text-gray-800">#{{ $idx + 1 }} {{ $it->item_name }} <span class="text-gray-400">×{{ $it->qty }}{{ $it->unit ? ' '.$it->unit : '' }}</span></div>
                                 @if ($it->estimated_value)<div class="text-xs text-gray-500">{{ number_format($it->estimated_value, 2) }} {{ $it->currency }}</div>@endif
                             </div>
+                            @if ($it->asset_code || $it->fixed_asset_no)
+                                <div class="text-xs text-gray-500 mt-0.5">
+                                    @if ($it->asset_code)ທະບຽນເຄື່ອງ: <span class="font-mono text-gray-700">{{ $it->asset_code }}</span>@endif
+                                    @if ($it->fixed_asset_no) · ທະບຽນຊັບສິນ: <span class="font-mono text-gray-700">{{ $it->fixed_asset_no }}</span>@endif
+                                </div>
+                            @endif
                             @if ($it->description)<div class="text-xs text-gray-500 mt-0.5">{{ $it->description }}</div>@endif
                             <div class="text-xs text-gray-500 mt-0.5">
                                 @if ($it->condition_on_deposit)ຝາກ: {{ $it->condition_on_deposit }}@endif
@@ -264,7 +270,9 @@
                         <div class="text-sm font-medium text-gray-700">ລາຍການເຄື່ອງ</div>
                         @foreach ($record->items as $it)
                             <div wire:key="ei-{{ $it->id }}" class="border border-gray-200 rounded-md p-3 grid grid-cols-1 sm:grid-cols-6 gap-2 text-sm">
-                                <div class="sm:col-span-3"><label class="block text-xs text-gray-500 mb-1">ຊື່</label><input type="text" wire:model="ei.{{ $it->id }}.item_name" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                                <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ຊື່</label><input type="text" wire:model="ei.{{ $it->id }}.item_name" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                                <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ທະບຽນເຄື່ອງ</label><input type="text" wire:model="ei.{{ $it->id }}.asset_code" placeholder="ເຊັ່ນ EL-T001-1" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                                <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ທະບຽນຊັບສິນ</label><input type="text" wire:model="ei.{{ $it->id }}.fixed_asset_no" placeholder="Fixed asset no." class="w-full rounded-md border-gray-300 text-sm" /></div>
                                 <div><label class="block text-xs text-gray-500 mb-1">ຈຳນວນ</label><input type="number" min="1" wire:model="ei.{{ $it->id }}.qty" class="w-full rounded-md border-gray-300 text-sm" /></div>
                                 <div><label class="block text-xs text-gray-500 mb-1">ໜ່ວຍ</label><input type="text" wire:model="ei.{{ $it->id }}.unit" class="w-full rounded-md border-gray-300 text-sm" /></div>
                                 <div><label class="block text-xs text-gray-500 mb-1">ມູນຄ່າ</label><input type="number" step="0.01" wire:model="ei.{{ $it->id }}.estimated_value" class="w-full rounded-md border-gray-300 text-sm" /></div>

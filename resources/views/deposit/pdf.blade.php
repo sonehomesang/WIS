@@ -70,7 +70,7 @@
             @foreach ($record->items as $it)
                 <tr>
                     <td class="center">{{ $loop->iteration }}</td>
-                    <td>{{ $it->item_name }}@if ($it->description)<div class="muted">{{ $it->description }}</div>@endif</td>
+                    <td>{{ $it->item_name }}@if ($it->asset_code || $it->fixed_asset_no)<div class="muted">@if ($it->asset_code)ທະບຽນເຄື່ອງ: {{ $it->asset_code }}@endif@if ($it->fixed_asset_no) · ຊັບສິນ: {{ $it->fixed_asset_no }}@endif</div>@endif@if ($it->description)<div class="muted">{{ $it->description }}</div>@endif</td>
                     <td>
                         @foreach ($it->photos as $p)@if ($src = $img($p->path))<img class="ph" src="{{ $src }}">@endif @endforeach
                     </td>

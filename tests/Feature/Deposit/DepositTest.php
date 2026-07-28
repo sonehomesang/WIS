@@ -154,3 +154,24 @@ test('non-permitted user cannot open deposit index', function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => false]));
     Livewire::test(Index::class)->assertForbidden();
 });
+
+test('a deposit item stores asset_code (ທະບຽນເຄື່ອງ) and fixed_asset_no (ທະບຽນຊັບສິນ)', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+
+    Livewire::test(App\Livewire\Deposit\Create::class)
+        ->set('item_category', 'Tools')
+        ->set('origin_source', 'Personal')
+        ->set('deposit_reason', 'no space')
+        ->set('expected_duration', '1 month')
+        ->set('items', [[
+            'item_name' => 'Fluke 175', 'asset_code' => 'EL-T004-1', 'fixed_asset_no' => 'FA-9001', 'qty' => 1,
+        ]])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $item = App\Models\DepositItem::where('item_name', 'Fluke 175')->first();
+    expect($item)->not->toBeNull();
+    expect($item->asset_code)->toBe('EL-T004-1');
+    expect($item->fixed_asset_no)->toBe('FA-9001');
+});

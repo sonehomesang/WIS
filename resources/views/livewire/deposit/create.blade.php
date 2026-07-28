@@ -75,10 +75,20 @@
                 <div wire:key="item-{{ $i }}" class="border border-gray-200 rounded-md p-3 space-y-2">
                     <div class="flex items-start gap-2">
                         <div class="flex-1 grid grid-cols-1 sm:grid-cols-6 gap-2">
-                            <div class="sm:col-span-3">
+                            <div class="sm:col-span-2">
                                 <label class="block text-xs text-gray-500 mb-1">ຊື່ເຄື່ອງ <span class="text-red-500">*</span></label>
                                 <input type="text" wire:model="items.{{ $i }}.item_name" class="w-full rounded-md border-gray-300 text-sm" />
                                 @error("items.$i.item_name")<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs text-gray-500 mb-1">ທະບຽນເຄື່ອງ</label>
+                                <input type="text" wire:model="items.{{ $i }}.asset_code" placeholder="ເຊັ່ນ EL-T001-1" class="w-full rounded-md border-gray-300 text-sm" />
+                                @error("items.$i.asset_code")<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs text-gray-500 mb-1">ທະບຽນຊັບສິນ</label>
+                                <input type="text" wire:model="items.{{ $i }}.fixed_asset_no" placeholder="Fixed asset no." class="w-full rounded-md border-gray-300 text-sm" />
+                                @error("items.$i.fixed_asset_no")<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1">ຈຳນວນ <span class="text-red-500">*</span></label>

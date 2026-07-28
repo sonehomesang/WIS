@@ -280,7 +280,8 @@ class Show extends Component
             'warehouse_instructions' => $r->warehouse_instructions, 'remark' => $r->remark,
         ];
         $this->ei = $r->items->mapWithKeys(fn ($it) => [$it->id => [
-            'item_name' => $it->item_name, 'description' => $it->description, 'qty' => $it->qty, 'unit' => $it->unit,
+            'item_name' => $it->item_name, 'asset_code' => $it->asset_code, 'fixed_asset_no' => $it->fixed_asset_no,
+            'description' => $it->description, 'qty' => $it->qty, 'unit' => $it->unit,
             'estimated_value' => $it->estimated_value, 'currency' => $it->currency,
             'condition_on_deposit' => $it->condition_on_deposit, 'condition_on_claim' => $it->condition_on_claim,
         ]])->all();
@@ -305,6 +306,8 @@ class Show extends Component
             'ef.warehouse_instructions' => ['nullable', 'string', 'max:2000'],
             'ef.remark' => ['nullable', 'string', 'max:500'],
             'ei.*.item_name' => ['required', 'string', 'max:256'],
+            'ei.*.asset_code' => ['nullable', 'string', 'max:64'],
+            'ei.*.fixed_asset_no' => ['nullable', 'string', 'max:64'],
             'ei.*.qty' => ['required', 'integer', 'min:1'],
             'ei.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
             'ei.*.currency' => ['nullable', 'in:LAK,THB,USD'],
@@ -332,6 +335,8 @@ class Show extends Component
             if ($f) {
                 $it->update([
                     'item_name' => $f['item_name'],
+                    'asset_code' => ($f['asset_code'] ?? null) ?: null,
+                    'fixed_asset_no' => ($f['fixed_asset_no'] ?? null) ?: null,
                     'description' => $f['description'] ?: null,
                     'qty' => max(1, (int) $f['qty']),
                     'unit' => $f['unit'] ?: null,

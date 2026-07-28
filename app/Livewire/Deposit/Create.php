@@ -34,7 +34,7 @@ class Create extends Component
 
     public string $remark = '';
 
-    /** @var array<int, array{item_name:string, description:string, qty:int, unit:string, estimated_value:string, currency:string, condition_on_deposit:string}> */
+    /** @var array<int, array{item_name:string, asset_code:string, fixed_asset_no:string, description:string, qty:int, unit:string, estimated_value:string, currency:string, condition_on_deposit:string}> */
     public array $items = [];
 
     /** @var array<int, TemporaryUploadedFile[]> ຮູບ deposit ຕໍ່ item (index) */
@@ -49,7 +49,7 @@ class Create extends Component
 
     protected function blankItem(): array
     {
-        return ['item_name' => '', 'description' => '', 'qty' => 1, 'unit' => '', 'estimated_value' => '', 'currency' => '', 'condition_on_deposit' => ''];
+        return ['item_name' => '', 'asset_code' => '', 'fixed_asset_no' => '', 'description' => '', 'qty' => 1, 'unit' => '', 'estimated_value' => '', 'currency' => '', 'condition_on_deposit' => ''];
     }
 
     public function addItem(): void
@@ -83,6 +83,8 @@ class Create extends Component
             'remark' => ['nullable', 'string', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_name' => ['required', 'string', 'max:256'],
+            'items.*.asset_code' => ['nullable', 'string', 'max:64'],
+            'items.*.fixed_asset_no' => ['nullable', 'string', 'max:64'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
             'items.*.unit' => ['nullable', 'string', 'max:32'],
             'items.*.estimated_value' => ['nullable', 'numeric', 'min:0'],

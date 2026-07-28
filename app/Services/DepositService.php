@@ -69,6 +69,8 @@ class DepositService
                 $record->items()->create([
                     'item_id' => $it['item_id'] ?? null,
                     'item_name' => $it['item_name'],
+                    'asset_code' => ($it['asset_code'] ?? null) ?: null,
+                    'fixed_asset_no' => ($it['fixed_asset_no'] ?? null) ?: null,
                     'description' => $it['description'] ?? null,
                     'qty' => max(1, (int) ($it['qty'] ?? 1)),
                     'unit' => $it['unit'] ?? null,
