@@ -224,7 +224,7 @@
                     <thead class="sticky top-0 z-10 bg-gray-50 text-gray-600 text-xs border-b border-gray-200 shadow-sm">
                         <tr>
                             <th class="text-left px-3 py-2 font-semibold w-full">ເຄື່ອງ</th>
-                            <th class="text-left px-3 py-2 font-semibold w-20">ວັນທີ/ເວລາ</th>
+                            <th class="text-left px-2 py-2 font-semibold w-14">ວັນທີ</th>
                             <th class="text-left px-3 py-2 font-semibold">ຜູ້ກວດ</th>
                             <th class="text-left px-3 py-2 font-semibold">ຜົນ</th>
                             <th class="text-left px-3 py-2 font-semibold">ກວດ ຄັ້ງ ໜ້າ</th>
@@ -242,12 +242,12 @@
                                         <div class="text-[11px] text-red-600 mt-0.5">🗑 ລຶບ: {{ $ins->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $ins->deletedBy?->display_name ?? '—' }}@if ($ins->deleted_reason) · ເຫດຜົນ: {{ $ins->deleted_reason }}@endif</div>
                                     @endif
                                 </td>
-                                <td class="px-3 py-2 text-xs text-gray-600 w-20">{{ $ins->inspected_at?->format('d/m/Y') }}<div class="text-gray-400">{{ $ins->inspected_at?->format('H:i') }}</div></td>
+                                <td class="px-2 py-2 text-xs text-gray-600 w-14">{{ $ins->inspected_at?->format('d/m/y') }}<div class="text-gray-400">{{ $ins->inspected_at?->format('H:i') }}</div></td>
                                 <td class="px-3 py-2">{{ $ins->inspector_name ?? '—' }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap">
-                                    <span class="text-xs rounded px-2 py-0.5 {{ $rb[$ins->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $rl[$ins->result] ?? $ins->result }}</span>
+                                <td class="px-2 py-2 whitespace-nowrap">
+                                    <span class="text-xs rounded px-1.5 py-0.5 {{ $rb[$ins->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $rl[$ins->result] ?? $ins->result }}</span>
                                     @if (! is_null($ins->score))
-                                        <span class="text-xs text-gray-400 ml-1">{{ $ins->score }}%</span>
+                                        <div class="text-[10px] text-gray-400 mt-0.5">{{ $ins->score }}%</div>
                                     @endif
                                 </td>
                                 <td class="px-3 py-2 whitespace-nowrap">
