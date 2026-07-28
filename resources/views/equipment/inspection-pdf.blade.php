@@ -46,6 +46,9 @@
         .ng { color: #b91c1c; font-weight: bold; }
         .ok { color: #15803d; font-weight: bold; }
         .warn { color: #b45309; font-weight: bold; }
+        .sig { margin-top: 22px; width: 100%; page-break-inside: avoid; }
+        .sig td { width: 50%; text-align: center; vertical-align: top; padding: 0 14px; font-size: 9px; }
+        .sigbox { border: 1px solid #555; height: 58px; margin-top: 4px; }
         .page-footer { position: fixed; bottom: -14mm; left: 0; right: 0; }
         .page-footer table { border-top: 1px solid #cbd5e1; }
         .page-footer td { padding-top: 4px; font-size: 8px; color: #6b7280; }
@@ -123,6 +126,14 @@
     @if ($record->notes)
         <div style="margin-top:8px; font-size:9px;"><b>ໝາຍເຫດ ລວມ:</b> {{ $record->notes }}</div>
     @endif
+
+    {{-- ລາຍເຊັນ — ຜູ້ ກວດ + ຜູ້ ຮັບຊາບ (ໄວ້ ໃສ່ e-signature ຕອນ export) --}}
+    <table class="sig">
+        <tr>
+            <td>ຜູ້ ກວດ<div class="sigbox"></div><div class="muted">{{ $record->inspector_name ?: '............................' }} · {{ $record->inspected_at?->format('d/m/Y') ?? '' }}</div></td>
+            <td>ຜູ້ ຮັບຊາບ (Manager / Leader)<div class="sigbox"></div><div class="muted">............................</div></td>
+        </tr>
+    </table>
 
     {{-- FOOTER: ວັນທີກວດ + ເວລາ · ຜູ້ກວດ · ເລກໜ້າ · ຂັ້ນ ດ້ວຍ ເສັ້ນ --}}
     <div class="page-footer">
