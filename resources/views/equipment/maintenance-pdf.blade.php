@@ -130,7 +130,7 @@
     <table class="sig">
         <tr>
             <td>ຜູ້ ເຮັດ / ຜູ້ ກວດ<div class="sigbox"></div><div class="muted">{{ $record->performed_by ?: '............................' }} · {{ $fmt($record->maintenance_date) }}</div></td>
-            <td>ຜູ້ ຮັບຊາບ (Manager / Leader)<div class="sigbox"></div><div class="muted">............................</div></td>
+            <td>ຜູ້ ຮັບຊາບ (Manager / Leader)<div class="sigbox"></div><div class="muted">{{ $record->acknowledged_by_name ? $record->acknowledged_by_name.' · '.$fmt($record->acknowledged_at) : '............................' }}</div></td>
         </tr>
     </table>
 

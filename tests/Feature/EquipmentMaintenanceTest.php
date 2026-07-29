@@ -527,6 +527,65 @@ test('a requester cannot download another department maintenance PDF', function 
     $this->actingAs($u)->get(route('equipment.maintenance.pdf', $m->id))->assertForbidden();
 });
 
+test('a manager with activate permission can acknowledge a maintenance and it fills the PDF signature box', function () {
+    $mgr = User::factory()->create(['display_name' => 'ຫົວໜ້າ ຊ່າງ']);
+    $mgr->syncRoles(['warehouse_staff']);   // adminPerm on equipment → has equipment.activate
+    $e = Equipment::create(['asset_code' => 'ACK-1', 'name' => 'Forklift', 'quantity' => 1]);
+    $m = $e->maintenances()->create([
+        'maintenance_date' => '2026-07-28', 'type' => 'preventive', 'title' => 'PM', 'status' => 'done',
+    ]);
+
+    actingAs($mgr);
+    Livewire::test(Maintenance::class)
+        ->call('viewRecord', $m->id)
+        ->assertViewHas('canAcknowledge', true)
+        ->call('acknowledgeMaintenance', $m->id)
+        ->assertHasNoErrors();
+
+    $m->refresh();
+    expect($m->acknowledged_by)->toBe($mgr->id);
+    expect($m->acknowledged_by_name)->toBe('ຫົວໜ້າ ຊ່າງ');
+    expect($m->acknowledged_at)->not->toBeNull();
+
+    // ຊື່ + ວັນທີ ຂຶ້ນ ໃນ ຫ້ອງ ລາຍເຊັນ "ຜູ້ ຮັບຊາບ" ຂອງ PDF
+    $html = view('equipment.maintenance-pdf', ['record' => $m, 'totalPages' => 1])->render();
+    expect($html)->toContain('ຫົວໜ້າ ຊ່າງ');
+    expect($html)->toContain('28/07/2026');
+});
+
+test('a user with equipment view but no activate permission cannot acknowledge a maintenance', function () {
+    $u = User::factory()->create();
+    $u->givePermissionTo('equipment.view');   // ເບິ່ງ ໄດ້ ແຕ່ ບໍ່ ມີ activate
+    $e = Equipment::create(['asset_code' => 'ACK-2', 'name' => 'Forklift', 'quantity' => 1]);
+    $m = $e->maintenances()->create(['maintenance_date' => '2026-07-28', 'type' => 'preventive', 'title' => 'PM', 'status' => 'done']);
+
+    actingAs($u);
+    Livewire::test(Maintenance::class)
+        ->assertViewHas('canAcknowledge', false)
+        ->call('acknowledgeMaintenance', $m->id)
+        ->assertForbidden();
+
+    expect($m->fresh()->acknowledged_at)->toBeNull();
+});
+
+test('an acknowledgement can be revoked', function () {
+    $mgr = User::factory()->create(['display_name' => 'Boss']);
+    $mgr->syncRoles(['warehouse_staff']);
+    $e = Equipment::create(['asset_code' => 'ACK-3', 'name' => 'Forklift', 'quantity' => 1]);
+    $m = $e->maintenances()->create([
+        'maintenance_date' => '2026-07-28', 'type' => 'preventive', 'title' => 'PM', 'status' => 'done',
+        'acknowledged_by' => $mgr->id, 'acknowledged_by_name' => 'Boss', 'acknowledged_at' => now(),
+    ]);
+
+    actingAs($mgr);
+    Livewire::test(Maintenance::class)->call('unacknowledgeMaintenance', $m->id)->assertHasNoErrors();
+
+    $m->refresh();
+    expect($m->acknowledged_at)->toBeNull();
+    expect($m->acknowledged_by)->toBeNull();
+    expect($m->acknowledged_by_name)->toBeNull();
+});
+
 test('maintenance list search + type + status filters narrow the records', function () {
     actingAs(User::factory()->create(['is_super_admin' => true]));
     $e1 = Equipment::create(['asset_code' => 'FORK-1', 'name' => 'Forklift', 'quantity' => 1]);

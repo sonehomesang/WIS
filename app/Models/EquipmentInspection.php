@@ -12,7 +12,9 @@ class EquipmentInspection extends Model
 
     protected $fillable = [
         'equipment_id', 'template_id', 'fuel_type', 'frequency', 'inspected_at', 'inspector_name', 'result', 'score',
-        'checklist', 'notes', 'next_due_date', 'photo_path', 'photos', 'created_by', 'deleted_reason', 'deleted_by',
+        'checklist', 'notes', 'next_due_date', 'photo_path', 'photos', 'created_by',
+        'acknowledged_by', 'acknowledged_by_name', 'acknowledged_at',
+        'deleted_reason', 'deleted_by',
     ];
 
     protected $casts = [
@@ -21,7 +23,14 @@ class EquipmentInspection extends Model
         'score' => 'integer',
         'checklist' => 'array',
         'photos' => 'array',
+        'acknowledged_at' => 'datetime',
     ];
+
+    /** ຜູ້ ຮັບຊາບ (Manager/Leader). */
+    public function acknowledgedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'acknowledged_by');
+    }
 
     /** ຮູບ ຫຼັກຖານ ທັງ ໝົດ — ໃຊ້ photos array; ຖ້າ ບໍ່ ມີ ຕົກ ໄປ photo_path ເກົ່າ. */
     public function allPhotos(): array

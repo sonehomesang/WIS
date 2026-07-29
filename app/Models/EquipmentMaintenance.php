@@ -40,6 +40,7 @@ class EquipmentMaintenance extends Model
     protected $fillable = [
         'equipment_id', 'template_id', 'source_maintenance_id', 'maintenance_date', 'type', 'title', 'description',
         'performed_by', 'cost', 'frequency', 'next_service_date', 'status', 'checklist', 'notes', 'photos', 'created_by',
+        'acknowledged_by', 'acknowledged_by_name', 'acknowledged_at',
         'deleted_reason', 'deleted_by',
     ];
 
@@ -61,7 +62,14 @@ class EquipmentMaintenance extends Model
         'cost' => 'decimal:2',
         'checklist' => 'array',
         'photos' => 'array',
+        'acknowledged_at' => 'datetime',
     ];
+
+    /** ຜູ້ ຮັບຊາບ (Manager/Leader) — ຊື່ ຖືກ snapshot ໄວ້ ໃນ acknowledged_by_name ນຳ. */
+    public function acknowledgedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'acknowledged_by');
+    }
 
     public function equipment(): BelongsTo
     {

@@ -89,3 +89,59 @@ test('the inspection record PDF renders via DomPDF (SCU-WID header, no overlap)'
     $res->assertOk();
     expect($res->headers->get('content-type'))->toContain('application/pdf');
 });
+
+test('a manager can acknowledge an inspection and it fills the PDF signature box', function () {
+    $mgr = User::factory()->create(['display_name' => 'ຫົວໜ້າ ກວດ']);
+    $mgr->syncRoles(['warehouse_staff']);   // has equipment.activate
+    $e = Equipment::create(['asset_code' => 'IACK-1', 'name' => 'Forklift', 'quantity' => 1]);
+    $ins = $e->inspections()->create([
+        'inspected_at' => '2026-07-28 08:00', 'inspector_name' => 'ຊ່າງ', 'result' => 'pass',
+    ]);
+
+    actingAs($mgr);
+    Livewire::test(Index::class)
+        ->call('viewInspection', $ins->id)
+        ->assertViewHas('canAcknowledge', true)
+        ->call('acknowledgeInspection', $ins->id)
+        ->assertHasNoErrors();
+
+    $ins->refresh();
+    expect($ins->acknowledged_by)->toBe($mgr->id);
+    expect($ins->acknowledged_by_name)->toBe('ຫົວໜ້າ ກວດ');
+    expect($ins->acknowledged_at)->not->toBeNull();
+
+    $html = view('equipment.inspection-pdf', ['record' => $ins, 'totalPages' => 1])->render();
+    expect($html)->toContain('ຫົວໜ້າ ກວດ');
+});
+
+test('a user with equipment view but no activate cannot acknowledge an inspection', function () {
+    $u = User::factory()->create();
+    $u->givePermissionTo('equipment.view');
+    $e = Equipment::create(['asset_code' => 'IACK-2', 'name' => 'Forklift', 'quantity' => 1]);
+    $ins = $e->inspections()->create(['inspected_at' => '2026-07-28 08:00', 'inspector_name' => 'ຊ່າງ', 'result' => 'pass']);
+
+    actingAs($u);
+    Livewire::test(Index::class)
+        ->assertViewHas('canAcknowledge', false)
+        ->call('acknowledgeInspection', $ins->id)
+        ->assertForbidden();
+
+    expect($ins->fresh()->acknowledged_at)->toBeNull();
+});
+
+test('an inspection acknowledgement can be revoked', function () {
+    $mgr = User::factory()->create();
+    $mgr->syncRoles(['warehouse_staff']);
+    $e = Equipment::create(['asset_code' => 'IACK-3', 'name' => 'Forklift', 'quantity' => 1]);
+    $ins = $e->inspections()->create([
+        'inspected_at' => '2026-07-28 08:00', 'inspector_name' => 'ຊ່າງ', 'result' => 'pass',
+        'acknowledged_by' => $mgr->id, 'acknowledged_by_name' => 'X', 'acknowledged_at' => now(),
+    ]);
+
+    actingAs($mgr);
+    Livewire::test(Index::class)->call('unacknowledgeInspection', $ins->id)->assertHasNoErrors();
+
+    $ins->refresh();
+    expect($ins->acknowledged_at)->toBeNull();
+    expect($ins->acknowledged_by)->toBeNull();
+});

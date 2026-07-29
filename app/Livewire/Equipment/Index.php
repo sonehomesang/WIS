@@ -529,6 +529,44 @@ class Index extends Component
         $this->viewingInspectionId = $id;
     }
 
+    /** ຜູ້ ມີ ສິດ ຮັບຊາບ (Manager/Leader) ບໍ — ໃຊ້ ສິດ equipment.activate. */
+    protected function canAcknowledge(): bool
+    {
+        $u = auth()->user();
+
+        return $u->is_super_admin || $u->can('equipment.activate');
+    }
+
+    /** Manager/Leader ຮັບຊາບ ໃບ ກວດ → ບັນທຶກ ຜູ້ + ວັນທີ (ຂຶ້ນ ໃນ ຫ້ອງ ລາຍເຊັນ PDF). */
+    public function acknowledgeInspection(int $id): void
+    {
+        abort_unless($this->canAcknowledge(), 403);
+        $ins = EquipmentInspection::with('equipment')->findOrFail($id);
+        if ($ins->equipment) {
+            $this->guardDept($ins->equipment);
+        }
+        $ins->update([
+            'acknowledged_by' => auth()->id(),
+            'acknowledged_by_name' => auth()->user()->display_name,
+            'acknowledged_at' => now(),
+        ]);
+        session()->flash('ok', '✓ ຮັບຊາບ ໃບ ກວດ ແລ້ວ ໂດຍ '.auth()->user()->display_name);
+        $this->dispatch('saved');
+    }
+
+    /** ຖອນ ການ ຮັບຊາບ ໃບ ກວດ (ກໍລະນີ ກົດ ຜິດ). */
+    public function unacknowledgeInspection(int $id): void
+    {
+        abort_unless($this->canAcknowledge(), 403);
+        $ins = EquipmentInspection::with('equipment')->findOrFail($id);
+        if ($ins->equipment) {
+            $this->guardDept($ins->equipment);
+        }
+        $ins->update(['acknowledged_by' => null, 'acknowledged_by_name' => null, 'acknowledged_at' => null]);
+        session()->flash('ok', 'ຖອນ ການ ຮັບຊາບ ໃບ ກວດ ແລ້ວ');
+        $this->dispatch('saved');
+    }
+
     /** ເປີດ ໜ້າຕ່າງ ປະຫວັດ/ສະຖານະ ການ ກວດເຊັກ ຂອງ ເຄື່ອງ ໜຶ່ງ. */
     public function viewInspectionHistory(int $id): void
     {
@@ -903,7 +941,7 @@ class Index extends Component
         $insTemplateNeedsFreq = (bool) $insTpl?->hasFrequencies();
 
         $viewingInspection = $this->viewingInspectionId
-            ? EquipmentInspection::with(['equipment', 'template'])->find($this->viewingInspectionId)
+            ? EquipmentInspection::with(['equipment', 'template', 'acknowledgedBy'])->find($this->viewingInspectionId)
             : null;
 
         // ປະຫວັດ ການ ກວດເຊັກ ຂອງ ເຄື່ອງ (ໜ້າຕ່າງ ຈາກ ໄອຄ່ອນ ດວງຕາ ໃນ ທະບຽນ).
@@ -961,6 +999,7 @@ class Index extends Component
             'insTemplateNeedsFuel' => $insTemplateNeedsFuel,
             'insTemplateNeedsFreq' => $insTemplateNeedsFreq,
             'viewingInspection' => $viewingInspection,
+            'canAcknowledge' => $this->canAcknowledge(),
             'historyEquipment' => $historyEquipment,
             'historyInspections' => $historyInspections,
             'viewingItem' => $viewingItem,

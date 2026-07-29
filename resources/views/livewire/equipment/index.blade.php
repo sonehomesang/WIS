@@ -744,6 +744,25 @@
                     @endif
                 </div>{{-- /#ins-detail-card --}}
 
+                {{-- ຮັບຊາບ ໂດຍ Manager/Leader → auto-fill ຫ້ອງ ລາຍເຊັນ "ຜູ້ ຮັບຊາບ" ໃນ PDF --}}
+                <div class="rounded-md border px-3 py-2 flex items-center justify-between gap-2 flex-wrap {{ $viewingInspection->acknowledged_at ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50' }}">
+                    @if ($viewingInspection->acknowledged_at)
+                        <div class="text-sm text-green-800 leading-tight">
+                            <span class="font-medium">✓ ຮັບຊາບ ແລ້ວ</span>
+                            <span class="text-green-700">· {{ $viewingInspection->acknowledged_by_name ?? $viewingInspection->acknowledgedBy?->display_name ?? '—' }}</span>
+                            <span class="text-green-600 text-xs">· {{ $viewingInspection->acknowledged_at->format('d/m/Y H:i') }}</span>
+                        </div>
+                        @if ($canAcknowledge)
+                            <button wire:click="unacknowledgeInspection({{ $viewingInspection->id }})" wire:confirm="ຖອນ ການ ຮັບຊາບ ໃບ ກວດ ນີ້?" class="text-xs text-gray-500 underline hover:text-red-600">ຖອນ ຮັບຊາບ</button>
+                        @endif
+                    @else
+                        <span class="text-sm text-gray-500">ຍັງ ບໍ່ ຮັບຊາບ <span class="text-xs text-gray-400">(ຫ້ອງ ລາຍເຊັນ Manager ໃນ PDF ຫວ່າງ)</span></span>
+                        @if ($canAcknowledge)
+                            <button wire:click="acknowledgeInspection({{ $viewingInspection->id }})" wire:confirm="ຢືນຢັນ ຮັບຊາບ ໃບ ກວດ ນີ້? ຊື່ + ວັນທີ ຂອງ ທ່ານ ຈະ ຂຶ້ນ ໃນ PDF." class="text-sm text-white bg-emerald-600 rounded-md px-3 py-1.5 hover:bg-emerald-700">✅ ຮັບຊາບ (Manager/Leader)</button>
+                        @endif
+                    @endif
+                </div>
+
                 <div class="flex flex-wrap justify-end gap-2 pt-2 border-t">
                     <a href="{{ route('equipment.inspection.pdf', $viewingInspection->id) }}" target="_blank" class="inline-flex items-center text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">⬇ PDF</a>
                     <button type="button" onclick="window.exportJpg('ins-detail-card', '{{ $vfn }}.jpg')" class="text-sm text-sky-700 border border-sky-200 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-50">⬇ JPG</button>

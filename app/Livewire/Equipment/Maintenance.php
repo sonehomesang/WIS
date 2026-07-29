@@ -505,6 +505,44 @@ class Maintenance extends Component
         $this->viewingId = $id;
     }
 
+    /** ຜູ້ ມີ ສິດ ຮັບຊາບ (Manager/Leader) ບໍ — ໃຊ້ ສິດ equipment.activate. */
+    protected function canAcknowledge(): bool
+    {
+        $u = auth()->user();
+
+        return $u->is_super_admin || $u->can('equipment.activate');
+    }
+
+    /** Manager/Leader ຮັບຊາບ ໃບ ບຳລຸງ → ບັນທຶກ ຜູ້ + ວັນທີ (ຂຶ້ນ ໃນ ຫ້ອງ ລາຍເຊັນ PDF). */
+    public function acknowledgeMaintenance(int $id): void
+    {
+        abort_unless($this->canAcknowledge(), 403);
+        $m = EquipmentMaintenance::with('equipment')->findOrFail($id);
+        if ($m->equipment) {
+            $this->guardDept($m->equipment);
+        }
+        $m->update([
+            'acknowledged_by' => auth()->id(),
+            'acknowledged_by_name' => auth()->user()->display_name,
+            'acknowledged_at' => now(),
+        ]);
+        session()->flash('ok', '✓ ຮັບຊາບ ແລ້ວ ໂດຍ '.auth()->user()->display_name);
+        $this->dispatch('saved');
+    }
+
+    /** ຖອນ ການ ຮັບຊາບ (ກໍລະນີ ກົດ ຜິດ) — ຜູ້ ມີ ສິດ activate. */
+    public function unacknowledgeMaintenance(int $id): void
+    {
+        abort_unless($this->canAcknowledge(), 403);
+        $m = EquipmentMaintenance::with('equipment')->findOrFail($id);
+        if ($m->equipment) {
+            $this->guardDept($m->equipment);
+        }
+        $m->update(['acknowledged_by' => null, 'acknowledged_by_name' => null, 'acknowledged_at' => null]);
+        session()->flash('ok', 'ຖອນ ການ ຮັບຊາບ ແລ້ວ');
+        $this->dispatch('saved');
+    }
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -609,8 +647,9 @@ class Maintenance extends Component
             'history' => $history,
             'deptScoped' => $deptScoped,
             'templateOptions' => $templateOptions,
-            'viewing' => $this->viewingId ? EquipmentMaintenance::with('equipment')->find($this->viewingId) : null,
+            'viewing' => $this->viewingId ? EquipmentMaintenance::with('equipment', 'acknowledgedBy')->find($this->viewingId) : null,
             'canManageDeleted' => $this->canManageDeleted(),
+            'canAcknowledge' => $this->canAcknowledge(),
             'checklistGroups' => $checklistGroups,
             'checklistTotal' => count($this->mChecklist),
             'checklistNgCount' => $ckNgCount,

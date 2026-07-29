@@ -605,6 +605,25 @@
                     </div>
                 @endif
 
+                {{-- ຮັບຊາບ ໂດຍ Manager/Leader → auto-fill ຫ້ອງ ລາຍເຊັນ "ຜູ້ ຮັບຊາບ" ໃນ PDF --}}
+                <div class="rounded-md border px-3 py-2 flex items-center justify-between gap-2 flex-wrap {{ $viewing->acknowledged_at ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50' }}">
+                    @if ($viewing->acknowledged_at)
+                        <div class="text-sm text-green-800 leading-tight">
+                            <span class="font-medium">✓ ຮັບຊາບ ແລ້ວ</span>
+                            <span class="text-green-700">· {{ $viewing->acknowledged_by_name ?? $viewing->acknowledgedBy?->display_name ?? '—' }}</span>
+                            <span class="text-green-600 text-xs">· {{ $viewing->acknowledged_at->format('d/m/Y H:i') }}</span>
+                        </div>
+                        @if ($canAcknowledge)
+                            <button wire:click="unacknowledgeMaintenance({{ $viewing->id }})" wire:confirm="ຖອນ ການ ຮັບຊາບ ໃບ ນີ້?" class="text-xs text-gray-500 underline hover:text-red-600">ຖອນ ຮັບຊາບ</button>
+                        @endif
+                    @else
+                        <span class="text-sm text-gray-500">ຍັງ ບໍ່ ຮັບຊາບ <span class="text-xs text-gray-400">(ຫ້ອງ ລາຍເຊັນ Manager ໃນ PDF ຫວ່າງ)</span></span>
+                        @if ($canAcknowledge)
+                            <button wire:click="acknowledgeMaintenance({{ $viewing->id }})" wire:confirm="ຢືນຢັນ ຮັບຊາບ ໃບ ບຳລຸງ ນີ້? ຊື່ + ວັນທີ ຂອງ ທ່ານ ຈະ ຂຶ້ນ ໃນ PDF." class="text-sm text-white bg-emerald-600 rounded-md px-3 py-1.5 hover:bg-emerald-700">✅ ຮັບຊາບ (Manager/Leader)</button>
+                        @endif
+                    @endif
+                </div>
+
                 <div class="flex justify-end pt-1 border-t">
                     <button wire:click="$set('viewingId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
                 </div>
