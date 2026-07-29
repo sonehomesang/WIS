@@ -20,4 +20,9 @@ class Room extends Model
     {
         return $this->belongsTo(Building::class);
     }
+
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
 }

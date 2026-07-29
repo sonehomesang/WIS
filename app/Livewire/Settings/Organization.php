@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Settings;
 
+use App\Livewire\Concerns\MultiSoftDeletesWithReason;
 use App\Models\Department;
 use App\Models\Unit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -14,6 +16,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Organization extends Component
 {
+    use MultiSoftDeletesWithReason;
+
     public ?int $selectedUnitId = null;
 
     // Modal state
@@ -131,21 +135,6 @@ class Organization extends Component
         $unit->update(['is_active' => ! $unit->is_active, 'updated_by' => auth()->id()]);
     }
 
-    public function deleteUnit(int $id): void
-    {
-        abort_unless(auth()->user()->can('units.delete'), 403);
-        $unit = Unit::findOrFail($id);
-        if ($unit->departments()->exists()) {
-            $this->addError('row', 'ລຶບ Unit ບໍ່ໄດ້ — ຍັງມີ Department ຢູ່ພາຍໃນ.');
-
-            return;
-        }
-        $unit->delete();
-        if ($this->selectedUnitId === $id) {
-            $this->selectedUnitId = Unit::orderBy('name')->value('id');
-        }
-    }
-
     public function toggleDepartment(int $id): void
     {
         $dept = Department::findOrFail($id);
@@ -153,10 +142,30 @@ class Organization extends Component
         $dept->update(['is_active' => ! $dept->is_active, 'updated_by' => auth()->id()]);
     }
 
-    public function deleteDepartment(int $id): void
+    // ── delete-with-reason + Deleted Log (trait MultiSoftDeletesWithReason) ──
+
+    protected function deletableTypes(): array
     {
-        abort_unless(auth()->user()->can('departments.delete'), 403);
-        Department::findOrFail($id)->delete();
+        return [
+            'unit' => ['model' => Unit::class, 'perm' => 'units', 'noun' => 'ໜ່ວຍງານ (Unit)'],
+            'department' => ['model' => Department::class, 'perm' => 'departments', 'noun' => 'ພະແນກ (Department)'],
+        ];
+    }
+
+    protected function deleteBlockReason(string $type, Model $record): ?string
+    {
+        if ($type === 'unit' && $record->departments()->exists()) {
+            return 'ລຶບ Unit ບໍ່ໄດ້ — ຍັງມີ Department ຢູ່ພາຍໃນ.';
+        }
+
+        return null;
+    }
+
+    protected function afterDelete(string $type, Model $record): void
+    {
+        if ($type === 'unit' && $this->selectedUnitId === $record->id) {
+            $this->selectedUnitId = Unit::orderBy('name')->value('id');
+        }
     }
 
     protected function resetForm(string $type): void
@@ -198,12 +207,25 @@ class Organization extends Component
 
     public function render(): View
     {
-        $units = Unit::withCount('departments')->orderBy('name')->get();
-        $departments = $this->selectedUnitId
-            ? Department::where('unit_id', $this->selectedUnitId)->orderBy('name')->get()
-            : collect();
-        $selectedUnit = $this->selectedUnitId ? $units->firstWhere('id', $this->selectedUnitId) : null;
+        $showDelUnits = $this->showDeletedType === 'unit' && $this->canManageDeletedType('unit');
+        $showDelDepts = $this->showDeletedType === 'department' && $this->canManageDeletedType('department');
 
-        return view('livewire.settings.organization', compact('units', 'departments', 'selectedUnit'));
+        $units = $showDelUnits
+            ? Unit::onlyTrashed()->with('deletedBy')->orderBy('name')->get()
+            : Unit::withCount('departments')->orderBy('name')->get();
+
+        // ເລືອກ unit ຫາ ຈາກ ຖານ ຂໍ້ມູນ ໂດຍກົງ (ບໍ່ ຂຶ້ນ ກັບ ລາຍການ ທີ່ ໂຊ — trashed/active).
+        $selectedUnit = $this->selectedUnitId ? Unit::find($this->selectedUnitId) : null;
+
+        $departments = $this->selectedUnitId
+            ? ($showDelDepts
+                ? Department::onlyTrashed()->with('deletedBy')->where('unit_id', $this->selectedUnitId)->orderBy('name')->get()
+                : Department::where('unit_id', $this->selectedUnitId)->orderBy('name')->get())
+            : collect();
+
+        // dropdown ໃນ ຟອມ department ຕ້ອງ ໃຊ້ unit ປົກກະຕິ ສະເໝີ (ບໍ່ ໃຫ້ ຕິດ trashed).
+        $unitOptions = Unit::orderBy('name')->get(['id', 'name']);
+
+        return view('livewire.settings.organization', compact('units', 'departments', 'selectedUnit', 'showDelUnits', 'showDelDepts', 'unitOptions'));
     }
 }

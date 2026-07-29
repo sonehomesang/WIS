@@ -77,17 +77,61 @@ test('cannot delete a unit that has departments', function () {
     $u = Unit::create(['slug' => 'eng', 'name' => 'Engineering', 'is_active' => true]);
     Department::create(['unit_id' => $u->id, 'slug' => 'civ', 'name' => 'Civil', 'is_active' => true]);
 
-    Livewire::test(Organization::class)->call('deleteUnit', $u->id)->assertHasErrors('row');
+    Livewire::test(Organization::class)->call('openDelete', 'unit', $u->id)->assertHasErrors('row');
 
     expect(Unit::find($u->id))->not->toBeNull();
 });
 
-test('can soft-delete an empty unit', function () {
-    $this->actingAs(superAdminUser());
+test('deleting an empty unit needs a reason, records who, and can be restored', function () {
+    $admin = superAdminUser();
+    $this->actingAs($admin);
     $u = Unit::create(['slug' => 'empty', 'name' => 'Empty', 'is_active' => true]);
 
-    Livewire::test(Organization::class)->call('deleteUnit', $u->id);
+    // reason required
+    Livewire::test(Organization::class)
+        ->call('openDelete', 'unit', $u->id)
+        ->call('deleteRecord')
+        ->assertHasErrors(['deleteReason' => 'required']);
+    expect(Unit::find($u->id))->not->toBeNull();
+
+    // delete with reason → soft-deleted + metadata
+    Livewire::test(Organization::class)
+        ->call('openDelete', 'unit', $u->id)
+        ->set('deleteReason', 'ບໍ່ ໃຊ້ ແລ້ວ')
+        ->call('deleteRecord')
+        ->assertHasNoErrors();
 
     expect(Unit::find($u->id))->toBeNull();
-    expect(Unit::withTrashed()->find($u->id))->not->toBeNull();
+    $trashed = Unit::withTrashed()->find($u->id);
+    expect($trashed->trashed())->toBeTrue();
+    expect($trashed->deleted_reason)->toBe('ບໍ່ ໃຊ້ ແລ້ວ');
+    expect($trashed->deleted_by)->toBe($admin->id);
+
+    // Deleted Log toggle shows it, then restore clears the metadata
+    Livewire::test(Organization::class)
+        ->call('toggleDeletedLog', 'unit')
+        ->assertViewHas('showDelUnits', true)
+        ->assertSee('Empty')
+        ->call('restoreRecord', 'unit', $u->id);
+    expect(Unit::find($u->id))->not->toBeNull();
+    expect(Unit::find($u->id)->deleted_reason)->toBeNull();
+});
+
+test('a department can be soft-deleted with a reason and restored', function () {
+    $this->actingAs(superAdminUser());
+    $u = Unit::create(['slug' => 'eng', 'name' => 'Engineering', 'is_active' => true]);
+    $d = Department::create(['unit_id' => $u->id, 'slug' => 'civ', 'name' => 'Civil', 'is_active' => true]);
+
+    Livewire::test(Organization::class)
+        ->call('selectUnit', $u->id)
+        ->call('openDelete', 'department', $d->id)
+        ->set('deleteReason', 'ຍ້າຍ ໄປ unit ໃໝ່')
+        ->call('deleteRecord')
+        ->assertHasNoErrors();
+
+    expect(Department::find($d->id))->toBeNull();
+    expect(Department::withTrashed()->find($d->id)->deleted_reason)->toBe('ຍ້າຍ ໄປ unit ໃໝ່');
+
+    Livewire::test(Organization::class)->call('selectUnit', $u->id)->call('restoreRecord', 'department', $d->id);
+    expect(Department::find($d->id))->not->toBeNull();
 });

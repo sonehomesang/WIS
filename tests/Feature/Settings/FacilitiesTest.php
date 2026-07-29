@@ -48,3 +48,41 @@ test('super admin can add a building type', function () {
 
     expect(\App\Models\BuildingType::where('name', 'Substation')->exists())->toBeTrue();
 });
+
+test('a room can be soft-deleted with a reason and restored', function () {
+    $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+    $loc = Location::create(['slug' => 'l', 'name' => 'Site', 'is_active' => true]);
+    $bt = \App\Models\BuildingType::where('is_active', true)->first();
+    $bld = Building::create(['location_id' => $loc->id, 'building_type_id' => $bt->id, 'slug' => 'b', 'name' => 'WH', 'is_active' => true]);
+    $room = Room::create(['building_id' => $bld->id, 'slug' => 'r', 'name' => 'Store 1', 'is_active' => true]);
+
+    Livewire::test(Facilities::class)
+        ->call('selectLocation', $loc->id)
+        ->call('selectBuilding', $bld->id)
+        ->call('openDelete', 'room', $room->id)
+        ->set('deleteReason', 'ຮື້ ຫ້ອງ ຖິ້ມ')
+        ->call('deleteRecord')
+        ->assertHasNoErrors();
+
+    expect(Room::find($room->id))->toBeNull();
+    expect(Room::withTrashed()->find($room->id)->deleted_reason)->toBe('ຮື້ ຫ້ອງ ຖິ້ມ');
+
+    Livewire::test(Facilities::class)
+        ->call('selectLocation', $loc->id)
+        ->call('selectBuilding', $bld->id)
+        ->call('toggleDeletedLog', 'room')
+        ->assertViewHas('showDelRoom', true)
+        ->assertSee('Store 1')
+        ->call('restoreRecord', 'room', $room->id);
+    expect(Room::find($room->id))->not->toBeNull();
+});
+
+test('a location with buildings cannot be deleted', function () {
+    $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+    $loc = Location::create(['slug' => 'l', 'name' => 'Site', 'is_active' => true]);
+    $bt = \App\Models\BuildingType::where('is_active', true)->first();
+    Building::create(['location_id' => $loc->id, 'building_type_id' => $bt->id, 'slug' => 'b', 'name' => 'WH', 'is_active' => true]);
+
+    Livewire::test(Facilities::class)->call('openDelete', 'location', $loc->id)->assertHasErrors('row');
+    expect(Location::find($loc->id))->not->toBeNull();
+});

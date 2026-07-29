@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Settings;
 
+use App\Livewire\Concerns\MultiSoftDeletesWithReason;
 use App\Models\Building;
 use App\Models\BuildingType;
 use App\Models\Location;
 use App\Models\Room;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -16,6 +18,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Facilities extends Component
 {
+    use MultiSoftDeletesWithReason;
+
     public ?int $selectedLocationId = null;
 
     public ?int $selectedBuildingId = null;
@@ -228,44 +232,11 @@ class Facilities extends Component
         $m->update(['is_active' => ! $m->is_active, 'updated_by' => auth()->id()]);
     }
 
-    public function deleteLocation(int $id): void
-    {
-        abort_unless(auth()->user()->can('locations.delete'), 403);
-        $m = Location::findOrFail($id);
-        if ($m->buildings()->exists()) {
-            $this->addError('row', 'ລຶບ Location ບໍ່ໄດ້ — ຍັງມີ Building ຢູ່ພາຍໃນ.');
-
-            return;
-        }
-        $m->delete();
-        if ($this->selectedLocationId === $id) {
-            $this->selectedLocationId = Location::orderBy('name')->value('id');
-            $this->selectedBuildingId = $this->selectedLocationId
-                ? Building::where('location_id', $this->selectedLocationId)->orderBy('name')->value('id')
-                : null;
-        }
-    }
-
     public function toggleBuilding(int $id): void
     {
         $m = Building::findOrFail($id);
         abort_unless(auth()->user()->can('buildings.'.($m->is_active ? 'deactivate' : 'activate')), 403);
         $m->update(['is_active' => ! $m->is_active, 'updated_by' => auth()->id()]);
-    }
-
-    public function deleteBuilding(int $id): void
-    {
-        abort_unless(auth()->user()->can('buildings.delete'), 403);
-        $m = Building::findOrFail($id);
-        if ($m->rooms()->exists()) {
-            $this->addError('row', 'ລຶບ Building ບໍ່ໄດ້ — ຍັງມີ Room ຢູ່ພາຍໃນ.');
-
-            return;
-        }
-        $m->delete();
-        if ($this->selectedBuildingId === $id) {
-            $this->selectedBuildingId = Building::where('location_id', $this->selectedLocationId)->orderBy('name')->value('id');
-        }
     }
 
     public function toggleRoom(int $id): void
@@ -275,10 +246,37 @@ class Facilities extends Component
         $m->update(['is_active' => ! $m->is_active, 'updated_by' => auth()->id()]);
     }
 
-    public function deleteRoom(int $id): void
+    // ── delete-with-reason + Deleted Log (trait MultiSoftDeletesWithReason) ──
+
+    protected function deletableTypes(): array
     {
-        abort_unless(auth()->user()->can('rooms.delete'), 403);
-        Room::findOrFail($id)->delete();
+        return [
+            'location' => ['model' => Location::class, 'perm' => 'locations', 'noun' => 'ບ່ອນຕັ້ງ (Location)'],
+            'building' => ['model' => Building::class, 'perm' => 'buildings', 'noun' => 'ອາຄານ (Building)'],
+            'room' => ['model' => Room::class, 'perm' => 'rooms', 'noun' => 'ຫ້ອງ (Room)'],
+        ];
+    }
+
+    protected function deleteBlockReason(string $type, Model $record): ?string
+    {
+        return match ($type) {
+            'location' => $record->buildings()->exists() ? 'ລຶບ Location ບໍ່ໄດ້ — ຍັງມີ Building ຢູ່ພາຍໃນ.' : null,
+            'building' => $record->rooms()->exists() ? 'ລຶບ Building ບໍ່ໄດ້ — ຍັງມີ Room ຢູ່ພາຍໃນ.' : null,
+            default => null,
+        };
+    }
+
+    protected function afterDelete(string $type, Model $record): void
+    {
+        if ($type === 'location' && $this->selectedLocationId === $record->id) {
+            $this->selectedLocationId = Location::orderBy('name')->value('id');
+            $this->selectedBuildingId = $this->selectedLocationId
+                ? Building::where('location_id', $this->selectedLocationId)->orderBy('name')->value('id')
+                : null;
+        }
+        if ($type === 'building' && $this->selectedBuildingId === $record->id) {
+            $this->selectedBuildingId = Building::where('location_id', $this->selectedLocationId)->orderBy('name')->value('id');
+        }
     }
 
     // ── Building-types manager ────────────────────────────────
@@ -369,22 +367,43 @@ class Facilities extends Component
 
     public function render(): View
     {
-        $locations = Location::withCount('buildings')->orderBy('name')->get();
+        $showDelLoc = $this->showDeletedType === 'location' && $this->canManageDeletedType('location');
+        $showDelBld = $this->showDeletedType === 'building' && $this->canManageDeletedType('building');
+        $showDelRoom = $this->showDeletedType === 'room' && $this->canManageDeletedType('room');
+
+        $locations = $showDelLoc
+            ? Location::onlyTrashed()->with('deletedBy')->orderBy('name')->get()
+            : Location::withCount('buildings')->orderBy('name')->get();
+
         $buildings = $this->selectedLocationId
-            ? Building::where('location_id', $this->selectedLocationId)->with('buildingType')->withCount('rooms')->orderBy('name')->get()
+            ? ($showDelBld
+                ? Building::onlyTrashed()->with('deletedBy')->where('location_id', $this->selectedLocationId)->orderBy('name')->get()
+                : Building::where('location_id', $this->selectedLocationId)->with('buildingType')->withCount('rooms')->orderBy('name')->get())
             : collect();
+
         $rooms = $this->selectedBuildingId
-            ? Room::where('building_id', $this->selectedBuildingId)->orderBy('name')->get()
+            ? ($showDelRoom
+                ? Room::onlyTrashed()->with('deletedBy')->where('building_id', $this->selectedBuildingId)->orderBy('name')->get()
+                : Room::where('building_id', $this->selectedBuildingId)->orderBy('name')->get())
             : collect();
 
         return view('livewire.settings.facilities', [
             'locations' => $locations,
             'buildings' => $buildings,
             'rooms' => $rooms,
-            'selectedLocation' => $this->selectedLocationId ? $locations->firstWhere('id', $this->selectedLocationId) : null,
-            'selectedBuilding' => $this->selectedBuildingId ? $buildings->firstWhere('id', $this->selectedBuildingId) : null,
+            // ເລືອກ ຫາ ຈາກ DB ໂດຍກົງ (ບໍ່ ຂຶ້ນ ກັບ ລາຍການ ທີ່ ໂຊ — trashed/active).
+            'selectedLocation' => $this->selectedLocationId ? Location::find($this->selectedLocationId) : null,
+            'selectedBuilding' => $this->selectedBuildingId ? Building::find($this->selectedBuildingId) : null,
             'buildingTypes' => BuildingType::where('is_active', true)->orderBy('name')->get(),
             'allTypes' => BuildingType::orderBy('name')->get(),
+            'showDelLoc' => $showDelLoc,
+            'showDelBld' => $showDelBld,
+            'showDelRoom' => $showDelRoom,
+            // dropdown ໃນ ຟອມ ຕ້ອງ ໃຊ້ ລາຍການ ປົກກະຕິ ສະເໝີ (ບໍ່ ໃຫ້ ຕິດ trashed).
+            'locationOptions' => Location::orderBy('name')->get(['id', 'name']),
+            'buildingOptions' => $this->selectedLocationId
+                ? Building::where('location_id', $this->selectedLocationId)->orderBy('name')->get(['id', 'name'])
+                : collect(),
         ]);
     }
 }

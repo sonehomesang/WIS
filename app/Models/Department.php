@@ -29,4 +29,9 @@ class Department extends Model
     {
         return $this->belongsTo(Unit::class);
     }
+
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
 }
