@@ -80,9 +80,22 @@
                                 <input type="text" wire:model="items.{{ $i }}.item_name" class="w-full rounded-md border-gray-300 text-sm" />
                                 @error("items.$i.item_name")<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                             </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs text-gray-500 mb-1">ທະບຽນເຄື່ອງ</label>
-                                <input type="text" wire:model="items.{{ $i }}.asset_code" placeholder="ເຊັ່ນ EL-T001-1" class="w-full rounded-md border-gray-300 text-sm" />
+                            <div class="sm:col-span-2 relative">
+                                <label class="block text-xs text-gray-500 mb-1">ທະບຽນເຄື່ອງ <span class="text-gray-400">🔎 ຄົ້ນ ຈາກ ທະບຽນ</span></label>
+                                <input type="text" wire:model.live.debounce.350ms="items.{{ $i }}.asset_code" placeholder="ພິມ ລະຫັດ/ຊື່ ເພື່ອ ດຶງ…" autocomplete="off" class="w-full rounded-md border-gray-300 text-sm" />
+                                <div wire:loading.flex wire:target="items.{{ $i }}.asset_code" class="absolute right-2 top-7 text-gray-300"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg></div>
+                                @if (! empty($eqMatches[$i]))
+                                    <ul class="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-52 overflow-auto text-xs">
+                                        @foreach ($eqMatches[$i] as $m)
+                                            <li>
+                                                <button type="button" wire:click="pickEquipment({{ $i }}, {{ $m['id'] }})" class="w-full text-left px-2.5 py-1.5 hover:bg-sky-50 border-b border-gray-50 last:border-0">
+                                                    <span class="font-mono text-sky-700">{{ $m['asset_code'] }}</span> · {{ $m['name'] }}
+                                                    @if ($m['fixed_asset_no'])<span class="text-gray-400"> · {{ $m['fixed_asset_no'] }}</span>@endif
+                                                </button>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
                                 @error("items.$i.asset_code")<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div class="sm:col-span-2">

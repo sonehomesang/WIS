@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Deposit;
 
+use App\Models\Equipment;
 use App\Models\Uom;
 use App\Services\DepositService;
 use Illuminate\Support\Carbon;
@@ -40,6 +41,10 @@ class Create extends Component
     /** @var array<int, TemporaryUploadedFile[]> ຮູບ deposit ຕໍ່ item (index) */
     public array $photos = [];
 
+    /** @var array<int, array<int, array{id:int,asset_code:string,fixed_asset_no:?string,name:string}>>
+     *  ຜົນ ຄົ້ນ ທະບຽນ Equipment ຕໍ່ ແຖວ item (index) — ສຳລັບ ດຶງ ທະບຽນເຄື່ອງ/ຊັບສິນ ອັດຕະໂນມັດ. */
+    public array $eqMatches = [];
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('deposit.create'), 403);
@@ -57,11 +62,51 @@ class Create extends Component
         $this->items[] = $this->blankItem();
     }
 
+    /** ພິມ ໃນ ຊ່ອງ ທະບຽນເຄື່ອງ → ຄົ້ນ ທະບຽນ Equipment ໃຫ້ ດຶງ ມາ ຕື່ມ ໄດ້ (key = "{i}.asset_code"). */
+    public function updatedItems($value, $key): void
+    {
+        [$i, $field] = array_pad(explode('.', (string) $key, 2), 2, null);
+        if ($field !== 'asset_code') {
+            return;
+        }
+        $i = (int) $i;
+        $term = trim((string) $value);
+        if (strlen($term) < 2) {
+            $this->eqMatches[$i] = [];
+
+            return;
+        }
+        $this->eqMatches[$i] = Equipment::query()
+            ->where(fn ($q) => $q->where('asset_code', 'like', "%{$term}%")
+                ->orWhere('fixed_asset_no', 'like', "%{$term}%")
+                ->orWhere('name', 'like', "%{$term}%"))
+            ->orderBy('asset_code')->limit(6)
+            ->get(['id', 'asset_code', 'fixed_asset_no', 'name'])
+            ->map(fn ($e) => ['id' => $e->id, 'asset_code' => $e->asset_code, 'fixed_asset_no' => $e->fixed_asset_no, 'name' => $e->name])
+            ->all();
+    }
+
+    /** ເລືອກ ເຄື່ອງ ຈາກ ທະບຽນ → ຕື່ມ ທະບຽນເຄື່ອງ + ຊັບສິນ (+ ຊື່ ຖ້າ ຍັງ ຫວ່າງ). */
+    public function pickEquipment(int $i, int $eqId): void
+    {
+        $e = Equipment::find($eqId);
+        if (! $e || ! isset($this->items[$i])) {
+            return;
+        }
+        $this->items[$i]['asset_code'] = $e->asset_code;
+        $this->items[$i]['fixed_asset_no'] = $e->fixed_asset_no ?? '';
+        if (trim((string) ($this->items[$i]['item_name'] ?? '')) === '') {
+            $this->items[$i]['item_name'] = $e->name;
+        }
+        $this->eqMatches[$i] = [];
+    }
+
     public function removeItem(int $i): void
     {
         unset($this->items[$i], $this->photos[$i]);
         $this->items = array_values($this->items);
         $this->photos = array_values($this->photos);
+        $this->eqMatches = [];   // index shift → ລ້າງ ຜົນ ຄົ້ນ ທັງໝົດ ກັນ ຫຼົງ ແຖວ
         if (empty($this->items)) {
             $this->items = [$this->blankItem()];
         }

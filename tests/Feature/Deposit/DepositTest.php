@@ -175,3 +175,30 @@ test('a deposit item stores asset_code (ທະບຽນເຄື່ອງ) and f
     expect($item->asset_code)->toBe('EL-T004-1');
     expect($item->fixed_asset_no)->toBe('FA-9001');
 });
+
+test('typing a code looks up the equipment register and picking fills asset_code, fixed_asset_no and name', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $eq = App\Models\Equipment::create([
+        'asset_code' => 'EL-T004-1', 'fixed_asset_no' => 'FA-9001', 'name' => 'Fluke 175', 'quantity' => 1,
+    ]);
+    $this->actingAs($admin);
+
+    Livewire::test(App\Livewire\Deposit\Create::class)
+        ->set('items.0.asset_code', 'EL-T004')            // ພິມ → ຄົ້ນ ທະບຽນ
+        ->assertSet('eqMatches.0.0.id', $eq->id)          // ພົບ ໃນ ທະບຽນ Equipment
+        ->call('pickEquipment', 0, $eq->id)               // ເລືອກ
+        ->assertSet('items.0.asset_code', 'EL-T004-1')
+        ->assertSet('items.0.fixed_asset_no', 'FA-9001')
+        ->assertSet('items.0.item_name', 'Fluke 175')     // ຊື່ ຫວ່າງ → ຕື່ມ ໃຫ້
+        ->assertSet('eqMatches.0', []);                   // dropdown ປິດ
+});
+
+test('a short asset-code term returns no lookup matches', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    App\Models\Equipment::create(['asset_code' => 'EL-T004-1', 'name' => 'Fluke', 'quantity' => 1]);
+    $this->actingAs($admin);
+
+    Livewire::test(App\Livewire\Deposit\Create::class)
+        ->set('items.0.asset_code', 'E')                  // < 2 ຕົວ → ບໍ່ ຄົ້ນ
+        ->assertSet('eqMatches.0', []);
+});
