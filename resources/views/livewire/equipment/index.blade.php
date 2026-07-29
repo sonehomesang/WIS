@@ -655,7 +655,6 @@
             $vrb = ['pass' => 'bg-green-50 text-green-700', 'fail' => 'bg-red-50 text-red-700', 'follow_up' => 'bg-amber-50 text-amber-700'];
             $vrl = ['pass' => 'ຜ່ານ', 'fail' => 'ບໍ່ຜ່ານ - ຫ້າມ ໃຊ້ງານ', 'follow_up' => 'ຕ້ອງຕິດຕາມ'];
             $vcl = ['pass' => ['OK · ຜ່ານ', 'text-green-700'], 'fail' => ['NG · ບໍ່ຜ່ານ', 'text-red-700'], 'na' => ['N/A', 'text-gray-400']];
-            $vfn = 'inspection-'.\Illuminate\Support\Str::slug($viewingInspection->equipment?->asset_code ?? 'eq').'-'.($viewingInspection->inspected_at?->format('Ymd-Hi') ?? 'na');
         @endphp
         <div class="fixed inset-0 z-[55] flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="ins-view-modal">
             <div class="bg-white w-full md:max-w-sm rounded-t-lg md:rounded-lg p-3 space-y-2 max-h-[90vh] overflow-y-auto">
@@ -765,7 +764,6 @@
 
                 <div class="flex flex-wrap justify-end gap-2 pt-2 border-t">
                     <a href="{{ route('equipment.inspection.pdf', $viewingInspection->id) }}" target="_blank" class="inline-flex items-center text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">⬇ PDF</a>
-                    <button type="button" onclick="window.exportJpg('ins-detail-card', '{{ $vfn }}.jpg')" class="text-sm text-sky-700 border border-sky-200 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-50">⬇ JPG</button>
                     @can('equipment.edit')
                         <button wire:click="editInspection({{ $viewingInspection->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-50">ແກ້ໄຂ</button>
                     @endcan
