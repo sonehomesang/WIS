@@ -3,6 +3,7 @@
 namespace App\Livewire\Deposit;
 
 use App\Models\Equipment;
+use App\Models\InventoryItem;
 use App\Models\Uom;
 use App\Services\DepositService;
 use Illuminate\Support\Carbon;
@@ -41,9 +42,9 @@ class Create extends Component
     /** @var array<int, TemporaryUploadedFile[]> ຮູບ deposit ຕໍ່ item (index) */
     public array $photos = [];
 
-    /** @var array<int, array<int, array{id:int,asset_code:string,fixed_asset_no:?string,name:string}>>
-     *  ຜົນ ຄົ້ນ ທະບຽນ Equipment ຕໍ່ ແຖວ item (index) — ສຳລັບ ດຶງ ທະບຽນເຄື່ອງ/ຊັບສິນ ອັດຕະໂນມັດ. */
-    public array $eqMatches = [];
+    /** @var array<int, array<int, array{source:string,id:int,code:string,fixed:?string,name:string}>>
+     *  ຜົນ ຄົ້ນ ຕໍ່ ແຖວ item (index) — ຈາກ Inventory ຫຼື Equipment ຕາມ ແຫຼ່ງ ທີ່ ເລືອກ. */
+    public array $assetMatches = [];
 
     public function mount(): void
     {
@@ -54,7 +55,8 @@ class Create extends Component
 
     protected function blankItem(): array
     {
-        return ['item_name' => '', 'asset_code' => '', 'fixed_asset_no' => '', 'description' => '', 'qty' => 1, 'unit' => '', 'estimated_value' => '', 'currency' => '', 'condition_on_deposit' => ''];
+        // asset_source = ແຫຼ່ງ ຂອງ ທະບຽນເຄື່ອງ: 'inventory' | 'equipment' | 'new' (UI ຢ່າງດຽວ — ບໍ່ ບັນທຶກ).
+        return ['item_name' => '', 'asset_source' => 'inventory', 'asset_code' => '', 'fixed_asset_no' => '', 'description' => '', 'qty' => 1, 'unit' => '', 'estimated_value' => '', 'currency' => '', 'condition_on_deposit' => ''];
     }
 
     public function addItem(): void
@@ -62,43 +64,76 @@ class Create extends Component
         $this->items[] = $this->blankItem();
     }
 
-    /** ພິມ ໃນ ຊ່ອງ ທະບຽນເຄື່ອງ → ຄົ້ນ ທະບຽນ Equipment ໃຫ້ ດຶງ ມາ ຕື່ມ ໄດ້ (key = "{i}.asset_code"). */
+    /** ພິມ ໃນ ຊ່ອງ ທະບຽນເຄື່ອງ → ຄົ້ນ ຈາກ ແຫຼ່ງ ທີ່ ເລືອກ (Inventory/Equipment); 'new' = ພິມ ເອງ. */
     public function updatedItems($value, $key): void
     {
         [$i, $field] = array_pad(explode('.', (string) $key, 2), 2, null);
+        $i = (int) $i;
+
+        if ($field === 'asset_source') {
+            $this->assetMatches[$i] = [];   // ປ່ຽນ ແຫຼ່ງ → ລ້າງ ຜົນ ຄົ້ນ ເກົ່າ
+            return;
+        }
         if ($field !== 'asset_code') {
             return;
         }
-        $i = (int) $i;
+
+        $src = $this->items[$i]['asset_source'] ?? 'inventory';
         $term = trim((string) $value);
-        if (strlen($term) < 2) {
-            $this->eqMatches[$i] = [];
+        if ($src === 'new' || strlen($term) < 2) {
+            $this->assetMatches[$i] = [];
 
             return;
         }
-        $this->eqMatches[$i] = Equipment::query()
-            ->where(fn ($q) => $q->where('asset_code', 'like', "%{$term}%")
-                ->orWhere('fixed_asset_no', 'like', "%{$term}%")
-                ->orWhere('name', 'like', "%{$term}%"))
-            ->orderBy('asset_code')->limit(6)
-            ->get(['id', 'asset_code', 'fixed_asset_no', 'name'])
-            ->map(fn ($e) => ['id' => $e->id, 'asset_code' => $e->asset_code, 'fixed_asset_no' => $e->fixed_asset_no, 'name' => $e->name])
-            ->all();
+
+        if ($src === 'equipment') {
+            $this->assetMatches[$i] = Equipment::query()
+                ->where(fn ($q) => $q->where('asset_code', 'like', "%{$term}%")
+                    ->orWhere('fixed_asset_no', 'like', "%{$term}%")
+                    ->orWhere('name', 'like', "%{$term}%"))
+                ->orderBy('asset_code')->limit(6)
+                ->get(['id', 'asset_code', 'fixed_asset_no', 'name'])
+                ->map(fn ($e) => ['source' => 'equipment', 'id' => $e->id, 'code' => $e->asset_code, 'fixed' => $e->fixed_asset_no, 'name' => $e->name])
+                ->all();
+        } else { // inventory
+            $this->assetMatches[$i] = InventoryItem::query()
+                ->where(fn ($q) => $q->where('slug', 'like', "%{$term}%")
+                    ->orWhere('name', 'like', "%{$term}%")
+                    ->orWhere('serial_number', 'like', "%{$term}%"))
+                ->orderBy('slug')->limit(6)
+                ->get(['id', 'slug', 'name', 'serial_number'])
+                ->map(fn ($x) => ['source' => 'inventory', 'id' => $x->id, 'code' => $x->slug, 'fixed' => null, 'name' => $x->name])
+                ->all();
+        }
     }
 
-    /** ເລືອກ ເຄື່ອງ ຈາກ ທະບຽນ → ຕື່ມ ທະບຽນເຄື່ອງ + ຊັບສິນ (+ ຊື່ ຖ້າ ຍັງ ຫວ່າງ). */
-    public function pickEquipment(int $i, int $eqId): void
+    /** ເລືອກ ຈາກ ຜົນ ຄົ້ນ → ຕື່ມ ທະບຽນເຄື່ອງ (+ ຊັບສິນ ຖ້າ ມາ ຈາກ Equipment) (+ ຊື່ ຖ້າ ຍັງ ຫວ່າງ). */
+    public function pickAsset(int $i, string $source, int $id): void
     {
-        $e = Equipment::find($eqId);
-        if (! $e || ! isset($this->items[$i])) {
+        if (! isset($this->items[$i])) {
             return;
         }
-        $this->items[$i]['asset_code'] = $e->asset_code;
-        $this->items[$i]['fixed_asset_no'] = $e->fixed_asset_no ?? '';
-        if (trim((string) ($this->items[$i]['item_name'] ?? '')) === '') {
-            $this->items[$i]['item_name'] = $e->name;
+        if ($source === 'equipment') {
+            $e = Equipment::find($id);
+            if (! $e) {
+                return;
+            }
+            $this->items[$i]['asset_code'] = $e->asset_code;
+            $this->items[$i]['fixed_asset_no'] = $e->fixed_asset_no ?? '';
+            $name = $e->name;
+        } else {
+            $x = InventoryItem::find($id);
+            if (! $x) {
+                return;
+            }
+            $this->items[$i]['asset_code'] = $x->slug;
+            // Inventory ບໍ່ ມີ ເລກ ຊັບສິນ — ຄົງ ຄ່າ ເກົ່າ ໄວ້.
+            $name = $x->name;
         }
-        $this->eqMatches[$i] = [];
+        if (trim((string) ($this->items[$i]['item_name'] ?? '')) === '') {
+            $this->items[$i]['item_name'] = $name;
+        }
+        $this->assetMatches[$i] = [];
     }
 
     public function removeItem(int $i): void
@@ -106,7 +141,7 @@ class Create extends Component
         unset($this->items[$i], $this->photos[$i]);
         $this->items = array_values($this->items);
         $this->photos = array_values($this->photos);
-        $this->eqMatches = [];   // index shift → ລ້າງ ຜົນ ຄົ້ນ ທັງໝົດ ກັນ ຫຼົງ ແຖວ
+        $this->assetMatches = [];   // index shift → ລ້າງ ຜົນ ຄົ້ນ ທັງໝົດ ກັນ ຫຼົງ ແຖວ
         if (empty($this->items)) {
             $this->items = [$this->blankItem()];
         }

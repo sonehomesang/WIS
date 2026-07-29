@@ -176,7 +176,7 @@ test('a deposit item stores asset_code (ທະບຽນເຄື່ອງ) and f
     expect($item->fixed_asset_no)->toBe('FA-9001');
 });
 
-test('typing a code looks up the equipment register and picking fills asset_code, fixed_asset_no and name', function () {
+test('the asset lookup can pull from the Equipment & Tools register', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $eq = App\Models\Equipment::create([
         'asset_code' => 'EL-T004-1', 'fixed_asset_no' => 'FA-9001', 'name' => 'Fluke 175', 'quantity' => 1,
@@ -184,13 +184,31 @@ test('typing a code looks up the equipment register and picking fills asset_code
     $this->actingAs($admin);
 
     Livewire::test(App\Livewire\Deposit\Create::class)
-        ->set('items.0.asset_code', 'EL-T004')            // ພິມ → ຄົ້ນ ທະບຽນ
-        ->assertSet('eqMatches.0.0.id', $eq->id)          // ພົບ ໃນ ທະບຽນ Equipment
-        ->call('pickEquipment', 0, $eq->id)               // ເລືອກ
+        ->set('items.0.asset_source', 'equipment')        // ເລືອກ ແຫຼ່ງ = Equipment
+        ->set('items.0.asset_code', 'EL-T004')            // ພິມ → ຄົ້ນ
+        ->assertSet('assetMatches.0.0.id', $eq->id)
+        ->assertSet('assetMatches.0.0.source', 'equipment')
+        ->call('pickAsset', 0, 'equipment', $eq->id)      // ເລືອກ
         ->assertSet('items.0.asset_code', 'EL-T004-1')
-        ->assertSet('items.0.fixed_asset_no', 'FA-9001')
-        ->assertSet('items.0.item_name', 'Fluke 175')     // ຊື່ ຫວ່າງ → ຕື່ມ ໃຫ້
-        ->assertSet('eqMatches.0', []);                   // dropdown ປິດ
+        ->assertSet('items.0.fixed_asset_no', 'FA-9001')  // Equipment ຕື່ມ ເລກ ຊັບສິນ ໃຫ້ ນຳ
+        ->assertSet('items.0.item_name', 'Fluke 175')
+        ->assertSet('assetMatches.0', []);
+});
+
+test('the asset lookup can pull from the Inventory register (material no.)', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $inv = App\Models\InventoryItem::create(['slug' => 'EL-0001', 'name' => 'Cable 2.5mm', 'quantity' => 10]);
+    $this->actingAs($admin);
+
+    Livewire::test(App\Livewire\Deposit\Create::class)
+        ->set('items.0.asset_source', 'inventory')        // ແຫຼ່ງ = Inventory (default)
+        ->set('items.0.asset_code', 'EL-0001')
+        ->assertSet('assetMatches.0.0.id', $inv->id)
+        ->assertSet('assetMatches.0.0.source', 'inventory')
+        ->call('pickAsset', 0, 'inventory', $inv->id)
+        ->assertSet('items.0.asset_code', 'EL-0001')      // ດຶງ Material No. (slug)
+        ->assertSet('items.0.item_name', 'Cable 2.5mm')
+        ->assertSet('assetMatches.0', []);
 });
 
 test('a short asset-code term returns no lookup matches', function () {
@@ -199,6 +217,7 @@ test('a short asset-code term returns no lookup matches', function () {
     $this->actingAs($admin);
 
     Livewire::test(App\Livewire\Deposit\Create::class)
+        ->set('items.0.asset_source', 'equipment')
         ->set('items.0.asset_code', 'E')                  // < 2 ຕົວ → ບໍ່ ຄົ້ນ
-        ->assertSet('eqMatches.0', []);
+        ->assertSet('assetMatches.0', []);
 });

@@ -81,16 +81,25 @@
                                 @error("items.$i.item_name")<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                             </div>
                             <div class="sm:col-span-2 relative">
-                                <label class="block text-xs text-gray-500 mb-1">ທະບຽນເຄື່ອງ <span class="text-gray-400">🔎 ຄົ້ນ ຈາກ ທະບຽນ</span></label>
-                                <input type="text" wire:model.live.debounce.350ms="items.{{ $i }}.asset_code" placeholder="ພິມ ລະຫັດ/ຊື່ ເພື່ອ ດຶງ…" autocomplete="off" class="w-full rounded-md border-gray-300 text-sm" />
-                                <div wire:loading.flex wire:target="items.{{ $i }}.asset_code" class="absolute right-2 top-7 text-gray-300"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg></div>
-                                @if (! empty($eqMatches[$i]))
+                                @php $src = $row['asset_source'] ?? 'inventory'; @endphp
+                                <div class="flex items-center justify-between mb-1 gap-2">
+                                    <label class="text-xs text-gray-500 whitespace-nowrap">ທະບຽນເຄື່ອງ</label>
+                                    <div class="flex rounded-md border border-gray-200 overflow-hidden text-[10px] leading-none shrink-0">
+                                        @foreach (['inventory' => 'Inventory', 'equipment' => 'Equipment', 'new' => '+ ໃໝ່'] as $sv => $sl)
+                                            <button type="button" wire:click="$set('items.{{ $i }}.asset_source', '{{ $sv }}')" class="px-1.5 py-1 border-l first:border-l-0 border-gray-200 {{ $src === $sv ? 'bg-sky-600 text-white' : 'text-gray-500 hover:bg-gray-50' }}">{{ $sl }}</button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <input type="text" wire:model.live.debounce.350ms="items.{{ $i }}.asset_code" placeholder="{{ $src === 'new' ? 'ພິມ ລະຫັດ ເອງ…' : 'ພິມ ລະຫັດ/ຊື່ ເພື່ອ ຄົ້ນ…' }}" autocomplete="off" class="w-full rounded-md border-gray-300 text-sm" />
+                                @unless ($src === 'new')<div wire:loading.flex wire:target="items.{{ $i }}.asset_code" class="absolute right-2 bottom-2 text-gray-300"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg></div>@endunless
+                                @if (! empty($assetMatches[$i]))
                                     <ul class="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-52 overflow-auto text-xs">
-                                        @foreach ($eqMatches[$i] as $m)
+                                        @foreach ($assetMatches[$i] as $m)
                                             <li>
-                                                <button type="button" wire:click="pickEquipment({{ $i }}, {{ $m['id'] }})" class="w-full text-left px-2.5 py-1.5 hover:bg-sky-50 border-b border-gray-50 last:border-0">
-                                                    <span class="font-mono text-sky-700">{{ $m['asset_code'] }}</span> · {{ $m['name'] }}
-                                                    @if ($m['fixed_asset_no'])<span class="text-gray-400"> · {{ $m['fixed_asset_no'] }}</span>@endif
+                                                <button type="button" wire:click="pickAsset({{ $i }}, '{{ $m['source'] }}', {{ $m['id'] }})" class="w-full text-left px-2.5 py-1.5 hover:bg-sky-50 border-b border-gray-50 last:border-0">
+                                                    <span class="inline-block text-[9px] rounded px-1 mr-0.5 {{ $m['source'] === 'equipment' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700' }}">{{ $m['source'] === 'equipment' ? 'EQ' : 'INV' }}</span>
+                                                    <span class="font-mono text-sky-700">{{ $m['code'] }}</span> · {{ $m['name'] }}
+                                                    @if ($m['fixed'])<span class="text-gray-400"> · {{ $m['fixed'] }}</span>@endif
                                                 </button>
                                             </li>
                                         @endforeach

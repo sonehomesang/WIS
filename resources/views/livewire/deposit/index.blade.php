@@ -49,6 +49,8 @@
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ໄອດີ <span class="text-gray-400">(DP No.)</span></th>
                         <th class="text-left font-semibold px-4 py-2">ເຈົ້າຂອງ <span class="text-gray-400">(Owner)</span></th>
                         <th class="text-left font-semibold px-4 py-2 w-full">ເຄື່ອງຝາກ <span class="text-gray-400">(Items)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລະຫັດເຄື່ອງ <span class="text-gray-400">(Asset)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລະຫັດຊັບສິນ <span class="text-gray-400">(Fixed)</span></th>
                         <th class="text-left font-semibold px-4 py-2 min-w-[13rem]">ບ່ອນເກັບ <span class="text-gray-400">(Storage)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ວັນທີຝາກ <span class="text-gray-400">(Date)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖານະ <span class="text-gray-400">(Status)</span></th>
@@ -68,12 +70,11 @@
                                     <div class="min-w-0">
                                         <div class="font-medium text-gray-800 truncate max-w-xs">{{ $first?->item_name ?? '—' }}@if ($r->items->count() > 1) <span class="text-gray-400 text-xs">+{{ $r->items->count() - 1 }}</span>@endif</div>
                                         <div class="text-xs text-gray-400">Qty: {{ $r->items->sum('qty') }}@if ($r->item_category) · {{ Str::limit($r->item_category, 24) }}@endif</div>
-                                        @if ($first?->asset_code || $first?->fixed_asset_no)
-                                            <div class="text-[11px] text-gray-400 truncate max-w-xs">@if ($first->asset_code)ທ.ເຄື່ອງ: <span class="font-mono text-gray-500">{{ $first->asset_code }}</span>@endif@if ($first->fixed_asset_no) · ຊັບສິນ: <span class="font-mono text-gray-500">{{ $first->fixed_asset_no }}</span>@endif</div>
-                                        @endif
                                     </div>
                                 </div>
                             </td>
+                            <td class="px-4 py-2 align-top text-xs whitespace-nowrap font-mono {{ $first?->asset_code ? 'text-gray-700' : 'text-gray-300' }}">{{ $first?->asset_code ?: '—' }}@if ($r->items->count() > 1)<span class="text-gray-300" title="ຫຼາຍ ລາຍການ"> …</span>@endif</td>
+                            <td class="px-4 py-2 align-top text-xs whitespace-nowrap font-mono {{ $first?->fixed_asset_no ? 'text-gray-700' : 'text-gray-300' }}">{{ $first?->fixed_asset_no ?: '—' }}</td>
                             <td class="px-4 py-2 align-top text-xs text-gray-600 min-w-[13rem]">{{ collect([$r->storage_location, $r->storage_shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
                             <td class="px-4 py-2 align-top text-xs whitespace-nowrap">
                                 <div class="text-gray-700 font-medium">{{ $r->deposit_date?->format('M d, Y') }}</div>
@@ -90,7 +91,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີລາຍການຝາກ</td></tr>
+                        <tr><td colspan="9" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີລາຍການຝາກ</td></tr>
                     @endforelse
                 </tbody>
             </table>
