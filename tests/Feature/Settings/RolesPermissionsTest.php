@@ -54,3 +54,31 @@ test('non-permitted user cannot open roles editor', function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => false]));
     Livewire::test(RolesPermissions::class)->assertForbidden();
 });
+
+test('the roles editor lists every menu the seeder creates (no silent perm loss)', function () {
+    $ref = new ReflectionClass(RolePermissionSeeder::class);
+    $prop = $ref->getProperty('menus');
+    $prop->setAccessible(true);
+    $seederMenus = $prop->getValue(new RolePermissionSeeder);
+
+    // If the UI list drifts from the seeder, save()'s syncPermissions() would strip
+    // the missing menus' permissions from the role — the exact bug this guards.
+    expect((new RolesPermissions)->menus)->toEqualCanonicalizing($seederMenus);
+});
+
+test('saving a role via the editor keeps its equipment + disposal permissions', function () {
+    $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+    $role = Role::where('name', 'warehouse_staff')->firstOrFail();
+
+    expect($role->hasPermissionTo('equipment.view'))->toBeTrue()
+        ->and($role->hasPermissionTo('disposal.view'))->toBeTrue();
+
+    Livewire::test(RolesPermissions::class)
+        ->call('selectRole', $role->id)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $role->unsetRelation('permissions');
+    expect($role->hasPermissionTo('equipment.view'))->toBeTrue()   // must survive the save
+        ->and($role->hasPermissionTo('disposal.view'))->toBeTrue();
+});

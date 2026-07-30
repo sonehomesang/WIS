@@ -9,7 +9,8 @@ use Spatie\Permission\PermissionRegistrar;
 
 /**
  * RBAC seed — source of truth: docs/v2/RBAC_MATRIX.md (from seed_roles.ts).
- * 22 menus × 6 actions = 132 permissions; 8 roles + scope_rules.
+ * 23 menus × 6 actions = 138 permissions; 8 roles + scope_rules.
+ * NOTE: keep $menus in sync with App\Livewire\Settings\RolesPermissions::$menus.
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -27,7 +28,7 @@ class RolePermissionSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        // 1. Create 126 permissions
+        // 1. Create 138 permissions (23 menus × 6 actions)
         foreach ($this->menus as $menu) {
             foreach ($this->actions as $action) {
                 Permission::firstOrCreate(['name' => "{$menu}.{$action}", 'guard_name' => 'web']);

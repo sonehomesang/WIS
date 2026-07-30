@@ -11,10 +11,16 @@ use Spatie\Permission\PermissionRegistrar;
 #[Layout('layouts.app')]
 class RolesPermissions extends Component
 {
-    /** @var list<string> */
+    /**
+     * MUST match RolePermissionSeeder::$menus exactly (23 menus). If a menu is
+     * missing here, save()'s syncPermissions() would STRIP that menu's perms from
+     * the role on every save (e.g. the disposal + equipment perms were silently wiped).
+     *
+     * @var list<string>
+     */
     public array $menus = [
-        'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo',
-        'catalog', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
+        'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo', 'disposal',
+        'catalog', 'equipment', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
         'users', 'roles', 'settings', 'reports', 'audit', 'notifications',
     ];
 
