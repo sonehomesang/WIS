@@ -12,16 +12,12 @@
 
 <div class="pb-10">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-        <div class="flex items-start justify-between gap-2">
-            <div>
-                <h2 class="text-xl font-bold text-gray-800">{{ $record->request_number }} <span class="text-xs px-2 py-0.5 rounded-full {{ $badge($record->status) }}">{{ $record->statusLabel() }}</span></h2>
-                <div class="text-sm text-gray-500">{{ $record->title ?: '—' }}@if ($record->department) · {{ $record->department->name }}@endif · {{ $record->items->count() }} ລາຍການ</div>
-            </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('disposal.pdf', $record) }}" target="_blank" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
-                <a href="{{ route('disposal') }}" wire:navigate class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</a>
-            </div>
-        </div>
+        <x-page-subheader :back="route('disposal')" back-label="ລາຍການ" :record="$record->request_number" :status="$record->statusLabel()" :status-class="$badge($record->status)">
+            <x-slot:actions>
+                <a href="{{ route('disposal.pdf', $record) }}" target="_blank" class="inline-flex items-center gap-1 text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
+            </x-slot>
+        </x-page-subheader>
+        <p class="text-sm text-gray-500 -mt-1">{{ $record->title ?: '—' }}@if ($record->department) · {{ $record->department->name }}@endif · {{ $record->items->count() }} ລາຍການ</p>
 
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror

@@ -2,9 +2,7 @@
 
 <div class="pb-6">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-        <div class="flex items-center justify-between">
-            <a href="{{ route('deposit') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບໄປ list</a>
-        </div>
+        <x-page-subheader :back="route('deposit')" back-label="ລາຍການ ຝາກ" />
 
         @include('partials._form-errors')
 

@@ -10,9 +10,8 @@
 
 <div class="pb-6" x-data="{ tab: 'companies' }">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-        <div class="flex items-center justify-between gap-2">
-            <a href="{{ route('expo') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບໄປ list</a>
-            <div class="flex items-center gap-2">
+        <x-page-subheader :back="route('expo')" back-label="ລາຍການ Expo">
+            <x-slot:actions>
                 @if ($editable)
                     <button wire:click="openEvent" class="text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-1.5 hover:bg-sky-50">✏️ ແກ້ໄຂ ຂໍ້ມູນງານ</button>
                     @if ($record->status === 'draft')<button wire:click="finalize" title="ລັອກ — ບໍ່ໃຫ້ແກ້ໄຂຕໍ່" class="text-sm text-white bg-emerald-600 rounded-md px-3 py-1.5 hover:bg-emerald-700">✓ ສະຫຼຸບ/ປິດງານ</button>
@@ -20,8 +19,8 @@
                 @endif
                 <a href="{{ route('expo.pdf', $record) }}" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF report</a>
                 @if ($editable)<button wire:click="openDelete" class="text-sm text-red-600 border border-red-200 rounded-md px-3 py-1.5 hover:bg-red-50">🗑</button>@endif
-            </div>
-        </div>
+            </x-slot>
+        </x-page-subheader>
 
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
 

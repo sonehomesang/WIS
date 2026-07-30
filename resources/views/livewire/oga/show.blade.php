@@ -16,10 +16,11 @@
 
 <div class="pb-6">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-        <div class="flex items-center justify-between gap-2">
-            <a href="{{ route('oga') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບໄປ list</a>
-            <a href="{{ route('oga.pdf', $record) }}" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
-        </div>
+        <x-page-subheader :back="route('oga')" back-label="ລາຍການ OGA">
+            <x-slot:actions>
+                <a href="{{ route('oga.pdf', $record) }}" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
+            </x-slot>
+        </x-page-subheader>
 
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror

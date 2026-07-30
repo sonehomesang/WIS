@@ -19,13 +19,12 @@
 <div class="pb-6">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         {{-- header --}}
-        <div class="flex items-center justify-between gap-2">
-            <a href="{{ route('deposit') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບໄປ list</a>
-            <div class="flex items-center gap-2">
+        <x-page-subheader :back="route('deposit')" back-label="ລາຍການ ຝາກ" :record="$record->request_number" :status="$slbl" :status-class="$scls">
+            <x-slot:actions>
                 @if ($editable)<button wire:click="openEdit" class="text-sm text-white bg-amber-600 rounded-md px-3 py-1.5 hover:bg-amber-700">✏️ ແກ້ໄຂ</button>@endif
                 <a href="{{ route('deposit.pdf', $record) }}" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
-            </div>
-        </div>
+            </x-slot>
+        </x-page-subheader>
 
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror

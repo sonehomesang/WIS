@@ -1,15 +1,11 @@
 <div class="pb-6">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-xl font-bold text-gray-800">ລິສ ລວມ ຈຳໜ່າຍ <span class="text-gray-400 text-sm font-normal">· Disposal summary</span></h2>
-                <p class="text-sm text-gray-400">ລວມ {{ $items->count() }} ລາຍການ · {{ number_format($totalQty) }} ໜ່ວຍ · ມູນຄ່າ {{ number_format($totalValue) }} ກີບ</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('disposal.summary.pdf', ['from' => $from, 'to' => $to, 'department_id' => $department_id, 'status' => $status]) }}" target="_blank" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
-                <a href="{{ route('disposal') }}" wire:navigate class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</a>
-            </div>
-        </div>
+        <x-page-subheader :back="route('disposal')" back-label="ລາຍການ ຈຳໜ່າຍ">
+            <x-slot:actions>
+                <a href="{{ route('disposal.summary.pdf', ['from' => $from, 'to' => $to, 'department_id' => $department_id, 'status' => $status]) }}" target="_blank" class="inline-flex items-center gap-1 text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
+            </x-slot>
+        </x-page-subheader>
+        <p class="text-sm text-gray-500 -mt-1">ລວມ {{ $items->count() }} ລາຍການ · {{ number_format($totalQty) }} ໜ່ວຍ · ມູນຄ່າ {{ number_format($totalValue) }} ກີບ</p>
 
         <div class="bg-white border border-gray-100 rounded-lg p-4 flex flex-wrap items-end gap-3 text-sm">
             <div><label class="block text-xs text-gray-500 mb-1">ແຕ່ ວັນທີ</label><input type="date" wire:model.live="from" class="rounded-md border-gray-300 text-sm" /></div>

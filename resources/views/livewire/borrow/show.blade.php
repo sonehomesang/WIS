@@ -17,17 +17,13 @@
 
 <div class="pb-6">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-        {{-- header (X close → back) --}}
-        <div class="flex items-center justify-between">
-            <div><h2 class="text-xl font-bold text-gray-800">Borrowing Record Details</h2>
-                <div class="text-sm text-gray-400"><span class="font-mono">{{ $record->request_number }}</span> · <span class="text-xs px-2 py-0.5 rounded-full {{ $badge($st) }}">{{ strtoupper($st) }}</span></div></div>
-            <div class="flex items-center gap-3">
+        <x-page-subheader :back="route('borrow')" back-label="ລາຍການ ຢືມ" :record="$record->request_number" :status="strtoupper($st)" :status-class="$badge($st)">
+            <x-slot:actions>
                 @if ($editable)<button type="button" wire:click="openEdit" class="text-sm text-white bg-amber-600 rounded-md px-3 py-1.5 hover:bg-amber-700">✏️ ແກ້ໄຂ</button>@endif
                 <button type="button" onclick="exportJpg('borrow-detail', 'borrow-{{ $record->request_number }}.jpg')" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">🖼 JPG</button>
                 <a href="{{ route('borrow.pdf', $record) }}" target="_blank" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
-                <a href="{{ route('borrow') }}" wire:navigate class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</a>
-            </div>
-        </div>
+            </x-slot>
+        </x-page-subheader>
 
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror

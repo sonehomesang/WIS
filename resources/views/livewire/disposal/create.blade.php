@@ -1,12 +1,8 @@
 <div class="pb-10">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-xl font-bold text-gray-800">ໃບ ຂໍ ຈຳໜ່າຍ ເຄື່ອງ <span class="text-gray-400 text-sm font-normal">· Disposal request</span></h2>
-                <p class="text-sm text-gray-400">ຈຳໜ່າຍ ເຄື່ອງ ຊຳລຸດ / ໝົດ ອາຍຸ / ໃຊ້ ບໍ່ ໄດ້</p>
-            </div>
-            <a href="{{ route('disposal') }}" wire:navigate class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</a>
-        </div>
+        <x-page-subheader :back="route('disposal')" back-label="ລາຍການ ຈຳໜ່າຍ">
+            <x-slot:hint>ຕ້ອງ ຜ່ານ ການ ເຊັນ ຮັບຮອງ 5 ຝ່າຍ</x-slot>
+        </x-page-subheader>
 
         @include('partials._form-errors')
 

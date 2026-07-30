@@ -1,14 +1,9 @@
 <div class="pb-6">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-        <a href="{{ route('borrow') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບໄປ list</a>
+        <x-page-subheader :back="route('borrow')" back-label="ລາຍການ ຢືມ" />
 
         <div class="bg-white rounded-lg border border-gray-100 p-5 space-y-5">
-            <div class="flex items-center justify-between">
-                <div class="font-semibold text-gray-800">ຢືມ ເຄື່ອງ ໃໝ່</div>
-                <a href="{{ route('borrow') }}" wire:navigate class="text-gray-400 hover:text-gray-700 p-1" title="ປິດ" aria-label="ປິດ">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-                </a>
-            </div>
+            <div class="font-semibold text-gray-800">ຢືມ ເຄື່ອງ ໃໝ່</div>
 
             @include('partials._form-errors')
 
