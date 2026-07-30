@@ -3,6 +3,7 @@
 namespace App\Livewire\Notifications;
 
 use App\Models\Notification;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -14,7 +15,14 @@ class Bell extends Component
         if ($n) {
             $n->update(['read_at' => now()]);
             if ($n->link) {
-                return $this->redirect($n->link, navigate: true);
+                // ຮັບ ສະເພາະ ປາຍທາງ ພາຍໃນ ແອັບ (ກັນ open-redirect ຖ້າ link ຖືກ ໃສ່ ຄ່າ ພາຍນອກ).
+                $to = $n->link;
+                $base = url('/');
+                if (! (str_starts_with($to, $base) || (Str::startsWith($to, '/') && ! Str::startsWith($to, '//')))) {
+                    $to = route('dashboard');
+                }
+
+                return $this->redirect($to, navigate: true);
             }
         }
     }

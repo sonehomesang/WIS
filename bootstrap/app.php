@@ -26,7 +26,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust reverse-proxy headers (X-Forwarded-Proto/Host) so HTTPS is detected
         // behind cloudflared tunnel / nginx — otherwise asset URLs come out as http://
         // on an https page and get blocked as mixed content (broken CSS on mobile).
-        $middleware->trustProxies(at: '*');
+        //
+        // SECURITY: pin to the real edge IP(s), NOT '*'. Trusting all proxies lets a
+        // client spoof X-Forwarded-For (defeating the per-IP login throttle → brute
+        // force) and X-Forwarded-Proto. Default = loopback (tunnel/nginx on the same
+        // host); override on the server via TRUSTED_PROXIES=ip1,cidr2 (or '*' at own risk).
+        $proxies = trim((string) env('TRUSTED_PROXIES', '127.0.0.1,::1'));
+        $middleware->trustProxies(at: $proxies === '*' ? '*' : array_values(array_filter(array_map('trim', explode(',', $proxies)))));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

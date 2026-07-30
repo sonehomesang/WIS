@@ -118,11 +118,57 @@ test('the summary lists disposed items with running totals', function () {
     $r = app(DisposalService::class)->createDraft([
         'items' => [['source_type' => 'new', 'item_name' => 'ໝວກ ນິລະໄພ', 'qty' => 2, 'estimated_value' => 150000]],
     ], $admin);
-    $r->update(['status' => 'disposed']);
+    $r->forceFill(['status' => 'disposed'])->save();   // status is guarded (mass-assign blocked)
 
     actingAs($admin);
     Livewire::test(App\Livewire\Disposal\Summary::class)
         ->assertViewHas('totalQty', 2)
         ->assertViewHas('totalValue', 150000.0)
         ->assertSee('ໝວກ ນິລະໄພ');
+});
+
+test('IDOR: a disposal.view user who is not the owner cannot open or PDF another record', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $r = app(DisposalService::class)->createDraft(['items' => [['source_type' => 'new', 'item_name' => 'X', 'qty' => 1]]], $admin);
+
+    $other = User::factory()->create();
+    $other->givePermissionTo('disposal.view');   // ເຫັນ ໄດ້ ແຕ່ ບໍ່ ແມ່ນ ເຈົ້າ ໃບ + ບໍ່ ມີ role ກວ້າງ
+    actingAs($other);
+
+    Livewire::test(App\Livewire\Disposal\Show::class, ['record' => $r])->assertForbidden();
+    $this->get(route('disposal.pdf', $r))->assertForbidden();
+});
+
+test('confirmCancel is blocked for a signer who is neither the preparer nor a disposal.edit holder', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $svc = app(DisposalService::class);
+    $r = $svc->createDraft(['items' => [['source_type' => 'new', 'item_name' => 'X', 'qty' => 1]]], $admin);
+    $svc->transition($r, 'submit', $admin);
+
+    $approver = User::factory()->create();
+    $approver->syncRoles(['approver']);   // view+create+activate, NOT edit; not the preparer
+    actingAs($approver);
+
+    Livewire::test(App\Livewire\Disposal\Show::class, ['record' => $r])
+        ->call('confirmCancel')
+        ->assertForbidden();
+    expect($r->fresh()->status)->toBe('committee_review');
+});
+
+test('the summary is department-clamped for a department_admin', function () {
+    $unit = App\Models\Unit::create(['slug' => 'u', 'name' => 'U', 'is_active' => true]);
+    $deptA = App\Models\Department::create(['unit_id' => $unit->id, 'slug' => 'a', 'name' => 'Dept A', 'is_active' => true]);
+    $deptB = App\Models\Department::create(['unit_id' => $unit->id, 'slug' => 'b', 'name' => 'Dept B', 'is_active' => true]);
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $svc = app(DisposalService::class);
+    $svc->createDraft(['department_id' => $deptA->id, 'items' => [['source_type' => 'new', 'item_name' => 'ItemAA', 'qty' => 1]]], $admin)->forceFill(['status' => 'disposed'])->save();
+    $svc->createDraft(['department_id' => $deptB->id, 'items' => [['source_type' => 'new', 'item_name' => 'ItemBB', 'qty' => 1]]], $admin)->forceFill(['status' => 'disposed'])->save();
+
+    $da = User::factory()->create(['department_id' => $deptA->id]);
+    $da->syncRoles(['department_admin']);
+    actingAs($da);
+
+    Livewire::test(App\Livewire\Disposal\Summary::class)
+        ->assertSee('ItemAA')
+        ->assertDontSee('ItemBB');
 });

@@ -34,7 +34,8 @@ class DisposalRecord extends Model
         'executive' => ['order' => 5, 'label' => 'ຜູ້ ບໍລິຫານ'],
     ];
 
-    protected $guarded = ['id'];
+    // ກັນ overposting: ຄໍລັມ workflow/ສິດ ຕັ້ງ ໄດ້ ສະເພາະ server (forceFill/direct assignment) — ບໍ່ ຮັບ ຈາກ mass-assign.
+    protected $guarded = ['id', 'status', 'prepared_by_user_id', 'registers_updated_by', 'registers_updated_at', 'deleted_by', 'deleted_reason'];
 
     protected $casts = [
         'prepared_at' => 'datetime',

@@ -28,6 +28,17 @@ class Summary extends Component
         $this->to = now()->toDateString();
     }
 
+    /** ຄັດ ພະແນກ ຕາມ scope: dept-admin ຖືກ ບັງຄັບ ໃຫ້ ພະແນກ ຕົນ (ຫ້າມ ເບິ່ງ ພະແນກ ອື່ນ). */
+    public static function scopedDeptId($requested): ?int
+    {
+        $u = auth()->user();
+        if ($u && $u->hasRole('department_admin') && ! $u->is_super_admin && ! $u->hasAnyRole(['admin', 'warehouse_staff', 'approver', 'line_manager'])) {
+            return $u->department_id;
+        }
+
+        return $requested ? (int) $requested : null;
+    }
+
     /** @return array<int, string> */
     public static function statusesFor(string $status): array
     {
@@ -54,7 +65,7 @@ class Summary extends Component
 
     public function render(): View
     {
-        $items = self::itemsQuery($this->from ?: null, $this->to ?: null, $this->department_id, $this->status)->get();
+        $items = self::itemsQuery($this->from ?: null, $this->to ?: null, self::scopedDeptId($this->department_id), $this->status)->get();
 
         return view('livewire.disposal.summary', [
             'items' => $items,

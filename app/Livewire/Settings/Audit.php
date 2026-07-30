@@ -75,12 +75,15 @@ class Audit extends Component
         abort_unless(auth()->user()->can('audit.view'), 403);
         $rows = $this->unionQuery()->limit(5000)->get();
 
-        return response()->streamDownload(function () use ($rows) {
+        // ກັນ CSV formula-injection: cell ທີ່ ຂຶ້ນຕົ້ນ ດ້ວຍ = + - @ tab cr → ນຳ ໜ້າ ດ້ວຍ ' (ບໍ່ ໃຫ້ Excel ຕີ ເປັນ ສູດ).
+        $safe = fn ($v) => is_string($v) && $v !== '' && in_array($v[0], ['=', '+', '-', '@', "\t", "\r"], true) ? "'".$v : $v;
+
+        return response()->streamDownload(function () use ($rows, $safe) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Module', 'Number', 'Action', 'Status', 'User', 'Role', 'Comment', 'When']);
             foreach ($rows as $r) {
-                fputcsv($out, [$r->module, $r->number, $r->action, $r->status, $r->user_name, $r->role, $r->comment, $r->created_at]);
+                fputcsv($out, array_map($safe, [$r->module, $r->number, $r->action, $r->status, $r->user_name, $r->role, $r->comment, (string) $r->created_at]));
             }
             fclose($out);
         }, 'audit-'.now()->format('Ymd-Hi').'.csv', ['Content-Type' => 'text/csv']);

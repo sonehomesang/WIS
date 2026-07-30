@@ -132,7 +132,7 @@ Route::get('disposal/summary/pdf', function () {
     abort_unless(auth()->user()->can('disposal.view'), 403);
     $from = request('from') ?: null;
     $to = request('to') ?: null;
-    $deptId = request('department_id') ? (int) request('department_id') : null;
+    $deptId = App\Livewire\Disposal\Summary::scopedDeptId(request('department_id')); // clamp dept-admin ໃສ່ ພະແນກ ຕົນ
     $status = request('status', 'disposed');
     $items = App\Livewire\Disposal\Summary::itemsQuery($from, $to, $deptId, $status)->get();
 
@@ -147,7 +147,7 @@ Route::get('disposal/summary/pdf', function () {
 
 Route::get('disposal/{record}/pdf', function (App\Models\DisposalRecord $record) {
     $u = auth()->user();
-    abort_unless($u->can('disposal.view'), 403);
+    abort_unless($u->can('disposal.view') && App\Livewire\Disposal\Show::canAccess($record), 403); // ownership scope (IDOR guard)
     $record->load(['items', 'signoffs', 'department', 'preparedBy']);
 
     return \App\Support\PdfExport::download('disposal.pdf', ['record' => $record], "disposal-{$record->request_number}.pdf");

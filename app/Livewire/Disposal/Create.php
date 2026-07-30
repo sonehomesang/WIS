@@ -224,9 +224,15 @@ class Create extends Component
             $payloadItems[] = $it + ['history' => $history];
         }
 
+        // dept-admin ຖືກ ບັງຄັບ ໃຫ້ ພະແນກ ຕົນ (ຫ້າມ ຍື່ນ ໃສ່ ພະແນກ ອື່ນ).
+        $u = auth()->user();
+        $deptId = ($u->hasRole('department_admin') && ! $u->is_super_admin && ! $u->hasAnyRole(['admin', 'warehouse_staff', 'approver', 'line_manager']))
+            ? $u->department_id
+            : $this->department_id;
+
         $record = app(DisposalService::class)->createDraft([
             'title' => $this->title ?: null,
-            'department_id' => $this->department_id,
+            'department_id' => $deptId,
             'note' => $this->note ?: null,
             'items' => $payloadItems,
         ], auth()->user());

@@ -43,17 +43,17 @@ class DisposalService
     public function createDraft(array $data, $actor): DisposalRecord
     {
         return DB::transaction(function () use ($data, $actor) {
-            $record = DisposalRecord::create([
+            $record = new DisposalRecord([
                 'request_number' => $this->nextNumber((int) now()->year),
                 'title' => $data['title'] ?? null,
                 'department_id' => $data['department_id'] ?? $actor->department_id ?? null,
                 'note' => $data['note'] ?? null,
-                'prepared_by_user_id' => $actor->id,
                 'prepared_by_name' => $actor->display_name ?? $actor->email,
-                'status' => 'draft',
                 'created_by' => $actor->id,
                 'updated_by' => $actor->id,
             ]);
+            // guarded ຄໍລັມ — ຕັ້ງ server-side ເທົ່ານັ້ນ.
+            $record->forceFill(['status' => 'draft', 'prepared_by_user_id' => $actor->id])->save();
 
             foreach (array_values($data['items'] ?? []) as $i => $it) {
                 $record->items()->create([

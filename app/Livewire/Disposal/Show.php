@@ -42,14 +42,35 @@ class Show extends Component
 
     public function mount(DisposalRecord $record): void
     {
-        $u = auth()->user();
-        abort_unless($u->can('disposal.view'), 403);
-        // department_admin ເບິ່ງ ສະເພາະ ພະແນກ ຕົນ (ຖ້າ ບໍ່ ແມ່ນ role ທີ່ ເຫັນ ໝົດ).
-        if ($u->hasRole('department_admin') && ! $u->is_super_admin && ! $u->hasAnyRole(['admin', 'warehouse_staff', 'approver', 'line_manager'])) {
-            abort_unless($record->department_id === $u->department_id, 403);
-        }
+        abort_unless(auth()->user()->can('disposal.view') && static::canAccess($record), 403);
         $this->record = $record;
         $this->committee = [['name' => '', 'title' => '']];
+    }
+
+    /** ຂອບເຂດ ການ ເຫັນ ໃບ — ຄື Index::scopeFor: admin/warehouse/approver/manager ເຫັນ ໝົດ ·
+     *  dept-admin ເຫັນ ພະແນກ ຕົນ · ອື່ນ ເຫັນ ສະເພາະ ໃບ ຂອງ ຕົນ. (static → ໃຊ້ ໃນ route PDF ໄດ້ ນຳ.) */
+    public static function canAccess(DisposalRecord $record): bool
+    {
+        $u = auth()->user();
+        if (! $u) {
+            return false;
+        }
+        if ($u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff', 'approver', 'line_manager'])) {
+            return true;
+        }
+        if ($u->hasRole('department_admin')) {
+            return $record->department_id === $u->department_id;
+        }
+
+        return $record->prepared_by_user_id === $u->id;
+    }
+
+    /** ຜູ້ ຍົກເລີກ ໄດ້: ຜູ້ ມີ ສິດ disposal.edit ຫຼື ຜູ້ ເຮັດລິສ ເອງ ຫຼື super admin. */
+    protected function canCancelRecord(): bool
+    {
+        $u = auth()->user();
+
+        return $u->can('disposal.edit') || $this->record->prepared_by_user_id === $u->id || $u->is_super_admin;
     }
 
     protected function canSign(): bool
@@ -119,14 +140,14 @@ class Show extends Component
 
     public function openCancel(): void
     {
-        $u = auth()->user();
-        abort_unless($u->can('disposal.edit') || $this->record->prepared_by_user_id === $u->id || $u->is_super_admin, 403);
+        abort_unless($this->canCancelRecord(), 403);
         $this->cancelReason = '';
         $this->showCancel = true;
     }
 
     public function confirmCancel(): void
     {
+        abort_unless($this->canCancelRecord(), 403);   // action re-check — button hidden ≠ safe
         $this->act('cancel', ['reason' => $this->cancelReason ?: null]);
         $this->showCancel = false;
     }
