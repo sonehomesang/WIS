@@ -8,8 +8,17 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * ໃສ່ HTTP security headers ໃຫ້ ທຸກ response (ກັນ clickjacking, MIME-sniffing,
- * referrer leak, ແລະ ບັງຄັບ HTTPS). CSP ໃສ່ ແບບ report-only ກ່ອນ — ບໍ່ ທຳລາຍ
- * ການ ໃຊ້ ງານ (Livewire/Alpine ຕ້ອງ inline+eval) ແຕ່ ສະແດງ ວ່າ ມີ ພື້ນຖານ CSP.
+ * referrer leak, ແລະ ບັງຄັບ HTTPS).
+ *
+ * SECURITY DECISION — CSP is intentionally Content-Security-Policy-**Report-Only**,
+ * not enforced. Livewire 3 + Alpine require 'unsafe-inline' + 'unsafe-eval', so a
+ * strict enforced CSP would break the UI. Report-Only ships a real, documented CSP
+ * baseline (and can collect violation reports) without functional risk. This is a
+ * deliberate, accepted low-severity item for pentest — NOT an oversight.
+ *
+ * To ENFORCE later: move to a per-request nonce ('nonce-...') for scripts/styles,
+ * drop 'unsafe-inline'/'unsafe-eval', verify Livewire/Alpine still work, then rename
+ * the header to 'Content-Security-Policy'.
  */
 class SecurityHeaders
 {
