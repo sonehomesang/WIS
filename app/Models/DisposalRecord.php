@@ -12,6 +12,28 @@ class DisposalRecord extends Model
 {
     use SoftDeletes;
 
+    /** ເຫດຜົນ ຈຳໜ່າຍ ສຳເລັດຮູບ (ຕໍ່ ລາຍການ) — dropdown + ພິມ ເພີ່ມ. */
+    public const REASONS = ['ຊຳລຸດ / ເສຍຫາຍ', 'ໝົດ ອາຍຸ ໃຊ້ງານ', 'ລ້າສະໄໝ / ຕົກລຸ້ນ', 'ສູນຫາຍ', 'ອື່ນໆ'];
+
+    /** ຄຳແນະນຳ ສຳເລັດຮູບ. */
+    public const RECOMMENDATIONS = ['ທຳລາຍ', 'ຂາຍ ເສດ', 'ບໍລິຈາກ', 'ສົ່ງ ຄືນ ຜູ້ສະໜອງ', 'ອື່ນໆ'];
+
+    /** ປ້າຍ ສະຖານະ (Lao). */
+    public const STATUS_LABELS = [
+        'draft' => 'ຮ່າງ', 'committee_review' => 'ລໍ ຄະນະ ກວດ', 'technical_review' => 'ລໍ ວິຊາການ',
+        'manager_review' => 'ລໍ ຜູ້ຈັດການ', 'executive_review' => 'ລໍ ຜູ້ບໍລິຫານ', 'approved' => 'ອະນຸມັດ ແລ້ວ',
+        'disposed' => 'ຈຳໜ່າຍ ແລ້ວ', 'rejected' => 'ຕີ ກັບ', 'cancelled' => 'ຍົກເລີກ',
+    ];
+
+    /** 5 ຂັ້ນ ເຊັນ — order + ຊື່. */
+    public const STAGES = [
+        'preparer' => ['order' => 1, 'label' => 'ຜູ້ ເຮັດລິສ'],
+        'committee' => ['order' => 2, 'label' => 'ຄະນະກຳມະການ ຮ່ວມກວດ'],
+        'technical' => ['order' => 3, 'label' => 'ວິຊາການ / ວິສະວະກອນ'],
+        'manager' => ['order' => 4, 'label' => 'ຜູ້ ຈັດການ'],
+        'executive' => ['order' => 5, 'label' => 'ຜູ້ ບໍລິຫານ'],
+    ];
+
     protected $guarded = ['id'];
 
     protected $casts = [
@@ -48,5 +70,28 @@ class DisposalRecord extends Model
     public function deletedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'deleted_by');
+    }
+
+    /** role_key ຂອງ ຂັ້ນ ທີ່ ຖ້າ ເຊັນ ຢູ່ (null = ບໍ່ ຢູ່ ໃນ ຂັ້ນ ເຊັນ). */
+    public function currentStageKey(): ?string
+    {
+        return match ($this->status) {
+            'committee_review' => 'committee',
+            'technical_review' => 'technical',
+            'manager_review' => 'manager',
+            'executive_review' => 'executive',
+            default => null,
+        };
+    }
+
+    public function statusLabel(): string
+    {
+        return self::STATUS_LABELS[$this->status] ?? $this->status;
+    }
+
+    /** ຍັງ ແກ້ໄຂ/ສົ່ງ ໄດ້ ບໍ (draft). */
+    public function isEditable(): bool
+    {
+        return $this->status === 'draft';
     }
 }

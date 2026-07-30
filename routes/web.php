@@ -115,6 +115,27 @@ Route::get('deposit/{record}', App\Livewire\Deposit\Show::class)
     ->middleware(['auth', 'verified'])
     ->name('deposit.show');
 
+// ── Disposal (ຈຳໜ່າຍ ເຄື່ອງ ຊຳລຸດ) ──
+Route::get('disposal', App\Livewire\Disposal\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('disposal');
+
+Route::get('disposal/create', App\Livewire\Disposal\Create::class)
+    ->middleware(['auth', 'verified'])
+    ->name('disposal.create');
+
+Route::get('disposal/{record}/pdf', function (App\Models\DisposalRecord $record) {
+    $u = auth()->user();
+    abort_unless($u->can('disposal.view'), 403);
+    $record->load(['items', 'signoffs', 'department', 'preparedBy']);
+
+    return \App\Support\PdfExport::download('disposal.pdf', ['record' => $record], "disposal-{$record->request_number}.pdf");
+})->middleware(['auth', 'verified'])->name('disposal.pdf');
+
+Route::get('disposal/{record}', App\Livewire\Disposal\Show::class)
+    ->middleware(['auth', 'verified'])
+    ->name('disposal.show');
+
 // ── Shops Material (catalog ສິນຄ້າ supplier) — Phase 6.7a ──
 Route::get('catalog', App\Livewire\Catalog\Index::class)
     ->middleware(['auth', 'verified'])

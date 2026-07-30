@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\DepositItem;
 use App\Models\DisposalRecord;
+use App\Models\Equipment;
+use App\Models\InventoryItem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -67,7 +70,7 @@ class DisposalService
                     'recommendation' => ($it['recommendation'] ?? null) ?: null,
                     'recommendation_detail' => ($it['recommendation_detail'] ?? null) ?: null,
                     'estimated_value' => ($it['estimated_value'] ?? null) !== null && $it['estimated_value'] !== '' ? $it['estimated_value'] : null,
-                    'currency' => $it['currency'] ?? null,
+                    'currency' => in_array($it['currency'] ?? null, ['LAK', 'THB', 'USD'], true) ? $it['currency'] : null,
                     'history' => ! empty($it['history']) ? array_values($it['history']) : null,
                     'photos' => ! empty($it['photos']) ? array_values($it['photos']) : null,
                     'sort_order' => $i,
@@ -86,6 +89,9 @@ class DisposalService
         return DB::transaction(function () use ($r, $action, $actor, $opts) {
             match ($action) {
                 'submit' => $this->doSubmit($r, $actor),
+                'sign' => $this->doSign($r, $actor, $opts),
+                'reject' => $this->doReject($r, $actor, $opts),
+                'dispose' => $this->doDispose($r, $actor, $opts),
                 'cancel' => $this->doCancel($r, $opts),
                 default => throw ValidationException::withMessages(['status' => "Unknown action: {$action}"]),
             };
@@ -115,6 +121,87 @@ class DisposalService
             'decision' => 'approved',
             'signed_at' => now(),
         ]);
+    }
+
+    /** ເຊັນ ຮັບຮອງ ຂັ້ນ ປັດຈຸບັນ → ຂຶ້ນ ຂັ້ນ ຕໍ່ໄປ. ຄະນະ = ໃສ່ ຫຼາຍ ຄົນ (opts['committee']=[{name,title}]). */
+    private function doSign(DisposalRecord $r, $actor, array $opts): void
+    {
+        $stage = $r->currentStageKey();
+        $this->assert($stage !== null, 'ບໍ່ ຢູ່ ໃນ ຂັ້ນ ເຊັນ.');
+
+        if ($stage === 'committee') {
+            $members = array_values(array_filter($opts['committee'] ?? [], fn ($m) => trim((string) ($m['name'] ?? '')) !== ''));
+            $this->assert(count($members) >= 1, 'ຕ້ອງ ມີ ຄະນະກຳມະການ ຢ່າງໜ້ອຍ 1 ຄົນ.');
+            foreach ($members as $mem) {
+                $r->signoffs()->create([
+                    'role_key' => 'committee', 'stage_order' => 2,
+                    'name' => $mem['name'], 'title' => $mem['title'] ?? null,
+                    'decision' => 'approved', 'signed_at' => now(), 'comment' => $opts['comment'] ?? null,
+                ]);
+            }
+            $r->status = 'technical_review';
+
+            return;
+        }
+
+        $map = [
+            'technical' => ['order' => 3, 'next' => 'manager_review'],
+            'manager' => ['order' => 4, 'next' => 'executive_review'],
+            'executive' => ['order' => 5, 'next' => 'approved'],
+        ];
+        $cfg = $map[$stage];
+        $r->signoffs()->create([
+            'role_key' => $stage, 'stage_order' => $cfg['order'],
+            'user_id' => $actor->id, 'name' => $actor->display_name ?? $actor->email, 'title' => $opts['title'] ?? null,
+            'decision' => 'approved', 'signed_at' => now(), 'comment' => $opts['comment'] ?? null,
+        ]);
+        $r->status = $cfg['next'];
+    }
+
+    /** ຕີ ກັບ → draft ພ້ອມ ເຫດຜົນ. */
+    private function doReject(DisposalRecord $r, $actor, array $opts): void
+    {
+        $stage = $r->currentStageKey();
+        $this->assert($stage !== null, 'ຕີ ກັບ ບໍ່ ໄດ້ ໃນ ສະຖານະ ນີ້.');
+        $this->assert(! empty($opts['reason']), 'ຕ້ອງ ໃສ່ ເຫດຜົນ ຕີ ກັບ.');
+        $r->signoffs()->create([
+            'role_key' => $stage, 'stage_order' => 0,
+            'user_id' => $actor->id, 'name' => $actor->display_name ?? $actor->email,
+            'decision' => 'rejected', 'signed_at' => now(), 'comment' => $opts['reason'],
+        ]);
+        $r->status = 'draft';
+        $r->reject_reason = $opts['reason'];
+    }
+
+    /** ອະນຸມັດ ສຳເລັດ → ຈຳໜ່າຍ; ຖ້າ update_registers=true → ອັບເດດ ທະບຽນ ຕົ້ນທາງ (Phase 6). */
+    private function doDispose(DisposalRecord $r, $actor, array $opts): void
+    {
+        $this->assert($r->status === 'approved', 'ຈຳໜ່າຍ ໄດ້ ສະເພາະ ໃບ ທີ່ ອະນຸມັດ ແລ້ວ.');
+        if ($opts['update_registers'] ?? false) {
+            $this->updateSourceRegisters($r);
+            $r->registers_updated_at = now();
+            $r->registers_updated_by = $actor->id;
+        }
+        $r->status = 'disposed';
+    }
+
+    /** ອັບເດດ ທະບຽນ ຕົ້ນທາງ: Equipment → retired · Inventory → ปิด · Deposit → disposed. */
+    protected function updateSourceRegisters(DisposalRecord $r): void
+    {
+        foreach ($r->items()->get() as $it) {
+            if (! $it->source_id) {
+                continue;
+            }
+            if ($it->source_type === 'equipment' && ($e = Equipment::find($it->source_id))) {
+                $b = $e->statusBreakdown();
+                $retire = min(max(1, (int) $it->qty), $b['active']);
+                $e->update(['status_counts' => ['active' => $b['active'] - $retire, 'repair' => $b['repair'], 'retired' => $b['retired'] + $retire]]);
+            } elseif ($it->source_type === 'inventory' && ($inv = InventoryItem::find($it->source_id))) {
+                $inv->update(['is_active' => false]);
+            } elseif ($it->source_type === 'deposit' && ($di = DepositItem::find($it->source_id))) {
+                $di->update(['condition_on_claim' => 'ຈຳໜ່າຍ (disposed) · '.$r->request_number]);
+            }
+        }
     }
 
     private function doCancel(DisposalRecord $r, array $opts): void
