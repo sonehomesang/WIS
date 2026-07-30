@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+/** audit trail (append-only) ຂອງ ໃບ ຈຳໜ່າຍ. */
+class DisposalHistory extends Model
+{
+    public const UPDATED_AT = null; // append-only — created_at ເທົ່ານັ້ນ
+
+    protected $table = 'disposal_history';
+
+    protected $guarded = ['id'];
+
+    public function record(): BelongsTo
+    {
+        return $this->belongsTo(DisposalRecord::class, 'record_id');
+    }
+}

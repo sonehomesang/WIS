@@ -15,7 +15,7 @@ class RolePermissionSeeder extends Seeder
 {
     /** @var list<string> */
     private array $menus = [
-        'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo',
+        'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo', 'disposal',
         'catalog', 'equipment', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
         'users', 'roles', 'settings', 'reports', 'audit', 'notifications',
     ];
@@ -85,7 +85,7 @@ class RolePermissionSeeder extends Seeder
         $admin['roles'] = 'viewOnly';
 
         $warehouse = $this->allMenus('viewOnly');
-        foreach (['inventory', 'borrow', 'deposit', 'da', 'oga', 'expo', 'equipment'] as $m) {
+        foreach (['inventory', 'borrow', 'deposit', 'da', 'oga', 'expo', 'equipment', 'disposal'] as $m) {
             $warehouse[$m] = 'adminPerm';
         }
         foreach (['roles', 'settings', 'audit'] as $m) {
@@ -93,7 +93,7 @@ class RolePermissionSeeder extends Seeder
         }
 
         $approver = $this->allMenus('viewOnly');
-        foreach (['borrow', 'deposit', 'request', 'da'] as $m) {
+        foreach (['borrow', 'deposit', 'request', 'da', 'disposal'] as $m) {
             $approver[$m] = 'viewCreateActivate';
         }
         foreach (['users', 'roles', 'settings', 'audit', 'equipment'] as $m) {
@@ -128,6 +128,7 @@ class RolePermissionSeeder extends Seeder
         $deptAdmin['inventory'] = 'viewOnly';
         $deptAdmin['notifications'] = 'viewOnly';
         $deptAdmin['equipment'] = 'adminPerm';
+        $deptAdmin['disposal'] = 'viewOnly';   // ເຫັນ ໃບ ຈຳໜ່າຍ ຂອງ ພະແນກ ຕົນ (ດຶງ ຈາກ Equipment ຕົນ)
         // ເບິ່ງ transaction ຂອງ ພະແນກ ຕົນ (scope = department, ເບິ່ງ scopes())
         foreach (['borrow', 'deposit', 'request'] as $m) {
             $deptAdmin[$m] = 'viewOnly';
