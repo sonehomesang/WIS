@@ -1,23 +1,23 @@
 <div class="pb-10">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-3">
         <x-page-subheader :back="route('disposal')" back-label="ລາຍການ ຈຳໜ່າຍ">
             <x-slot:hint>ຕ້ອງ ຜ່ານ ການ ເຊັນ ຮັບຮອງ 5 ຝ່າຍ</x-slot>
         </x-page-subheader>
 
         @include('partials._form-errors')
 
-        <div class="bg-white border border-gray-100 rounded-lg p-5 grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
+        <div class="bg-white border border-gray-100 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
             <div class="sm:col-span-2"><label class="block text-gray-600 mb-1">ຫົວຂໍ້ / ຊຸດ</label><input type="text" wire:model="title" placeholder="ເຊັ່ນ: ຈຳໜ່າຍ ເຄື່ອງມື ຊຳລຸດ ໄຕມາດ 3" class="w-full rounded-md border-gray-300 text-sm" /></div>
             <div><label class="block text-gray-600 mb-1">ພະແນກ</label><select wire:model="department_id" class="w-full rounded-md border-gray-300 text-sm"><option value="">—</option>@foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach</select></div>
             <div><label class="block text-gray-600 mb-1">ໝາຍເຫດ</label><input type="text" wire:model="note" class="w-full rounded-md border-gray-300 text-sm" /></div>
         </div>
 
-        <div class="space-y-3">
+        <div class="space-y-2">
             <div class="text-sm font-medium text-gray-600">ລາຍການ ຈຳໜ່າຍ ({{ count($items) }})</div>
 
             @foreach ($items as $i => $row)
                 @php $src = $row['source_type'] ?? 'equipment'; @endphp
-                <div wire:key="di-{{ $i }}" class="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+                <div wire:key="di-{{ $i }}" class="bg-white border border-gray-200 rounded-lg p-3 space-y-2">
                     <div class="flex items-center gap-2">
                         <span class="text-sm font-medium">#{{ $i + 1 }}</span>
                         <div class="inline-flex rounded-md border border-gray-300 overflow-hidden text-xs ml-auto">
@@ -55,7 +55,7 @@
 
                     <div><label class="block text-xs text-gray-500 mb-1">ສະພາບ ປັດຈຸບັນ</label><input type="text" wire:model="items.{{ $i }}.condition" placeholder="ເຊັ່ນ: ມໍເຕີ ໄໝ້ · ໃຊ້ ບໍ່ ໄດ້" class="w-full rounded-md border-gray-300 text-sm" /></div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs text-red-600 mb-1">ເຫດຜົນ ຈຳໜ່າຍ</label>
                             <select wire:model="items.{{ $i }}.reason" class="w-full rounded-md border-gray-300 text-sm"><option value="">— ເລືອກ —</option>@foreach ($reasons as $r)<option value="{{ $r }}">{{ $r }}</option>@endforeach</select>
