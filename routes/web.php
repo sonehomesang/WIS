@@ -124,6 +124,27 @@ Route::get('disposal/create', App\Livewire\Disposal\Create::class)
     ->middleware(['auth', 'verified'])
     ->name('disposal.create');
 
+Route::get('disposal/summary', App\Livewire\Disposal\Summary::class)
+    ->middleware(['auth', 'verified'])
+    ->name('disposal.summary');
+
+Route::get('disposal/summary/pdf', function () {
+    abort_unless(auth()->user()->can('disposal.view'), 403);
+    $from = request('from') ?: null;
+    $to = request('to') ?: null;
+    $deptId = request('department_id') ? (int) request('department_id') : null;
+    $status = request('status', 'disposed');
+    $items = App\Livewire\Disposal\Summary::itemsQuery($from, $to, $deptId, $status)->get();
+
+    return \App\Support\PdfExport::download('disposal.summary-pdf', [
+        'items' => $items,
+        'from' => $from, 'to' => $to, 'status' => $status,
+        'deptName' => $deptId ? optional(App\Models\Department::find($deptId))->name : null,
+        'totalQty' => $items->sum('qty'),
+        'totalValue' => $items->sum(fn ($it) => (float) $it->estimated_value),
+    ], 'disposal-summary.pdf');
+})->middleware(['auth', 'verified'])->name('disposal.summary.pdf');
+
 Route::get('disposal/{record}/pdf', function (App\Models\DisposalRecord $record) {
     $u = auth()->user();
     abort_unless($u->can('disposal.view'), 403);

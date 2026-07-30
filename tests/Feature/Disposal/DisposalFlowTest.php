@@ -95,9 +95,34 @@ test('reject at a review stage loops back to draft with the reason', function ()
     expect($r->signoffs()->where('decision', 'rejected')->exists())->toBeTrue();
 });
 
+test('the → Disposal register button preloads the first item from an equipment id', function () {
+    $e = Equipment::create(['asset_code' => 'PL-1', 'name' => 'Pump', 'quantity' => 1]);
+    actingAs($this->staff);
+
+    Livewire::withQueryParams(['add' => 'equipment:'.$e->id])
+        ->test(Create::class)
+        ->assertSet('items.0.source_type', 'equipment')
+        ->assertSet('items.0.item_name', 'Pump')
+        ->assertSet('items.0.asset_code', 'PL-1');
+});
+
 test('a non-permitted user cannot open the disposal list', function () {
     $u = User::factory()->create();
     $u->syncRoles(['requester']);
     actingAs($u);
     Livewire::test(Index::class)->assertForbidden();
+});
+
+test('the summary lists disposed items with running totals', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $r = app(DisposalService::class)->createDraft([
+        'items' => [['source_type' => 'new', 'item_name' => 'ໝວກ ນິລະໄພ', 'qty' => 2, 'estimated_value' => 150000]],
+    ], $admin);
+    $r->update(['status' => 'disposed']);
+
+    actingAs($admin);
+    Livewire::test(App\Livewire\Disposal\Summary::class)
+        ->assertViewHas('totalQty', 2)
+        ->assertViewHas('totalValue', 150000.0)
+        ->assertSee('ໝວກ ນິລະໄພ');
 });

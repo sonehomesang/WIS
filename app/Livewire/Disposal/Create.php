@@ -40,6 +40,12 @@ class Create extends Component
         abort_unless(auth()->user()->can('disposal.create'), 403);
         $this->department_id = auth()->user()->department_id;
         $this->items = [$this->blankItem()];
+
+        // preload ຈາກ ທະບຽນ ຕົ້ນທາງ (ປຸ່ມ "→ Disposal") — ?add=equipment:10
+        if (preg_match('/^(inventory|equipment|deposit):(\d+)$/', (string) request()->query('add', ''), $m)) {
+            $this->items[0]['source_type'] = $m[1];
+            $this->pickAsset(0, $m[1], (int) $m[2]);
+        }
     }
 
     protected function blankItem(): array

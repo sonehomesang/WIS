@@ -893,6 +893,9 @@
                 @endif
 
                 <div class="flex flex-wrap justify-end gap-2 pt-2 border-t">
+                    @can('disposal.create')
+                        <a href="{{ route('disposal.create', ['add' => 'equipment:' . $viewingItem->id]) }}" wire:navigate class="text-sm text-red-700 border border-red-200 rounded-md px-4 py-2 min-h-[40px] inline-flex items-center hover:bg-red-50" title="ຂໍ ຈຳໜ່າຍ ເຄື່ອງ ນີ້">🗑 → Disposal</a>
+                    @endcan
                     @can('equipment.edit')
                         <button wire:click="editItem({{ $viewingItem->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-50">ແກ້ໄຂ</button>
                     @endcan

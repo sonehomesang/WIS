@@ -24,6 +24,7 @@
                         <option value="">ທຸກ ສະຖານະ</option>
                         @foreach ($statusLabels as $k => $lbl)<option value="{{ $k }}">{{ $lbl }}</option>@endforeach
                     </select>
+                    <a href="{{ route('disposal.summary') }}" wire:navigate class="text-sm text-gray-700 border border-gray-300 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-gray-50 whitespace-nowrap">📊 ລິສ ລວມ</a>
                     @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
                     @can('disposal.create')<a href="{{ route('disposal.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-3 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ ຈຳໜ່າຍ</a>@endcan
                 </div>
