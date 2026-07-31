@@ -5,6 +5,8 @@ use App\Models\AreaInspection;
 use App\Models\AreaInspectionTemplate;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
@@ -92,4 +94,35 @@ test('a manager can create, edit and deactivate an area checklist template in-ap
 
     Livewire::test(Index::class)->call('toggleTemplateActive', $t->id);
     expect($t->fresh()->is_active)->toBeFalse();
+});
+
+test('evidence photo is kept only for NC items; overview photos are stored + stamped', function () {
+    Storage::fake('public');
+    $u = User::factory()->create();
+    $u->syncRoles(['warehouse_staff']);
+    actingAs($u);
+
+    $t = AreaInspectionTemplate::create([
+        'name' => 'X', 'frequency' => 'monthly', 'is_active' => true,
+        'items' => [['label' => 'A', 'requirement' => ''], ['label' => 'B', 'requirement' => '']],
+    ]);
+
+    Livewire::test(Index::class)
+        ->call('newInspection')
+        ->set('fTemplateId', $t->id)
+        ->set('fLocationLabel', 'Room X')
+        ->set('checklist.0.status', 'C')
+        ->set('checklist.1.status', 'NC')
+        ->set('photos.0', UploadedFile::fake()->image('should-be-ignored.jpg'))   // C ຂໍ້ — ບໍ່ ເກັບ
+        ->set('photos.1', UploadedFile::fake()->image('evidence.jpg'))            // NC ຂໍ້ — ເກັບ
+        ->set('overviewPhotos', [UploadedFile::fake()->image('overview.jpg')])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $r = AreaInspection::first();
+    expect($r->checklist[0]['photo'])->toBeNull()          // C = ບໍ່ ມີ ຮູບ
+        ->and($r->checklist[1]['photo'])->not->toBeNull()  // NC = ມີ ຮູບ ຫຼັກຖານ
+        ->and($r->overview_photos)->toHaveCount(1);
+    Storage::disk('public')->assertExists($r->checklist[1]['photo']);
+    Storage::disk('public')->assertExists($r->overview_photos[0]);
 });

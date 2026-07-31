@@ -195,22 +195,33 @@
                                         <div class="flex gap-1 flex-shrink-0">
                                             @foreach (['C' => 'bg-green-600', 'NC' => 'bg-red-600', 'NA' => 'bg-gray-400'] as $st => $active)
                                                 <label class="cursor-pointer">
-                                                    <input type="radio" wire:model="checklist.{{ $i }}.status" value="{{ $st }}" class="sr-only peer">
+                                                    <input type="radio" wire:model.live="checklist.{{ $i }}.status" value="{{ $st }}" class="sr-only peer">
                                                     <span class="inline-block text-xs font-medium px-2 py-1 rounded border border-gray-300 text-gray-500 peer-checked:text-white peer-checked:border-transparent peer-checked:{{ $active }}">{{ $st }}</span>
                                                 </label>
                                             @endforeach
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <input type="text" wire:model="checklist.{{ $i }}.observation" placeholder="ໝາຍເຫດ / corrective action" class="w-full rounded-md border-gray-300 text-xs">
-                                        <input type="file" wire:model="photos.{{ $i }}" accept="image/*" class="text-xs text-gray-500">
-                                    </div>
+                                    {{-- ຫຼັກຖານ: ໂຜ່ ສະເພາະ ຂໍ້ ທີ່ ຜິດປົກກະຕິ (NC) — ຄື pattern ບຳລຸງຮັກສາ --}}
+                                    @if (($checklist[$i]['status'] ?? 'C') === 'NC')
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-red-50/50 border border-red-100 rounded-md p-2">
+                                            <input type="text" wire:model="checklist.{{ $i }}.observation" placeholder="ໝາຍເຫດ / corrective action (ໃຜ · ເມື່ອໃດ)" class="w-full rounded-md border-gray-300 text-xs">
+                                            <div>
+                                                <input type="file" wire:model="photos.{{ $i }}" accept="image/*" class="block w-full text-xs text-gray-600 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-red-100 file:text-red-700" />
+                                                <span class="text-[10px] text-gray-400">📷 ຮູບ ຫຼັກຖານ (ກ້ອງ/ແກເລີຣີ · ຝັງ ວັນ+ເວລາ)</span>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
                     @else
                         <div class="text-sm text-gray-400 text-center py-4">ເລືອກ ແມ່ແບບ ເພື່ອ ໂຫຼດ ຂໍ້ ກວດ.</div>
                     @endif
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">ຮູບ ພາບ ລວມ ຂອງ ສະຖານທີ່ (ສูงສุด 3 · ກ້ອງ/ແກເລີຣີ · ຝັງ ວັນ+ເວລາ)</label>
+                        <input type="file" wire:model="overviewPhotos" multiple accept="image/*" class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-sky-50 file:text-sky-700 file:min-h-[40px]" />
+                        @error('overviewPhotos.*')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                    </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">ໝາຍເຫດ ລວມ</label>
                         <textarea wire:model="fNotes" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea>

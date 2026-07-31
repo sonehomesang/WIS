@@ -18,6 +18,7 @@ class AreaInspection extends Model
         'next_due_date' => 'date',
         'inspectors' => 'array',
         'checklist' => 'array',
+        'overview_photos' => 'array',
         'acknowledged_at' => 'datetime',
     ];
 

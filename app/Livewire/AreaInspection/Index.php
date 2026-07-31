@@ -8,6 +8,7 @@ use App\Models\AreaInspectionTemplate;
 use App\Models\Location;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -46,8 +47,11 @@ class Index extends Component
     /** @var array<int,array{label:string,requirement:string,status:string,observation:string}> */
     public array $checklist = [];
 
-    /** @var array<int,TemporaryUploadedFile> ຮູບ ຕໍ່ ຂໍ້ */
+    /** @var array<int,TemporaryUploadedFile> ຮູບ ຫຼັກຖານ ຕໍ່ ຂໍ້ (ສະເພາະ ຂໍ້ NC) */
     public array $photos = [];
+
+    /** @var array<int,TemporaryUploadedFile> ຮູບ ພາບ ລວມ ຂອງ ສະຖານທີ່ (ສูงສุด 3) */
+    public array $overviewPhotos = [];
 
     // ── tab + template management (ແມ່ແບບ) ──
     public string $tab = 'records';   // records | templates
@@ -143,6 +147,7 @@ class Index extends Component
             'checklist.*.status' => ['required', 'in:C,NC,NA'],
             'checklist.*.observation' => ['nullable', 'string', 'max:500'],
             'photos.*' => ['nullable', 'image', 'max:5120'],
+            'overviewPhotos.*' => ['nullable', 'image', 'max:5120'],
         ], [], ['checklist' => 'ເຊັກລິສ']);
 
         // ຕ້ອງ ມີ ສະຖານທີ່ (ເລືອກ ຫຼື ພິມ).
@@ -156,20 +161,29 @@ class Index extends Component
             ? trim($this->fLocationLabel)
             : (string) optional(Location::find($this->fLocationId))->name;
 
-        // ຝັງ ຮູບ ຕໍ່ ຂໍ້.
+        // ຮູບ ຫຼັກຖານ ຕໍ່ ຂໍ້ (ຝັງ ວັນ+ເວລາ) — ໂດຍ ປົກກະຕິ ມີ ສະເພາະ ຂໍ້ NC.
         $items = [];
         foreach ($this->checklist as $i => $row) {
+            $status = in_array($row['status'] ?? 'C', ['C', 'NC', 'NA'], true) ? $row['status'] : 'C';
             $path = null;
-            if (isset($this->photos[$i]) && $this->photos[$i]) {
-                $path = $this->photos[$i]->store('area-inspection', 'public');
+            if ($status === 'NC' && isset($this->photos[$i]) && $this->photos[$i]) {
+                $path = $this->stampAndStore($this->photos[$i], 'area-inspection');
             }
             $items[] = [
                 'label' => $row['label'] ?? '',
                 'requirement' => $row['requirement'] ?? '',
-                'status' => in_array($row['status'] ?? 'C', ['C', 'NC', 'NA'], true) ? $row['status'] : 'C',
-                'observation' => $row['observation'] ?? '',
+                'status' => $status,
+                'observation' => $status === 'NC' ? ($row['observation'] ?? '') : '',
                 'photo' => $path,
             ];
+        }
+
+        // ຮູບ ພາບ ລວມ ຂອງ ສະຖານທີ່ (ຝັງ ວັນ+ເວລາ).
+        $overview = [];
+        foreach (array_values($this->overviewPhotos) as $file) {
+            if ($file) {
+                $overview[] = $this->stampAndStore($file, 'area-inspection/overview');
+            }
         }
 
         $hasNc = collect($items)->contains(fn ($x) => $x['status'] === 'NC');
@@ -184,6 +198,7 @@ class Index extends Component
             'frequency' => $this->fFrequency,
             'inspectors' => array_values(array_filter(array_map('trim', $this->fInspectors))),
             'checklist' => $items,
+            'overview_photos' => $overview,
             'result' => $hasNc ? 'has_nc' : 'compliant',
             'next_due_date' => $this->computeNextDue($this->fDate, $this->fFrequency),
             'notes' => $this->fNotes ?: null,
@@ -193,7 +208,45 @@ class Index extends Component
 
         $this->showForm = false;
         session()->flash('ok', '✓ ບັນທຶກ ໃບ ກວດ ສະຖານທີ່ ແລ້ວ');
-        $this->reset(['checklist', 'photos']);
+        $this->reset(['checklist', 'photos', 'overviewPhotos']);
+    }
+
+    /** ຝັງ ວັນທີ+ເວລາ (ຕອນ upload) ໃສ່ ຮູບ ດ້ວຍ GD ແລ້ວ ບັນທຶກ; fallback ຖ້າ GD ລົ້ມ. */
+    protected function stampAndStore($photo, string $dir): string
+    {
+        $stamp = now()->timezone('Asia/Vientiane')->format('Y-m-d H:i');
+        try {
+            $img = @imagecreatefromstring(file_get_contents($photo->getRealPath()));
+            if ($img !== false) {
+                $w = imagesx($img);
+                $h = imagesy($img);
+                $tw = imagefontwidth(5) * strlen($stamp);
+                $th = imagefontheight(5);
+                $tmp = imagecreatetruecolor($tw, $th);
+                imagefill($tmp, 0, 0, imagecolorallocate($tmp, 0, 0, 0));
+                imagestring($tmp, 5, 0, 0, $stamp, imagecolorallocate($tmp, 255, 255, 255));
+                $scale = max(2, (int) floor($w / 500));
+                $dw = $tw * $scale;
+                $dh = $th * $scale;
+                $pad = max(4, (int) round($dh * 0.35));
+                $bar = imagecolorallocatealpha($img, 0, 0, 0, 55);
+                imagefilledrectangle($img, 0, $h - $dh - 2 * $pad, $dw + 2 * $pad, $h, $bar);
+                imagecopyresized($img, $tmp, $pad, $h - $dh - $pad, 0, 0, $dw, $dh, $tw, $th);
+                imagedestroy($tmp);
+                ob_start();
+                imagejpeg($img, null, 85);
+                $bytes = ob_get_clean();
+                imagedestroy($img);
+                $path = rtrim($dir, '/').'/'.uniqid('ai_').'.jpg';
+                Storage::disk('public')->put($path, $bytes);
+
+                return $path;
+            }
+        } catch (\Throwable $ex) {
+            // fall through to plain store
+        }
+
+        return $photo->store($dir, 'public');
     }
 
     public function acknowledge(int $id): void
