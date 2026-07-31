@@ -33,6 +33,16 @@ test('warehouse staff can create equipment with the code they enter', function (
     expect($e->statusBreakdown())->toBe(['active' => 1, 'repair' => 0, 'retired' => 0]);
 });
 
+test('clearItemPhoto requires equipment.edit — a view-only user cannot delete files (H1)', function () {
+    $viewer = User::factory()->create();
+    $viewer->givePermissionTo('equipment.view');   // ເຫັນ ໄດ້ ແຕ່ ບໍ່ ມີ edit
+    actingAs($viewer);
+
+    Livewire::test(App\Livewire\Equipment\Maintenance::class)
+        ->call('clearItemPhoto', 0, 'problem')
+        ->assertForbidden();
+});
+
 test('viewItem opens a read-only detail modal (register manage column)', function () {
     $e = Equipment::create([
         'asset_code' => 'EL-T001-1', 'name' => 'Megger Insulation Tester',

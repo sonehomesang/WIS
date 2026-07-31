@@ -313,17 +313,33 @@ class Maintenance extends Component
     /** ລຶບ ຮູບ/ຄລິບ ຂອງ ຂໍ້ ($slot = 'before'|'after'|'problem'). ລຶບ ທັງ temp ອັບ + ໄຟລ໌ ທີ່ ບັນທຶກ ໄວ້. */
     public function clearItemPhoto(int $i, string $slot): void
     {
+        abort_unless(auth()->user()->can('equipment.edit'), 403);
+
         $slot = in_array($slot, ['before', 'after', 'problem'], true) ? $slot : 'before';
         $store = ['before' => 'itemPhotoBefore', 'after' => 'itemPhotoAfter', 'problem' => 'itemPhotoProblem'][$slot];
         unset($this->{$store}[$i]);
 
         $key = 'photo_'.$slot;
-        if (isset($this->mChecklist[$i][$key])) {
-            if ($this->editingId) {
-                Storage::disk('public')->delete($this->mChecklist[$i][$key]);
-            }
-            unset($this->mChecklist[$i][$key]);
+        if (! isset($this->mChecklist[$i][$key])) {
+            return;
         }
+
+        // ລຶບ ໄຟລ໌ ຈິງ ໄດ້ ສະເພາະ ຕອນ ແກ້ record ທີ່ ມີ ຢູ່ — ແລະ path ຕ້ອງ ກົງ ກັບ ທີ່ ບັນທຶກ ໃນ DB
+        // (ບໍ່ ເຊື່ອ path ຈາກ client mChecklist → ກັນ ລຶບ ໄຟລ໌ public ໃດ ກໍ ໄດ້).
+        if ($this->editingId) {
+            $m = EquipmentMaintenance::with('equipment')->find($this->editingId);
+            if ($m) {
+                if ($m->equipment) {
+                    $this->guardDept($m->equipment);
+                }
+                $stored = $m->checklist[$i][$key] ?? null;
+                if ($stored && $stored === $this->mChecklist[$i][$key]) {
+                    Storage::disk('public')->delete($stored);
+                }
+            }
+        }
+
+        unset($this->mChecklist[$i][$key]);
     }
 
     public function save(): void
