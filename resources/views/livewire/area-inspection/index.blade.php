@@ -209,6 +209,7 @@
                                             <div>
                                                 <input type="file" wire:model="photos.{{ $i }}" accept="image/*" class="block w-full text-xs text-gray-600 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-red-100 file:text-red-700" />
                                                 <span class="text-[10px] text-gray-400">📷 ຮູບ ຫຼັກຖານ (ກ້ອງ/ແກເລີຣີ · ຝັງ ວັນ+ເວລາ)</span>
+                                                @error('photos.'.$i)<div class="text-[10px] text-red-600 mt-0.5">{{ $message }}</div>@enderror
                                             </div>
                                         </div>
                                     @endif
@@ -221,6 +222,7 @@
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">ຮູບ ພາບ ລວມ ຂອງ ສະຖານທີ່ (ສูงສุด 3 · ກ້ອງ/ແກເລີຣີ · ຝັງ ວັນ+ເວລາ)</label>
                         <input type="file" wire:model="overviewPhotos" multiple accept="image/*" class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-sky-50 file:text-sky-700 file:min-h-[40px]" />
+                        @error('overviewPhotos')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                         @error('overviewPhotos.*')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                     </div>
                     <div>

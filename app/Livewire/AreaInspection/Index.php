@@ -109,7 +109,7 @@ class Index extends Component
     public function newInspection(): void
     {
         abort_unless(auth()->user()->can('area_inspection.create'), 403);
-        $this->reset(['fTemplateId', 'fLocationId', 'fLocationLabel', 'fTime', 'fNotes', 'checklist', 'photos']);
+        $this->reset(['fTemplateId', 'fLocationId', 'fLocationLabel', 'fTime', 'fNotes', 'checklist', 'photos', 'overviewPhotos']);
         $this->fInspectors = ['', '', ''];
         $this->fDate = now()->toDateString();
         $this->fFrequency = 'monthly';
@@ -147,8 +147,9 @@ class Index extends Component
             'checklist.*.status' => ['required', 'in:C,NC,NA'],
             'checklist.*.observation' => ['nullable', 'string', 'max:500'],
             'photos.*' => ['nullable', 'image', 'max:5120'],
+            'overviewPhotos' => ['nullable', 'array', 'max:3'],
             'overviewPhotos.*' => ['nullable', 'image', 'max:5120'],
-        ], [], ['checklist' => 'ເຊັກລິສ']);
+        ], [], ['checklist' => 'ເຊັກລິສ', 'overviewPhotos' => 'ຮູບ ພາບ ລວມ']);
 
         // ຕ້ອງ ມີ ສະຖານທີ່ (ເລືອກ ຫຼື ພິມ).
         if (! $this->fLocationId && trim($this->fLocationLabel) === '') {
@@ -180,7 +181,7 @@ class Index extends Component
 
         // ຮູບ ພາບ ລວມ ຂອງ ສະຖານທີ່ (ຝັງ ວັນ+ເວລາ).
         $overview = [];
-        foreach (array_values($this->overviewPhotos) as $file) {
+        foreach (array_slice(array_values($this->overviewPhotos), 0, 3) as $file) {
             if ($file) {
                 $overview[] = $this->stampAndStore($file, 'area-inspection/overview');
             }

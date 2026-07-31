@@ -127,6 +127,59 @@ test('evidence photo is kept only for NC items; overview photos are stored + sta
     Storage::disk('public')->assertExists($r->overview_photos[0]);
 });
 
+test('newInspection clears overview photos so stale ones do not leak into a new record', function () {
+    Storage::fake('public');
+    $u = User::factory()->create();
+    $u->syncRoles(['warehouse_staff']);
+    actingAs($u);
+
+    $t = AreaInspectionTemplate::create([
+        'name' => 'X', 'frequency' => 'monthly', 'is_active' => true,
+        'items' => [['label' => 'A', 'requirement' => '']],
+    ]);
+
+    Livewire::test(Index::class)
+        ->call('newInspection')
+        ->set('fTemplateId', $t->id)
+        ->set('overviewPhotos', [UploadedFile::fake()->image('abandoned.jpg')])  // ຕິດ ຮູບ ແລ້ວ ຍົກເລີກ
+        ->call('newInspection')                                                   // ເປີດ ໃໝ່ → ຕ້ອງ ລ້າງ
+        ->set('fTemplateId', $t->id)
+        ->set('fLocationLabel', 'Room Fresh')
+        ->set('checklist.0.status', 'C')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $r = AreaInspection::first();
+    expect($r->location_label)->toBe('Room Fresh')
+        ->and($r->overview_photos)->toHaveCount(0);   // ຮູບ ເກົ່າ ບໍ່ ຄ້າງ ມາ
+});
+
+test('overview photos are capped at 3 server-side', function () {
+    Storage::fake('public');
+    $u = User::factory()->create();
+    $u->syncRoles(['warehouse_staff']);
+    actingAs($u);
+
+    $t = AreaInspectionTemplate::create([
+        'name' => 'X', 'frequency' => 'monthly', 'is_active' => true,
+        'items' => [['label' => 'A', 'requirement' => '']],
+    ]);
+
+    Livewire::test(Index::class)
+        ->call('newInspection')
+        ->set('fTemplateId', $t->id)
+        ->set('fLocationLabel', 'Room X')
+        ->set('checklist.0.status', 'C')
+        ->set('overviewPhotos', [
+            UploadedFile::fake()->image('1.jpg'), UploadedFile::fake()->image('2.jpg'),
+            UploadedFile::fake()->image('3.jpg'), UploadedFile::fake()->image('4.jpg'),
+        ])
+        ->call('save')
+        ->assertHasErrors(['overviewPhotos']);   // ເກີນ 3 → ບໍ່ ຜ່ານ validation
+
+    expect(AreaInspection::count())->toBe(0);
+});
+
 test('the inspection PDF downloads for a permitted user, 403 for others', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $r = AreaInspection::create([
