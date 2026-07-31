@@ -93,7 +93,7 @@
                             <td x-show="cols.materialNo" x-cloak class="px-4 py-2 font-mono text-xs text-gray-500 whitespace-nowrap">{{ $it->slug }}</td>
                             <td class="px-4 py-2 w-full">
                                 <div class="flex items-center gap-2">
-                                    @if ($photo = $it->primaryPhoto->first())
+                                    @if ($photo = $it->primaryPhoto)
                                         <img src="{{ $photo->url }}" alt="" class="w-9 h-9 rounded object-cover border border-gray-200 shrink-0" />
                                     @endif
                                     <div>
@@ -132,7 +132,7 @@
                 <div wire:key="m-{{ $it->id }}" class="bg-white border border-gray-100 rounded-lg p-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            @if ($photo = $it->primaryPhoto->first())
+                            @if ($photo = $it->primaryPhoto)
                                 <img src="{{ $photo->url }}" alt="" class="w-8 h-8 rounded object-cover border border-gray-200 shrink-0" />
                             @endif
                             <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>

@@ -62,7 +62,7 @@
         </tr></thead>
         <tbody>
             @foreach ($record->items as $it)
-                @php $photo = $it->inventoryItem?->primaryPhoto?->first(); @endphp
+                @php $photo = $it->inventoryItem?->primaryPhoto; @endphp
                 <tr>
                     <td class="center">{{ $loop->iteration }}</td>
                     <td>{{ $it->inventoryItem?->slug ?? '—' }}</td>

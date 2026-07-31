@@ -65,7 +65,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($records as $r)
-                        @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->photos->first() ?? $first?->inventoryItem?->primaryPhoto?->first(); $d = $r->days_left; @endphp
+                        @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->photos->first() ?? $first?->inventoryItem?->primaryPhoto; $d = $r->days_left; @endphp
                         <tr wire:key="br-{{ $r->id }}" class="hover:bg-gray-50">
                             {{-- BR No. --}}
                             <td class="px-4 py-2 align-top whitespace-nowrap"><a href="{{ route('borrow.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
@@ -118,7 +118,7 @@
         {{-- Mobile cards --}}
         <div class="md:hidden space-y-2">
             @forelse ($records as $r)
-                @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->photos->first() ?? $first?->inventoryItem?->primaryPhoto?->first(); $tag = $showDeleted ? 'div' : 'a'; @endphp
+                @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->photos->first() ?? $first?->inventoryItem?->primaryPhoto; $tag = $showDeleted ? 'div' : 'a'; @endphp
                 <{{ $tag }} @if (! $showDeleted) href="{{ route('borrow.show', $r) }}" wire:navigate @endif wire:key="mbr-{{ $r->id }}" class="block bg-white border border-gray-100 rounded-lg p-3">
                     <div class="flex items-start justify-between gap-2">
                         <div class="flex gap-2 min-w-0">

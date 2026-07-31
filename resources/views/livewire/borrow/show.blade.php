@@ -87,7 +87,7 @@
                     </thead>
                     <tbody>
                         @foreach ($record->items as $it)
-                            @php $photo = $it->inventoryItem?->primaryPhoto?->first(); $take = $it->photos->where('kind', 'take'); @endphp
+                            @php $photo = $it->inventoryItem?->primaryPhoto; $take = $it->photos->where('kind', 'take'); @endphp
                             <tr>
                                 <td class="{{ $bd }} align-top">{{ $loop->iteration }}</td>
                                 <td class="{{ $bd }} align-top font-mono">{{ $it->inventoryItem?->slug ?? '—' }}</td>

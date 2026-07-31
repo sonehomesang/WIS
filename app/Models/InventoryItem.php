@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
@@ -51,10 +52,11 @@ class InventoryItem extends Model
         return $this->hasMany(InventoryItemPhoto::class, 'item_id')->orderBy('sort_order')->orderBy('id');
     }
 
-    /** ຮູບໃບທຳອິດ (ໃຊ້ເປັນ thumbnail ໃນ list). */
-    public function primaryPhoto(): HasMany
+    /** ຮູບໃບທຳອິດ (ໃຊ້ເປັນ thumbnail ໃນ list). "one of many" — eager-load ຖືກ ຕ້ອງ ຕໍ່ ແຖວ
+     *  (hasMany()->limit(1) ຈະ ຕີ LIMIT 1 ໃສ່ ທັງ batch → ໂຊ ຮູບ ແຖວ ດຽວ/ໜ້າ). */
+    public function primaryPhoto(): HasOne
     {
-        return $this->photos()->limit(1);
+        return $this->hasOne(InventoryItemPhoto::class, 'item_id')->ofMany(['sort_order' => 'min', 'id' => 'min']);
     }
 
     /** ໂຕເລກ Material No. (slug) — ນັບຕາມໝວດ (prefix N ໂຕໜ້າ). Dashboard ໃຊ້ຕໍ່ໄດ້.

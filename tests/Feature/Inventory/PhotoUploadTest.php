@@ -14,6 +14,19 @@ beforeEach(function () {
     Storage::fake('public');
 });
 
+test('primaryPhoto eager-loads one photo per item across a page (audit M6)', function () {
+    $a = InventoryItem::create(['slug' => 'ma', 'name' => 'A', 'quantity' => 1]);
+    $b = InventoryItem::create(['slug' => 'mb', 'name' => 'B', 'quantity' => 1]);
+    $a->photos()->create(['path' => 'inventory/a.jpg', 'sort_order' => 1]);
+    $b->photos()->create(['path' => 'inventory/b.jpg', 'sort_order' => 1]);
+
+    // eager-load ຮ່ວມ ກັນ (ຄື list) — bug ເກົ່າ hasMany()->limit(1) ຈະ ໃຫ້ ຮູບ ແຖວ ດຽວ
+    $items = InventoryItem::with('primaryPhoto')->whereIn('id', [$a->id, $b->id])->get();
+
+    expect($items->firstWhere('id', $a->id)->primaryPhoto?->path)->toBe('inventory/a.jpg')
+        ->and($items->firstWhere('id', $b->id)->primaryPhoto?->path)->toBe('inventory/b.jpg');
+});
+
 test('super admin can create an item with photos', function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => true]));
 
