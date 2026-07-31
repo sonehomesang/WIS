@@ -551,7 +551,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {{-- ຜູ້ ກວດ (ຈາກ ຜູ້ ລ໋ອກອິນ) + ເວລາ (ສະແຕັມ ອັດຕະໂນມັດ) --}}
                     <div class="md:col-span-2 flex flex-wrap gap-x-6 gap-y-1 text-sm bg-gray-50 border border-gray-100 rounded-md px-3 py-2">
-                        <span class="text-gray-500">ຜູ້ ກວດ: <span class="font-medium text-gray-800">{{ auth()->user()->name }}</span></span>
+                        <span class="text-gray-500">ຜູ້ ກວດ: <span class="font-medium text-gray-800">{{ auth()->user()->display_name }}</span></span>
                         <span class="text-gray-500">ວັນທີ/ເວລາ:
                             <span class="font-medium text-gray-800">
                                 @if ($editingInspectionId){{ $insDate ? \Illuminate\Support\Carbon::parse($insDate)->format('d/m/Y') : '—' }} <span class="text-xs text-gray-400">(ຕາມ ເດີມ)</span>@else ສະແຕັມ ອັດຕະໂນມັດ ຕອນ ບັນທຶກ @endif

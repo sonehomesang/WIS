@@ -217,3 +217,14 @@ test('reject at a later stage then resubmit gives a clean sign-off chain (audit 
     $svc->transition($r, 'sign', $admin);   // executive → approved
     expect($r->refresh()->status)->toBe('approved');
 });
+
+test('disposal create rejects a forged register source_id (audit)', function () {
+    actingAs($this->staff);
+    Livewire::test(Create::class)
+        ->set('items.0.source_type', 'equipment')
+        ->set('items.0.source_id', 999999)     // ບໍ່ ມີ ຈິງ ໃນ ທະບຽນ
+        ->set('items.0.item_name', 'X')
+        ->set('items.0.qty', 1)
+        ->call('save', false)
+        ->assertHasErrors('items');
+});

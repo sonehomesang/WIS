@@ -175,8 +175,9 @@ class Show extends Component
 
     public function cancel(): void
     {
-        $this->act('cancel', ['reason' => $this->cancelReason]);
-        $this->showCancel = false;
+        if ($this->act('cancel', ['reason' => $this->cancelReason])) {
+            $this->showCancel = false;   // ປິດ modal ສະເພາະ ຕອນ ສຳເລັດ
+        }
     }
 
     protected function canDelete(): bool

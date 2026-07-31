@@ -215,6 +215,22 @@ class Create extends Component
             'photos.*.*' => ['image', 'max:8192'],
         ], [], ['title' => 'ຫົວຂໍ້', 'items.*.item_name' => 'ຊື່ເຄື່ອງ']);
 
+        // ກັນ forged source_id: ຖ້າ ດຶງ ຈາກ ທະບຽນ, id ຕ້ອງ ມີ ຈິງ ຕາມ ປະເພດ — ບໍ່ ດັ່ງນັ້ນ
+        // ຕອນ ຈຳໜ່າຍ updateSourceRegisters ອາດ ໄປ ແຕະ ຊັບ ອື່ນ ທີ່ ບໍ່ ກ່ຽວ.
+        $exists = [
+            'inventory' => fn ($id) => \App\Models\InventoryItem::whereKey($id)->exists(),
+            'equipment' => fn ($id) => \App\Models\Equipment::whereKey($id)->exists(),
+            'deposit' => fn ($id) => \App\Models\DepositItem::whereKey($id)->exists(),
+        ];
+        foreach (array_values($this->items) as $i => $it) {
+            $st = $it['source_type'] ?? 'new';
+            $sid = $it['source_id'] ?? null;
+            if (isset($exists[$st]) && $sid && ! $exists[$st]($sid)) {
+                $this->addError("items.$i.item_name", 'ແຫຼ່ງ ທີ່ ດຶງ ບໍ່ ພົບ ໃນ ທະບຽນ.');
+                throw \Illuminate\Validation\ValidationException::withMessages(['items' => 'invalid source_id']);
+            }
+        }
+
         $payloadItems = [];
         foreach (array_values($this->items) as $it) {
             $history = collect($it['history'] ?? [])

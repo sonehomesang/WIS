@@ -159,8 +159,9 @@ class Show extends Component
 
     public function cancel(): void
     {
-        $this->act('cancel', ['reason' => $this->cancelReason]);
-        $this->showCancel = false;
+        if ($this->act('cancel', ['reason' => $this->cancelReason])) {
+            $this->showCancel = false;   // ປິດ modal ສະເພາະ ຕອນ ສຳເລັດ (ບໍ່ ດັ່ງນັ້ນ error ໂຜ່ ແຕ່ modal ຫາຍ)
+        }
     }
 
     public function purchasingDecide(): void
