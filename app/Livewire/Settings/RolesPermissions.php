@@ -20,7 +20,7 @@ class RolesPermissions extends Component
      */
     public array $menus = [
         'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo', 'disposal',
-        'catalog', 'equipment', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
+        'catalog', 'equipment', 'area_inspection', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
         'users', 'roles', 'settings', 'reports', 'audit', 'notifications',
     ];
 

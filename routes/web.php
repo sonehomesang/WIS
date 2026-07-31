@@ -167,6 +167,11 @@ Route::get('disposal/{record}', App\Livewire\Disposal\Show::class)
     ->middleware(['auth', 'verified'])
     ->name('disposal.show');
 
+// ── Area/Workplace Inspection (ກວດ ສະຖານທີ່) ──
+Route::get('area-inspection', App\Livewire\AreaInspection\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('area-inspection');
+
 // ── Shops Material (catalog ສິນຄ້າ supplier) — Phase 6.7a ──
 Route::get('catalog', App\Livewire\Catalog\Index::class)
     ->middleware(['auth', 'verified'])

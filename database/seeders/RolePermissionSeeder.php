@@ -9,7 +9,7 @@ use Spatie\Permission\PermissionRegistrar;
 
 /**
  * RBAC seed — source of truth: docs/v2/RBAC_MATRIX.md (from seed_roles.ts).
- * 23 menus × 6 actions = 138 permissions; 8 roles + scope_rules.
+ * 24 menus × 6 actions = 144 permissions; 8 roles + scope_rules.
  * NOTE: keep $menus in sync with App\Livewire\Settings\RolesPermissions::$menus.
  */
 class RolePermissionSeeder extends Seeder
@@ -17,7 +17,7 @@ class RolePermissionSeeder extends Seeder
     /** @var list<string> */
     private array $menus = [
         'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo', 'disposal',
-        'catalog', 'equipment', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
+        'catalog', 'equipment', 'area_inspection', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
         'users', 'roles', 'settings', 'reports', 'audit', 'notifications',
     ];
 
@@ -28,7 +28,7 @@ class RolePermissionSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        // 1. Create 138 permissions (23 menus × 6 actions)
+        // 1. Create 144 permissions (24 menus × 6 actions)
         foreach ($this->menus as $menu) {
             foreach ($this->actions as $action) {
                 Permission::firstOrCreate(['name' => "{$menu}.{$action}", 'guard_name' => 'web']);
@@ -86,7 +86,7 @@ class RolePermissionSeeder extends Seeder
         $admin['roles'] = 'viewOnly';
 
         $warehouse = $this->allMenus('viewOnly');
-        foreach (['inventory', 'borrow', 'deposit', 'da', 'oga', 'expo', 'equipment', 'disposal'] as $m) {
+        foreach (['inventory', 'borrow', 'deposit', 'da', 'oga', 'expo', 'equipment', 'disposal', 'area_inspection'] as $m) {
             $warehouse[$m] = 'adminPerm';
         }
         foreach (['roles', 'settings', 'audit'] as $m) {

@@ -1,0 +1,239 @@
+<?php
+
+namespace App\Livewire\AreaInspection;
+
+use App\Livewire\Concerns\SoftDeletesWithReason;
+use App\Models\AreaInspection;
+use App\Models\AreaInspectionTemplate;
+use App\Models\Location;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+use Illuminate\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
+
+/** ກວດ ສະຖານທີ່ (Area/Workplace Inspection) — ບັນທຶກ + ລິສ + ຮັບຊາບ. */
+#[Layout('layouts.app')]
+class Index extends Component
+{
+    use SoftDeletesWithReason;
+    use WithFileUploads;
+    use WithPagination;
+
+    // ── record modal ──
+    public bool $showForm = false;
+
+    public ?int $fTemplateId = null;
+
+    public ?int $fLocationId = null;
+
+    public string $fLocationLabel = '';
+
+    public string $fDate = '';
+
+    public string $fTime = '';
+
+    public string $fFrequency = 'monthly';
+
+    /** @var array<int,string> ຜູ້ ກວດ (ສูงສุด 3) */
+    public array $fInspectors = ['', '', ''];
+
+    public string $fNotes = '';
+
+    /** @var array<int,array{label:string,requirement:string,status:string,observation:string}> */
+    public array $checklist = [];
+
+    /** @var array<int,TemporaryUploadedFile> ຮູບ ຕໍ່ ຂໍ້ */
+    public array $photos = [];
+
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->can('area_inspection.view'), 403);
+        $this->fDate = now()->toDateString();
+    }
+
+    protected function deleteModelClass(): string
+    {
+        return AreaInspection::class;
+    }
+
+    protected function deletePermission(): string
+    {
+        return 'area_inspection.delete';
+    }
+
+    protected function deleteNoun(): string
+    {
+        return 'ໃບ ກວດ';
+    }
+
+    protected function deleteLabel(Model $record): string
+    {
+        return $record->inspection_number ?? $record->locationName();
+    }
+
+    protected function canAcknowledge(): bool
+    {
+        $u = auth()->user();
+
+        return $u->is_super_admin || $u->can('area_inspection.activate');
+    }
+
+    // ── record ──
+    public function newInspection(): void
+    {
+        abort_unless(auth()->user()->can('area_inspection.create'), 403);
+        $this->reset(['fTemplateId', 'fLocationId', 'fLocationLabel', 'fTime', 'fNotes', 'checklist', 'photos']);
+        $this->fInspectors = ['', '', ''];
+        $this->fDate = now()->toDateString();
+        $this->fFrequency = 'monthly';
+        $this->resetValidation();
+        $this->showForm = true;
+    }
+
+    /** ເລືອກ ແມ່ແບບ → ໂຫຼດ ຂໍ້ ເຂົ້າ checklist. */
+    public function updatedFTemplateId($value): void
+    {
+        $t = AreaInspectionTemplate::find($value);
+        if (! $t) {
+            $this->checklist = [];
+
+            return;
+        }
+        $this->fFrequency = $t->frequency;
+        $this->checklist = collect($t->normalizedItems())
+            ->map(fn ($x) => ['label' => $x['label'], 'requirement' => $x['requirement'], 'status' => 'C', 'observation' => ''])
+            ->all();
+        $this->photos = [];
+    }
+
+    public function save(): void
+    {
+        abort_unless(auth()->user()->can('area_inspection.create'), 403);
+
+        $this->validate([
+            'fLocationId' => ['nullable', 'exists:locations,id'],
+            'fLocationLabel' => ['nullable', 'string', 'max:256'],
+            'fDate' => ['required', 'date'],
+            'fTime' => ['nullable', 'string', 'max:16'],
+            'fFrequency' => ['required', 'in:'.implode(',', AreaInspectionTemplate::FREQUENCIES)],
+            'checklist' => ['required', 'array', 'min:1'],
+            'checklist.*.status' => ['required', 'in:C,NC,NA'],
+            'checklist.*.observation' => ['nullable', 'string', 'max:500'],
+            'photos.*' => ['nullable', 'image', 'max:5120'],
+        ], [], ['checklist' => 'ເຊັກລິສ']);
+
+        // ຕ້ອງ ມີ ສະຖານທີ່ (ເລືອກ ຫຼື ພິມ).
+        if (! $this->fLocationId && trim($this->fLocationLabel) === '') {
+            $this->addError('fLocationLabel', 'ຕ້ອງ ເລືອກ ຫຼື ພິມ ສະຖານທີ່.');
+
+            return;
+        }
+
+        $label = trim($this->fLocationLabel) !== ''
+            ? trim($this->fLocationLabel)
+            : (string) optional(Location::find($this->fLocationId))->name;
+
+        // ຝັງ ຮູບ ຕໍ່ ຂໍ້.
+        $items = [];
+        foreach ($this->checklist as $i => $row) {
+            $path = null;
+            if (isset($this->photos[$i]) && $this->photos[$i]) {
+                $path = $this->photos[$i]->store('area-inspection', 'public');
+            }
+            $items[] = [
+                'label' => $row['label'] ?? '',
+                'requirement' => $row['requirement'] ?? '',
+                'status' => in_array($row['status'] ?? 'C', ['C', 'NC', 'NA'], true) ? $row['status'] : 'C',
+                'observation' => $row['observation'] ?? '',
+                'photo' => $path,
+            ];
+        }
+
+        $hasNc = collect($items)->contains(fn ($x) => $x['status'] === 'NC');
+
+        AreaInspection::create([
+            'inspection_number' => $this->nextNumber(),
+            'template_id' => $this->fTemplateId,
+            'location_id' => $this->fLocationId,
+            'location_label' => $label,
+            'inspected_on' => $this->fDate,
+            'inspected_time' => $this->fTime ?: null,
+            'frequency' => $this->fFrequency,
+            'inspectors' => array_values(array_filter(array_map('trim', $this->fInspectors))),
+            'checklist' => $items,
+            'result' => $hasNc ? 'has_nc' : 'compliant',
+            'next_due_date' => $this->computeNextDue($this->fDate, $this->fFrequency),
+            'notes' => $this->fNotes ?: null,
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
+        ]);
+
+        $this->showForm = false;
+        session()->flash('ok', '✓ ບັນທຶກ ໃບ ກວດ ສະຖານທີ່ ແລ້ວ');
+        $this->reset(['checklist', 'photos']);
+    }
+
+    public function acknowledge(int $id): void
+    {
+        abort_unless($this->canAcknowledge(), 403);
+        $r = AreaInspection::findOrFail($id);
+        $u = auth()->user();
+        $r->update([
+            'acknowledged_by' => $u->id,
+            'acknowledged_by_name' => $u->display_name ?? $u->email,
+            'acknowledged_at' => now(),
+        ]);
+        session()->flash('ok', '✓ ຮັບຊາບ ໃບ ກວດ ແລ້ວ');
+    }
+
+    public function unacknowledge(int $id): void
+    {
+        abort_unless($this->canAcknowledge(), 403);
+        AreaInspection::whereKey($id)->update(['acknowledged_by' => null, 'acknowledged_by_name' => null, 'acknowledged_at' => null]);
+    }
+
+    protected function nextNumber(): string
+    {
+        $year = now()->year;
+        $prefix = "AI{$year}-";
+        $max = AreaInspection::withTrashed()->where('inspection_number', 'like', $prefix.'%')->max('inspection_number');
+        $seq = $max ? ((int) substr($max, strlen($prefix))) + 1 : 1;
+
+        return $prefix.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+    }
+
+    protected function computeNextDue(string $date, string $freq): ?string
+    {
+        $d = Carbon::parse($date);
+
+        return match ($freq) {
+            'daily' => $d->addDay()->toDateString(),
+            'weekly' => $d->addWeek()->toDateString(),
+            'monthly' => $d->addMonth()->toDateString(),
+            'quarterly' => $d->addMonths(3)->toDateString(),
+            'annual' => $d->addYear()->toDateString(),
+            default => null,
+        };
+    }
+
+    public function render(): View
+    {
+        $canDel = $this->showDeleted && $this->canManageDeleted();
+        $q = AreaInspection::query()->with(['template', 'location', 'acknowledgedBy']);
+        if ($canDel) {
+            $q->onlyTrashed()->with('deletedBy');
+        }
+
+        return view('livewire.area-inspection.index', [
+            'rows' => $q->orderByDesc('id')->paginate(15),
+            'templates' => AreaInspectionTemplate::where('is_active', true)->orderBy('name')->get(['id', 'name', 'frequency']),
+            'locations' => Location::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'canAck' => $this->canAcknowledge(),
+            'freqLabels' => AreaInspectionTemplate::FREQ_LABELS,
+        ]);
+    }
+}
