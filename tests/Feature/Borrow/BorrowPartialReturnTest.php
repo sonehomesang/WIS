@@ -157,7 +157,11 @@ test('the receive modal records an event with photos linked to that event', func
         ->and($r->returnEvents)->toHaveCount(1)
         ->and($r->returnEvents->first()->photos)->toHaveCount(1);
     $eventId = $r->returnEvents->first()->id;
-    expect($r->returnEvents->first()->photos->first()->return_event_id)->toBe($eventId);
+    $photo = $r->returnEvents->first()->photos->first();
+    expect($photo->return_event_id)->toBe($eventId)
+        ->and($photo->path)->toContain('bw_')     // ຜ່ານ stampAndStore (ຝັງ ວັນ+ເວລາ)
+        ->and($photo->path)->toEndWith('.jpg');
+    Storage::disk('public')->assertExists($photo->path);
 });
 
 test('receiveReturn requires a photo for each item received in the event', function () {

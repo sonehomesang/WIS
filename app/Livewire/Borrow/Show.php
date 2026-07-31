@@ -395,12 +395,51 @@ class Show extends Component
 
     protected function storeItemPhotos($item, array $files, string $kind, ?int $returnEventId = null): void
     {
+        $dir = "borrow/{$this->record->id}/{$item->id}";
         foreach (array_values($files) as $i => $file) {
-            $path = $file->store("borrow/{$this->record->id}/{$item->id}", 'public');
+            $path = $this->stampAndStore($file, $dir);
             $item->photos()->create([
                 'kind' => $kind, 'path' => $path, 'sort_order' => $i, 'return_event_id' => $returnEventId,
             ]);
         }
+    }
+
+    /** ຝັງ ວັນ+ເວລາ (Asia/Vientiane) ໃສ່ ຮູບ ກ່ອນ ເກັບ — ຫຼັກຖານ ຕອນ ຮັບເຄື່ອງ/ຮັບຄືນ. */
+    protected function stampAndStore($photo, string $dir): string
+    {
+        $stamp = now()->timezone('Asia/Vientiane')->format('Y-m-d H:i');
+        try {
+            $img = @imagecreatefromstring(file_get_contents($photo->getRealPath()));
+            if ($img !== false) {
+                $w = imagesx($img);
+                $h = imagesy($img);
+                $tw = imagefontwidth(5) * strlen($stamp);
+                $th = imagefontheight(5);
+                $tmp = imagecreatetruecolor($tw, $th);
+                imagefill($tmp, 0, 0, imagecolorallocate($tmp, 0, 0, 0));
+                imagestring($tmp, 5, 0, 0, $stamp, imagecolorallocate($tmp, 255, 255, 255));
+                $scale = max(2, (int) floor($w / 500));
+                $dw = $tw * $scale;
+                $dh = $th * $scale;
+                $pad = max(4, (int) round($dh * 0.35));
+                $bar = imagecolorallocatealpha($img, 0, 0, 0, 55);
+                imagefilledrectangle($img, 0, $h - $dh - 2 * $pad, $dw + 2 * $pad, $h, $bar);
+                imagecopyresized($img, $tmp, $pad, $h - $dh - $pad, 0, 0, $dw, $dh, $tw, $th);
+                imagedestroy($tmp);
+                ob_start();
+                imagejpeg($img, null, 85);
+                $bytes = ob_get_clean();
+                imagedestroy($img);
+                $path = rtrim($dir, '/').'/'.uniqid('bw_').'.jpg';
+                Storage::disk('public')->put($path, $bytes);
+
+                return $path;
+            }
+        } catch (\Throwable $ex) {
+            // fall through to plain store
+        }
+
+        return $photo->store($dir, 'public');
     }
 
     // ── admin edit (super_admin / borrow.edit) ──
