@@ -32,7 +32,7 @@
                 {{-- Scope --}}
                 <div class="bg-white border border-gray-100 rounded-lg p-4">
                     <div class="text-sm font-medium text-gray-700 mb-2">Scope rules — {{ $selectedRoleName }}</div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">transactionScope</label>
                             <select wire:model="scope.transactionScope" @disabled(! $canEdit) class="w-full rounded-md border-gray-300 text-sm disabled:bg-gray-50">
@@ -55,6 +55,14 @@
                             <select wire:model="scope.catalogScope" @disabled(! $canEdit) class="w-full rounded-md border-gray-300 text-sm disabled:bg-gray-50">
                                 <option value="all">all</option>
                                 <option value="own_supplier">own_supplier</option>
+                                <option value="none">none</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">equipmentScope</label>
+                            <select wire:model="scope.equipmentScope" @disabled(! $canEdit) class="w-full rounded-md border-gray-300 text-sm disabled:bg-gray-50">
+                                <option value="all">all</option>
+                                <option value="department">department</option>
                                 <option value="none">none</option>
                             </select>
                         </div>

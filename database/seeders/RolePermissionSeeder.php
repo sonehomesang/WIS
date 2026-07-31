@@ -155,7 +155,8 @@ class RolePermissionSeeder extends Seeder
             'admin' => ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
             'warehouse_staff' => ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
             'approver' => ['transactionScope' => 'assigned', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
-            'line_manager' => ['transactionScope' => 'assigned', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
+            // line_manager ເຫັນ/ອະນຸມັດ transaction ຂອງ ໝົດ ພະແນກ ຕົນ (ຕ່າງ ຈາກ approver ທີ່ ເຫັນ ສະເພາະ ໃບ ທີ່ ມອບ ໃຫ້).
+            'line_manager' => ['transactionScope' => 'department', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
             'requester' => ['transactionScope' => 'own', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'],
             'supplier' => ['transactionScope' => 'own_orders', 'inventoryScope' => 'none', 'catalogScope' => 'own_supplier', 'equipmentScope' => 'none'],
             // department_admin — ເຫັນ/ຈັດການ ສະເພາະ ເຄື່ອງ ຂອງ ພະແນກ ຕົນ.

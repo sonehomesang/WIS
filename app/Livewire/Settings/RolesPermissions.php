@@ -33,7 +33,7 @@ class RolesPermissions extends Component
 
     public array $grants = [];   // [menu][action] => bool
 
-    public array $scope = ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all'];
+    public array $scope = ['transactionScope' => 'all', 'inventoryScope' => 'all', 'catalogScope' => 'all', 'equipmentScope' => 'all'];
 
     public function mount(): void
     {
@@ -69,6 +69,7 @@ class RolesPermissions extends Component
             'transactionScope' => $sr['transactionScope'] ?? 'all',
             'inventoryScope' => $sr['inventoryScope'] ?? 'all',
             'catalogScope' => $sr['catalogScope'] ?? 'all',
+            'equipmentScope' => $sr['equipmentScope'] ?? 'all',
         ];
     }
 
@@ -90,7 +91,7 @@ class RolesPermissions extends Component
             }
         }
         $role->syncPermissions($perms);
-        // merge → ຮັກສາ key ອື່ນ (ເຊັ່ນ equipmentScope) ທີ່ editor ບໍ່ ໄດ້ ຄຸມ
+        // merge → ຮັກສາ key scope ອື່ນ (ຖ້າ ມີ) ທີ່ ຍັງ ບໍ່ ໄດ້ surface ໃນ editor
         $role->scope_rules = array_merge($role->scope_rules ?? [], $this->scope);
         $role->save();
 

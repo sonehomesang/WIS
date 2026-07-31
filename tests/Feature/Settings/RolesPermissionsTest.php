@@ -82,3 +82,21 @@ test('saving a role via the editor keeps its equipment + disposal permissions', 
     expect($role->hasPermissionTo('equipment.view'))->toBeTrue()   // must survive the save
         ->and($role->hasPermissionTo('disposal.view'))->toBeTrue();
 });
+
+test('line_manager is scoped to its whole department; approver only to assigned', function () {
+    expect(Role::where('name', 'line_manager')->first()->scope_rules['transactionScope'])->toBe('department')
+        ->and(Role::where('name', 'approver')->first()->scope_rules['transactionScope'])->toBe('assigned');
+});
+
+test('the editor can set and persist a role equipmentScope', function () {
+    $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+    $role = Role::where('name', 'approver')->firstOrFail();
+
+    Livewire::test(RolesPermissions::class)
+        ->call('selectRole', $role->id)
+        ->set('scope.equipmentScope', 'department')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($role->fresh()->scope_rules['equipmentScope'])->toBe('department');
+});
