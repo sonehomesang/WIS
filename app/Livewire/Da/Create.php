@@ -94,11 +94,6 @@ class Create extends Component
             'photoComparison' => ['nullable', 'image', 'max:5120'],
         ], [], ['po_number' => 'PO number', 'discrepancy_types' => 'ປະເພດຄວາມຜິດ']);
 
-        if ($submit && empty($this->discrepancy_types)) {
-            $this->addError('discrepancy_types', 'ຕ້ອງເລືອກ ປະເພດຄວາມຜິດ ຢ່າງໜ້ອຍ 1.');
-            throw ValidationException::withMessages(['discrepancy_types' => 'required']);
-        }
-
         $record = app(DiscrepancyService::class)->createDraft([
             'date' => $this->date,
             'po_number' => $this->po_number,

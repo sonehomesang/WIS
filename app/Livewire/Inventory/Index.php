@@ -115,12 +115,14 @@ class Index extends Component
 
     public function newItem(): void
     {
+        abort_unless(auth()->user()->can('inventory.create'), 403);
         $this->resetForm();
         $this->showModal = true;
     }
 
     public function editItem(int $id): void
     {
+        abort_unless(auth()->user()->can('inventory.edit'), 403);
         $m = InventoryItem::findOrFail($id);
         $this->editingId = $m->id;
         $this->name = $m->name;

@@ -52,12 +52,15 @@ class NotificationLog extends Component
         abort_unless(auth()->user()->can('settings.view'), 403);
         $rows = $this->baseQuery()->limit(5000)->get();
 
-        return response()->streamDownload(function () use ($rows) {
+        // ກັນ CSV formula-injection: cell ຂຶ້ນຕົ້ນ = + - @ tab cr → ນຳ ໜ້າ ດ້ວຍ ' (ຄື Audit export).
+        $safe = fn ($v) => is_string($v) && $v !== '' && in_array($v[0], ['=', '+', '-', '@', "\t", "\r"], true) ? "'".$v : $v;
+
+        return response()->streamDownload(function () use ($rows, $safe) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel
             fputcsv($out, ['ID', 'Recipient', 'Type', 'Title', 'Message', 'Read at', 'Created at']);
             foreach ($rows as $r) {
-                fputcsv($out, [$r->id, $r->recipient, $r->type, $r->title, $r->message, $r->read_at, $r->created_at]);
+                fputcsv($out, array_map($safe, [$r->id, $r->recipient, $r->type, $r->title, $r->message, (string) $r->read_at, (string) $r->created_at]));
             }
             fclose($out);
         }, 'notifications-'.now()->format('Ymd-Hi').'.csv', ['Content-Type' => 'text/csv']);

@@ -176,7 +176,7 @@ class Create extends Component
         if ($submit) {
             foreach ($this->items as $i => $it) {
                 if (empty($this->photos[$i])) {
-                    $this->addError('photos', "ຕ້ອງມີຢ່າງໜ້ອຍ 1 ຮູບ ສຳລັບລາຍການທີ {$i}+1 ກ່ອນສົ່ງ.");
+                    $this->addError('photos', 'ຕ້ອງມີຢ່າງໜ້ອຍ 1 ຮູບ ສຳລັບລາຍການທີ '.($i + 1).' ກ່ອນສົ່ງ.');
                     throw ValidationException::withMessages(['photos' => 'photo required']);
                 }
             }

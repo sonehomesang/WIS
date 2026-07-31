@@ -153,6 +153,7 @@ class Index extends Component
             'contract_start_date' => ['nullable', 'date'],
             'contract_end_date' => ['nullable', 'date'],
             'remark' => ['nullable', 'string', 'max:500'],
+            'newPhotos' => ['array', 'max:'.self::MAX_PHOTOS],   // cap ຈຳນວນ ຮູບ ຕໍ່ ຄັ້ງ (const ທີ່ ເຄີຍ ບໍ່ ໄດ້ ໃຊ້)
             'newPhotos.*' => ['image', 'max:5120'],
         ], [], ['supplier_id' => 'Supplier', 'category' => 'ປະເພດ', 'description' => 'ລາຍລະອຽດ']);
 
