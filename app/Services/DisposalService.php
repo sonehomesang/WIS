@@ -16,9 +16,9 @@ use Illuminate\Validation\ValidationException;
  *              → approved → disposed | rejected(→draft) | cancelled
  *   submit  (preparer)  draft → committee_review   (stamp preparer sign-off)
  *   cancel  (preparer)  any non-final → cancelled
- *
- * TODO Phase 3: sign (advance committee→technical→manager→executive→approved) + reject(→draft).
- * TODO Phase 6: confirm-then-update source registers (Equipment retired / Inventory off / Deposit disposed) → disposed.
+ *   sign    advance committee→technical→manager→executive→approved (stamp each stage sign-off)
+ *   reject  any review stage → draft (with reason)
+ *   dispose approved → disposed (confirm-then-update source registers: Equipment/Inventory/Deposit)
  */
 class DisposalService
 {
@@ -108,6 +108,11 @@ class DisposalService
     {
         $this->assert($r->status === 'draft', 'submit ໄດ້ ສະເພາະ draft.');
         $this->assert($r->items()->exists(), 'ຕ້ອງ ມີ ຢ່າງໜ້ອຍ 1 ລາຍການ.');
+
+        // ເລີ່ມ ຮອບ ເຊັນ ໃໝ່ ທຸກ ຄັ້ງ ທີ່ ສົ່ງ — ລ້າງ sign-off ຮອບ ກ່ອນ (ກັນ ໃບ ທີ່ ຖືກ reject
+        // ແລ້ວ resubmit ຄ້າງ sign-off ເກົ່າ → chain ຄ້າງ + preparer ຊ້ຳ). audit ຢູ່ disposal_history.
+        $r->signoffs()->delete();
+
         $r->status = 'committee_review';
         $r->prepared_at = now();
         $r->reject_reason = null;

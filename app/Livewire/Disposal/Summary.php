@@ -28,15 +28,20 @@ class Summary extends Component
         $this->to = now()->toDateString();
     }
 
-    /** ຄັດ ພະແນກ ຕາມ scope: dept-admin ຖືກ ບັງຄັບ ໃຫ້ ພະແນກ ຕົນ (ຫ້າມ ເບິ່ງ ພະແນກ ອື່ນ). */
+    /**
+     * ຄັດ ພະແນກ ຕາມ scope (ໃຫ້ ຕົງ ກັບ Index::scopeFor / Show::canAccess):
+     *  - broad role (super/admin/warehouse/approver/line_manager) → ເຫັນ ໝົດ ຫຼື ພະແນກ ທີ່ ເລືອກ
+     *  - ອື່ນ ໆ (department_admin ຫຼື ຜູ້ ໄດ້ ສິດ disposal.view ໂດຍກົງ) → ບັງຄັບ ພະແນກ ຕົນ ເທົ່ານັ້ນ;
+     *    ຖ້າ ບໍ່ ມີ ພະແນກ → -1 (ບໍ່ ກົງ record ໃດ = ບໍ່ ເຫັນ, ກັນ ຮົ່ວ ຂ້າມ ພະແນກ).
+     */
     public static function scopedDeptId($requested): ?int
     {
         $u = auth()->user();
-        if ($u && $u->hasRole('department_admin') && ! $u->is_super_admin && ! $u->hasAnyRole(['admin', 'warehouse_staff', 'approver', 'line_manager'])) {
-            return $u->department_id;
+        if ($u && ($u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff', 'approver', 'line_manager']))) {
+            return $requested ? (int) $requested : null;
         }
 
-        return $requested ? (int) $requested : null;
+        return $u?->department_id ?? -1;
     }
 
     /** @return array<int, string> */

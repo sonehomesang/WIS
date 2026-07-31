@@ -172,3 +172,48 @@ test('the summary is department-clamped for a department_admin', function () {
         ->assertSee('ItemAA')
         ->assertDontSee('ItemBB');
 });
+
+test('the summary does not leak other departments to a plain disposal.view user (audit M2)', function () {
+    $unit = App\Models\Unit::create(['slug' => 'u2', 'name' => 'U2', 'is_active' => true]);
+    $deptA = App\Models\Department::create(['unit_id' => $unit->id, 'slug' => 'a2', 'name' => 'Dept A2', 'is_active' => true]);
+    $deptB = App\Models\Department::create(['unit_id' => $unit->id, 'slug' => 'b2', 'name' => 'Dept B2', 'is_active' => true]);
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $svc = app(DisposalService::class);
+    $svc->createDraft(['department_id' => $deptA->id, 'items' => [['source_type' => 'new', 'item_name' => 'ItemAA', 'qty' => 1]]], $admin)->forceFill(['status' => 'disposed'])->save();
+    $svc->createDraft(['department_id' => $deptB->id, 'items' => [['source_type' => 'new', 'item_name' => 'ItemBB', 'qty' => 1]]], $admin)->forceFill(['status' => 'disposed'])->save();
+
+    // ໄດ້ ສິດ disposal.view ໂດຍກົງ, ບໍ່ ມີ broad role, ຢູ່ Dept A2
+    $viewer = User::factory()->create(['department_id' => $deptA->id]);
+    $viewer->givePermissionTo('disposal.view');
+    actingAs($viewer);
+
+    Livewire::test(App\Livewire\Disposal\Summary::class)
+        ->assertSee('ItemAA')
+        ->assertDontSee('ItemBB');   // ຫ້າມ ເຫັນ ພະແນກ ອື່ນ
+});
+
+test('reject at a later stage then resubmit gives a clean sign-off chain (audit M3)', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $svc = app(DisposalService::class);
+    $r = $svc->createDraft(['items' => [['source_type' => 'new', 'item_name' => 'X', 'qty' => 1]]], $admin);
+
+    $svc->transition($r, 'submit', $admin);
+    $svc->transition($r, 'sign', $admin, ['committee' => [['name' => 'A', 'title' => '']]]);   // → technical_review
+    expect($r->refresh()->status)->toBe('technical_review');
+
+    $svc->transition($r, 'reject', $admin, ['reason' => 'ຂໍ້ມູນ ຜິດ']);
+    expect($r->refresh()->status)->toBe('draft');
+
+    // resubmit → chain ໃໝ່ ສະອາດ (committee sign-off ເກົ່າ ຖືກ ລ້າງ, preparer ບໍ່ ຊ້ຳ)
+    $svc->transition($r, 'submit', $admin);
+    expect($r->refresh()->status)->toBe('committee_review');
+    expect($r->signoffs()->where('role_key', 'committee')->count())->toBe(0);
+    expect($r->signoffs()->where('role_key', 'preparer')->count())->toBe(1);
+
+    // ເດີນ ໜ້າ ຕໍ່ ຈົນ approved ໄດ້ ປົກກະຕິ
+    $svc->transition($r, 'sign', $admin, ['committee' => [['name' => 'A', 'title' => '']]]);
+    $svc->transition($r, 'sign', $admin);   // technical → manager
+    $svc->transition($r, 'sign', $admin);   // manager → executive
+    $svc->transition($r, 'sign', $admin);   // executive → approved
+    expect($r->refresh()->status)->toBe('approved');
+});
