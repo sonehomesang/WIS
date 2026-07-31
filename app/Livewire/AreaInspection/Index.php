@@ -69,6 +69,9 @@ class Index extends Component
     {
         abort_unless(auth()->user()->can('area_inspection.view'), 403);
         $this->fDate = now()->toDateString();
+        if (request('tab') === 'templates') {
+            $this->tab = 'templates';
+        }
     }
 
     protected function deleteModelClass(): string
