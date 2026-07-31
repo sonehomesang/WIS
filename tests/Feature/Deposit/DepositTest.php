@@ -1,8 +1,12 @@
 <?php
 
+use App\Livewire\Deposit\Create;
 use App\Livewire\Deposit\Index;
 use App\Livewire\Deposit\Show;
+use App\Models\DepositItem;
 use App\Models\DepositRecord;
+use App\Models\Equipment;
+use App\Models\InventoryItem;
 use App\Models\User;
 use App\Services\DepositService;
 use Database\Seeders\RolePermissionSeeder;
@@ -159,7 +163,7 @@ test('a deposit item stores asset_code (ທະບຽນເຄື່ອງ) and f
     $admin = User::factory()->create(['is_super_admin' => true]);
     $this->actingAs($admin);
 
-    Livewire::test(App\Livewire\Deposit\Create::class)
+    Livewire::test(Create::class)
         ->set('item_category', 'Tools')
         ->set('origin_source', 'Personal')
         ->set('deposit_reason', 'no space')
@@ -170,7 +174,7 @@ test('a deposit item stores asset_code (ທະບຽນເຄື່ອງ) and f
         ->call('save')
         ->assertHasNoErrors();
 
-    $item = App\Models\DepositItem::where('item_name', 'Fluke 175')->first();
+    $item = DepositItem::where('item_name', 'Fluke 175')->first();
     expect($item)->not->toBeNull();
     expect($item->asset_code)->toBe('EL-T004-1');
     expect($item->fixed_asset_no)->toBe('FA-9001');
@@ -178,12 +182,12 @@ test('a deposit item stores asset_code (ທະບຽນເຄື່ອງ) and f
 
 test('the asset lookup can pull from the Equipment & Tools register', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
-    $eq = App\Models\Equipment::create([
+    $eq = Equipment::create([
         'asset_code' => 'EL-T004-1', 'fixed_asset_no' => 'FA-9001', 'name' => 'Fluke 175', 'quantity' => 1,
     ]);
     $this->actingAs($admin);
 
-    Livewire::test(App\Livewire\Deposit\Create::class)
+    Livewire::test(Create::class)
         ->set('items.0.asset_source', 'equipment')        // ເລືອກ ແຫຼ່ງ = Equipment
         ->set('items.0.asset_code', 'EL-T004')            // ພິມ → ຄົ້ນ
         ->assertSet('assetMatches.0.0.id', $eq->id)
@@ -197,10 +201,10 @@ test('the asset lookup can pull from the Equipment & Tools register', function (
 
 test('the asset lookup can pull from the Inventory register (material no.)', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
-    $inv = App\Models\InventoryItem::create(['slug' => 'EL-0001', 'name' => 'Cable 2.5mm', 'quantity' => 10]);
+    $inv = InventoryItem::create(['slug' => 'EL-0001', 'name' => 'Cable 2.5mm', 'quantity' => 10]);
     $this->actingAs($admin);
 
-    Livewire::test(App\Livewire\Deposit\Create::class)
+    Livewire::test(Create::class)
         ->set('items.0.asset_source', 'inventory')        // ແຫຼ່ງ = Inventory (default)
         ->set('items.0.asset_code', 'EL-0001')
         ->assertSet('assetMatches.0.0.id', $inv->id)
@@ -213,10 +217,10 @@ test('the asset lookup can pull from the Inventory register (material no.)', fun
 
 test('a short asset-code term returns no lookup matches', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
-    App\Models\Equipment::create(['asset_code' => 'EL-T004-1', 'name' => 'Fluke', 'quantity' => 1]);
+    Equipment::create(['asset_code' => 'EL-T004-1', 'name' => 'Fluke', 'quantity' => 1]);
     $this->actingAs($admin);
 
-    Livewire::test(App\Livewire\Deposit\Create::class)
+    Livewire::test(Create::class)
         ->set('items.0.asset_source', 'equipment')
         ->set('items.0.asset_code', 'E')                  // < 2 ຕົວ → ບໍ່ ຄົ້ນ
         ->assertSet('assetMatches.0', []);

@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Translation;
+use App\Support\TranslationExtractor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -113,7 +114,7 @@ class Translations extends Component
     public function syncTerms(): void
     {
         abort_unless(auth()->user()->can('settings.edit'), 403);
-        $r = \App\Support\TranslationExtractor::run();
+        $r = TranslationExtractor::run();
 
         // ກັບ ໄປ ໜ້າ ທຳອິດ ແລະ ລ້າງ ຟິລເຕີ ເພື່ອ ໃຫ້ ເຫັນ ຄຳ ໃໝ່.
         $this->reset(['search', 'groupFilter', 'changedOnly']);

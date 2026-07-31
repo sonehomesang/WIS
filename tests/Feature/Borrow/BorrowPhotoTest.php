@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Borrow\Show;
+use App\Models\BorrowItemPhoto;
 use App\Models\InventoryItem;
 use App\Models\User;
 use App\Services\BorrowService;
@@ -101,7 +102,7 @@ test('removePhoto cannot delete a photo of another borrow record (audit M1 / IDO
     // ຢູ່ ໜ້າ record A ແລ້ວ ພະຍາຍາມ ລຶບ ຮູບ ຂອງ record B ຜ່ານ id → ຕ້ອງ ບໍ່ ມີ ຜົນ
     Livewire::test(Show::class, ['record' => $a])->call('removePhoto', $victim->id);
 
-    expect(App\Models\BorrowItemPhoto::find($victim->id))->not->toBeNull();
+    expect(BorrowItemPhoto::find($victim->id))->not->toBeNull();
 });
 
 test('return qty is clamped to the borrowed qty — no stock over-increment (audit)', function () {

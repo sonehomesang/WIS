@@ -5,6 +5,7 @@ namespace App\Livewire\Expo;
 use App\Models\ExpoCompanyFile;
 use App\Models\ExpoContact;
 use App\Models\ExpoEvent;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -290,7 +291,7 @@ class Show extends Component
             return;
         }
         if (! $this->record->attendees()->where('user_id', $uid)->exists()) {
-            $u = \App\Models\User::find($uid);
+            $u = User::find($uid);
             $this->record->attendees()->create([
                 'user_id' => $uid,
                 'user_name' => $u?->display_name ?? $u?->email ?? 'user '.$uid,
@@ -376,7 +377,7 @@ class Show extends Component
         return view('livewire.expo.show', [
             'record' => $this->record,
             'editable' => $this->canEdit(),
-            'availableUsers' => \App\Models\User::whereNotIn('id', $this->record->attendees->pluck('user_id'))
+            'availableUsers' => User::whereNotIn('id', $this->record->attendees->pluck('user_id'))
                 ->orderBy('display_name')->get(['id', 'display_name', 'email']),
         ]);
     }

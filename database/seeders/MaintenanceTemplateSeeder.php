@@ -21,6 +21,7 @@ class MaintenanceTemplateSeeder extends Seeder
 
     /** ປະເພດ ເຄື່ອງ ທີ່ ແມ່ແບບ ນີ້ ຂຶ້ນ (master scope). */
     public const CATEGORY = 'Vehicles';
+
     /**
      * ລາຍການ ເຊັກລິສ ມາດຕະຖານ (label · remark · cycles · group).
      * static ເພື່ອ ໃຫ້ migration backfill ໃຊ້ ນິຍາມ ດຽວກັນ (ບໍ່ ຊ້ຳ).

@@ -4,6 +4,7 @@ namespace App\Livewire\Equipment;
 
 use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\Equipment;
+use App\Models\EquipmentCategory;
 use App\Models\MaintenanceTemplate;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\View\View;
@@ -235,7 +236,7 @@ class MaintenanceTemplates extends Component
             ? MaintenanceTemplate::with('equipment')->find($this->viewingId)
             : null;
 
-        $categories = \App\Models\EquipmentCategory::where('is_active', true)
+        $categories = EquipmentCategory::where('is_active', true)
             ->orderBy('sort_order')->orderBy('name')->pluck('name');
 
         return view('livewire.equipment.maintenance-templates', [

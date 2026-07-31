@@ -4,6 +4,7 @@ namespace App\Livewire\Disposal;
 
 use App\Models\DisposalRecord;
 use App\Services\DisposalService;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -173,7 +174,7 @@ class Show extends Component
             app(DisposalService::class)->transition($this->record, $action, auth()->user(), $opts);
             $this->refreshRecord();
             session()->flash('ok', '✓ ດຳເນີນການ ສຳເລັດ');
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->addError('action', $e->validator->errors()->first());
         }
     }

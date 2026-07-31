@@ -1,8 +1,8 @@
 <?php
 
 use App\Livewire\Settings\Audit;
-use App\Livewire\Settings\Notifications;
 use App\Livewire\Settings\NotificationLog;
+use App\Livewire\Settings\Notifications;
 use App\Livewire\Settings\Reports;
 use App\Livewire\Settings\System;
 use App\Models\Notification;

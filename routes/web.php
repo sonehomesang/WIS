@@ -3,11 +3,14 @@
 use App\Livewire\Borrow\Create;
 use App\Livewire\Borrow\Show;
 use App\Livewire\Dashboard;
+use App\Livewire\Disposal\Summary;
 use App\Livewire\Equipment\Categories;
 use App\Livewire\Equipment\InspectionTemplates;
+use App\Livewire\Equipment\MaintenanceTemplates;
 use App\Livewire\Inventory\Index;
 use App\Livewire\Settings\Audit;
 use App\Livewire\Settings\Backup;
+use App\Livewire\Settings\Email;
 use App\Livewire\Settings\Facilities;
 use App\Livewire\Settings\NotificationLog;
 use App\Livewire\Settings\Notifications;
@@ -21,12 +24,17 @@ use App\Livewire\Settings\Translations;
 use App\Livewire\Settings\Uom;
 use App\Livewire\Settings\Users;
 use App\Models\BorrowRecord;
+use App\Models\Department;
 use App\Models\DepositRecord;
 use App\Models\DiscrepancyAdvice;
+use App\Models\DisposalRecord;
+use App\Models\EquipmentInspection;
+use App\Models\EquipmentMaintenance;
 use App\Models\ExpoEvent;
 use App\Models\MaterialRequest;
 use App\Models\OutwardsGoodsAdvice;
 use App\Models\Setting;
+use App\Support\PdfExport;
 use Illuminate\Support\Facades\Route;
 
 // ໜ້າ ທຳອິດ: login ແລ້ວ → dashboard, ຍັງ → ໜ້າ login (ບໍ່ ມີ ໜ້າ welcome ເກົ່າ ແລ້ວ).
@@ -83,7 +91,7 @@ Route::get('borrow/{record}/pdf', function (BorrowRecord $record) {
     );
     $record->load(['items.inventoryItem.primaryPhoto', 'items.photos', 'unit', 'department']);
 
-    return \App\Support\PdfExport::download('borrow.pdf', ['record' => $record], "borrow-{$record->request_number}.pdf");
+    return PdfExport::download('borrow.pdf', ['record' => $record], "borrow-{$record->request_number}.pdf");
 })->middleware(['auth', 'verified'])->name('borrow.pdf');
 
 Route::get('borrow/{record}', Show::class)
@@ -110,7 +118,7 @@ Route::get('deposit/{record}/pdf', function (DepositRecord $record) {
     );
     $record->load(['items.photos', 'unit', 'department', 'history']);
 
-    return \App\Support\PdfExport::download('deposit.pdf', ['record' => $record], "deposit-{$record->request_number}.pdf");
+    return PdfExport::download('deposit.pdf', ['record' => $record], "deposit-{$record->request_number}.pdf");
 })->middleware(['auth', 'verified'])->name('deposit.pdf');
 
 Route::get('deposit/{record}', App\Livewire\Deposit\Show::class)
@@ -126,7 +134,7 @@ Route::get('disposal/create', App\Livewire\Disposal\Create::class)
     ->middleware(['auth', 'verified'])
     ->name('disposal.create');
 
-Route::get('disposal/summary', App\Livewire\Disposal\Summary::class)
+Route::get('disposal/summary', Summary::class)
     ->middleware(['auth', 'verified'])
     ->name('disposal.summary');
 
@@ -134,25 +142,25 @@ Route::get('disposal/summary/pdf', function () {
     abort_unless(auth()->user()->can('disposal.view'), 403);
     $from = request('from') ?: null;
     $to = request('to') ?: null;
-    $deptId = App\Livewire\Disposal\Summary::scopedDeptId(request('department_id')); // clamp dept-admin ໃສ່ ພະແນກ ຕົນ
+    $deptId = Summary::scopedDeptId(request('department_id')); // clamp dept-admin ໃສ່ ພະແນກ ຕົນ
     $status = request('status', 'disposed');
-    $items = App\Livewire\Disposal\Summary::itemsQuery($from, $to, $deptId, $status)->get();
+    $items = Summary::itemsQuery($from, $to, $deptId, $status)->get();
 
-    return \App\Support\PdfExport::download('disposal.summary-pdf', [
+    return PdfExport::download('disposal.summary-pdf', [
         'items' => $items,
         'from' => $from, 'to' => $to, 'status' => $status,
-        'deptName' => $deptId ? optional(App\Models\Department::find($deptId))->name : null,
+        'deptName' => $deptId ? optional(Department::find($deptId))->name : null,
         'totalQty' => $items->sum('qty'),
         'totalValue' => $items->sum(fn ($it) => (float) $it->estimated_value),
     ], 'disposal-summary.pdf');
 })->middleware(['auth', 'verified'])->name('disposal.summary.pdf');
 
-Route::get('disposal/{record}/pdf', function (App\Models\DisposalRecord $record) {
+Route::get('disposal/{record}/pdf', function (DisposalRecord $record) {
     $u = auth()->user();
     abort_unless($u->can('disposal.view') && App\Livewire\Disposal\Show::canAccess($record), 403); // ownership scope (IDOR guard)
     $record->load(['items', 'signoffs', 'department', 'preparedBy']);
 
-    return \App\Support\PdfExport::download('disposal.pdf', ['record' => $record], "disposal-{$record->request_number}.pdf");
+    return PdfExport::download('disposal.pdf', ['record' => $record], "disposal-{$record->request_number}.pdf");
 })->middleware(['auth', 'verified'])->name('disposal.pdf');
 
 Route::get('disposal/{record}', App\Livewire\Disposal\Show::class)
@@ -186,7 +194,7 @@ Route::get('request/{record}/pdf', function (MaterialRequest $record) {
     );
     $record->load(['items', 'supplier', 'unit', 'department', 'history']);
 
-    return \App\Support\PdfExport::download('request.pdf', ['record' => $record], "request-{$record->request_number}.pdf");
+    return PdfExport::download('request.pdf', ['record' => $record], "request-{$record->request_number}.pdf");
 })->middleware(['auth', 'verified'])->name('request.pdf');
 
 Route::get('request/{record}', App\Livewire\Request\Show::class)
@@ -212,7 +220,7 @@ Route::get('da/{record}/pdf', function (DiscrepancyAdvice $record) {
     );
     $record->load(['items', 'photos', 'supplier', 'history']);
 
-    return \App\Support\PdfExport::download('da.pdf', ['record' => $record], "da-{$record->da_number}.pdf");
+    return PdfExport::download('da.pdf', ['record' => $record], "da-{$record->da_number}.pdf");
 })->middleware(['auth', 'verified'])->name('da.pdf');
 
 Route::get('da/{record}', App\Livewire\Da\Show::class)
@@ -237,7 +245,7 @@ Route::get('oga/{record}/pdf', function (OutwardsGoodsAdvice $record) {
     }
     $record->load(['items', 'photos', 'supplier', 'history']);
 
-    return \App\Support\PdfExport::download('oga.pdf', ['record' => $record], "oga-{$record->oga_number}.pdf");
+    return PdfExport::download('oga.pdf', ['record' => $record], "oga-{$record->oga_number}.pdf");
 })->middleware(['auth', 'verified'])->name('oga.pdf');
 
 Route::get('oga/{record}', App\Livewire\Oga\Show::class)
@@ -253,7 +261,7 @@ Route::get('equipment/inspection-templates', InspectionTemplates::class)
     ->middleware(['auth', 'verified'])
     ->name('equipment.templates');
 
-Route::get('equipment/maintenance-templates', App\Livewire\Equipment\MaintenanceTemplates::class)
+Route::get('equipment/maintenance-templates', MaintenanceTemplates::class)
     ->middleware(['auth', 'verified'])
     ->name('equipment.maintenance-templates');
 
@@ -261,23 +269,23 @@ Route::get('equipment/categories', Categories::class)
     ->middleware(['auth', 'verified'])
     ->name('equipment.categories');
 
-Route::get('equipment/maintenance/{record}/pdf', function (App\Models\EquipmentMaintenance $record) {
+Route::get('equipment/maintenance/{record}/pdf', function (EquipmentMaintenance $record) {
     $u = auth()->user();
     abort_unless($u->can('equipment.view'), 403);
     // ພະແນກ scope — department_admin ດຶງ ໄດ້ ສະເພາະ ເຄື່ອງ ພະແນກ ຕົນ (ກັນ IDOR).
     $record->load('equipment');
     abort_if($u->equipmentDepartmentScoped() && $record->equipment?->department_id !== $u->department_id, 403);
 
-    return \App\Support\PdfExport::download('equipment.maintenance-pdf', ['record' => $record], "maintenance-{$record->id}.pdf");
+    return PdfExport::download('equipment.maintenance-pdf', ['record' => $record], "maintenance-{$record->id}.pdf");
 })->middleware(['auth', 'verified'])->name('equipment.maintenance.pdf');
 
-Route::get('equipment/inspection/{record}/pdf', function (App\Models\EquipmentInspection $record) {
+Route::get('equipment/inspection/{record}/pdf', function (EquipmentInspection $record) {
     $u = auth()->user();
     abort_unless($u->can('equipment.view'), 403);
     $record->load(['equipment', 'template']);
     abort_if($u->equipmentDepartmentScoped() && $record->equipment?->department_id !== $u->department_id, 403);
 
-    return \App\Support\PdfExport::download('equipment.inspection-pdf', ['record' => $record], "inspection-{$record->id}.pdf");
+    return PdfExport::download('equipment.inspection-pdf', ['record' => $record], "inspection-{$record->id}.pdf");
 })->middleware(['auth', 'verified'])->name('equipment.inspection.pdf');
 
 // ── Expo Info (mini-CRM) — Phase 6.9 ──
@@ -293,7 +301,7 @@ Route::get('expo/{record}/pdf', function (ExpoEvent $record) {
     abort_unless(auth()->user()->can('expo.view'), 403);
     $record->load(['attendees', 'companies.contacts', 'companies.files']);
 
-    return \App\Support\PdfExport::download('expo.pdf', ['record' => $record], "expo-{$record->expo_number}.pdf");
+    return PdfExport::download('expo.pdf', ['record' => $record], "expo-{$record->expo_number}.pdf");
 })->middleware(['auth', 'verified'])->name('expo.pdf');
 
 Route::get('expo/{record}', App\Livewire\Expo\Show::class)
@@ -345,7 +353,7 @@ Route::get('settings/notifications', Notifications::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.notifications');
 
-Route::get('settings/email', App\Livewire\Settings\Email::class)
+Route::get('settings/email', Email::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.email');
 

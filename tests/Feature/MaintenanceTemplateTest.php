@@ -4,6 +4,7 @@ use App\Livewire\Equipment\MaintenanceTemplates;
 use App\Models\Equipment;
 use App\Models\MaintenanceTemplate;
 use App\Models\User;
+use Database\Seeders\MaintenanceTemplateSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Livewire\Livewire;
 
@@ -175,9 +176,9 @@ test('legacy freqs items are read as check actions', function () {
 });
 
 test('the seeder loads the forklift checklist as an unlinked Vehicles-category master', function () {
-    (new Database\Seeders\MaintenanceTemplateSeeder)->run();
+    (new MaintenanceTemplateSeeder)->run();
 
-    $t = MaintenanceTemplate::where('name', \Database\Seeders\MaintenanceTemplateSeeder::NAME)->first();
+    $t = MaintenanceTemplate::where('name', MaintenanceTemplateSeeder::NAME)->first();
     expect($t)->not->toBeNull();
     expect($t->equipment_id)->toBeNull();             // master — ບໍ່ ຜູກ ເຄື່ອງ
     expect($t->category)->toBe('Vehicles');           // ຂຶ້ນ ຕາມ ປະເພດ ລົດ
@@ -191,8 +192,8 @@ test('the seeder loads the forklift checklist as an unlinked Vehicles-category m
     expect($t->hasFuelTypes())->toBeTrue();
 
     // ຣັນ ຊ້ຳ ບໍ່ ຊ້ຳ ຂໍ້ມູນ
-    (new Database\Seeders\MaintenanceTemplateSeeder)->run();
-    expect(MaintenanceTemplate::where('name', \Database\Seeders\MaintenanceTemplateSeeder::NAME)->count())->toBe(1);
+    (new MaintenanceTemplateSeeder)->run();
+    expect(MaintenanceTemplate::where('name', MaintenanceTemplateSeeder::NAME)->count())->toBe(1);
 });
 
 test('a maintenance template is deleted with a required reason and can be restored', function () {

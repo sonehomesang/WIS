@@ -2,8 +2,12 @@
 
 use App\Livewire\Disposal\Create;
 use App\Livewire\Disposal\Index;
+use App\Livewire\Disposal\Show;
+use App\Livewire\Disposal\Summary;
+use App\Models\Department;
 use App\Models\DisposalRecord;
 use App\Models\Equipment;
+use App\Models\Unit;
 use App\Models\User;
 use App\Services\DisposalService;
 use Database\Seeders\RolePermissionSeeder;
@@ -121,7 +125,7 @@ test('the summary lists disposed items with running totals', function () {
     $r->forceFill(['status' => 'disposed'])->save();   // status is guarded (mass-assign blocked)
 
     actingAs($admin);
-    Livewire::test(App\Livewire\Disposal\Summary::class)
+    Livewire::test(Summary::class)
         ->assertViewHas('totalQty', 2)
         ->assertViewHas('totalValue', 150000.0)
         ->assertSee('ໝວກ ນິລະໄພ');
@@ -135,7 +139,7 @@ test('IDOR: a disposal.view user who is not the owner cannot open or PDF another
     $other->givePermissionTo('disposal.view');   // ເຫັນ ໄດ້ ແຕ່ ບໍ່ ແມ່ນ ເຈົ້າ ໃບ + ບໍ່ ມີ role ກວ້າງ
     actingAs($other);
 
-    Livewire::test(App\Livewire\Disposal\Show::class, ['record' => $r])->assertForbidden();
+    Livewire::test(Show::class, ['record' => $r])->assertForbidden();
     $this->get(route('disposal.pdf', $r))->assertForbidden();
 });
 
@@ -149,16 +153,16 @@ test('confirmCancel is blocked for a signer who is neither the preparer nor a di
     $approver->syncRoles(['approver']);   // view+create+activate, NOT edit; not the preparer
     actingAs($approver);
 
-    Livewire::test(App\Livewire\Disposal\Show::class, ['record' => $r])
+    Livewire::test(Show::class, ['record' => $r])
         ->call('confirmCancel')
         ->assertForbidden();
     expect($r->fresh()->status)->toBe('committee_review');
 });
 
 test('the summary is department-clamped for a department_admin', function () {
-    $unit = App\Models\Unit::create(['slug' => 'u', 'name' => 'U', 'is_active' => true]);
-    $deptA = App\Models\Department::create(['unit_id' => $unit->id, 'slug' => 'a', 'name' => 'Dept A', 'is_active' => true]);
-    $deptB = App\Models\Department::create(['unit_id' => $unit->id, 'slug' => 'b', 'name' => 'Dept B', 'is_active' => true]);
+    $unit = Unit::create(['slug' => 'u', 'name' => 'U', 'is_active' => true]);
+    $deptA = Department::create(['unit_id' => $unit->id, 'slug' => 'a', 'name' => 'Dept A', 'is_active' => true]);
+    $deptB = Department::create(['unit_id' => $unit->id, 'slug' => 'b', 'name' => 'Dept B', 'is_active' => true]);
     $admin = User::factory()->create(['is_super_admin' => true]);
     $svc = app(DisposalService::class);
     $svc->createDraft(['department_id' => $deptA->id, 'items' => [['source_type' => 'new', 'item_name' => 'ItemAA', 'qty' => 1]]], $admin)->forceFill(['status' => 'disposed'])->save();
@@ -168,15 +172,15 @@ test('the summary is department-clamped for a department_admin', function () {
     $da->syncRoles(['department_admin']);
     actingAs($da);
 
-    Livewire::test(App\Livewire\Disposal\Summary::class)
+    Livewire::test(Summary::class)
         ->assertSee('ItemAA')
         ->assertDontSee('ItemBB');
 });
 
 test('the summary does not leak other departments to a plain disposal.view user (audit M2)', function () {
-    $unit = App\Models\Unit::create(['slug' => 'u2', 'name' => 'U2', 'is_active' => true]);
-    $deptA = App\Models\Department::create(['unit_id' => $unit->id, 'slug' => 'a2', 'name' => 'Dept A2', 'is_active' => true]);
-    $deptB = App\Models\Department::create(['unit_id' => $unit->id, 'slug' => 'b2', 'name' => 'Dept B2', 'is_active' => true]);
+    $unit = Unit::create(['slug' => 'u2', 'name' => 'U2', 'is_active' => true]);
+    $deptA = Department::create(['unit_id' => $unit->id, 'slug' => 'a2', 'name' => 'Dept A2', 'is_active' => true]);
+    $deptB = Department::create(['unit_id' => $unit->id, 'slug' => 'b2', 'name' => 'Dept B2', 'is_active' => true]);
     $admin = User::factory()->create(['is_super_admin' => true]);
     $svc = app(DisposalService::class);
     $svc->createDraft(['department_id' => $deptA->id, 'items' => [['source_type' => 'new', 'item_name' => 'ItemAA', 'qty' => 1]]], $admin)->forceFill(['status' => 'disposed'])->save();
@@ -187,7 +191,7 @@ test('the summary does not leak other departments to a plain disposal.view user 
     $viewer->givePermissionTo('disposal.view');
     actingAs($viewer);
 
-    Livewire::test(App\Livewire\Disposal\Summary::class)
+    Livewire::test(Summary::class)
         ->assertSee('ItemAA')
         ->assertDontSee('ItemBB');   // ຫ້າມ ເຫັນ ພະແນກ ອື່ນ
 });

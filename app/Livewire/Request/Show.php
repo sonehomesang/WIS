@@ -4,6 +4,7 @@ namespace App\Livewire\Request;
 
 use App\Models\MaterialRequest;
 use App\Services\RequestService;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -216,7 +217,7 @@ class Show extends Component
             'invoiceNumber' => ['required', 'string', 'max:128'],
             'sapReference' => ['required', 'string', 'max:128'],
             // '' = ບໍ່ລະບຸ (ທາງເລືອກ); ຫຼື ໜຶ່ງໃນ key ທີ່ອະນຸຍາດ
-            'sapStatus' => [\Illuminate\Validation\Rule::in(array_merge([''], array_keys(MaterialRequest::sapStatuses())))],
+            'sapStatus' => [Rule::in(array_merge([''], array_keys(MaterialRequest::sapStatuses())))],
         ]);
         if ($this->act('close', [
             'invoice_number' => $this->invoiceNumber,

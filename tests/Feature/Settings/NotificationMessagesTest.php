@@ -48,7 +48,7 @@ test('disabling an in-app template makes notify a no-op', function () {
     Setting::put('notifications', ['enabled' => true]);
     Setting::put('notification_templates', ['request.submit' => ['enabled' => false]]);
 
-    (new NotificationService())->notifyTemplate($user->id, 'info', 'request.submit', ['number' => 'R1', 'requester' => 'A']);
+    (new NotificationService)->notifyTemplate($user->id, 'info', 'request.submit', ['number' => 'R1', 'requester' => 'A']);
 
     expect(Notification::where('user_id', $user->id)->count())->toBe(0);
 });

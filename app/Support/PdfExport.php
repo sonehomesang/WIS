@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -53,7 +54,7 @@ class PdfExport
         }
 
         try {
-            $abs = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
+            $abs = Storage::disk('public')->path($path);
             if (! is_file($abs)) {
                 return null;
             }

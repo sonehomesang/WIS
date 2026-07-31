@@ -3,6 +3,7 @@
 use App\Livewire\Settings\Translations as TranslationsPage;
 use App\Models\Translation;
 use App\Models\User;
+use App\Support\TranslationExtractor;
 use Database\Seeders\RolePermissionSeeder;
 use Livewire\Livewire;
 
@@ -132,12 +133,12 @@ test('translations page is forbidden without settings permission', function () {
 });
 
 test('the extractor pulls hardcoded strings into the catalogue, idempotently', function () {
-    $r1 = App\Support\TranslationExtractor::run();
+    $r1 = TranslationExtractor::run();
     expect($r1['created'])->toBeGreaterThan(0);
     expect($r1['total'])->toBe($r1['created']);                 // fresh DB → all created
     expect(Translation::where('type', 'replace')->count())->toBe($r1['total']);
 
-    $r2 = App\Support\TranslationExtractor::run();               // again
+    $r2 = TranslationExtractor::run();               // again
     expect($r2['created'])->toBe(0);                            // nothing new
     expect($r2['total'])->toBe($r1['total']);
 });
@@ -150,7 +151,7 @@ test('the sync button pulls terms for an admin', function () {
 });
 
 test('extractor captures dropdown/label text and rejects code leaks', function () {
-    $phrases = new ReflectionMethod(App\Support\TranslationExtractor::class, 'phrases');
+    $phrases = new ReflectionMethod(TranslationExtractor::class, 'phrases');
     $phrases->setAccessible(true);
 
     // A Lao word ending in ດ (e0 ba 94) used to be sheared by the byte-based

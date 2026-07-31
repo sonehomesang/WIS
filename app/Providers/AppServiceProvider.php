@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Material;
 use App\Models\Setting;
+use App\Models\Translation;
 use App\Observers\MaterialObserver;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
@@ -55,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
         \Livewire\on('render', function ($component, $view) {
             return function ($html) {
                 return request()->routeIs('*livewire.update')
-                    ? \App\Models\Translation::applyReplacements($html)
+                    ? Translation::applyReplacements($html)
                     : $html;
             };
         });

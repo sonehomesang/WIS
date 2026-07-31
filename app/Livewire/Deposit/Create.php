@@ -72,6 +72,7 @@ class Create extends Component
 
         if ($field === 'asset_source') {
             $this->assetMatches[$i] = [];   // ປ່ຽນ ແຫຼ່ງ → ລ້າງ ຜົນ ຄົ້ນ ເກົ່າ
+
             return;
         }
         if ($field !== 'asset_code') {

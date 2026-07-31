@@ -4,15 +4,19 @@ namespace App\Livewire\Disposal;
 
 use App\Models\Department;
 use App\Models\DepositItem;
+use App\Models\DisposalRecord;
 use App\Models\Equipment;
 use App\Models\EquipmentInspection;
 use App\Models\EquipmentMaintenance;
 use App\Models\InventoryItem;
 use App\Models\Uom;
 use App\Services\DisposalService;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
@@ -29,7 +33,7 @@ class Create extends Component
     /** @var array<int, array<string, mixed>> */
     public array $items = [];
 
-    /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile[]> ຮູບ ຕໍ່ item */
+    /** @var array<int, TemporaryUploadedFile[]> ຮູບ ຕໍ່ item */
     public array $photos = [];
 
     /** @var array<int, array<int, array{source:string,id:int,code:string,fixed:?string,name:string}>> */
@@ -190,7 +194,7 @@ class Create extends Component
         $insps = EquipmentInspection::where('equipment_id', $equipmentId)->where('result', 'fail')
             ->orderByDesc('inspected_at')->limit(20)->get();
         foreach ($insps as $ins) {
-            $out[] = ['date' => $ins->inspected_at?->format('Y-m-d'), 'kind' => 'inspection', 'problem' => 'ກວດ ບໍ່ຜ່ານ'.($ins->notes ? ' · '.\Illuminate\Support\Str::limit($ins->notes, 40) : ''), 'action' => 'ຕິດຕາມ/ສ້ອມ', 'include' => true];
+            $out[] = ['date' => $ins->inspected_at?->format('Y-m-d'), 'kind' => 'inspection', 'problem' => 'ກວດ ບໍ່ຜ່ານ'.($ins->notes ? ' · '.Str::limit($ins->notes, 40) : ''), 'action' => 'ຕິດຕາມ/ສ້ອມ', 'include' => true];
         }
 
         return $out;
@@ -218,16 +222,16 @@ class Create extends Component
         // ກັນ forged source_id: ຖ້າ ດຶງ ຈາກ ທະບຽນ, id ຕ້ອງ ມີ ຈິງ ຕາມ ປະເພດ — ບໍ່ ດັ່ງນັ້ນ
         // ຕອນ ຈຳໜ່າຍ updateSourceRegisters ອາດ ໄປ ແຕະ ຊັບ ອື່ນ ທີ່ ບໍ່ ກ່ຽວ.
         $exists = [
-            'inventory' => fn ($id) => \App\Models\InventoryItem::whereKey($id)->exists(),
-            'equipment' => fn ($id) => \App\Models\Equipment::whereKey($id)->exists(),
-            'deposit' => fn ($id) => \App\Models\DepositItem::whereKey($id)->exists(),
+            'inventory' => fn ($id) => InventoryItem::whereKey($id)->exists(),
+            'equipment' => fn ($id) => Equipment::whereKey($id)->exists(),
+            'deposit' => fn ($id) => DepositItem::whereKey($id)->exists(),
         ];
         foreach (array_values($this->items) as $i => $it) {
             $st = $it['source_type'] ?? 'new';
             $sid = $it['source_id'] ?? null;
             if (isset($exists[$st]) && $sid && ! $exists[$st]($sid)) {
                 $this->addError("items.$i.item_name", 'ແຫຼ່ງ ທີ່ ດຶງ ບໍ່ ພົບ ໃນ ທະບຽນ.');
-                throw \Illuminate\Validation\ValidationException::withMessages(['items' => 'invalid source_id']);
+                throw ValidationException::withMessages(['items' => 'invalid source_id']);
             }
         }
 
@@ -277,8 +281,8 @@ class Create extends Component
         return view('livewire.disposal.create', [
             'departments' => Department::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(['id', 'name']),
-            'reasons' => \App\Models\DisposalRecord::REASONS,
-            'recommendations' => \App\Models\DisposalRecord::RECOMMENDATIONS,
+            'reasons' => DisposalRecord::REASONS,
+            'recommendations' => DisposalRecord::RECOMMENDATIONS,
         ]);
     }
 }

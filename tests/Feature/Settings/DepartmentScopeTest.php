@@ -1,7 +1,9 @@
 <?php
 
 use App\Livewire\Borrow\Index;
+use App\Livewire\Borrow\Show;
 use App\Models\User;
+use App\Services\BorrowService;
 use Database\Seeders\RolePermissionSeeder;
 use Livewire\Livewire;
 
@@ -42,7 +44,7 @@ test('department_admin can open a borrow Show for a record in their department, 
     $da = User::factory()->create(['status' => 'active', 'department_id' => 5]);
     $da->syncRoles(['department_admin']);
     $owner = User::factory()->create(['department_id' => 5]);   // ຄົນ ອື່ນ ໃນ ພະແນກ (da ບໍ່ ແມ່ນ ເຈົ້າ ໃບ)
-    $svc = app(App\Services\BorrowService::class);
+    $svc = app(BorrowService::class);
 
     $mk = function (int $dept) use ($svc, $owner) {
         $r = $svc->createDraft([
@@ -55,6 +57,6 @@ test('department_admin can open a borrow Show for a record in their department, 
     };
 
     actingAs($da);
-    Livewire::test(App\Livewire\Borrow\Show::class, ['record' => $mk(5)])->assertOk();         // ພະແນກ ຕົນ
-    Livewire::test(App\Livewire\Borrow\Show::class, ['record' => $mk(9)])->assertForbidden();  // ພະແນກ ອື່ນ
+    Livewire::test(Show::class, ['record' => $mk(5)])->assertOk();         // ພະແນກ ຕົນ
+    Livewire::test(Show::class, ['record' => $mk(9)])->assertForbidden();  // ພະແນກ ອື່ນ
 });

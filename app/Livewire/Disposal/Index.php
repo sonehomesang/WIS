@@ -5,6 +5,7 @@ namespace App\Livewire\Disposal;
 use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\DisposalRecord;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -45,7 +46,7 @@ class Index extends Component
         return 'disposal.delete';
     }
 
-    protected function deleteLabel(\Illuminate\Database\Eloquent\Model $record): string
+    protected function deleteLabel(Model $record): string
     {
         return $record->request_number;
     }

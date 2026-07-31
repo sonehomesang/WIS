@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\SetPasswordNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -52,7 +53,7 @@ class User extends Authenticatable
     /** ໃຊ້ notification ຂອງ ເຮົາ (ລາວ/ອັງກິດ, admin ແກ້ ໄດ້) ແທນ default ຂອງ Laravel. */
     public function sendPasswordResetNotification($token): void
     {
-        $this->notify(new \App\Notifications\SetPasswordNotification($token));
+        $this->notify(new SetPasswordNotification($token));
     }
 
     /**

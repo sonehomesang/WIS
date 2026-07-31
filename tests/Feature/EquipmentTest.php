@@ -1,7 +1,9 @@
 <?php
 
 use App\Livewire\Equipment\Index;
+use App\Livewire\Equipment\Maintenance;
 use App\Models\Equipment;
+use App\Models\EquipmentInspection;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Http\UploadedFile;
@@ -38,7 +40,7 @@ test('clearItemPhoto requires equipment.edit — a view-only user cannot delete 
     $viewer->givePermissionTo('equipment.view');   // ເຫັນ ໄດ້ ແຕ່ ບໍ່ ມີ edit
     actingAs($viewer);
 
-    Livewire::test(App\Livewire\Equipment\Maintenance::class)
+    Livewire::test(Maintenance::class)
         ->call('clearItemPhoto', 0, 'problem')
         ->assertForbidden();
 });
@@ -68,7 +70,7 @@ test('viewItem opens a read-only detail modal (register manage column)', functio
 test('an inspection is deleted with a required reason and can be restored', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $e = Equipment::create(['asset_code' => 'EL-9', 'name' => 'Tester', 'quantity' => 1]);
-    $ins = App\Models\EquipmentInspection::create([
+    $ins = EquipmentInspection::create([
         'equipment_id' => $e->id, 'inspected_at' => now(), 'inspector_name' => 'SA', 'result' => 'pass',
     ]);
     actingAs($admin);
@@ -79,7 +81,7 @@ test('an inspection is deleted with a required reason and can be restored', func
         ->assertSet('deletingInsId', $ins->id)
         ->call('deleteInspectionRecord')
         ->assertHasErrors(['insDeleteReason' => 'required']);
-    expect(App\Models\EquipmentInspection::find($ins->id))->not->toBeNull();
+    expect(EquipmentInspection::find($ins->id))->not->toBeNull();
 
     // delete with reason → soft-deleted + metadata stored
     Livewire::test(Index::class)
@@ -88,23 +90,23 @@ test('an inspection is deleted with a required reason and can be restored', func
         ->call('deleteInspectionRecord')
         ->assertHasNoErrors()
         ->assertSet('deletingInsId', null);
-    expect(App\Models\EquipmentInspection::find($ins->id))->toBeNull();
-    $trashed = App\Models\EquipmentInspection::withTrashed()->find($ins->id);
+    expect(EquipmentInspection::find($ins->id))->toBeNull();
+    $trashed = EquipmentInspection::withTrashed()->find($ins->id);
     expect($trashed->trashed())->toBeTrue();
     expect($trashed->deleted_reason)->toBe('ບັນທຶກ ຊ້ຳ');
     expect($trashed->deleted_by)->toBe($admin->id);
 
     // restore clears metadata
     Livewire::test(Index::class)->call('restoreInspection', $ins->id);
-    expect(App\Models\EquipmentInspection::find($ins->id)?->deleted_reason)->toBeNull();
+    expect(EquipmentInspection::find($ins->id)?->deleted_reason)->toBeNull();
 });
 
 test('inspection list search + result + category filters narrow the list', function () {
     actingAs(User::factory()->create(['is_super_admin' => true]));
     $e1 = Equipment::create(['asset_code' => 'A-1', 'name' => 'Alpha', 'category' => 'Power tool', 'quantity' => 1]);
     $e2 = Equipment::create(['asset_code' => 'B-1', 'name' => 'Beta', 'category' => 'Vehicle', 'quantity' => 1]);
-    App\Models\EquipmentInspection::create(['equipment_id' => $e1->id, 'inspected_at' => now(), 'result' => 'pass', 'inspector_name' => 'Sam']);
-    App\Models\EquipmentInspection::create(['equipment_id' => $e2->id, 'inspected_at' => now(), 'result' => 'fail', 'inspector_name' => 'Lee']);
+    EquipmentInspection::create(['equipment_id' => $e1->id, 'inspected_at' => now(), 'result' => 'pass', 'inspector_name' => 'Sam']);
+    EquipmentInspection::create(['equipment_id' => $e2->id, 'inspected_at' => now(), 'result' => 'fail', 'inspector_name' => 'Lee']);
 
     Livewire::test(Index::class)->set('inspSearch', 'Alpha')
         ->assertViewHas('inspections', fn ($i) => $i->count() === 1 && $i->first()->equipment_id === $e1->id);
