@@ -77,7 +77,9 @@ class Show extends Component
     {
         $u = auth()->user();
 
-        return $this->isStaff() || $r->requester_user_id === $u->id || $r->approver_user_id === $u->id
+        $deptScoped = $u->transactionScope() === 'department' && $u->department_id && $r->requester_dept_id === $u->department_id;
+
+        return $this->isStaff() || $r->requester_user_id === $u->id || $r->approver_user_id === $u->id || $deptScoped
             || ($u->hasRole('supplier') && $u->supplier_id && $r->assigned_supplier_id === $u->supplier_id);
     }
 

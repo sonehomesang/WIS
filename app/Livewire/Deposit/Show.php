@@ -75,7 +75,9 @@ class Show extends Component
     public function mount(DepositRecord $record): void
     {
         abort_unless(auth()->user()->can('deposit.view'), 403);
-        abort_unless($this->isStaff() || $record->owner_user_id === auth()->id(), 403);
+        $u = auth()->user();
+        $deptScoped = $u->transactionScope() === 'department' && $u->department_id && $record->owner_dept_id === $u->department_id;
+        abort_unless($this->isStaff() || $record->owner_user_id === $u->id || $deptScoped, 403);
         $this->record = $record;
     }
 

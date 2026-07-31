@@ -77,7 +77,8 @@ Route::get('borrow/{record}/pdf', function (BorrowRecord $record) {
     $email = mb_strtolower($u->email);
     abort_unless(
         $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff'])
-        || $record->borrower_user_id === $u->id || $record->approver_email === $email || $record->acknowledge_email === $email,
+        || $record->borrower_user_id === $u->id || $record->approver_email === $email || $record->acknowledge_email === $email
+        || ($u->transactionScope() === 'department' && $u->department_id && $record->borrower_dept_id === $u->department_id),
         403
     );
     $record->load(['items.inventoryItem.primaryPhoto', 'items.photos', 'unit', 'department']);
@@ -103,7 +104,8 @@ Route::get('deposit/{record}/pdf', function (DepositRecord $record) {
     abort_unless($u->can('deposit.view'), 403);
     // ownership scope — mirrors Deposit\Show::mount()
     abort_unless(
-        $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']) || $record->owner_user_id === $u->id,
+        $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']) || $record->owner_user_id === $u->id
+        || ($u->transactionScope() === 'department' && $u->department_id && $record->owner_dept_id === $u->department_id),
         403
     );
     $record->load(['items.photos', 'unit', 'department', 'history']);
@@ -178,7 +180,8 @@ Route::get('request/{record}/pdf', function (MaterialRequest $record) {
     abort_unless(
         $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff'])
         || $record->requester_user_id === $u->id || $record->approver_user_id === $u->id
-        || ($u->hasRole('supplier') && $u->supplier_id && $record->assigned_supplier_id === $u->supplier_id),
+        || ($u->hasRole('supplier') && $u->supplier_id && $record->assigned_supplier_id === $u->supplier_id)
+        || ($u->transactionScope() === 'department' && $u->department_id && $record->requester_dept_id === $u->department_id),
         403
     );
     $record->load(['items', 'supplier', 'unit', 'department', 'history']);

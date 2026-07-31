@@ -94,8 +94,9 @@ class Show extends Component
         }
         $u = auth()->user();
         $email = mb_strtolower($u->email);
+        $deptScoped = $u->transactionScope() === 'department' && $u->department_id && $r->borrower_dept_id === $u->department_id;
 
-        return $r->borrower_user_id === $u->id || $r->approver_email === $email || $r->acknowledge_email === $email;
+        return $r->borrower_user_id === $u->id || $r->approver_email === $email || $r->acknowledge_email === $email || $deptScoped;
     }
 
     /** Server-side authorization for each workflow transition (not just button visibility). */

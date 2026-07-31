@@ -37,3 +37,24 @@ test('department_admin can view the (department-scoped) borrow list', function (
     actingAs($u);
     Livewire::test(Index::class)->assertOk();
 });
+
+test('department_admin can open a borrow Show for a record in their department, not others (audit dept-link)', function () {
+    $da = User::factory()->create(['status' => 'active', 'department_id' => 5]);
+    $da->syncRoles(['department_admin']);
+    $owner = User::factory()->create(['department_id' => 5]);   // ຄົນ ອື່ນ ໃນ ພະແນກ (da ບໍ່ ແມ່ນ ເຈົ້າ ໃບ)
+    $svc = app(App\Services\BorrowService::class);
+
+    $mk = function (int $dept) use ($svc, $owner) {
+        $r = $svc->createDraft([
+            'borrow_type' => 'new_inventory', 'borrow_date' => now()->toDateString(), 'period_days' => 7,
+            'borrower_dept_id' => $dept, 'items' => [['item_name' => 'X', 'qty' => 1]],
+        ], $owner);
+        $r->forceFill(['status' => 'approved'])->save();
+
+        return $r->refresh();
+    };
+
+    actingAs($da);
+    Livewire::test(App\Livewire\Borrow\Show::class, ['record' => $mk(5)])->assertOk();         // ພະແນກ ຕົນ
+    Livewire::test(App\Livewire\Borrow\Show::class, ['record' => $mk(9)])->assertForbidden();  // ພະແນກ ອື່ນ
+});
