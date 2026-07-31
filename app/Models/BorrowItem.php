@@ -39,4 +39,21 @@ class BorrowItem extends Model
     {
         return $this->hasMany(BorrowItemPhoto::class, 'borrow_item_id')->orderBy('sort_order')->orderBy('id');
     }
+
+    public function returnLines(): HasMany
+    {
+        return $this->hasMany(BorrowReturnEventLine::class, 'borrow_item_id');
+    }
+
+    /** ຈຳນວນ ທີ່ ຮັບຄືນ ແລ້ວ (ສະສົມ). */
+    public function getReceivedQtyAttribute(): int
+    {
+        return (int) ($this->return_qty ?? 0);
+    }
+
+    /** ຈຳນວນ ທີ່ ຍັງ ຄ້າງ ຢູ່ ນຳ ຜູ້ຢືມ. */
+    public function getOutstandingQtyAttribute(): int
+    {
+        return max(0, (int) $this->qty - $this->received_qty);
+    }
 }

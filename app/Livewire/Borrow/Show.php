@@ -55,6 +55,20 @@ class Show extends Component
 
     public string $rrRemarks = '';
 
+    // ── ທະຍອຍ ຮັບຄືນ (partial receive — ເປີດ ດ້ວຍ workflow.borrow.partial_return) ──
+    public bool $showReceive = false;
+
+    public string $receiveDate = '';
+
+    public string $receiveRemarks = '';
+
+    /** @var array<int,int> [borrow_item_id => qty ຮັບ ຄັ້ງ ນີ້] */
+    public array $receiveQty = [];
+
+    public array $receiveCondition = [];
+
+    public array $receivePhotos = [];
+
     // ── delete (soft) ──
     public bool $showDelete = false;
 
@@ -261,6 +275,76 @@ class Show extends Component
         }
     }
 
+    // ── ທະຍອຍ ຮັບຄືນ ບາງ ສ່ວນ (partial receive) ──
+    public function partialReturn(): bool
+    {
+        return app(BorrowService::class)->partialReturnEnabled();
+    }
+
+    public function openReceive(): void
+    {
+        $this->reset(['receiveCondition', 'receivePhotos', 'receiveRemarks']);
+        $this->receiveDate = Carbon::today()->toDateString();
+        // ຄ່າ ເລີ່ມຕົ້ນ = ຮັບ ສ່ວນ ທີ່ ຍັງ ຄ້າງ ທັງ ໝົດ (ແກ້ ລົງ ໄດ້).
+        $this->receiveQty = $this->record->items->mapWithKeys(fn ($it) => [$it->id => $it->outstanding_qty])->all();
+        $this->resetErrorBag();
+        $this->showReceive = true;
+    }
+
+    public function receiveReturn(): void
+    {
+        $this->authorizeAction('confirmReturn');   // warehouse ເທົ່ານັ້ນ
+        if (! $this->partialReturn() || ! in_array($this->record->status, ['active', 'overdue'], true)) {
+            return;
+        }
+
+        // ຈຳນວນ ຮັບ ຄັ້ງ ນີ້ (clamp 0..ຄ້າງ).
+        $qtyMap = [];
+        foreach ($this->record->items as $it) {
+            $qtyMap[$it->id] = max(0, min($it->outstanding_qty, (int) ($this->receiveQty[$it->id] ?? 0)));
+        }
+        if (array_sum($qtyMap) < 1) {
+            $this->addError('receiveQty', 'ຕ້ອງ ໃສ່ ຈຳນວນ ຮັບຄືນ ຢ່າງ ໜ້ອຍ 1 ລາຍການ.');
+
+            return;
+        }
+        // ບັງຄັບ ຮູບ ຕໍ່ ລາຍການ ທີ່ ຮັບ ຄັ້ງ ນີ້.
+        foreach ($this->record->items as $it) {
+            if ($qtyMap[$it->id] > 0 && empty($this->receivePhotos[$it->id])) {
+                $this->addError('receivePhotos', "ຕ້ອງ ມີ ຢ່າງ ໜ້ອຍ 1 ຮູບ ສຳລັບ \"{$it->item_name}\".");
+
+                return;
+            }
+        }
+        $this->validate(['receivePhotos.*.*' => ['image', 'max:4096']]);
+
+        $svc = app(BorrowService::class);
+        try {
+            $svc->transition($this->record, 'receiveReturn', auth()->user(), [
+                'receive' => $qtyMap,
+                'conditions' => $this->receiveCondition,
+                'returned_on' => $this->receiveDate ?: null,
+                'remarks' => $this->receiveRemarks ?: null,
+            ]);
+        } catch (ValidationException $e) {
+            $this->addError('receiveQty', $e->validator->errors()->first());
+
+            return;
+        }
+
+        // ຜູກ ຮູບ ກັບ "ຄັ້ງ" ນີ້.
+        $eventId = $svc->lastReturnEventId;
+        foreach ($this->record->items as $it) {
+            if ($qtyMap[$it->id] > 0) {
+                $this->storeItemPhotos($it, $this->receivePhotos[$it->id] ?? [], 'return', $eventId);
+            }
+        }
+
+        $this->record->refresh();
+        session()->flash('ok', '✓ ຮັບຄືນ ບາງ ສ່ວນ ສຳເລັດ');
+        $this->reset(['showReceive', 'receiveCondition', 'receivePhotos', 'receiveQty', 'receiveRemarks']);
+    }
+
     // ── soft delete (admin/borrow.edit; ສະເພາະ draft/cancelled/rejected/returned) ──
     protected function canDelete(): bool
     {
@@ -309,11 +393,13 @@ class Show extends Component
         $this->validate([$field.'.*.*' => ['image', 'max:4096']]);
     }
 
-    protected function storeItemPhotos($item, array $files, string $kind): void
+    protected function storeItemPhotos($item, array $files, string $kind, ?int $returnEventId = null): void
     {
         foreach (array_values($files) as $i => $file) {
             $path = $file->store("borrow/{$this->record->id}/{$item->id}", 'public');
-            $item->photos()->create(['kind' => $kind, 'path' => $path, 'sort_order' => $i]);
+            $item->photos()->create([
+                'kind' => $kind, 'path' => $path, 'sort_order' => $i, 'return_event_id' => $returnEventId,
+            ]);
         }
     }
 
@@ -422,11 +508,15 @@ class Show extends Component
         $steps = app(BorrowService::class)->effectiveSteps($this->record);
 
         return view('livewire.borrow.show', [
-            'record' => $this->record->load(['items.inventoryItem.primaryPhoto', 'items.photos', 'history', 'unit', 'department', 'borrower']),
+            'record' => $this->record->load([
+                'items.inventoryItem.primaryPhoto', 'items.photos', 'history', 'unit', 'department', 'borrower',
+                'returnEvents.lines.item', 'returnEvents.photos',
+            ]),
             'steps' => $steps,
             'editable' => $this->canEdit(),
             'deletable' => $this->canDelete(),
             'isBorrower' => auth()->id() === $this->record->borrower_user_id,
+            'partial' => $this->partialReturn(),
         ]);
     }
 }

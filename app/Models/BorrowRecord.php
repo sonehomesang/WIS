@@ -42,6 +42,29 @@ class BorrowRecord extends Model
         return $this->hasMany(BorrowHistory::class, 'record_id')->orderBy('id');
     }
 
+    /** ຄັ້ງ ຮັບຄືນ ບາງ ສ່ວນ (progressive partial return). */
+    public function returnEvents(): HasMany
+    {
+        return $this->hasMany(BorrowReturnEvent::class, 'record_id')->orderBy('seq');
+    }
+
+    /** ຮັບຄືນ ບາງ ສ່ວນ ແລ້ວ ແຕ່ ຍັງ ບໍ່ ຄົບ (status ຍັງ active). */
+    public function getIsPartiallyReturnedAttribute(): bool
+    {
+        if (! in_array($this->status, ['active', 'overdue'], true)) {
+            return false;
+        }
+        $received = $this->items->sum(fn ($i) => (int) ($i->return_qty ?? 0));
+
+        return $received > 0 && $received < $this->items->sum('qty');
+    }
+
+    /** ຈຳນວນ ລວມ ທີ່ ຍັງ ຄ້າງ ຢູ່ (ທຸກ ລາຍການ). */
+    public function getOutstandingQtyAttribute(): int
+    {
+        return (int) $this->items->sum(fn ($i) => max(0, (int) $i->qty - (int) ($i->return_qty ?? 0)));
+    }
+
     public function borrower(): BelongsTo
     {
         return $this->belongsTo(User::class, 'borrower_user_id');

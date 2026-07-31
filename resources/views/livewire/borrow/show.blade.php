@@ -150,6 +150,33 @@
                 </table>
             </div>
 
+            {{-- ⑥ ປະຫວັດ ການ ຮັບຄືນ ເປັນ ຄັ້ງ (ທະຍອຍ ຮັບ) --}}
+            @if ($record->returnEvents->count())
+                <div>
+                    <div class="text-center bg-gray-200 border border-black p-2 font-bold mb-3">ປະຫວັດ ການ ຮັບຄືນ (Return Events)</div>
+                    <div class="space-y-2">
+                        @foreach ($record->returnEvents as $ev)
+                            <div class="border border-gray-200 rounded-md p-3">
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                                    <span class="font-bold text-sky-700">ຄັ້ງ {{ $ev->seq }}</span>
+                                    <span class="text-gray-500 text-xs">📅 {{ $ev->returned_on?->format('d/m/Y') }}</span>
+                                    <span class="text-gray-500 text-xs">ຮັບໂດຍ: {{ $ev->received_by_name ?? '—' }}</span>
+                                    @if ($ev->remarks)<span class="text-gray-400 text-xs">· {{ $ev->remarks }}</span>@endif
+                                </div>
+                                <ul class="mt-1 text-xs text-gray-700 list-disc pl-5">
+                                    @foreach ($ev->lines as $ln)
+                                        <li>{{ $ln->item?->item_name ?? '—' }} — ຮັບ <b>{{ $ln->qty }}</b>@if ($ln->condition) <span class="text-gray-400">({{ $ln->condition }})</span>@endif</li>
+                                    @endforeach
+                                </ul>
+                                @if ($ev->photos->count())
+                                    <div class="flex gap-2 flex-wrap mt-2">@foreach ($ev->photos as $p)<img src="{{ $p->url }}" alt="" class="w-14 h-14 object-cover border border-gray-300 rounded" />@endforeach</div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             {{-- ລາຍເຊັນ (auto: ຊື່ + ວັນທີ ເວລາ ກົດດຳເນີນການ) --}}
             <div class="grid grid-cols-2 gap-8 pt-4">
                 <div class="text-center">
@@ -189,8 +216,13 @@
                 @else
                     <span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded px-2 py-1">📩 ຜູ້ຢືມແຈ້ງສົ່ງຄືນແລ້ວ{{ $record->borrower_return_date ? ' ('.$record->borrower_return_date->format('d/m/Y').')' : '' }} — ລໍ Warehouse ຢືນຢັນ</span>
                 @endif
-                {{-- step 2: Warehouse ຢືນຢັນຮັບຄືນ --}}
-                @if ($editable)<button wire:click="openReturn" class="text-white bg-sky-600 rounded px-3 py-1.5">✅ ຢືນຢັນຮັບຄືນ (confirmReturn)</button>@endif
+                {{-- step 2: Warehouse ຮັບຄືນ --}}
+                @if ($partial)
+                    @if ($record->is_partially_returned)<span class="inline-flex items-center gap-1 text-xs bg-sky-50 text-sky-700 border border-sky-200 rounded px-2 py-1">📦 ຮັບຄືນ ບາງ ສ່ວນ ແລ້ວ · ຍັງ ຄ້າງ {{ $record->outstanding_qty }}</span>@endif
+                    @if ($editable)<button wire:click="openReceive" class="text-white bg-sky-600 rounded px-3 py-1.5">📦 ທະຍອຍ ຮັບຄືນ (ຄ້າງ {{ $record->outstanding_qty }})</button>@endif
+                @else
+                    @if ($editable)<button wire:click="openReturn" class="text-white bg-sky-600 rounded px-3 py-1.5">✅ ຢືນຢັນຮັບຄືນ (confirmReturn)</button>@endif
+                @endif
             @else
                 <span class="text-gray-400">— ບໍ່ມີ action ({{ $record->status }})</span>
             @endif
@@ -257,6 +289,47 @@
                     <div class="flex justify-end gap-2 pt-2">
                         <button wire:click="$set('showReturn', false)" class="border border-gray-300 rounded px-4 py-2 text-sm">ປິດ</button>
                         <button wire:click="confirmReturn" wire:loading.attr="disabled" wire:target="confirmReturn,returnPhotos" class="bg-sky-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ຢືນຢັນຮັບຄືນ</button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- ທະຍອຍ ຮັບຄືນ (partial receive) modal --}}
+        @if ($showReceive)
+            <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
+                <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                    <h3 class="text-lg font-medium text-gray-800">📦 ທະຍອຍ ຮັບຄືນ — ຮັບ ເປັນ ລາຍການ/ຄັ້ງ</h3>
+                    <p class="text-xs text-gray-500">ໃສ່ ຈຳນວນ ທີ່ ຮັບ ຄືນ ຄັ້ງ ນີ້ ຕໍ່ ລາຍການ (ຄ້າງ ໄວ້ ໄດ້). ໃບ ຈະ ປິດ ອັດຕະໂນມັດ ເມື່ອ ຄືນ ຄົບ ທຸກ ລາຍການ.</p>
+                    @error('receiveQty')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    @error('receivePhotos')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    @foreach ($record->items as $it)
+                        @php $out = $it->outstanding_qty; @endphp
+                        <div class="border {{ $out > 0 ? 'border-gray-200' : 'border-emerald-200 bg-emerald-50/40' }} rounded-md p-3 space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="text-sm font-medium text-gray-700">{{ $it->item_name }}
+                                    <span class="text-gray-400 text-xs">/ ຢືມ {{ $it->qty }} · ຄືນ ແລ້ວ {{ $it->received_qty }} · ຄ້າງ {{ $out }}</span>
+                                </div>
+                                @if ($out > 0)
+                                    <label class="text-xs text-gray-500 flex items-center gap-1">ຮັບ ຄັ້ງ ນີ້ <input type="number" min="0" max="{{ $out }}" wire:model="receiveQty.{{ $it->id }}" class="w-16 rounded-md border-gray-300 text-xs" /></label>
+                                @else
+                                    <span class="text-xs text-emerald-600 font-medium">✓ ຄືນ ຄົບ ແລ້ວ</span>
+                                @endif
+                            </div>
+                            @if ($out > 0)
+                                <input type="file" wire:model="receivePhotos.{{ $it->id }}" multiple accept="image/*" capture="environment" class="{{ $fileCls }}" />
+                                <div wire:loading wire:target="receivePhotos.{{ $it->id }}" class="text-xs text-gray-400">ກຳລັງອັບ…</div>
+                                @if (! empty($receivePhotos[$it->id]))<div class="flex gap-1 flex-wrap">@foreach ($receivePhotos[$it->id] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" class="w-12 h-12 rounded object-cover border border-sky-200" />@endif @endforeach</div>@endif
+                                <textarea wire:model="receiveCondition.{{ $it->id }}" rows="1" placeholder="ໝາຍເຫດສະພາບ (optional)…" class="w-full rounded-md border-gray-300 text-xs"></textarea>
+                            @endif
+                        </div>
+                    @endforeach
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="block text-xs text-gray-500 mb-1">ວັນທີ ຮັບ</label><input type="date" wire:model="receiveDate" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">ໝາຍເຫດ ຄັ້ງ ນີ້</label><input wire:model="receiveRemarks" placeholder="optional" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button wire:click="$set('showReceive', false)" class="border border-gray-300 rounded px-4 py-2 text-sm">ປິດ</button>
+                        <button wire:click="receiveReturn" wire:loading.attr="disabled" wire:target="receiveReturn,receivePhotos" class="bg-sky-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">📦 ບັນທຶກ ການ ຮັບ</button>
                     </div>
                 </div>
             </div>

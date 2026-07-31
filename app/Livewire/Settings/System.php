@@ -24,6 +24,9 @@ class System extends Component
 
     public ?int $defaultBorrowDays = 7;
 
+    /** ໂໝດ ທະຍອຍ ສົ່ງ ຍ່ອຍ / ທະຍອຍ ຮັບຄືນ (workflow.borrow.partial_return). */
+    public bool $borrowPartialReturn = false;
+
     // ── Currency ──
     public string $curPrimary = 'THB';
 
@@ -77,6 +80,9 @@ class System extends Component
         $this->appName = $gen['app_name'] ?? 'WH — Warehouse';
         $this->defaultBorrowDays = (int) ($gen['default_borrow_days'] ?? 7);
 
+        $wfBorrow = Setting::get('workflow', [])['borrow'] ?? [];
+        $this->borrowPartialReturn = ($wfBorrow['partial_return'] ?? 'off') === 'on';
+
         $cur = Setting::get('currency', []);
         $this->curPrimary = $cur['primary'] ?? 'THB';
         $this->curSecondary = $cur['secondary'] ?? 'LAK';
@@ -109,6 +115,17 @@ class System extends Component
             'app_name' => $this->appName,
             'default_borrow_days' => (int) $this->defaultBorrowDays,
         ], auth()->id());
+        $this->dispatch('saved');
+    }
+
+    public function saveBorrowWorkflow(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $wf = Setting::get('workflow', []);
+        $borrow = $wf['borrow'] ?? [];
+        $borrow['partial_return'] = $this->borrowPartialReturn ? 'on' : 'off';
+        $wf['borrow'] = $borrow;
+        Setting::put('workflow', $wf, auth()->id());
         $this->dispatch('saved');
     }
 

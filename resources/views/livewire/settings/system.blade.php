@@ -23,6 +23,19 @@
             @can('settings.edit')<div class="pt-1"><button wire:click="saveGeneral" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 hover:bg-sky-700">Save</button></div>@endcan
         </div>
 
+        {{-- Borrow workflow — ທະຍອຍ ຮັບຄືນ --}}
+        <div class="bg-white rounded-lg border border-gray-100 p-5 space-y-3">
+            <div class="font-medium text-gray-800">ຂັ້ນຕອນ ການ ຢືມ (Borrow Workflow)</div>
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" wire:model="borrowPartialReturn" class="mt-1 rounded border-gray-300 text-sky-600" />
+                <span class="text-sm text-gray-700">
+                    <span class="font-medium">ເປີດ ໂໝດ "ທະຍອຍ ສົ່ງ ຍ່ອຍ / ທະຍອຍ ຮັບຄືນ"</span>
+                    <span class="block text-xs text-gray-500 mt-0.5">ອະນຸຍາດ ຮັບຄືນ ເປັນ ລາຍການ/ຄັ້ງ ໄດ້ (ໃບ ຢືມ 1 ໃບ ຮັບ ຫຼາຍ ຄັ້ງ, ຄ້າງ ໄວ້ ຈົນ ຄືນ ຄົບ). ຖ້າ ປິດ = ຮັບຄືນ ຄັ້ງ ດຽວ ປິດ ໃບ (ຄ່າ ເລີ່ມຕົ້ນ).</span>
+                </span>
+            </label>
+            @can('settings.edit')<div class="pt-1"><button wire:click="saveBorrowWorkflow" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 hover:bg-sky-700">Save</button></div>@endcan
+        </div>
+
         {{-- Currency --}}
         <div class="bg-white border border-gray-100 rounded-lg p-5 md:max-w-md space-y-3">
             <div>

@@ -21,14 +21,23 @@ use Illuminate\Validation\ValidationException;
  */
 class BorrowService
 {
-    public const WORKFLOW_DEFAULT = ['acknowledge' => 'optional', 'approve' => 'required'];
+    public const WORKFLOW_DEFAULT = ['acknowledge' => 'optional', 'approve' => 'required', 'partial_return' => 'off'];
 
-    /** @return array{acknowledge:string, approve:string} */
+    /** ID ຂອງ "ຄັ້ງ" ຮັບຄືນ ຫຼ້າ ສຸດ (ໃຫ້ UI ຜູກ ຮູບ ຫຼັງ receiveReturn). */
+    public ?int $lastReturnEventId = null;
+
+    /** @return array{acknowledge:string, approve:string, partial_return:string} */
     public function workflowConfig(): array
     {
         $wf = Setting::get('workflow', []);
 
         return array_merge(self::WORKFLOW_DEFAULT, $wf['borrow'] ?? []);
+    }
+
+    /** ໂໝດ "ທະຍອຍ ສົ່ງ ຍ່ອຍ / ທະຍອຍ ຮັບຄືນ" ເປີດ ຢູ່ ບໍ. */
+    public function partialReturnEnabled(): bool
+    {
+        return ($this->workflowConfig()['partial_return'] ?? 'off') === 'on';
     }
 
     /** ຂັ້ນຕອນ active ສຳລັບ record ນີ້ (ຕາມ config + per-record choice). */
@@ -119,6 +128,7 @@ class BorrowService
                 'confirmTake' => $this->doConfirmTake($r, $actor),
                 'requestReturn' => $this->doRequestReturn($r, $opts),
                 'confirmReturn' => $this->doConfirmReturn($r, $actor, $opts),
+                'receiveReturn' => $this->doReceiveReturn($r, $actor, $opts),
                 'requestExtension' => $this->doRequestExtension($r, $actor, $opts),
                 'approveExtension' => $this->doDecideExtension($r, $actor, true),
                 'rejectExtension' => $this->doDecideExtension($r, $actor, false),
@@ -213,7 +223,8 @@ class BorrowService
     private function doRequestReturn(BorrowRecord $r, array $opts): void
     {
         $this->assert(in_array($r->status, ['active', 'overdue'], true), 'ແຈ້ງສົ່ງຄືນໄດ້ຕອນໃຊ້ງານຢູ່ເທົ່ານັ້ນ.');
-        $this->assert(! $r->borrower_return_ack, 'ໄດ້ແຈ້ງສົ່ງຄືນແລ້ວ.');
+        // ໃນ ໂໝດ ທະຍອຍ ສົ່ງ — ແຈ້ງ ໄດ້ ຫຼາຍ ຄັ້ງ; ໂໝດ ປົກກະຕິ — ຄັ້ງ ດຽວ.
+        $this->assert($this->partialReturnEnabled() || ! $r->borrower_return_ack, 'ໄດ້ແຈ້ງສົ່ງຄືນແລ້ວ.');
         $r->borrower_return_ack = true;
         $r->borrower_return_date = $opts['return_date'] ?? Carbon::today()->toDateString();
         if (! empty($opts['remarks'])) {
@@ -243,6 +254,71 @@ class BorrowService
         $r->wh_return_ack = true;
         $r->warehouse_staff_user_id = $actor->id;
         $r->warehouse_staff_name = $actor->display_name ?? $actor->email;
+    }
+
+    /**
+     * ທະຍອຍ ຮັບ ຄືນ ບາງ ສ່ວນ (1 ຄັ້ງ / event). ໃບ ຄ້າງ active ຈົນ ຄືນ ຄົບ ທຸກ ລາຍການ.
+     *
+     * @param  array  $opts  receive:[borrow_item_id=>qty], conditions:[id=>text], returned_on, remarks
+     */
+    private function doReceiveReturn(BorrowRecord $r, $actor, array $opts): void
+    {
+        $this->assert($this->partialReturnEnabled(), 'ໂໝດ ທະຍອຍ ຮັບຄືນ ຍັງ ບໍ່ ໄດ້ ເປີດ.');
+        $this->assert(in_array($r->status, ['active', 'overdue'], true), 'ຮັບຄືນ ໄດ້ ສະເພາະ active/overdue.');
+
+        $receive = $opts['receive'] ?? [];
+        $conditions = $opts['conditions'] ?? [];
+
+        // clamp ແຕ່ ລະ ລາຍການ ໃຫ້ ບໍ່ ເກີນ ຈຳນວນ ທີ່ ຍັງ ຄ້າງ.
+        $plan = [];
+        $total = 0;
+        foreach ($r->items as $it) {
+            $outstanding = max(0, (int) $it->qty - (int) ($it->return_qty ?? 0));
+            $q = max(0, min($outstanding, (int) ($receive[$it->id] ?? 0)));
+            if ($q > 0) {
+                $plan[$it->id] = ['qty' => $q, 'condition' => $conditions[$it->id] ?? null];
+                $total += $q;
+            }
+        }
+        $this->assert($total > 0, 'ຕ້ອງ ໃສ່ ຈຳນວນ ຮັບຄືນ ຢ່າງ ໜ້ອຍ 1 ລາຍການ.');
+
+        $event = $r->returnEvents()->create([
+            'seq' => (int) $r->returnEvents()->max('seq') + 1,
+            'returned_on' => $opts['returned_on'] ?? Carbon::today()->toDateString(),
+            'received_by_user_id' => $actor->id ?? null,
+            'received_by_name' => $actor->display_name ?? $actor->email ?? null,
+            'remarks' => $opts['remarks'] ?? null,
+            'created_at' => now(),
+        ]);
+        $this->lastReturnEventId = $event->id;
+
+        foreach ($plan as $itemId => $ln) {
+            $event->lines()->create([
+                'borrow_item_id' => $itemId, 'qty' => $ln['qty'], 'condition' => $ln['condition'],
+            ]);
+            $it = $r->items->firstWhere('id', $itemId);
+            $it->return_qty = (int) ($it->return_qty ?? 0) + $ln['qty'];
+            if ($ln['condition']) {
+                $it->condition_on_return = $ln['condition'];
+            }
+            $it->save();
+            if ($r->borrow_type === 'new_inventory' && $it->item_id) {
+                InventoryItem::whereKey($it->item_id)->increment('quantity', $ln['qty']);
+            }
+        }
+
+        $r->borrower_return_ack = true;
+
+        // ຄືນ ຄົບ ທຸກ ລາຍການ ແລ້ວ ບໍ → ປິດ ໃບ.
+        $stillOut = $r->items->sum(fn ($i) => max(0, (int) $i->qty - (int) ($i->return_qty ?? 0)));
+        if ($stillOut === 0) {
+            $r->status = 'returned';
+            $r->returned_at = now();
+            $r->actual_return_date = Carbon::today()->toDateString();
+            $r->wh_return_ack = true;
+            $r->warehouse_staff_user_id = $actor->id;
+            $r->warehouse_staff_name = $actor->display_name ?? $actor->email;
+        }
     }
 
     private function doRequestExtension(BorrowRecord $r, $actor, array $opts): void
