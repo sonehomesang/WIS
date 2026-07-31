@@ -63,11 +63,12 @@
                                     @if ($showDeleted)
                                         @if ($this->canManageDeleted())<button wire:click="restore({{ $r->id }})" class="text-xs text-sky-600 hover:underline">ກູ້ຄືນ</button>@endif
                                     @else
+                                        <a href="{{ route('area-inspection.pdf', $r) }}" target="_blank" class="text-xs text-gray-600 hover:underline">PDF</a>
                                         @if ($canAck)
                                             @if ($r->acknowledged_at)
-                                                <button wire:click="unacknowledge({{ $r->id }})" class="text-xs text-gray-500 hover:underline">ຍົກ ຮັບຊາບ</button>
+                                                <button wire:click="unacknowledge({{ $r->id }})" class="text-xs text-gray-500 hover:underline ml-2">ຍົກ ຮັບຊາບ</button>
                                             @else
-                                                <button wire:click="acknowledge({{ $r->id }})" class="text-xs text-emerald-700 hover:underline">ຮັບຊາບ</button>
+                                                <button wire:click="acknowledge({{ $r->id }})" class="text-xs text-emerald-700 hover:underline ml-2">ຮັບຊາບ</button>
                                             @endif
                                         @endif
                                         @can('area_inspection.delete')<button wire:click="openDelete({{ $r->id }})" class="text-xs text-red-600 hover:underline ml-2">ລຶບ</button>@endcan

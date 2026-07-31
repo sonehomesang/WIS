@@ -126,3 +126,20 @@ test('evidence photo is kept only for NC items; overview photos are stored + sta
     Storage::disk('public')->assertExists($r->checklist[1]['photo']);
     Storage::disk('public')->assertExists($r->overview_photos[0]);
 });
+
+test('the inspection PDF downloads for a permitted user, 403 for others', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $r = AreaInspection::create([
+        'inspection_number' => 'AI2026-0009', 'location_label' => 'Room Z', 'inspected_on' => now()->toDateString(),
+        'frequency' => 'monthly', 'inspectors' => ['Phouvanh'], 'result' => 'has_nc',
+        'checklist' => [['label' => 'A', 'requirement' => 'x', 'status' => 'NC', 'observation' => 'fix', 'photo' => null]],
+    ]);
+
+    actingAs($admin);
+    $this->get(route('area-inspection.pdf', $r))->assertOk();
+
+    $other = User::factory()->create();
+    $other->syncRoles(['requester']);   // ບໍ່ ມີ area_inspection.view
+    actingAs($other);
+    $this->get(route('area-inspection.pdf', $r))->assertForbidden();
+});

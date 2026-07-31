@@ -172,6 +172,13 @@ Route::get('area-inspection', App\Livewire\AreaInspection\Index::class)
     ->middleware(['auth', 'verified'])
     ->name('area-inspection');
 
+Route::get('area-inspection/{record}/pdf', function (App\Models\AreaInspection $record) {
+    abort_unless(auth()->user()->can('area_inspection.view'), 403);
+    $record->load(['template', 'location', 'acknowledgedBy']);
+
+    return PdfExport::download('area-inspection.pdf', ['record' => $record], "area-inspection-{$record->inspection_number}.pdf");
+})->middleware(['auth', 'verified'])->name('area-inspection.pdf');
+
 // ── Shops Material (catalog ສິນຄ້າ supplier) — Phase 6.7a ──
 Route::get('catalog', App\Livewire\Catalog\Index::class)
     ->middleware(['auth', 'verified'])
