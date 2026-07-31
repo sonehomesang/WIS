@@ -303,11 +303,21 @@ class Maintenance extends Component
     public function removeExistingPhoto(int $i): void
     {
         abort_unless(auth()->user()->can('equipment.edit'), 403);
-        if (isset($this->mExistingPhotos[$i])) {
-            Storage::disk('public')->delete($this->mExistingPhotos[$i]);
-            unset($this->mExistingPhotos[$i]);
-            $this->mExistingPhotos = array_values($this->mExistingPhotos);
+        if (! isset($this->mExistingPhotos[$i])) {
+            return;
         }
+        // ລຶບ ໄຟລ໌ ຈິງ ໄດ້ ສະເພາະ path ທີ່ ຢູ່ ໃນ ໃບ ບຳລຸງ ນັ້ນ ຈິງ + ຕາມ ພະແນກ (ບໍ່ ເຊື່ອ array ຈາກ client).
+        $path = $this->mExistingPhotos[$i];
+        if ($this->editingId && ($m = EquipmentMaintenance::with('equipment')->find($this->editingId))) {
+            if ($m->equipment) {
+                $this->guardDept($m->equipment);
+            }
+            if (in_array($path, $m->photos ?? [], true)) {
+                Storage::disk('public')->delete($path);
+            }
+        }
+        unset($this->mExistingPhotos[$i]);
+        $this->mExistingPhotos = array_values($this->mExistingPhotos);
     }
 
     /** ລຶບ ຮູບ/ຄລິບ ຂອງ ຂໍ້ ($slot = 'before'|'after'|'problem'). ລຶບ ທັງ temp ອັບ + ໄຟລ໌ ທີ່ ບັນທຶກ ໄວ້. */

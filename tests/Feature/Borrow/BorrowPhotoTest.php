@@ -81,3 +81,25 @@ test('confirmReturn stores return photo + qty, returns, restores inventory', fun
     expect($r->items->first()->photos()->where('kind', 'return')->count())->toBe(1);
     expect($inv->refresh()->quantity)->toBe(5);
 });
+
+test('removePhoto cannot delete a photo of another borrow record (audit M1 / IDOR)', function () {
+    $inv = InventoryItem::create(['slug' => 'idor', 'name' => 'Drill', 'quantity' => 20]);
+
+    $a = approvedRecord($inv);
+    $aItem = $a->items->first()->id;
+    Livewire::test(Show::class, ['record' => $a])->call('openTake')
+        ->set('takePhotos.'.$aItem, [UploadedFile::fake()->image('a.jpg')])->call('confirmTake');
+
+    $b = approvedRecord($inv);
+    $bItem = $b->items->first()->id;
+    Livewire::test(Show::class, ['record' => $b])->call('openTake')
+        ->set('takePhotos.'.$bItem, [UploadedFile::fake()->image('b.jpg')])->call('confirmTake');
+
+    $victim = $b->refresh()->items->first()->photos()->first();
+    expect($victim)->not->toBeNull();
+
+    // ຢູ່ ໜ້າ record A ແລ້ວ ພະຍາຍາມ ລຶບ ຮູບ ຂອງ record B ຜ່ານ id → ຕ້ອງ ບໍ່ ມີ ຜົນ
+    Livewire::test(Show::class, ['record' => $a])->call('removePhoto', $victim->id);
+
+    expect(App\Models\BorrowItemPhoto::find($victim->id))->not->toBeNull();
+});

@@ -349,7 +349,10 @@ class Index extends Component
     public function removePhoto(int $photoId): void
     {
         abort_unless(auth()->user()->can('equipment.edit'), 403);
-        if ($p = EquipmentPhoto::find($photoId)) {
+        if ($p = EquipmentPhoto::with('equipment')->find($photoId)) {
+            if ($p->equipment) {
+                $this->guardDept($p->equipment);   // ກັນ ລຶບ ຮູບ ເຄື່ອງ ຂ້າມ ພະແນກ
+            }
             Storage::disk('public')->delete($p->path);
             $p->delete();
         }
@@ -605,11 +608,21 @@ class Index extends Component
     public function removeExistingInsPhoto(int $i): void
     {
         abort_unless(auth()->user()->can('equipment.edit'), 403);
-        if (isset($this->insExistingPhotos[$i])) {
-            Storage::disk('public')->delete($this->insExistingPhotos[$i]);
-            unset($this->insExistingPhotos[$i]);
-            $this->insExistingPhotos = array_values($this->insExistingPhotos);
+        if (! isset($this->insExistingPhotos[$i])) {
+            return;
         }
+        // ລຶບ ໄຟລ໌ ຈິງ ໄດ້ ສະເພาະ path ທີ່ ຢູ່ ໃນ ໃບ ກວດ ນັ້ນ ຈິງ + ຕາມ ພະແນກ (ບໍ່ ເຊື່ອ array ຈາກ client).
+        $path = $this->insExistingPhotos[$i];
+        if ($this->editingInspectionId && ($ins = EquipmentInspection::with('equipment')->find($this->editingInspectionId))) {
+            if ($ins->equipment) {
+                $this->guardDept($ins->equipment);
+            }
+            if (in_array($path, $ins->allPhotos(), true)) {
+                Storage::disk('public')->delete($path);
+            }
+        }
+        unset($this->insExistingPhotos[$i]);
+        $this->insExistingPhotos = array_values($this->insExistingPhotos);
     }
 
     public function pickInspectionEquipment(int $id): void

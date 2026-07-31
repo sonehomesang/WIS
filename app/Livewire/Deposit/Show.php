@@ -365,7 +365,8 @@ class Show extends Component
     public function removePhoto(int $photoId): void
     {
         abort_unless($this->canEdit(), 403);
-        $p = DepositItemPhoto::find($photoId);
+        // ຜູກ photoId ກັບ record ນີ້ ເທົ່ານັ້ນ (ກັນ ລຶບ ຮູບ ໃບ ຝາກ ຂອງ ຄົນ ອື່ນ ຜ່ານ id ປອມ).
+        $p = DepositItemPhoto::whereHas('depositItem', fn ($q) => $q->where('record_id', $this->record->id))->find($photoId);
         if ($p) {
             Storage::disk('public')->delete($p->path);
             $p->delete();
