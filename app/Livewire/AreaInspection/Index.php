@@ -49,6 +49,22 @@ class Index extends Component
     /** @var array<int,TemporaryUploadedFile> ຮູບ ຕໍ່ ຂໍ້ */
     public array $photos = [];
 
+    // ── tab + template management (ແມ່ແບບ) ──
+    public string $tab = 'records';   // records | templates
+
+    public bool $showTemplateForm = false;
+
+    public ?int $tEditingId = null;
+
+    public string $tName = '';
+
+    public string $tFrequency = 'monthly';
+
+    public bool $tActive = true;
+
+    /** @var array<int,array{label:string,requirement:string}> */
+    public array $tItems = [];
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('area_inspection.view'), 403);
@@ -196,6 +212,91 @@ class Index extends Component
         AreaInspection::whereKey($id)->update(['acknowledged_by' => null, 'acknowledged_by_name' => null, 'acknowledged_at' => null]);
     }
 
+    // ── template management (tab ແມ່ແບບ — ຄື Equipment › ແມ່ແບບ) ──
+    public function setTab(string $tab): void
+    {
+        $this->tab = $tab === 'templates' ? 'templates' : 'records';
+    }
+
+    public function newTemplate(): void
+    {
+        abort_unless(auth()->user()->can('area_inspection.create'), 403);
+        $this->reset(['tEditingId', 'tName']);
+        $this->tFrequency = 'monthly';
+        $this->tActive = true;
+        $this->tItems = [['label' => '', 'requirement' => '']];
+        $this->resetValidation();
+        $this->showTemplateForm = true;
+    }
+
+    public function editTemplate(int $id): void
+    {
+        abort_unless(auth()->user()->can('area_inspection.edit'), 403);
+        $t = AreaInspectionTemplate::findOrFail($id);
+        $this->tEditingId = $t->id;
+        $this->tName = $t->name;
+        $this->tFrequency = $t->frequency;
+        $this->tActive = (bool) $t->is_active;
+        $this->tItems = $t->normalizedItems() ?: [['label' => '', 'requirement' => '']];
+        $this->resetValidation();
+        $this->showTemplateForm = true;
+    }
+
+    public function addTemplateItem(): void
+    {
+        $this->tItems[] = ['label' => '', 'requirement' => ''];
+    }
+
+    public function removeTemplateItem(int $i): void
+    {
+        unset($this->tItems[$i]);
+        $this->tItems = array_values($this->tItems);
+        if (empty($this->tItems)) {
+            $this->tItems = [['label' => '', 'requirement' => '']];
+        }
+    }
+
+    public function saveTemplate(): void
+    {
+        abort_unless(auth()->user()->can('area_inspection.'.($this->tEditingId ? 'edit' : 'create')), 403);
+
+        $this->validate([
+            'tName' => ['required', 'string', 'max:256'],
+            'tFrequency' => ['required', 'in:'.implode(',', AreaInspectionTemplate::FREQUENCIES)],
+            'tItems' => ['required', 'array', 'min:1'],
+            'tItems.*.label' => ['nullable', 'string', 'max:256'],
+            'tItems.*.requirement' => ['nullable', 'string', 'max:500'],
+        ], [], ['tName' => 'ຊື່ ແມ່ແບບ']);
+
+        $items = collect($this->tItems)
+            ->map(fn ($x) => ['label' => trim((string) ($x['label'] ?? '')), 'requirement' => trim((string) ($x['requirement'] ?? ''))])
+            ->filter(fn ($x) => $x['label'] !== '')
+            ->values()->all();
+
+        if (! $items) {
+            $this->addError('tItems', 'ຕ້ອງ ມີ ຢ່າງໜ້ອຍ 1 ຂໍ້ (ໃສ່ ຊື່ ຂໍ້).');
+
+            return;
+        }
+
+        $data = ['name' => $this->tName, 'frequency' => $this->tFrequency, 'items' => $items, 'is_active' => $this->tActive, 'updated_by' => auth()->id()];
+        if ($this->tEditingId) {
+            AreaInspectionTemplate::findOrFail($this->tEditingId)->update($data);
+        } else {
+            AreaInspectionTemplate::create($data + ['created_by' => auth()->id()]);
+        }
+
+        $this->showTemplateForm = false;
+        session()->flash('ok', '✓ ບັນທຶກ ແມ່ແບບ ແລ້ວ');
+    }
+
+    public function toggleTemplateActive(int $id): void
+    {
+        $t = AreaInspectionTemplate::findOrFail($id);
+        abort_unless(auth()->user()->can('area_inspection.'.($t->is_active ? 'deactivate' : 'activate')), 403);
+        $t->update(['is_active' => ! $t->is_active, 'updated_by' => auth()->id()]);
+    }
+
     protected function nextNumber(): string
     {
         $year = now()->year;
@@ -231,6 +332,7 @@ class Index extends Component
         return view('livewire.area-inspection.index', [
             'rows' => $q->orderByDesc('id')->paginate(15),
             'templates' => AreaInspectionTemplate::where('is_active', true)->orderBy('name')->get(['id', 'name', 'frequency']),
+            'allTemplates' => AreaInspectionTemplate::orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'canAck' => $this->canAcknowledge(),
             'freqLabels' => AreaInspectionTemplate::FREQ_LABELS,

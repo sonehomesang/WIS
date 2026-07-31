@@ -60,3 +60,36 @@ test('a manager can acknowledge an area inspection', function () {
     Livewire::test(Index::class)->call('acknowledge', $r->id);
     expect($r->fresh()->acknowledged_by_name)->toBe('Boss');
 });
+
+test('a manager can create, edit and deactivate an area checklist template in-app', function () {
+    $u = User::factory()->create();
+    $u->syncRoles(['warehouse_staff']);   // has area_inspection create/edit/activate/deactivate
+    actingAs($u);
+
+    Livewire::test(Index::class)
+        ->set('tab', 'templates')
+        ->call('newTemplate')
+        ->set('tName', 'Warehouse Weekly')
+        ->set('tFrequency', 'weekly')
+        ->set('tItems.0.label', 'Fire Exit')
+        ->set('tItems.0.requirement', 'Unlocked and marked')
+        ->call('addTemplateItem')
+        ->set('tItems.1.label', 'Housekeeping')
+        ->call('saveTemplate')
+        ->assertHasNoErrors();
+
+    $t = AreaInspectionTemplate::where('name', 'Warehouse Weekly')->first();
+    expect($t)->not->toBeNull()
+        ->and($t->frequency)->toBe('weekly')
+        ->and(count($t->normalizedItems()))->toBe(2);   // ຂໍ້ ວ່າງ ຖືກ ຄັດ ອອກ
+
+    Livewire::test(Index::class)
+        ->call('editTemplate', $t->id)
+        ->set('tName', 'Warehouse Weekly v2')
+        ->call('saveTemplate')
+        ->assertHasNoErrors();
+    expect($t->fresh()->name)->toBe('Warehouse Weekly v2');
+
+    Livewire::test(Index::class)->call('toggleTemplateActive', $t->id);
+    expect($t->fresh()->is_active)->toBeFalse();
+});
