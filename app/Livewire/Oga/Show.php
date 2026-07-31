@@ -144,6 +144,10 @@ class Show extends Component
 
     public function confirmDelivery(): void
     {
+        abort_unless($this->canEdit(), 403);              // ກວດ ສິດ ກ່ອນ ຂຽນ ຮູບ (warehouse ເທົ່ານັ້ນ)
+        if ($this->record->status !== 'dispatched') {
+            return;                                       // ຜິດ state — ບໍ່ ຂຽນ ຫຍັງ
+        }
         $this->validate([
             'photoDelivered' => ['nullable', 'image', 'max:5120'],
             'photoHandover' => ['nullable', 'image', 'max:5120'],

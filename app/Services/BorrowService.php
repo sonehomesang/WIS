@@ -227,7 +227,8 @@ class BorrowService
         $returnQtys = $opts['return_qty'] ?? []; // [borrow_item_id => qty]
         if ($r->borrow_type === 'new_inventory') {
             foreach ($r->items as $it) {
-                $qty = (int) ($returnQtys[$it->id] ?? $it->qty);
+                // clamp ໃຫ້ ບໍ່ ເກີນ ຈຳນວນ ທີ່ ຢືມ (ກັນ stock over-increment ຈາກ ຄ່າ ຜິດ/ປອມ).
+                $qty = max(0, min((int) $it->qty, (int) ($returnQtys[$it->id] ?? $it->qty)));
                 $it->return_qty = $qty;
                 $it->save();
                 if ($it->item_id && $qty > 0) {

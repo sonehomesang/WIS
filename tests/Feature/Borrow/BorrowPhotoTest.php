@@ -103,3 +103,25 @@ test('removePhoto cannot delete a photo of another borrow record (audit M1 / IDO
 
     expect(App\Models\BorrowItemPhoto::find($victim->id))->not->toBeNull();
 });
+
+test('return qty is clamped to the borrowed qty — no stock over-increment (audit)', function () {
+    $inv = InventoryItem::create(['slug' => 'clamp', 'name' => 'Drill', 'quantity' => 5]);
+    $r = approvedRecord($inv);   // ຢືມ qty 2
+    $itemId = $r->items->first()->id;
+
+    Livewire::test(Show::class, ['record' => $r])->call('openTake')
+        ->set('takePhotos.'.$itemId, [UploadedFile::fake()->image('t.jpg')])->call('confirmTake');
+    expect($inv->refresh()->quantity)->toBe(3);   // 5 - 2
+    $r->refresh();
+
+    // ພະຍາຍາມ ຄືນ 100 ຕໍ່ ຢືມ 2 → clamp ເປັນ 2 → stock ກັບ ເປັນ 5 (ບໍ່ ແມ່ນ 103)
+    Livewire::test(Show::class, ['record' => $r])
+        ->call('openReturn')
+        ->set('returnPhotos.'.$itemId, [UploadedFile::fake()->image('r.jpg')])
+        ->set('returnQty.'.$itemId, 100)
+        ->call('confirmReturn')
+        ->assertHasNoErrors();
+
+    expect($inv->refresh()->quantity)->toBe(5);
+    expect($r->refresh()->items->first()->return_qty)->toBe(2);
+});

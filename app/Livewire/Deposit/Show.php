@@ -159,6 +159,10 @@ class Show extends Component
 
     public function confirmStore(): void
     {
+        $this->authorizeAction($this->storeMode);         // ກວດ ສິດ ກ່ອນ ຂຽນ ຮູບ (warehouse ເທົ່ານັ້ນ)
+        if (! in_array($this->record->status, ['accepted', 'needs_fix'], true)) {
+            return;                                       // ຜິດ state — ບໍ່ ຂຽນ ຫຍັງ
+        }
         $this->requirePhotoPerItem($this->storePhotos, 'storePhotos');
 
         foreach ($this->record->items as $it) {
@@ -196,6 +200,10 @@ class Show extends Component
 
     public function confirmClaim(): void
     {
+        $this->authorizeAction('confirmClaim');           // ກວດ ສິດ ກ່ອນ ຂຽນ ຮູບ/condition (warehouse ເທົ່ານັ້ນ)
+        if ($this->record->status !== 'stored') {
+            return;                                       // ຜິດ state — ບໍ່ ຂຽນ ຫຍັງ
+        }
         $this->requirePhotoPerItem($this->claimPhotos, 'claimPhotos');
 
         foreach ($this->record->items as $it) {

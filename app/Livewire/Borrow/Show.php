@@ -193,6 +193,10 @@ class Show extends Component
 
     public function confirmTake(): void
     {
+        $this->authorizeAction('confirmTake');            // ກວດ ສິດ ກ່ອນ ຂຽນ ຮູບ/condition (warehouse ເທົ່ານັ້ນ)
+        if ($this->record->status !== 'approved') {
+            return;                                       // ຜິດ state (stale/crafted) — ບໍ່ ຂຽນ ຫຍັງ
+        }
         $this->requirePhotoPerItem($this->takePhotos, 'takePhotos');
 
         foreach ($this->record->items as $it) {
@@ -217,6 +221,10 @@ class Show extends Component
 
     public function confirmReturn(): void
     {
+        $this->authorizeAction('confirmReturn');          // ກວດ ສິດ ກ່ອນ ຂຽນ ຮູບ/condition (warehouse ເທົ່ານັ້ນ)
+        if (! in_array($this->record->status, ['active', 'overdue'], true)) {
+            return;                                       // ຜິດ state — ບໍ່ ຂຽນ ຫຍັງ
+        }
         $this->requirePhotoPerItem($this->returnPhotos, 'returnPhotos');
 
         foreach ($this->record->items as $it) {
