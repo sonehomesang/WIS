@@ -36,6 +36,28 @@ test('create makes EXP number + attendees', function () {
     expect($e->attendees()->first()->user_name)->toBe($a1->display_name);
 });
 
+test('a finalized expo blocks content edits until reopened (audit M7)', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $e = anExpo($admin);
+
+    Livewire::test(Show::class, ['record' => $e])->call('finalize');
+    expect($e->fresh()->status)->toBe('finalized');
+
+    // ແກ້ ເນື້ອ ໃນ ຖືກ ບລັອກ ຕອນ finalized
+    Livewire::test(Show::class, ['record' => $e->fresh()])->call('openCompany')->assertForbidden();
+
+    // reopen ໄດ້ (ປົດ ລັອກ) → ແກ້ ໄດ້ ຄືນ
+    Livewire::test(Show::class, ['record' => $e->fresh()])->call('reopen');
+    expect($e->fresh()->status)->toBe('draft');
+
+    Livewire::test(Show::class, ['record' => $e->fresh()])
+        ->call('openCompany')->set('cf.name', 'Reopened Co')->set('cf.interest_level', 'warm')
+        ->call('saveCompany')->assertHasNoErrors();
+
+    expect(ExpoCompany::where('event_id', $e->id)->where('name', 'Reopened Co')->exists())->toBeTrue();
+});
+
 test('can add a company with score + a contact', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $this->actingAs($admin);

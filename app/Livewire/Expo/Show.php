@@ -84,6 +84,8 @@ class Show extends Component
     protected function guardEdit(): void
     {
         abort_unless($this->canEdit(), 403);
+        // finalized = ລັອກ ການ ແກ້ ເນື້ອ ໃນ (ຕ້ອງ reopen ກ່ອນ). reopen/finalize ໃຊ້ canEdit ດິບ.
+        abort_if($this->record->status === 'finalized', 403);
     }
 
     // ── edit event meta ──
@@ -174,11 +176,13 @@ class Show extends Component
             'companyFiles.*' => ['image', 'max:5120'],
         ], [], ['cf.name' => 'ຊື່ບໍລິສັດ']);
 
+        // whitelist ສະເພາະ field ທີ່ validate — ກັນ mass-assign (event_id/created_by ຈາກ client array).
+        $attrs = collect($this->cf)->only(['name', 'country', 'website', 'email', 'phone', 'products', 'benefit', 'interest_level', 'score'])->all();
         if ($this->companyId) {
             $c = $this->record->companies()->findOrFail($this->companyId);
-            $c->update($this->cf);
+            $c->update($attrs);
         } else {
-            $c = $this->record->companies()->create($this->cf + ['sort_order' => ($this->record->companies()->max('sort_order') ?? -1) + 1]);
+            $c = $this->record->companies()->create($attrs + ['sort_order' => ($this->record->companies()->max('sort_order') ?? -1) + 1]);
         }
 
         foreach (array_values($this->companyFiles) as $i => $file) {
@@ -246,7 +250,8 @@ class Show extends Component
         ], [], ['kf.name' => 'ຊື່ຜູ້ຕິດຕໍ່']);
 
         $company = $this->record->companies()->findOrFail($this->contactCompanyId);
-        $attrs = $this->kf;
+        // whitelist — ກັນ mass-assign (company_id/created_by ຈາກ client array).
+        $attrs = collect($this->kf)->only(['name', 'role', 'title', 'email', 'phone', 'app_contact', 'notes'])->all();
         if ($this->businessCard) {
             $attrs['business_card_path'] = $this->businessCard->store("expo/{$this->record->id}/{$company->id}/cards", 'public');
         }
@@ -334,13 +339,13 @@ class Show extends Component
 
     public function finalize(): void
     {
-        $this->guardEdit();
+        abort_unless($this->canEdit(), 403);   // ບໍ່ ໃຊ້ guardEdit (ບໍ່ ດັ່ງນັ້ນ ຈະ ຕິດ ຕົວ ມັນ ເອງ)
         $this->record->update(['status' => 'finalized', 'updated_by' => auth()->id()]);
     }
 
     public function reopen(): void
     {
-        $this->guardEdit();
+        abort_unless($this->canEdit(), 403);   // ຕ້ອງ ເຮັດ ໄດ້ ຕອນ finalized (ປົດ ລັອກ)
         $this->record->update(['status' => 'draft', 'updated_by' => auth()->id()]);
     }
 
