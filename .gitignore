@@ -29,3 +29,6 @@ Thumbs.db
 # Reference app export (Google AI Studio v1 — compare only, not WH source)
 /docs/version-01/
 /docs/example.html
+
+# Security audit report — kept local only (contains vulnerability detail); do not commit
+/docs/wh-security-audit-report.html
