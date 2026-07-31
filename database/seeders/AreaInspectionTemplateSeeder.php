@@ -24,7 +24,7 @@ class AreaInspectionTemplateSeeder extends Seeder
             ['label' => 'Emergency Contact Info', 'requirement' => 'Emergency contact list posted and readable.'],
         ];
 
-        AreaInspectionTemplate::firstOrCreate(
+        AreaInspectionTemplate::updateOrCreate(
             ['name' => 'Monthly Chemical Storage Area Inspection'],
             ['frequency' => 'monthly', 'items' => $chemical, 'is_active' => true]
         );
@@ -38,7 +38,7 @@ class AreaInspectionTemplateSeeder extends Seeder
             ['label' => 'Spills / Leaks', 'requirement' => 'No spills or leaks present.'],
         ];
 
-        AreaInspectionTemplate::firstOrCreate(
+        AreaInspectionTemplate::updateOrCreate(
             ['name' => 'Daily Workplace Safety Walk'],
             ['frequency' => 'daily', 'items' => $daily, 'is_active' => true]
         );
