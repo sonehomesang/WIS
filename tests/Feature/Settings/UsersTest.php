@@ -32,6 +32,20 @@ test('super admin can create a user with a role', function () {
     expect($user->status)->toBe('active');
 });
 
+test('a non-super admin cannot lock, approve or reset-link a super_admin (audit M4)', function () {
+    config(['features.local_auth' => true]);
+    $admin = User::factory()->create();
+    $admin->syncRoles(['admin']);   // ມີ users.* (activate/deactivate/edit) ແຕ່ ບໍ່ ແມ່ນ super
+    $super = User::factory()->create(['is_super_admin' => true, 'status' => 'active']);
+    $this->actingAs($admin);
+
+    Livewire::test(Users::class)->call('toggleLock', $super->id)->assertForbidden();
+    expect($super->fresh()->status)->toBe('active');   // ບໍ່ ຖືກ lock
+
+    Livewire::test(Users::class)->call('approve', $super->id)->assertForbidden();
+    Livewire::test(Users::class)->call('linkFor', $super->id)->assertForbidden();
+});
+
 test('email must be unique', function () {
     $this->actingAs(adminUser());
     User::factory()->create(['email' => 'dup@nt2.la']);

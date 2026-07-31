@@ -178,6 +178,7 @@ class Users extends Component
         $isNew = ! $this->editingId;
         if ($this->editingId) {
             $user = User::findOrFail($this->editingId);
+            $this->guardSuperAdminTarget($user);   // ຜູ້ ບໍ່ ແມ່ນ super ຫ້າມ ແກ້/demote super_admin
             $user->fill($attrs);
             $user->save();
         } else {
@@ -229,12 +230,20 @@ class Users extends Component
         $user->sendPasswordResetNotification($token);
     }
 
+    /** ຫ້າມ ຜູ້ ບໍ່ ແມ່ນ super_admin ໄປ ຈັດການ ບັນຊີ super_admin (lock/demote/reset-link). */
+    protected function guardSuperAdminTarget(User $target): void
+    {
+        abort_if(! auth()->user()->is_super_admin && $target->is_super_admin, 403);
+    }
+
     /** ປຸ່ມ "ສົ່ງ/ກ໋ອບປີ້ ລິ້ງ ຕັ້ງ ລະຫັດ" ຕໍ່ ຜູ້ໃຊ້ (resend). */
     public function linkFor(int $id): void
     {
         abort_unless(auth()->user()->can('users.edit'), 403);
         abort_unless(config('features.local_auth'), 403);
-        $this->issueSetPasswordLink(User::findOrFail($id));
+        $user = User::findOrFail($id);
+        $this->guardSuperAdminTarget($user);
+        $this->issueSetPasswordLink($user);
     }
 
     public function closeLink(): void
@@ -246,12 +255,15 @@ class Users extends Component
     public function approve(int $id): void
     {
         abort_unless(auth()->user()->can('users.activate'), 403);
-        User::whereKey($id)->update(['status' => 'active']);
+        $user = User::findOrFail($id);
+        $this->guardSuperAdminTarget($user);
+        $user->update(['status' => 'active']);
     }
 
     public function toggleLock(int $id): void
     {
         $user = User::findOrFail($id);
+        $this->guardSuperAdminTarget($user);
         $target = $user->status === 'locked' ? 'active' : 'locked';
         abort_unless(auth()->user()->can('users.'.($target === 'locked' ? 'deactivate' : 'activate')), 403);
         $user->update(['status' => $target]);
