@@ -269,7 +269,7 @@ class Index extends Component
             'purchase_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'newPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
-            'newPhotos.*' => ['image', 'max:4096'],
+            'newPhotos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ], [
             'asset_code.unique' => 'ລະຫັດເຄື່ອງ ນີ້ ມີ ຢູ່ ແລ້ວ — ຫ້າມ ຊ້ຳ.',
             'asset_code.max' => 'ລະຫັດເຄື່ອງ ບໍ່ ເກີນ 10 ຕົວ.',
@@ -732,7 +732,7 @@ class Index extends Component
             'insNotes' => ['nullable', 'string', 'max:2000'],
             'insNextDue' => ['nullable', 'date'],
             'insPhotos' => ['array', 'max:'.self::MAX_INS_PHOTOS],
-            'insPhotos.*' => ['image', 'max:8192'],
+            'insPhotos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'insRepair' => ['integer', 'min:0'],
             'insRetired' => ['integer', 'min:0'],
             'insTemplateId' => ['nullable', 'exists:inspection_templates,id'],
@@ -805,7 +805,12 @@ class Index extends Component
         ];
 
         if ($this->editingInspectionId) {
-            EquipmentInspection::findOrFail($this->editingInspectionId)->update($payload);
+            // ກວດ dept-scope ຂອງ record ທີ່ ກຳລັງ ແກ້ (ບໍ່ ແມ່ນ ພຽງ equipment ທີ່ client ສົ່ງ ມາ) — ກັນ IDOR ຂ້າມ ພະແນກ.
+            $ins = EquipmentInspection::with('equipment')->findOrFail($this->editingInspectionId);
+            if ($ins->equipment) {
+                $this->guardDept($ins->equipment);
+            }
+            $ins->update($payload);
         } else {
             $payload['inspected_at'] = now();   // ສະແຕັມ ເວລາ submit
             $payload['created_by'] = auth()->id();

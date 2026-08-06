@@ -37,7 +37,8 @@ class Dashboard extends Component
         }
         $this->prefs[$key] = ! ($this->prefs[$key] ?? true);
         $u = auth()->user();
-        $u->dashboard_prefs = $this->prefs;
+        // ເກັບ ສະເພาะ key ທີ່ ຮູ້ຈັກ (ກັນ client ຍັດ key ອື່ນ ເຂົ້າ prefs).
+        $u->dashboard_prefs = array_intersect_key($this->prefs, User::DASHBOARD_DEFAULTS);
         $u->save();
     }
 

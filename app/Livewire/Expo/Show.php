@@ -174,7 +174,7 @@ class Show extends Component
             'cf.benefit' => ['nullable', 'string', 'max:1000'],
             'cf.interest_level' => ['required', 'in:hot,warm,cold'],
             'cf.score' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'companyFiles.*' => ['image', 'max:5120'],
+            'companyFiles.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [], ['cf.name' => 'ຊື່ບໍລິສັດ']);
 
         // whitelist ສະເພາະ field ທີ່ validate — ກັນ mass-assign (event_id/created_by ຈາກ client array).
@@ -247,7 +247,7 @@ class Show extends Component
             'kf.email' => ['nullable', 'string', 'max:256'],
             'kf.phone' => ['nullable', 'string', 'max:64'],
             'kf.app_contact' => ['nullable', 'string', 'max:128'],
-            'businessCard' => ['nullable', 'image', 'max:5120'],
+            'businessCard' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [], ['kf.name' => 'ຊື່ຜູ້ຕິດຕໍ່']);
 
         $company = $this->record->companies()->findOrFail($this->contactCompanyId);

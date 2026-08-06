@@ -229,7 +229,7 @@ class Show extends Component
     public function openReturn(): void
     {
         $this->reset(['returnCondition', 'returnPhotos']);
-        $this->returnQty = $this->record->items->mapWithKeys(fn ($it) => [$it->id => $it->qty])->all();
+        $this->returnQty = $this->record->items->mapWithKeys(fn ($it) => [$it->id => $it->outstanding_qty])->all();
         $this->resetErrorBag();
         $this->showReturn = true;
     }
@@ -316,7 +316,7 @@ class Show extends Component
                 return;
             }
         }
-        $this->validate(['receivePhotos.*.*' => ['image', 'max:4096']]);
+        $this->validate(['receivePhotos.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096']]);
 
         $svc = app(BorrowService::class);
         try {
@@ -390,7 +390,7 @@ class Show extends Component
                 throw ValidationException::withMessages([$field => 'photo required']);
             }
         }
-        $this->validate([$field.'.*.*' => ['image', 'max:4096']]);
+        $this->validate([$field.'.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096']]);
     }
 
     protected function storeItemPhotos($item, array $files, string $kind, ?int $returnEventId = null): void
@@ -485,7 +485,7 @@ class Show extends Component
             'ei.*.item_name' => ['required', 'string', 'max:256'],
             'ei.*.qty' => ['required', 'integer', 'min:1'],
             'ei.*.return_qty' => ['nullable', 'integer', 'min:0'],
-            'ep.*.*.*' => ['image', 'max:4096'],
+            'ep.*.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
         $r = $this->record;

@@ -136,6 +136,28 @@ test('each partial receive returns the received qty to inventory stock', functio
     expect($inv->refresh()->quantity)->toBe(10);  // ຄືນ ຄົບ
 });
 
+test('legacy confirmReturn after a partial receive does not over-increment stock', function () {
+    enablePartial();
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    actingAs($admin);
+    $inv = InventoryItem::create(['slug' => 'mix', 'name' => 'Drill', 'quantity' => 10]);
+    $r = makeActiveBorrow($admin, [['item_id' => $inv->id, 'item_name' => 'Drill', 'qty' => 10]]);
+    expect($inv->refresh()->quantity)->toBe(0);   // confirmTake ຫັກ 10
+    $itemId = $r->items->first()->id;
+    $svc = app(BorrowService::class);
+
+    // ທະຍອຍ ຮັບ 4 → stock 4
+    $svc->transition($r, 'receiveReturn', $admin, ['receive' => [$itemId => 4]]);
+    expect($inv->refresh()->quantity)->toBe(4);
+
+    // ຈາກ ນັ້ນ ໃຊ້ ເສັ້ນ ທາງ ເກົ່າ confirmReturn (ຮັບ ສ່ວນ ທີ່ ເຫຼືອ) → stock ຕ້ອງ = 10 ບໍ່ ແມ່ນ 14
+    $svc->transition($r->refresh(), 'confirmReturn', $admin, ['return_qty' => [$itemId => 10]]);
+    $r->refresh()->load('items');
+    expect($inv->refresh()->quantity)->toBe(10)           // ບໍ່ over-increment
+        ->and($r->items->first()->return_qty)->toBe(10)
+        ->and($r->status)->toBe('returned');
+});
+
 test('the receive modal records an event with photos linked to that event', function () {
     Storage::fake('public');
     enablePartial();

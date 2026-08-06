@@ -149,9 +149,9 @@ class Show extends Component
             return;                                       // ຜິດ state — ບໍ່ ຂຽນ ຫຍັງ
         }
         $this->validate([
-            'photoDelivered' => ['nullable', 'image', 'max:5120'],
-            'photoHandover' => ['nullable', 'image', 'max:5120'],
-            'photoReceipt' => ['nullable', 'image', 'max:5120'],
+            'photoDelivered' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'photoHandover' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'photoReceipt' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         foreach (['delivered' => $this->photoDelivered, 'handover' => $this->photoHandover, 'receipt' => $this->photoReceipt] as $kind => $file) {

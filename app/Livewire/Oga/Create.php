@@ -105,9 +105,9 @@ class Create extends Component
             'items' => ['required', 'array', 'min:1'],
             'items.*.description' => ['required', 'string', 'max:500'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
-            'photoLoaded' => ['nullable', 'image', 'max:5120'],
-            'photoSealed' => ['nullable', 'image', 'max:5120'],
-            'photoPaperPli' => ['nullable', 'image', 'max:5120'],
+            'photoLoaded' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'photoSealed' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'photoPaperPli' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [], ['goods_consigned' => 'ສິນຄ້າ', 'ship_via' => 'ວິທີສົ່ງ']);
 
         $record = app(OgaService::class)->createDraft([

@@ -216,7 +216,7 @@ class Create extends Component
             'items.*.recommendation' => ['nullable', 'string', 'max:128'],
             'items.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
             'items.*.currency' => ['nullable', 'in:LAK,THB,USD'],
-            'photos.*.*' => ['image', 'max:8192'],
+            'photos.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
         ], [], ['title' => 'ຫົວຂໍ້', 'items.*.item_name' => 'ຊື່ເຄື່ອງ']);
 
         // ກັນ forged source_id: ຖ້າ ດຶງ ຈາກ ທະບຽນ, id ຕ້ອງ ມີ ຈິງ ຕາມ ປະເພດ — ບໍ່ ດັ່ງນັ້ນ

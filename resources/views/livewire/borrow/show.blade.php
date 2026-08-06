@@ -207,7 +207,7 @@
                 @if ($steps['approve'])<button wire:click="approve" class="text-white bg-sky-600 rounded px-3 py-1.5">Approve</button>@endif
                 <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">Reject/ຍົກເລີກ</button>
             @elseif ($record->status === 'approved')
-                <button wire:click="openTake" class="text-white bg-emerald-600 rounded px-3 py-1.5">ມອບເຄື່ອງ (confirmTake)</button>
+                <button wire:click="openTake" class="text-white bg-emerald-600 rounded px-3 py-1.5">ມອບເຄື່ອງ</button>
                 <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">ຍົກເລີກ</button>
             @elseif (in_array($record->status, ['active', 'overdue']))
                 {{-- step 1: ຜູ້ຢືມ ແຈ້ງສົ່ງຄືນ --}}
@@ -221,7 +221,7 @@
                     @if ($record->is_partially_returned)<span class="inline-flex items-center gap-1 text-xs bg-sky-50 text-sky-700 border border-sky-200 rounded px-2 py-1">📦 ຮັບຄືນ ບາງ ສ່ວນ ແລ້ວ · ຍັງ ຄ້າງ {{ $record->outstanding_qty }}</span>@endif
                     @if ($editable)<button wire:click="openReceive" class="text-white bg-sky-600 rounded px-3 py-1.5">📦 ທະຍອຍ ຮັບຄືນ (ຄ້າງ {{ $record->outstanding_qty }})</button>@endif
                 @else
-                    @if ($editable)<button wire:click="openReturn" class="text-white bg-sky-600 rounded px-3 py-1.5">✅ ຢືນຢັນຮັບຄືນ (confirmReturn)</button>@endif
+                    @if ($editable)<button wire:click="openReturn" class="text-white bg-sky-600 rounded px-3 py-1.5">✅ ຢືນຢັນຮັບຄືນ</button>@endif
                 @endif
             @else
                 <span class="text-gray-400">— ບໍ່ມີ action ({{ $record->status }})</span>
@@ -278,7 +278,7 @@
                         <div class="border border-gray-200 rounded-md p-3 space-y-2">
                             <div class="flex items-center justify-between">
                                 <div class="text-sm font-medium text-gray-700">{{ $it->item_name }} <span class="text-gray-400">/ ຢືມ {{ $it->qty }}</span></div>
-                                <label class="text-xs text-gray-500 flex items-center gap-1">ຄືນ <input type="number" min="0" max="{{ $it->qty }}" wire:model="returnQty.{{ $it->id }}" class="w-16 rounded-md border-gray-300 text-xs" /></label>
+                                <label class="text-xs text-gray-500 flex items-center gap-1">ຄືນ <input type="number" min="0" max="{{ $it->outstanding_qty }}" wire:model="returnQty.{{ $it->id }}" class="w-16 rounded-md border-gray-300 text-xs" /></label>
                             </div>
                             <input type="file" wire:model="returnPhotos.{{ $it->id }}" multiple accept="image/*" capture="environment" class="{{ $fileCls }}" />
                             <div wire:loading wire:target="returnPhotos.{{ $it->id }}" class="text-xs text-gray-400">ກຳລັງອັບ…</div>

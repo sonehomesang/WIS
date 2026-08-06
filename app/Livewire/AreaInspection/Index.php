@@ -146,9 +146,9 @@ class Index extends Component
             'checklist' => ['required', 'array', 'min:1'],
             'checklist.*.status' => ['required', 'in:C,NC,NA'],
             'checklist.*.observation' => ['nullable', 'string', 'max:500'],
-            'photos.*' => ['nullable', 'image', 'max:5120'],
+            'photos.*' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'overviewPhotos' => ['nullable', 'array', 'max:3'],
-            'overviewPhotos.*' => ['nullable', 'image', 'max:5120'],
+            'overviewPhotos.*' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [], ['checklist' => 'ເຊັກລິສ', 'overviewPhotos' => 'ຮູບ ພາບ ລວມ']);
 
         // ຕ້ອງ ມີ ສະຖານທີ່ (ເລືອກ ຫຼື ພິມ).

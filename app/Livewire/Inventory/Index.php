@@ -172,7 +172,7 @@ class Index extends Component
             'status' => ['required', 'in:available,borrowed,maintenance,low-stock'],
             'is_active' => ['boolean'],
             'newPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
-            'newPhotos.*' => ['image', 'max:4096'],
+            'newPhotos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
         if (count($this->existingPhotos) + count($this->newPhotos) > self::MAX_PHOTOS) {

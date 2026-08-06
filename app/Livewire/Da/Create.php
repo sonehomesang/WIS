@@ -88,9 +88,9 @@ class Create extends Component
             'discrepancy_types' => ['required', 'array', 'min:1'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.description' => ['required', 'string', 'max:500'],
-            'photoOverview' => ['nullable', 'image', 'max:5120'],
-            'photoDefect' => ['nullable', 'image', 'max:5120'],
-            'photoComparison' => ['nullable', 'image', 'max:5120'],
+            'photoOverview' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'photoDefect' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'photoComparison' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [], ['po_number' => 'PO number', 'discrepancy_types' => 'ປະເພດຄວາມຜິດ']);
 
         $record = app(DiscrepancyService::class)->createDraft([

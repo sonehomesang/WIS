@@ -52,8 +52,10 @@ class Index extends Component
     {
         abort_unless($this->canManageDeleted(), 403);
         $r = OutwardsGoodsAdvice::onlyTrashed()->find($id);
-        if ($r) {
-            $u = auth()->user();
+        $u = auth()->user();
+        // ກູ້ຄືນ ໄດ້ ສະເພາະ ໃບ ທີ່ ຢູ່ ໃນ scope ການ ເບິ່ງ ຂອງ ຕົນ (ກັນ IDOR ຂ້າມ ຜູ້ສະໜອງ).
+        $privileged = $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']);
+        if ($r && ($privileged || $r->supplier_id === $u->supplier_id)) {
             $r->restore();
             $r->forceFill(['deleted_reason' => null, 'deleted_by' => null])->save();
             $r->history()->create([

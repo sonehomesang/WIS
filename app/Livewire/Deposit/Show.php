@@ -228,7 +228,7 @@ class Show extends Component
                 throw ValidationException::withMessages([$field => 'photo required']);
             }
         }
-        $this->validate([$field.'.*.*' => ['image', 'max:4096']]);
+        $this->validate([$field.'.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096']]);
     }
 
     protected function storeItemPhotos($item, array $files, string $kind): void
@@ -321,7 +321,7 @@ class Show extends Component
             'ei.*.qty' => ['required', 'integer', 'min:1'],
             'ei.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
             'ei.*.currency' => ['nullable', 'in:LAK,THB,USD'],
-            'ep.*.*.*' => ['image', 'max:4096'],
+            'ep.*.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
         $r = $this->record;

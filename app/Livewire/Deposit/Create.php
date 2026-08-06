@@ -170,7 +170,7 @@ class Create extends Component
             'items.*.unit' => ['nullable', 'string', 'max:32'],
             'items.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
             'items.*.currency' => ['nullable', 'in:LAK,THB,USD'],
-            'photos.*.*' => ['image', 'max:4096'],
+            'photos.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ], [], ['item_category' => 'ປະເພດ', 'origin_source' => 'ແຫຼ່ງທີ່ມາ', 'deposit_reason' => 'ເຫດຜົນ', 'expected_duration' => 'ໄລຍະເວລາ']);
 
         // submit → ບັງຄັບ ≥1 ຮູບ ຕໍ່ລາຍການ (evidence)

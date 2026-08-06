@@ -70,6 +70,19 @@ class Index extends Component
         return $q->where('prepared_by_user_id', $u->id);
     }
 
+    /** ລຶບ/ກູ້ຄືນ ຕ້ອງ ຢູ່ ໃນ scope ດຽວ ກັບ ການ ເບິ່ງ — ກັນ dept/self-scoped ຈັດການ ໃບ ພະແນກ ອື່ນ (IDOR). */
+    protected function deleteGuard(Model $record): void
+    {
+        $u = auth()->user();
+        if ($u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff', 'approver', 'line_manager'])) {
+            return;
+        }
+        $ok = $u->hasRole('department_admin')
+            ? $record->department_id === $u->department_id
+            : $record->prepared_by_user_id === $u->id;
+        abort_unless($ok, 403);
+    }
+
     public function render(): View
     {
         $showingDeleted = $this->showDeleted && $this->canManageDeleted();

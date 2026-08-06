@@ -52,8 +52,10 @@ class Index extends Component
     {
         abort_unless($this->canManageDeleted(), 403);
         $r = DiscrepancyAdvice::onlyTrashed()->find($id);
-        if ($r) {
-            $u = auth()->user();
+        $u = auth()->user();
+        // ກູ້ຄືນ ໄດ້ ສະເພາະ ໃບ ທີ່ ຢູ່ ໃນ scope ການ ເບິ່ງ ຂອງ ຕົນ (ກັນ IDOR ຂ້າມ ເຈົ້າ ຂອງ).
+        $privileged = $u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff', 'approver', 'line_manager']);
+        if ($r && ($privileged || $r->raised_by === $u->id)) {
             $r->restore();
             $r->forceFill(['deleted_reason' => null, 'deleted_by' => null])->save();
             $r->history()->create([

@@ -371,7 +371,7 @@ class Maintenance extends Component
             'mNotes' => ['nullable', 'string', 'max:2000'],
             'mTemplateId' => ['nullable', 'exists:maintenance_templates,id'],
             'mPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
-            'mPhotos.*' => ['image', 'max:8192'],
+            'mPhotos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             // ຮູບ ຫຼື ຄລິບ ສັ້ນ (≤30MB) ຕໍ່ ຂໍ້
             'itemPhotoBefore.*' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif,mp4,mov,webm,3gp,m4v', 'max:30720'],
             'itemPhotoAfter.*' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif,mp4,mov,webm,3gp,m4v', 'max:30720'],
@@ -438,7 +438,12 @@ class Maintenance extends Component
         ];
 
         if ($this->editingId) {
-            EquipmentMaintenance::findOrFail($this->editingId)->update($attrs);
+            // ກວດ dept-scope ຂອງ record ທີ່ ກຳລັງ ແກ້ ເອງ — ກັນ ແກ້/ຍ້າຍ record ຂ້າມ ພະແນກ (IDOR).
+            $m = EquipmentMaintenance::with('equipment')->findOrFail($this->editingId);
+            if ($m->equipment) {
+                $this->guardDept($m->equipment);
+            }
+            $m->update($attrs);
         } else {
             $e->maintenances()->create($attrs + ['created_by' => auth()->id()]);
         }
