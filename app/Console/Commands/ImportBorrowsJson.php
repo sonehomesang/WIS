@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
  */
 class ImportBorrowsJson extends Command
 {
-    protected $signature = 'borrow:import-json {path} {--by= : fallback user id ສຳລັບ borrower ທີ່ບໍ່ພົບ}';
+    protected $signature = 'borrow:import-json {path} {--by= : fallback user id ສຳລັບ borrower ທີ່ບໍ່ພົບ} {--refresh : ອັບເດດ ໃບ ທີ່ ມີ ແລ້ວ (status/return/items) ແທນ ການ ຂ້າມ}';
 
     protected $description = 'Import borrow records from a WIS export JSON';
 
@@ -42,14 +42,28 @@ class ImportBorrowsJson extends Command
         $byEmail = User::query()->get(['id', 'email'])
             ->mapWithKeys(fn ($u) => [mb_strtolower($u->email) => $u->id])->all();
 
+        $refresh = (bool) $this->option('refresh');
         $imported = 0;
         $skipped = 0;
+        $refreshed = 0;
         $unmatched = 0;
 
         foreach ($rows as $rec) {
             $num = $rec['request_number'] ?? null;
-            if (! $num || BorrowRecord::where('request_number', $num)->exists()) {
+            if (! $num) {
                 $skipped++;
+
+                continue;
+            }
+            $existing = BorrowRecord::where('request_number', $num)->first();
+            if ($existing) {
+                // ໃບ ມີ ແລ້ວ: refresh mode → ອັບເດດ status/return/items · ບໍ່ ດັ່ງນັ້ນ → ຂ້າມ (idempotent).
+                if ($refresh) {
+                    $this->refreshRecord($existing, $rec);
+                    $refreshed++;
+                } else {
+                    $skipped++;
+                }
 
                 continue;
             }
@@ -60,9 +74,9 @@ class ImportBorrowsJson extends Command
                 $unmatched++;
             }
 
-            $borrowDate = $rec['borrow_date'] ?: ($rec['created_at'] ? Carbon::parse($rec['created_at'])->toDateString() : Carbon::today()->toDateString());
+            $borrowDate = ($rec['borrow_date'] ?? null) ?: (($rec['created_at'] ?? null) ? Carbon::parse($rec['created_at'])->toDateString() : Carbon::today()->toDateString());
             $period = (int) ($rec['period_days'] ?? 7) ?: 7;
-            $planned = $rec['planned_return_date'] ?: Carbon::parse($borrowDate)->addDays($period)->toDateString();
+            $planned = ($rec['planned_return_date'] ?? null) ?: Carbon::parse($borrowDate)->addDays($period)->toDateString();
 
             DB::transaction(function () use ($rec, $num, $uid, $email, $borrowDate, $period, $planned) {
                 $r = BorrowRecord::create([
@@ -76,7 +90,7 @@ class ImportBorrowsJson extends Command
                     'borrow_date' => $borrowDate,
                     'period_days' => $period,
                     'planned_return_date' => $planned,
-                    'actual_return_date' => $rec['actual_return_date'] ?: null,
+                    'actual_return_date' => ($rec['actual_return_date'] ?? null) ?: null,
                     'requires_acknowledge' => (bool) ($rec['requires_acknowledge'] ?? false),
                     'acknowledge_email' => $rec['acknowledge_email'] ?? null,
                     'acknowledge_name' => $rec['acknowledge_name'] ?? null,
@@ -127,9 +141,45 @@ class ImportBorrowsJson extends Command
         }
 
         $this->newLine();
-        $this->info("✓ Imported: {$imported} · Skipped: {$skipped} · borrower unmatched→fallback: {$unmatched}");
+        $this->info("✓ Imported: {$imported} · Refreshed: {$refreshed} · Skipped: {$skipped} · borrower unmatched→fallback: {$unmatched}");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * refresh mode — ອັບເດດ ໃບ ທີ່ ມີ ແລ້ວ ໃນ ບ່ອນ (ຮັກສາ id/ຮູບ/history ເດີມ):
+     * ສະຖານະ + ວັນ ຄືນ + ຕິກ ຮັບ + ຈຳນວນ/ສະພາບ ຄືນ ຕໍ່ ລາຍການ (ຈັບ ຄູ່ ຕາມ sort_order).
+     */
+    private function refreshRecord(BorrowRecord $r, array $rec): void
+    {
+        DB::transaction(function () use ($r, $rec) {
+            $r->fill([
+                'status' => $rec['status'] ?? $r->status,
+                'actual_return_date' => ($rec['actual_return_date'] ?? null) ?: $r->actual_return_date,
+                'returned_at' => $rec['returned_at'] ?? $r->returned_at,
+                'taken_at' => $rec['taken_at'] ?? $r->taken_at,
+                'acknowledged_at' => $rec['acknowledged_at'] ?? $r->acknowledged_at,
+                'approved_at' => $rec['approved_at'] ?? $r->approved_at,
+                'warehouse_staff_name' => $rec['warehouse_staff_name'] ?? $r->warehouse_staff_name,
+                'updated_by' => auth()->id() ?? $r->updated_by,
+            ])->save();
+
+            $items = $r->items()->orderBy('sort_order')->orderBy('id')->get();
+            foreach (array_values($rec['items'] ?? []) as $i => $it) {
+                $item = $items[$i] ?? null;
+                if ($item) {
+                    $item->update([
+                        'return_qty' => isset($it['return_qty']) ? (int) $it['return_qty'] : $item->return_qty,
+                        'condition_on_take' => $it['condition_on_take'] ?? $item->condition_on_take,
+                        'condition_on_return' => $it['condition_on_return'] ?? $item->condition_on_return,
+                    ]);
+                }
+            }
+
+            DB::table('borrow_records')->where('id', $r->id)->update([
+                'updated_at' => $this->dt($rec['updated_at'] ?? null) ?? now(),
+            ]);
+        });
     }
 
     /** ISO/date string → MySQL datetime (null-safe). */
