@@ -3,7 +3,7 @@
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
              class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2 sticky top-16 z-30 bg-gray-100 py-1">
             <a href="{{ route('equipment') }}" wire:navigate class="text-sm text-gray-500 hover:text-gray-700">← ກັບ ໄປ ທະບຽນ ເຄື່ອງ</a>
             <div class="flex-1"></div>
             @if ($canManageDeleted)
@@ -14,9 +14,9 @@
             <button wire:click="newCategory" class="text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700" @if ($showDeleted) style="display:none" @endif>+ ປະເພດ ໃໝ່</button>
         </div>
 
-        <div class="bg-white border border-gray-100 rounded-lg overflow-hidden">
+        <div class="bg-white border border-gray-100 rounded-lg overflow-x-hidden overflow-y-auto max-h-[calc(100vh-16rem)]">
             <table class="w-full text-sm">
-                <thead class="bg-gray-50 text-gray-600 text-xs border-b border-gray-200">
+                <thead class="sticky top-0 z-10 bg-gray-50 text-gray-600 text-xs border-b border-gray-200 shadow-sm">
                     <tr>
                         <th class="text-left px-3 py-2 font-semibold w-16">ລຳດັບ</th>
                         <th class="text-left px-3 py-2 font-semibold">ຊື່ ປະເພດ</th>

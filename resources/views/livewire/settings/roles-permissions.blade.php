@@ -70,11 +70,11 @@
                 </div>
 
                 {{-- Permission matrix --}}
-                <div class="bg-white border border-gray-100 rounded-lg overflow-x-auto">
+                <div class="bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-18rem)]">
                     <table class="w-full text-sm">
-                        <thead class="bg-gray-50 text-gray-500">
+                        <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm">
                             <tr>
-                                <th class="text-left font-medium px-3 py-2">Menu</th>
+                                <th class="text-left font-semibold px-3 py-2">Menu</th>
                                 @foreach ($actions as $a)
                                     <th class="font-medium px-2 py-2 text-center capitalize" style="width:64px;">{{ $a }}</th>
                                 @endforeach

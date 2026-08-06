@@ -29,11 +29,11 @@
                 <span class="text-xs text-gray-400">ໜ້າ {{ $repPage }}/{{ $repPages }} · ທັງໝົດ {{ $repTotal }} ຄຳ</span>
             </div>
 
-            <div class="bg-white border border-gray-100 rounded-lg overflow-x-auto">
+            <div class="bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-20rem)]">
                 <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50 text-gray-500 text-xs">
+                    <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm text-xs">
                         <tr>
-                            <th class="text-left px-3 py-2 font-medium">ໝວດ</th>
+                            <th class="text-left px-3 py-2 font-semibold">ໝວດ</th>
                             <th class="text-left px-3 py-2 font-medium w-2/5">ຄຳ ເດີມ (ໃນແອັບ)</th>
                             <th class="text-left px-3 py-2 font-medium w-2/5">ແກ້ເປັນ →</th>
                             <th class="text-center px-3 py-2 font-medium">ໃຊ້</th>

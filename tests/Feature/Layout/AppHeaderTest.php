@@ -14,7 +14,7 @@ test('inventory page renders global header: dynamic title + role badge + user me
         ->assertOk()
         ->assertSee('WH Inventories') // dynamic page title (left)
         ->assertSee('Super Admin')    // role badge (user menu)
-        ->assertSee('Log Out');       // user dropdown
+        ->assertSee('ອອກ ຈາກ ລະບົບ');       // user dropdown
 });
 
 test('user menu appears on every page (dashboard too)', function () {
@@ -22,5 +22,5 @@ test('user menu appears on every page (dashboard too)', function () {
 
     $this->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Log Out');
+        ->assertSee('ອອກ ຈາກ ລະບົບ');
 });

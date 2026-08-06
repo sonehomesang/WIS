@@ -17,11 +17,11 @@
             <button wire:click="export" class="ml-auto text-sm text-gray-700 border border-gray-200 rounded-md px-3 py-1.5 hover:bg-gray-50">⬇ Export CSV</button>
         </div>
 
-        <div class="bg-white border border-gray-100 rounded-lg overflow-hidden">
+        <div class="bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-16rem)]">
             <table class="min-w-full text-sm">
-                <thead class="bg-gray-50 text-gray-500 text-xs">
+                <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm text-xs">
                     <tr>
-                        <th class="text-left px-3 py-2 font-medium">ຜູ້ຮັບ</th>
+                        <th class="text-left px-3 py-2 font-semibold">ຜູ້ຮັບ</th>
                         <th class="text-left px-3 py-2 font-medium">ປະເພດ</th>
                         <th class="text-left px-3 py-2 font-medium">ຫົວຂໍ້ / ຂໍ້ຄວາມ</th>
                         <th class="text-left px-3 py-2 font-medium">ອ່ານ</th>
