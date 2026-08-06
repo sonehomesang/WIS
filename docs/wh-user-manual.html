@@ -60,7 +60,7 @@
   <nav><div class="row">
     <a href="#overview">ພາບ ລວມ</a><a href="#dashboard">Dashboard</a><a href="#inventory">Inventory</a>
     <a href="#borrow">ຢືມ</a><a href="#deposit">ຝາກ</a><a href="#request">ເບີກ</a><a href="#equipment">ເຄື່ອງມື</a>
-    <a href="#disposal">ຈຳໜ່າຍ</a><a href="#da">DA/OGA</a><a href="#catalog">Catalog/Expo</a>
+    <a href="#area-inspection">ກວດ ສະຖານທີ່</a><a href="#disposal">ຈຳໜ່າຍ</a><a href="#da">DA/OGA</a><a href="#catalog">Catalog/Expo</a>
     <a href="#settings">Settings</a><a href="#roles">ສິດ</a><a href="#patterns">ຮູບແບບ ຮ່ວມ</a>
   </div></nav>
 
@@ -110,7 +110,7 @@
     <div class="flow"><span class="step">ຮ່າງ</span><span class="arrow">→</span><span class="step">ຮັບຊາບ (Line manager)</span><span class="arrow">→</span><span class="step">ອະນຸມັດ (Approver)</span><span class="arrow">→</span><span class="step">ມອບ ເຄື່ອງ</span><span class="arrow">→</span><span class="step">ໃຊ້ງານ</span><span class="arrow">→</span><span class="step end">ສົ່ງ ຄືນ</span></div>
     <h3>ໃຜ ໃຊ້</h3><div class="roles"><span class="role">requester (ຢືມ)</span><span class="role">line_manager</span><span class="role">approver</span><span class="role">warehouse_staff (ມອບ/ຮັບ)</span></div>
     <h3>ຄຸນ ສົມບັດ</h3>
-    <ul class="feat"><li>ຖ່າຍ ຮູບ ສະພາບ ຕອນ <b>ມອບ</b> ແລະ ຕອນ <b>ຮັບ ຄືນ</b></li><li><b>ຂໍ ຕໍ່ ເວລາ</b> · ແຈ້ງ ເຕືອນ ໃກ້ ຄົບ ກຳນົດ (overdue)</li><li>PDF / JPG · ລິສ ຢູ່ ມືຖື swipe ເບິ່ງ ຄໍລັມ</li></ul>
+    <ul class="feat"><li>ຖ່າຍ ຮູບ ສະພາບ ຕອນ <b>ມອບ</b> ແລະ ຕອນ <b>ຮັບ ຄືນ</b> (ຝັງ ວັນທີ+ເວລາ)</li><li><b>ຂໍ ຕໍ່ ເວລາ</b> · ແຈ້ງ ເຕືອນ ໃກ້ ຄົບ ກຳນົດ (overdue)</li><li><b>ທະຍອຍ ຮັບ ຄືນ</b> (ທາງ ເລືອກ · ເປີດ ໃນ Settings) — ໃບ ຢືມ ຫຼາຍ ລາຍການ ຮັບ ຄືນ ເປັນ ຄັ້ງ/ລາຍການ ໄດ້, ໃບ ຄ້າງ ຈົນ ຄືນ ຄົບ, ມີ ປະຫວັດ ແຕ່ ລະ ຄັ້ງ</li><li>PDF / JPG · ລິສ ຢູ່ ມືຖື swipe ເບິ່ງ ຄໍລັມ</li></ul>
   </section>
 
   <section id="deposit">
@@ -144,6 +144,20 @@
     <h3>ຮັບຊາບ (Manager sign-off)</h3>
     <div class="flow"><span class="step">ຜູ້ ກວດ/ຊ່າງ ເຮັດ</span><span class="arrow">→</span><span class="step end">Manager/Leader ຮັບຊາບ</span></div>
     <ul class="feat"><li>ຊື່+ວັນທີ ຜູ້ ຮັບຊາບ ຂຶ້ນ ໃນ ຫ້ອງ ລາຍເຊັນ PDF ອັດຕະໂນມັດ</li><li>PDF ໃບ ກວດ + ໃບ ບຳລຸງ (SCU-WID header)</li></ul>
+  </section>
+
+  <section id="area-inspection">
+    <div class="mh"><span class="ic" style="background:var(--ok2)">🏭</span><div><h2>ກວດ ສະຖານທີ່ — Area Inspection</h2><span class="en">Workplace / Area Inspection · NEW</span></div></div>
+    <p class="purpose">ກວດ ຄວາມ ປອດໄພ/ຄວາມ ຮຽບຮ້ອຍ ຂອງ ສະຖານທີ່ ເຮັດ ວຽກ ຕາມ ເຊັກລິສ — ປະຈຳ ວັນ/ອາທິດ/ເດືອນ, ໝາຍ ຜົນ C/NC/NA ຕໍ່ ຂໍ້.</p>
+    <h3>ໃຜ ໃຊ້</h3><div class="roles"><span class="role">warehouse_staff</span><span class="role">admin</span><span class="role">manager (ຮັບຊາບ)</span></div>
+    <h3>2 ແທັບ</h3>
+    <ul class="feat">
+      <li><b>ບັນທຶກ ການ ກວດ</b> — ເລືອກ ແມ່ແບບ → ໝາຍ <b>C</b> (ຜ່ານ) / <b>NC</b> (ບໍ່ ຜ່ານ) / <b>NA</b> (ບໍ່ ກ່ຽວ) ຕໍ່ ຂໍ້ · ຮູບ ຫຼັກຖານ ໂຜ່ <b>ສະເພາະ ຂໍ້ NC</b> · ຮູບ ພາບ ລວມ ຂອງ ສະຖານທີ່ (ຝັງ ວັນທີ+ເວລາ · ກ້ອງ/ແກເລີຣີ)</li>
+      <li><b>ແມ່ແບບ ເຊັກລິສ</b> — ສ້າງ/ແກ້ ເຊັກລິສ ເອງ (ຊື່ + ຮອບ + ລາຍການ ກວດ + ເງື່ອນໄຂ) · ເປີດ/ປິດ ໃຊ້ງານ</li>
+    </ul>
+    <h3>ຮັບຊາບ + PDF</h3>
+    <div class="flow"><span class="step">ຜູ້ ກວດ ບັນທຶກ</span><span class="arrow">→</span><span class="step end">Manager/Leader ຮັບຊາບ</span></div>
+    <ul class="feat"><li>ຜົນ ລວມ: ຜ່ານ (compliant) ຫຼື ມີ NC · ວັນ ກວດ ຄັ້ງ ໜ້າ ຄິດ ອັດຕະໂນມັດ ຕາມ ຮອບ</li><li>PDF ໃບ ກວດ (SCU-WID) — ຜູ້ ກວດ + ຜູ້ ຮັບຊາບ + ຮູບ ພາບ ລວມ/ຫຼັກຖານ NC</li></ul>
   </section>
 
   <section id="disposal">
@@ -186,7 +200,7 @@
     <p class="purpose">ບໍລິຫານ ຜູ້ໃຊ້, ສິດ, ໂຄງສ້າງ ອົງກອນ ແລະ ຄ່າ ລະບົບ (super_admin / admin).</p>
     <table class="rt"><tbody>
       <tr><td><b>Users</b></td><td>ຜູ້ໃຊ້ + role + ພະແນກ · approve/lock · ຕັ້ງ ລະຫັດ ຊົ່ວຄາວ · ໃຫ້ ສິດ ຕໍ່ ບຸກຄົນ</td></tr>
-      <tr><td><b>Roles &amp; permissions</b></td><td>RBAC — 21 menus × 6 actions + scope (ແກ້ ໄດ້ ໂດຍ super_admin)</td></tr>
+      <tr><td><b>Roles &amp; permissions</b></td><td>RBAC — 24 menus × 6 actions + scope (ແກ້ ໄດ້ ໂດຍ super_admin)</td></tr>
       <tr><td><b>Organization</b></td><td>ໜ່ວຍງານ (Units) → ພະແນກ (Departments) · ລຶບ-ເຫດຜົນ</td></tr>
       <tr><td><b>Facilities</b></td><td>ບ່ອນຕັ້ງ → ອາຄານ → ຫ້ອງ · ລຶບ-ເຫດຜົນ</td></tr>
       <tr><td><b>UoM · Suppliers</b></td><td>ໜ່ວຍ ວັດ · ຮ້ານ supplier</td></tr>
