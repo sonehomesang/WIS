@@ -189,8 +189,9 @@ class Index extends Component
 
         $hasNc = collect($items)->contains(fn ($x) => $x['status'] === 'NC');
 
-        AreaInspection::create([
-            'inspection_number' => $this->nextNumber(),
+        \Illuminate\Support\Facades\DB::transaction(function () use ($label, $items, $overview, $hasNc) {
+            AreaInspection::create([
+                'inspection_number' => $this->nextNumber(),
             'template_id' => $this->fTemplateId,
             'location_id' => $this->fLocationId,
             'location_label' => $label,
@@ -205,7 +206,8 @@ class Index extends Component
             'notes' => $this->fNotes ?: null,
             'created_by' => auth()->id(),
             'updated_by' => auth()->id(),
-        ]);
+            ]);
+        });
 
         $this->showForm = false;
         session()->flash('ok', '✓ ບັນທຶກ ໃບ ກວດ ສະຖານທີ່ ແລ້ວ');
@@ -238,7 +240,7 @@ class Index extends Component
                 imagejpeg($img, null, 85);
                 $bytes = ob_get_clean();
                 imagedestroy($img);
-                $path = rtrim($dir, '/').'/'.uniqid('ai_').'.jpg';
+                $path = rtrim($dir, '/').'/ai_'.\Illuminate\Support\Str::random(32).'.jpg';
                 Storage::disk('public')->put($path, $bytes);
 
                 return $path;
@@ -358,7 +360,7 @@ class Index extends Component
     {
         $year = now()->year;
         $prefix = "AI{$year}-";
-        $max = AreaInspection::withTrashed()->where('inspection_number', 'like', $prefix.'%')->max('inspection_number');
+        $max = AreaInspection::withTrashed()->where('inspection_number', 'like', $prefix.'%')->lockForUpdate()->max('inspection_number');
         $seq = $max ? ((int) substr($max, strlen($prefix))) + 1 : 1;
 
         return $prefix.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);

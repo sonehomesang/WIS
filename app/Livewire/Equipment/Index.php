@@ -876,7 +876,7 @@ class Index extends Component
                 imagejpeg($img, null, 85);
                 $bytes = ob_get_clean();
                 imagedestroy($img);
-                $path = rtrim($dir, '/').'/'.uniqid('ins_').'.jpg';
+                $path = rtrim($dir, '/').'/ins_'.\Illuminate\Support\Str::random(32).'.jpg';
                 Storage::disk('public')->put($path, $bytes);
 
                 return $path;

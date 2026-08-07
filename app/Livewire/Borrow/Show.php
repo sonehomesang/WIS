@@ -430,7 +430,7 @@ class Show extends Component
                 imagejpeg($img, null, 85);
                 $bytes = ob_get_clean();
                 imagedestroy($img);
-                $path = rtrim($dir, '/').'/'.uniqid('bw_').'.jpg';
+                $path = rtrim($dir, '/').'/bw_'.\Illuminate\Support\Str::random(32).'.jpg';
                 Storage::disk('public')->put($path, $bytes);
 
                 return $path;
