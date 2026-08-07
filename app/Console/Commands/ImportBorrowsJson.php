@@ -20,6 +20,9 @@ class ImportBorrowsJson extends Command
 
     protected $description = 'Import borrow records from a WIS export JSON';
 
+    /** ສະຖານະ ທີ່ ຮັບ ໄດ້ (whitelist ກັນ ຄ່າ ນອກ state-machine ຈາກ JSON). */
+    private const STATUSES = ['draft', 'acknowledged', 'approved', 'active', 'overdue', 'returned', 'cancelled'];
+
     public function handle(): int
     {
         $path = $this->argument('path');
@@ -101,7 +104,7 @@ class ImportBorrowsJson extends Command
                     'warehouse_staff_name' => $rec['warehouse_staff_name'] ?? null,
                     'taken_at' => $rec['taken_at'] ?? null,
                     'returned_at' => $rec['returned_at'] ?? null,
-                    'status' => $rec['status'] ?? 'draft',
+                    'status' => in_array($rec['status'] ?? '', self::STATUSES, true) ? $rec['status'] : 'draft',
                     'cancel_reason' => $rec['cancel_reason'] ?? null,
                     'created_by' => $uid,
                     'updated_by' => $uid,
@@ -154,7 +157,7 @@ class ImportBorrowsJson extends Command
     {
         DB::transaction(function () use ($r, $rec) {
             $r->fill([
-                'status' => $rec['status'] ?? $r->status,
+                'status' => in_array($rec['status'] ?? '', self::STATUSES, true) ? $rec['status'] : $r->status,
                 'actual_return_date' => ($rec['actual_return_date'] ?? null) ?: $r->actual_return_date,
                 'returned_at' => $rec['returned_at'] ?? $r->returned_at,
                 'taken_at' => $rec['taken_at'] ?? $r->taken_at,

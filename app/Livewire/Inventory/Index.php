@@ -241,7 +241,7 @@ class Index extends Component
         abort_unless(auth()->user()->can('inventory.create'), 403);
 
         $this->validate(
-            ['csvFile' => ['required', 'file', 'max:25600']],
+            ['csvFile' => ['required', 'file', 'mimes:csv,txt', 'max:25600']],
             [],
             ['csvFile' => 'ໄຟລ໌ CSV']
         );

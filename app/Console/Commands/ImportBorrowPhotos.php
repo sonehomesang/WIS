@@ -63,8 +63,10 @@ class ImportBorrowPhotos extends Command
                 continue;
             }
 
-            $src = $dir.'/'.$e['file'];
-            if (! is_file($src)) {
+            // ກັນ path-traversal ຜ່ານ manifest 'file' — confine ຢູ່ ໃນ $dir (ອະນຸຍາດ subdir ຖືກ ຕ້ອງ).
+            $base = realpath($dir);
+            $src = realpath($dir.'/'.(string) ($e['file'] ?? ''));
+            if (! $src || ! $base || ! str_starts_with($src, $base.DIRECTORY_SEPARATOR) || ! is_file($src)) {
                 $missing++;
 
                 continue;

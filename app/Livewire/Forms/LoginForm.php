@@ -32,6 +32,7 @@ class LoginForm extends Form
 
         if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
             RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->accountKey());
 
             throw ValidationException::withMessages([
                 'form.email' => trans('auth.failed'),
@@ -43,6 +44,7 @@ class LoginForm extends Form
             $status = Auth::user()->status;
             Auth::logout();
             RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->accountKey());
 
             throw ValidationException::withMessages([
                 'form.email' => $status === 'pending'
@@ -52,34 +54,41 @@ class LoginForm extends Form
         }
 
         RateLimiter::clear($this->throttleKey());
+        RateLimiter::clear($this->accountKey());
     }
 
     /**
      * Ensure the authentication request is not rate limited.
+     * per-(email+IP) = 5 · per-account across ALL IPs = 10 (ກັນ distributed password-spray).
      */
     protected function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
-            return;
+        foreach ([$this->throttleKey() => 5, $this->accountKey() => 10] as $key => $max) {
+            if (! RateLimiter::tooManyAttempts($key, $max)) {
+                continue;
+            }
+
+            event(new Lockout(request()));
+            $seconds = RateLimiter::availableIn($key);
+
+            throw ValidationException::withMessages([
+                'form.email' => trans('auth.throttle', [
+                    'seconds' => $seconds,
+                    'minutes' => ceil($seconds / 60),
+                ]),
+            ]);
         }
-
-        event(new Lockout(request()));
-
-        $seconds = RateLimiter::availableIn($this->throttleKey());
-
-        throw ValidationException::withMessages([
-            'form.email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
-        ]);
     }
 
-    /**
-     * Get the authentication rate limiting throttle key.
-     */
+    /** per-(email+IP) throttle key. */
     protected function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->email).'|'.request()->ip());
+    }
+
+    /** per-account throttle key (email only, across all IPs). */
+    protected function accountKey(): string
+    {
+        return 'acct:'.Str::transliterate(Str::lower($this->email));
     }
 }

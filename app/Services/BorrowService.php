@@ -237,7 +237,8 @@ class BorrowService
         $this->assert(in_array($r->status, ['active', 'overdue'], true), 'confirmReturn ໄດ້ສະເພາະ active.');
         $returnQtys = $opts['return_qty'] ?? []; // [borrow_item_id => qty]
         if ($r->borrow_type === 'new_inventory') {
-            foreach ($r->items as $it) {
+            // lockForUpdate: serialize ການ ຮັບຄືນ ພ້ອມ ກັນ (ກັນ stock double-increment ຈາກ race).
+            foreach ($r->items()->lockForUpdate()->get() as $it) {
                 // ນັບ ຕໍ່ ຈາກ ທີ່ ຮັບ ໄປ ແລ້ວ (ກໍລະນີ ເຄີຍ ທະຍອຍ ຮັບ) — ຄືນ stock ສະເພາະ ສ່ວນ ໃໝ່,
                 // clamp ໃຫ້ ບໍ່ ເກີນ ຈຳນວນ ທີ່ ຢືມ (ກັນ over-increment ຈາກ ຄ່າ ຜິດ/ປອມ ຫຼື ຮັບ ຊ້ຳ).
                 $already = (int) ($it->return_qty ?? 0);
@@ -272,10 +273,11 @@ class BorrowService
         $receive = $opts['receive'] ?? [];
         $conditions = $opts['conditions'] ?? [];
 
-        // clamp ແຕ່ ລະ ລາຍການ ໃຫ້ ບໍ່ ເກີນ ຈຳນວນ ທີ່ ຍັງ ຄ້າງ.
+        // lockForUpdate: serialize ການ ຮັບ ພ້ອມ ກັນ (ກັນ race) · clamp ໃຫ້ ບໍ່ ເກີນ ຈຳນວນ ທີ່ ຍັງ ຄ້າງ.
+        $items = $r->items()->lockForUpdate()->get()->keyBy('id');
         $plan = [];
         $total = 0;
-        foreach ($r->items as $it) {
+        foreach ($items as $it) {
             $outstanding = max(0, (int) $it->qty - (int) ($it->return_qty ?? 0));
             $q = max(0, min($outstanding, (int) ($receive[$it->id] ?? 0)));
             if ($q > 0) {
@@ -299,7 +301,7 @@ class BorrowService
             $event->lines()->create([
                 'borrow_item_id' => $itemId, 'qty' => $ln['qty'], 'condition' => $ln['condition'],
             ]);
-            $it = $r->items->firstWhere('id', $itemId);
+            $it = $items[$itemId];
             $it->return_qty = (int) ($it->return_qty ?? 0) + $ln['qty'];
             if ($ln['condition']) {
                 $it->condition_on_return = $ln['condition'];
@@ -313,7 +315,7 @@ class BorrowService
         $r->borrower_return_ack = true;
 
         // ຄືນ ຄົບ ທຸກ ລາຍການ ແລ້ວ ບໍ → ປິດ ໃບ.
-        $stillOut = $r->items->sum(fn ($i) => max(0, (int) $i->qty - (int) ($i->return_qty ?? 0)));
+        $stillOut = $items->sum(fn ($i) => max(0, (int) $i->qty - (int) ($i->return_qty ?? 0)));
         if ($stillOut === 0) {
             $r->status = 'returned';
             $r->returned_at = now();
