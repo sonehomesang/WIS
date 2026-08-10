@@ -32,3 +32,18 @@ Thumbs.db
 
 # Security audit report — kept local only (contains vulnerability detail); do not commit
 /docs/wh-security-audit-report.html
+
+# ── Team policy: document deliverables stay LOCAL only, never on GitHub ──
+# (.md .doc .docx .html .ppt .pptx .pdf under docs/ + root deploy/import guides)
+/docs/*.html
+/docs/*.pdf
+/docs/*.docx
+/docs/*.doc
+/docs/*.ppt
+/docs/*.pptx
+/docs/*.md
+/docs/UAT/
+/DEPLOY.html
+/DEPLOY.md
+/DB_IMPORT_GUIDE.html
+/readme/
