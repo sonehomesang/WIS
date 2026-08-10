@@ -1,239 +1,297 @@
+<meta charset="utf-8">
+<title>WH — Software Development, Testing, Security & Deployment Procedure (SCU-WID-SOP-WH-001)</title>
 <style>
-  @page { size: A4; margin: 20mm 16mm; }
   :root{
-    --ink:#1a2230;--soft:#455065;--faint:#8b95a7;--line:#d9dee6;--line2:#eef1f5;
-    --brand:#1e3a5f;--brand2:#eaf0f7;--brandink:#274b78;--accent:#0369a1;
-    --ok:#15803d;--ok2:#e7f4ec;--amber:#b45309;--amber2:#fdf3e3;--red:#b91c1c;--red2:#fdecec;
-    --sans:'Phetsarath OT','Noto Sans Lao',-apple-system,'Segoe UI',Roboto,sans-serif;
-    --mono:'SFMono-Regular',Consolas,monospace;
+    --brand:#1e3a5f; --brand-ink:#274b78; --ink:#1a2230; --soft:#455065;
+    --faint:#8b95a7; --line:#d9dee6; --zebra:#f5f8fb; --chip:#eaf0f7;
+    --amber-bg:#fdf3e3; --amber-bar:#b45309; --headbg:#1e3a5f;
   }
-  *{box-sizing:border-box;}
-  .doc{font-family:var(--sans);color:var(--ink);line-height:1.6;font-size:13.5px;max-width:900px;margin:0 auto;padding:0 14px 60px;background:#fff;}
-  .cover{text-align:center;padding:8px 0 4px;border-bottom:3px solid var(--brand);margin-bottom:6px;}
-  .cover .org{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--brandink);font-weight:700;}
-  .cover .code{font-size:22px;font-weight:800;color:var(--brand);letter-spacing:1px;margin-top:2px;}
-  .cover h1{font-size:19px;margin:3px 0 1px;color:var(--ink);}
-  .cover .en{font-size:13px;color:var(--soft);font-weight:400;}
-  table.ctrl{width:100%;border-collapse:collapse;font-size:11.5px;margin:10px 0 4px;}
-  table.ctrl td{border:1px solid var(--line);padding:4px 7px;vertical-align:top;}
-  table.ctrl .k{background:var(--brand2);font-weight:700;color:var(--brandink);white-space:nowrap;width:120px;}
-  .sig{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--line);border-top:none;font-size:11px;}
-  .sig div{padding:6px 8px;border-right:1px solid var(--line);}
-  .sig div:last-child{border-right:none;}
-  .sig .role{color:var(--faint);text-transform:uppercase;letter-spacing:.04em;font-size:9.5px;}
-  .sig .name{height:34px;}
-  h2.sec{font-size:15px;color:var(--brand);border-bottom:1.5px solid var(--brand2);padding-bottom:3px;margin:20px 0 6px;}
-  h2.sec .en{color:var(--faint);font-weight:400;font-size:12px;}
-  h3.sub{font-size:13px;color:var(--brandink);margin:12px 0 3px;}
-  h3.sub .en{color:var(--faint);font-weight:400;font-size:11px;}
-  p{margin:.35rem 0;color:var(--soft);} p b,li b{color:var(--ink);}
-  .lo{color:var(--ink);} .en-p{color:var(--soft);font-size:12.5px;}
-  ul,ol{margin:.3rem 0;padding-left:1.25rem;} li{margin:.25rem 0;color:var(--soft);}
-  table.t{width:100%;border-collapse:collapse;font-size:11.5px;margin:6px 0;}
-  table.t th{background:var(--brand);color:#fff;text-align:left;padding:5px 7px;font-weight:600;font-size:11px;}
-  table.t td{border:1px solid var(--line);padding:5px 7px;vertical-align:top;color:var(--soft);}
-  table.t td b{color:var(--ink);} table.t tr:nth-child(even) td{background:#f8fafc;}
-  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem;margin:.4rem 0;}
-  .chip{font-size:10.5px;font-weight:600;padding:.15rem .5rem;border-radius:5px;background:var(--brand2);color:var(--brandink);white-space:nowrap;}
-  .chip.end{background:var(--ok2);color:var(--ok);} .chip.stop{background:var(--red2);color:var(--red);}
-  .arr{color:var(--faint);}
-  .mod{border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin:9px 0;break-inside:avoid;}
-  .mod h3{margin-top:0;}
-  .note{background:var(--amber2);border-left:3px solid var(--amber);padding:6px 10px;font-size:12px;margin:8px 0;border-radius:0 5px 5px 0;}
-  .foot{text-align:center;color:var(--faint);font-size:10px;margin-top:24px;border-top:1px solid var(--line);padding-top:6px;}
-  code{font-family:var(--mono);font-size:.88em;background:#f1f5f9;padding:.02rem .3rem;border-radius:3px;}
+  *{box-sizing:border-box}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{
+    font-family:"Phetsarath OT","Noto Sans Lao","Segoe UI",sans-serif;
+    color:var(--ink); margin:0; background:#eef1f5; font-size:13.5px; line-height:1.6;
+  }
+  .page{
+    background:#fff; width:210mm; min-height:297mm; margin:14px auto; padding:20mm 18mm 22mm;
+    box-shadow:0 2px 14px rgba(20,34,48,.12); position:relative;
+  }
+  /* ── cover ── */
+  .org{text-align:center;font-weight:700;color:var(--brand-ink);letter-spacing:.06em;font-size:12px;text-transform:uppercase}
+  .mark{text-align:center;font-weight:800;color:var(--brand);font-size:40px;letter-spacing:.04em;
+        border-bottom:3px solid var(--brand);padding-bottom:8px;margin:2px 0 14px}
+  .doctitle-lo{text-align:center;font-weight:700;color:var(--ink);font-size:22px;margin:4px 0}
+  .doctitle-en{text-align:center;color:var(--soft);font-size:15px;margin:0 0 20px}
+  table{border-collapse:collapse;width:100%}
+  .ctrl td{border:1px solid var(--line);padding:7px 10px;font-size:12.5px;vertical-align:top}
+  .ctrl .k{background:#f0f4f9;font-weight:700;color:var(--brand-ink);width:20%}
+  .sign{margin-top:12px}
+  .sign td{border:1px solid var(--line);padding:10px 12px 34px;font-size:12px;color:var(--faint);width:33.33%;vertical-align:top}
+  /* ── contents ── */
+  h2.contents{font-size:26px;text-align:center;color:var(--ink);font-weight:800;margin:0 0 18px}
+  .toc a{display:flex;align-items:baseline;text-decoration:none;color:var(--soft);padding:3px 0;font-size:13px}
+  .toc a.l1{font-weight:700;color:var(--brand-ink);margin-top:8px}
+  .toc a.l2{padding-left:20px}
+  .toc a.l3{padding-left:40px;font-size:12.5px;color:var(--faint)}
+  .toc .t{white-space:nowrap;overflow:hidden}
+  .toc .dots{flex:1;border-bottom:1px dotted #c4ccd8;margin:0 6px;transform:translateY(-3px)}
+  .toc .pg{color:var(--faint);font-variant-numeric:tabular-nums}
+  /* ── body ── */
+  h1{font-size:20px;color:var(--brand);font-weight:800;margin:26px 0 10px;padding-bottom:6px;
+     border-bottom:2px solid #c9d6e5;display:flex;align-items:baseline;gap:12px}
+  h1 .en{color:var(--faint);font-size:15px;font-weight:600}
+  h1 .num{color:var(--brand);font-size:20px}
+  h2{font-size:16px;color:var(--brand-ink);font-weight:700;margin:20px 0 4px;display:flex;align-items:baseline;gap:10px}
+  h2 .en{color:var(--faint);font-size:13px;font-weight:500}
+  h3{font-size:13.5px;color:var(--ink);font-weight:700;margin:14px 0 3px}
+  h3 .en{color:var(--faint);font-weight:500;font-size:12px}
+  p{margin:2px 0 6px}
+  p.lo{color:var(--ink)}
+  p.en{color:var(--soft);font-size:12.5px;margin-bottom:10px}
+  ul{margin:4px 0 10px;padding-left:20px}
+  li{margin:4px 0;color:var(--soft)}
+  li b{color:var(--ink)}
+  .flow{margin:6px 0 10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .flow .step{background:var(--chip);color:var(--brand-ink);font-weight:700;font-size:12px;
+              padding:4px 10px;border-radius:5px}
+  .flow .arw{color:var(--faint);font-weight:700}
+  .tbl{margin:8px 0 12px}
+  .tbl th{background:var(--headbg);color:#fff;text-align:left;padding:7px 10px;font-size:12px;font-weight:700}
+  .tbl td{border:1px solid var(--line);padding:6px 10px;font-size:12.5px;color:var(--soft);vertical-align:top}
+  .tbl td:first-child{font-weight:700;color:var(--ink);white-space:nowrap}
+  .tbl tr:nth-child(even) td{background:var(--zebra)}
+  .note{background:var(--amber-bg);border-left:5px solid var(--amber-bar);padding:9px 13px;margin:10px 0;font-size:12.5px;color:var(--ink)}
+  .foot{position:absolute;bottom:12mm;left:18mm;right:18mm;border-top:1px solid var(--line);
+        padding-top:6px;display:flex;justify-content:space-between;color:var(--faint);font-size:10.5px}
+  @media print{
+    body{background:#fff;font-size:11pt}
+    .page{width:auto;min-height:auto;margin:0;padding:0;box-shadow:none}
+    .sheet{page-break-after:always}
+    .foot{position:fixed}
+    h1,h2,h3{page-break-after:avoid}
+    ul,.flow,.tbl,.note{page-break-inside:avoid}
+  }
 </style>
 
-<div class="doc">
+<!-- ══════════ COVER + CONTROL ══════════ -->
+<section class="page sheet">
+  <div class="org">Nam Theun 2 Power Company · Warehouse Information Division</div>
+  <div class="mark">WH · SCU-WID</div>
+  <div class="doctitle-lo">ລະບຽບ ຂັ້ນຕອນ ການ ພັດທະນາ ແລະ ຕິດຕັ້ງ ລະບົບ ຄຸ້ມຄອງ ສາງ (WH)</div>
+  <div class="doctitle-en">Software Development, Testing, Security &amp; Deployment Procedure — Warehouse Information System (WH)</div>
 
-  <div class="cover">
-    <div class="org">Nam Theun 2 Power Company · Warehouse Information Division</div>
-    <div class="code">WH · SCU-WID</div>
-    <h1>ລະບຽບ ການ ນຳໃຊ້ ລະບົບ ຄຸ້ມຄອງ ສາງ (WH)</h1>
-    <div class="en">Standard Operating Procedure — Warehouse Information System (WH)</div>
-  </div>
-
-  <table class="ctrl"><tbody>
+  <table class="ctrl">
     <tr><td class="k">ເລກ ເອກະສານ<br>Document No.</td><td>SCU-WID-SOP-WH-001</td>
         <td class="k">ລຸ້ນ / Version</td><td>1.0</td></tr>
-    <tr><td class="k">ວັນ ມີ ຜົນ<br>Effective date</td><td>__________</td>
+    <tr><td class="k">ວັນ ມີ ຜົນ<br>Effective date</td><td>____________</td>
         <td class="k">ທົບທວນ ຄັ້ງ ໜ້າ<br>Next review</td><td>+ 12 ເດືອນ / months</td></tr>
-    <tr><td class="k">ຂອບເຂດ / Scope</td><td colspan="3">ພະນັກງານ ທຸກ ຄົນ ທີ່ ກ່ຽວຂ້ອງ ກັບ ວຽກ ສາງ · All staff involved in warehouse operations</td></tr>
-  </tbody></table>
-  <div class="sig">
-    <div><div class="role">ຮ່າງ ໂດຍ · Prepared by</div><div class="name"></div>____________________</div>
-    <div><div class="role">ກວດ ໂດຍ · Reviewed by</div><div class="name"></div>____________________</div>
-    <div><div class="role">ອະນຸມັດ ໂດຍ · Approved by</div><div class="name"></div>____________________</div>
-  </div>
+    <tr><td class="k">ຂອບເຂດ / Scope</td>
+        <td colspan="3">ຕົວ ແອັບ WH · repository ໂຄ້ດ · ສະພາບ ແວດ ລ້ອມ dev / UAT / prod · ທຸກ ຝ່າຍ ພັດທະນາ-ທົດສອບ-ຕິດຕັ້ງ-ບຳລຸງ ຮັກສາ<br>
+        <span style="color:var(--faint);font-size:11.5px">The WH application, its source repository, all environments and everyone who develops, tests, deploys or maintains it.</span></td></tr>
+  </table>
 
-  <!-- 1 -->
-  <h2 class="sec">1. ຈຸດປະສົງ <span class="en">/ Purpose</span></h2>
-  <p class="lo">ລະບຽບ ນີ້ ກຳນົດ ວິທີ ການ ນຳໃຊ້ ລະບົບ ຄຸ້ມຄອງ ສາງ (WH) ໃຫ້ ເປັນ ມາດຕະຖານ ດຽວ ກັນ ທົ່ວ ອົງກອນ — ເພື່ອ ຮັບປະກັນ ຄວາມ ຖືກຕ້ອງ, ໂປ່ງໃສ, ກວດສອບ ໄດ້ ຂອງ ຂໍ້ມູນ ວັດສະດຸ, ການ ຢືມ-ຄືນ, ຝາກ, ເບີກ, ເຄື່ອງມື, ການ ກວດກາ ແລະ ການ ຈຳໜ່າຍ.</p>
-  <p class="en-p">This procedure defines the standard, organisation-wide way of using the Warehouse Information System (WH), to ensure accuracy, transparency and auditability of material, borrowing/return, deposit, requisition, equipment, inspection and disposal records.</p>
+  <table class="sign">
+    <tr>
+      <td>ຮ່າງ ໂດຍ / Prepared by<br><br><br>____________________</td>
+      <td>ກວດ ໂດຍ / Reviewed by<br><br><br>____________________</td>
+      <td>ອະນຸມັດ ໂດຍ / Approved by<br><br><br>____________________</td>
+    </tr>
+  </table>
 
-  <!-- 2 -->
-  <h2 class="sec">2. ຂອບເຂດ <span class="en">/ Scope</span></h2>
-  <p class="lo">ໃຊ້ ກັບ ພະນັກງານ ທຸກ ຄົນ ທີ່ ໄດ້ ຮັບ ສິດ ເຂົ້າ ໃຊ້ ລະບົບ WH — ລວມ ທັງ ຜູ້ ຮ້ອງຂໍ, ພະນັກງານ ສາງ, ຜູ້ ອະນຸມັດ, ຫົວໜ້າ ພະແນກ ແລະ ຜູ້ ດູແລ ລະບົບ. ຄຸ້ມຄອງ ວົງຈອນ ສາງ ຕັ້ງແຕ່ ຮັບ ເຂົ້າ ຈົນ ຈຳໜ່າຍ ອອກ.</p>
-  <p class="en-p">Applies to all staff granted access to WH — requesters, warehouse staff, approvers, line/department managers and administrators — covering the full warehouse cycle from receipt to disposal.</p>
+  <div class="foot"><span>SCU-WID-SOP-WH-001 · v1.0</span><span>Nam Theun 2 Power Company — Warehouse Information Division</span></div>
+</section>
 
-  <!-- 3 -->
-  <h2 class="sec">3. ນິຍາມ ແລະ ຄຳ ຫຍໍ້ <span class="en">/ Definitions &amp; Abbreviations</span></h2>
-  <table class="t"><thead><tr><th style="width:22%">ຄຳ / Term</th><th>ຄວາມ ໝາຍ / Meaning</th></tr></thead><tbody>
-    <tr><td><b>WH</b></td><td>ລະບົບ ຄຸ້ມຄອງ ສາງ / Warehouse Information System (this app)</td></tr>
-    <tr><td><b>RBAC</b></td><td>ການ ຄວບຄຸມ ສິດ ຕາມ ບົດບາດ / Role-Based Access Control (24 menus × 6 actions)</td></tr>
-    <tr><td><b>BR / DP / MR</b></td><td>ເລກ ໃບ ຢືມ / ຝາກ / ເບີກ · Borrow / Deposit / Material-Request number</td></tr>
-    <tr><td><b>DA / OGA</b></td><td>ໃບ ແຈ້ງ ເຄື່ອງ ຜິດ / ໃບ ສົ່ງ ເຄື່ອງ ອອກ · Discrepancy Advice / Outwards Goods Advice</td></tr>
-    <tr><td><b>PM / CM</b></td><td>ບຳລຸງ ຕາມ ແຜນ / ສ້ອມແປງ ແກ້ໄຂ · Preventive / Corrective Maintenance</td></tr>
-    <tr><td><b>C / NC / NA</b></td><td>ຜ່ານ / ບໍ່ ຜ່ານ / ບໍ່ ກ່ຽວ · Compliant / Non-Compliant / Not Applicable</td></tr>
-    <tr><td><b>PDF</b></td><td>ໃບ ພິມ ທາງ ການ (ຫົວ SCU-WID + ລາຍເຊັນ) · Official printout</td></tr>
-  </tbody></table>
+<!-- ══════════ CONTENTS ══════════ -->
+<section class="page sheet">
+  <h2 class="contents">Contents</h2>
+  <nav class="toc">
+    <a class="l1" href="#s1"><span class="t">1&nbsp;&nbsp;OVERVIEW</span><span class="dots"></span><span class="pg">3</span></a>
+    <a class="l2" href="#s1-1"><span class="t">1.1&nbsp;&nbsp;Purpose</span><span class="dots"></span><span class="pg">3</span></a>
+    <a class="l2" href="#s1-2"><span class="t">1.2&nbsp;&nbsp;Scope</span><span class="dots"></span><span class="pg">3</span></a>
+    <a class="l2" href="#s1-3"><span class="t">1.3&nbsp;&nbsp;Maintenance</span><span class="dots"></span><span class="pg">3</span></a>
+    <a class="l2" href="#s1-4"><span class="t">1.4&nbsp;&nbsp;Definitions</span><span class="dots"></span><span class="pg">3</span></a>
 
-  <!-- 4 -->
-  <h2 class="sec">4. ບົດບາດ ແລະ ໜ້າ ທີ່ <span class="en">/ Roles &amp; Responsibilities</span></h2>
-  <table class="t"><thead><tr><th style="width:24%">ບົດບາດ / Role</th><th>ໜ້າ ທີ່ ຫຼັກ / Key responsibility</th></tr></thead><tbody>
-    <tr><td><b>super_admin / admin</b></td><td>ຄຸ້ມຄອງ ລະບົບ ທັງ ໝົດ · ຜູ້ໃຊ້ · ຄ່າ ຕັ້ງ (admin ບໍ່ ແກ້ RBAC) · Full system administration</td></tr>
-    <tr><td><b>warehouse_staff</b></td><td>ຈັດການ ສາງ · ມອບ/ຮັບ ຄືນ · ຮັບ ຝາກ · ຈ່າຍ ອອກ · ບັນທຶກ ກວດ/ບຳລຸງ · Warehouse operations</td></tr>
-    <tr><td><b>approver / line_manager</b></td><td>ອະນຸມັດ / ຮັບຮອງ / ເຊັນ ໃບ ຢືມ · ເບີກ · DA · ຈຳໜ່າຍ (ຕາມ ຂອບເຂດ) · Approve/sign</td></tr>
-    <tr><td><b>requester</b></td><td>ຮ້ອງຂໍ ຢືມ / ຝາກ / ເບີກ (ເຫັນ ສະເພาະ ຂອງ ຕົນ) · Raise own requests</td></tr>
-    <tr><td><b>department_admin</b></td><td>ຈັດການ ເຄື່ອງມື + ຈຳໜ່າຍ ຂອງ <b>ພະແນກ ຕົນ</b> ເທົ່ານັ້ນ · Department-scoped</td></tr>
-    <tr><td><b>supplier</b></td><td>ເບິ່ງ/ແກ້ ບັນຊີ ສິນຄ້າ + ຄຳ ສັ່ງ ຂອງ ຕົນ · Own catalogue &amp; orders</td></tr>
-  </tbody></table>
-  <div class="note">🔒 ຜູ້ໃຊ້ ເຫັນ ແລະ ເຮັດ ໄດ້ ສະເພາະ ຕາມ ສິດ ທີ່ ໄດ້ ຮັບ (all / ພະແນກ / ຂອງ ຕົນ). Each user sees and acts only within their granted permission scope.</div>
+    <a class="l1" href="#s2"><span class="t">2&nbsp;&nbsp;PROCEDURE</span><span class="dots"></span><span class="pg">4</span></a>
+    <a class="l2" href="#s2-1"><span class="t">2.1&nbsp;&nbsp;Business Requirement Definition</span><span class="dots"></span><span class="pg">4</span></a>
+    <a class="l3" href="#s2-1"><span class="t">2.1.1 Purpose · 2.1.2 Workflow · 2.1.3 Details</span><span class="dots"></span><span class="pg">4</span></a>
+    <a class="l2" href="#s2-2"><span class="t">2.2&nbsp;&nbsp;Solution Design and Development</span><span class="dots"></span><span class="pg">5</span></a>
+    <a class="l3" href="#s2-2"><span class="t">2.2.1 Purpose · 2.2.2 Workflow · 2.2.3 Details</span><span class="dots"></span><span class="pg">5</span></a>
+    <a class="l2" href="#s2-3"><span class="t">2.3&nbsp;&nbsp;User Acceptance Testing (UAT)</span><span class="dots"></span><span class="pg">6</span></a>
+    <a class="l3" href="#s2-3"><span class="t">2.3.1 Purpose · 2.3.2 Workflow · 2.3.3 Details</span><span class="dots"></span><span class="pg">6</span></a>
+    <a class="l2" href="#s2-4"><span class="t">2.4&nbsp;&nbsp;System Penetration Testing</span><span class="dots"></span><span class="pg">7</span></a>
+    <a class="l3" href="#s2-4"><span class="t">2.4.1 Purpose · 2.4.2 Workflow · 2.4.3 Details</span><span class="dots"></span><span class="pg">7</span></a>
+    <a class="l2" href="#s2-5"><span class="t">2.5&nbsp;&nbsp;Deployment &amp; Verification</span><span class="dots"></span><span class="pg">8</span></a>
+    <a class="l3" href="#s2-5"><span class="t">2.5.1 Purpose · 2.5.2 Workflow · 2.5.3 Details</span><span class="dots"></span><span class="pg">8</span></a>
+    <a class="l2" href="#s2-6"><span class="t">2.6&nbsp;&nbsp;Version Control &amp; Change Management</span><span class="dots"></span><span class="pg">9</span></a>
+    <a class="l3" href="#s2-6"><span class="t">2.6.1 Source Access · 2.6.2 Version Control · 2.6.3 Change Mgmt · 2.6.4 External Vendors</span><span class="dots"></span><span class="pg">9</span></a>
 
-  <!-- 5 -->
-  <h2 class="sec">5. ຫຼັກ ການ ທົ່ວ ໄປ <span class="en">/ General Rules (apply to every module)</span></h2>
-  <ol>
-    <li><b>ເຂົ້າ ລະບົບ / Login</b> — ໃຊ້ email + ລະຫັດ ຜ່ານ ຂອງ ຕົນ. ຄັ້ງ ທຳ ອິດ ບັງຄັບ ປ່ຽນ ລະຫັດ ໃໝ່. ຫ້າມ ໃຊ້ ບັນຊີ ຮ່ວມ ກັນ. <i>Personal login only; mandatory password change on first sign-in.</i></li>
-    <li><b>ຮູບ ຫຼັກຖານ / Evidence photos</b> — ຖ່າຍ ຮູບ ຕາມ ຈຸດ ທີ່ ບັງຄັບ (ມອບ/ຮັບ ຄືນ, ຂໍ້ ບໍ່ ຜ່ານ). ທຸກ ຮູບ <b>ຝັງ ວັນທີ+ເວລາ</b> ອັດຕະໂນມັດ. <i>Take required photos; every photo is auto date-time stamped.</i></li>
-    <li><b>ລຶບ ຕ້ອງ ໃສ່ ເຫດຜົນ / Delete-with-reason</b> — ການ ລຶບ ຕ້ອງ ລະບຸ ເຫດຜົນ → ຍ້າຍ ໄປ <b>Deleted Log</b> (ກູ້ຄືນ ໄດ້, ຈົດ ຜູ້ ລຶບ). ບໍ່ ມີ ການ ລຶບ ຖາວອນ ໂດຍ ຜູ້ໃຊ້ ທົ່ວ ໄປ. <i>No permanent deletes; reason required, recoverable.</i></li>
-    <li><b>ອະນຸມັດ ຕາມ ຂັ້ນຕອນ / Follow the workflow</b> — ຫ້າມ ຂ້າມ ຂັ້ນ; ໃບ ຕ້ອງ ຜ່ານ ຜູ້ ອະນຸມັດ ກ່ອນ ດຳເນີນ ການ ຕໍ່. <i>Do not skip approval steps.</i></li>
-    <li><b>ໃບ PDF / Official printout</b> — ພິມ ໃບ ທາງ ການ ຈາກ ລະບົບ (ຫົວ SCU-WID + ລາຍເຊັນ) ເມື່ອ ຕ້ອງ ໃຊ້ ເປັນ ເອກະສານ.</li>
-    <li><b>ແຈ້ງເຕືອນ 🔔 / Notifications</b> — ກວດ ແຈ້ງເຕືອນ ເມື່ອ ມີ ວຽກ ລໍ ຕົນ ເຮັດ (ອະນຸມັດ/ຮັບ/ຄືນ).</li>
-    <li><b>ຄວາມ ຖືກຕ້ອງ / Data accuracy</b> — ຜູ້ ບັນທຶກ ຮັບຜິດຊອບ ຄວາມ ຖືກຕ້ອງ ຂອງ ຂໍ້ມູນ ທີ່ ຕົນ ໃສ່. ທຸກ ການ ກະທຳ ຖືກ ບັນທຶກ ໃນ <b>Audit Log</b>.</li>
-  </ol>
+    <a class="l1" href="#rev"><span class="t">Revision History</span><span class="dots"></span><span class="pg">10</span></a>
+  </nav>
+  <div class="foot"><span>SCU-WID-SOP-WH-001 · v1.0</span><span>Contents</span></div>
+</section>
 
-  <!-- 6 -->
-  <h2 class="sec">6. ຂັ້ນຕອນ ປະຕິບັດ ຕໍ່ ໂມດູລ <span class="en">/ Module Procedures</span></h2>
+<!-- ══════════ 1. OVERVIEW ══════════ -->
+<section class="page sheet">
+  <h1 id="s1"><span class="num">1</span> OVERVIEW <span class="en">/ ພາບ ລວມ</span></h1>
 
-  <div class="mod">
-    <h3 class="sub">6.1 ສາງ ວັດສະດຸ <span class="en">/ Inventory</span></h3>
-    <p>ທະບຽນ ວັດສະດຸ/ອຸປະກອນ — ຈຳນວນ, ໜ່ວຍ, ບ່ອນ ເກັບ, ຮູບ, ສະຖານະ. <i>Master register of materials.</i></p>
-    <ul>
-      <li>ພະນັກງານ ສາງ ເພີ່ມ/ແກ້ ລາຍການ + ຮູບ · ນຳເຂົ້າ ຈຳນວນ ຫຼາຍ ຜ່ານ CSV.</li>
-      <li>ກວດ ສະຖານະ: available / borrowed / maintenance / low-stock · ຄົ້ນ ຕາມ ຊື່/ລະຫັດ.</li>
-      <li>ສົ່ງ ລາຍການ ໄປ ຈຳໜ່າຍ (Disposal) ໄດ້ ໂດຍ ກົງ ເມື່ອ ຊຳລຸດ.</li>
-    </ul>
-  </div>
+  <h2 id="s1-1"><span>1.1 Purpose</span><span class="en">/ ຈຸດປະສົງ</span></h2>
+  <p class="lo">ລະບຽບ ນີ້ ອະທິບາຍ ຂັ້ນຕອນ ການ ພັດທະນາ, ທົດສອບ, ຮັບປະກັນ ຄວາມ ປອດໄພ, ຕິດຕັ້ງ ແລະ ຄຸ້ມຄອງ ການ ປ່ຽນແປງ ຂອງ ລະບົບ ຄຸ້ມຄອງ ສາງ (WH) — ເພື່ອ ໃຫ້ ໝັ້ນ ໃຈ ວ່າ ລະບົບ ຖືກ ສ້າງ ຂຶ້ນ ຢ່າງ ມີ ມາດຕະຖານ, ກວດສອບ ໄດ້ ແລະ ປອດໄພ ກ່ອນ ນຳ ໃຊ້ ຕົວ ຈິງ ທົ່ວ ອົງກອນ.</p>
+  <p class="en">This procedure describes how the WH application is developed, tested, secured, deployed and change-managed, ensuring it is built to a controlled, auditable and secure standard before organisation-wide use.</p>
 
-  <div class="mod">
-    <h3 class="sub">6.2 ຢືມ ເຄື່ອງ <span class="en">/ Borrow</span></h3>
-    <div class="flow"><span class="chip">ຮ່າງ Draft</span><span class="arr">→</span><span class="chip">ຮັບຊາບ L.Mgr</span><span class="arr">→</span><span class="chip">ອະນຸມັດ Approver</span><span class="arr">→</span><span class="chip">ມອບ ເຄື່ອງ (ຖ່າຍ ຮູບ)</span><span class="arr">→</span><span class="chip">ໃຊ້ງານ</span><span class="arr">→</span><span class="chip end">ຮັບ ຄືນ (ຖ່າຍ ຮູບ)</span></div>
-    <ul>
-      <li><b>ຜູ້ ຢືມ</b> ສ້າງ ໃບ (ລາຍການ + ຈຳນວນ + ຈຸດປະສົງ + ກຳນົດ ຄືນ) → ສົ່ງ ຂໍ ອະນຸມັດ.</li>
-      <li><b>ຜູ້ ອະນຸມັດ</b> ຮັບຊາບ/ອະນຸມັດ · <b>ພະນັກງານ ສາງ</b> ມອບ ເຄື່ອງ + ຖ່າຍ ຮູບ ສະພາບ.</li>
-      <li>ຮັບ ຄືນ: ຖ່າຍ ຮູບ + ບັນທຶກ ຈຳນວນ/ສະພາບ. ຮອງຮັບ <b>ທະຍອຍ ຮັບ ຄືນ</b> (ຮັບ ເປັນ ຄັ້ງ, ຄ້າງ ຈົນ ຄົບ) ຖ້າ ເປີດ ໃນ Settings.</li>
-      <li>ຂໍ ຕໍ່ ເວລາ ໄດ້ · ລະບົບ ແຈ້ງເຕືອນ ໃກ້/ເກີນ ກຳນົດ.</li>
-    </ul>
-  </div>
+  <h2 id="s1-2"><span>1.2 Scope</span><span class="en">/ ຂອບເຂດ</span></h2>
+  <p class="lo">ໃຊ້ ກັບ ຕົວ ແອັບ WH (Laravel 12 + Livewire), repository ໂຄ້ດ, ສະພາບ ແວດ ລ້ອມ ທັງ ໝົດ (ພັດທະນາ / UAT / ຕົວ ຈິງ) ແລະ ທຸກ ຝ່າຍ ທີ່ ກ່ຽວຂ້ອງ ກັບ ການ ພັດທະນາ, ທົດສອບ, ຕິດຕັ້ງ ແລະ ບຳລຸງ ຮັກສາ ລະບົບ.</p>
+  <p class="en">Applies to the WH application, its source repository, all environments (development / UAT / production), and everyone involved in developing, testing, deploying and maintaining it.</p>
 
-  <div class="mod">
-    <h3 class="sub">6.3 ຝາກ ເຄື່ອງ <span class="en">/ Deposit</span></h3>
-    <div class="flow"><span class="chip">ຮ່າງ</span><span class="arr">→</span><span class="chip">ສົ່ງ</span><span class="arr">→</span><span class="chip">ຮັບ ຝາກ (ກຳນົດ ບ່ອນ ເກັບ)</span><span class="arr">→</span><span class="chip">ເກັບ ແລ້ວ</span><span class="arr">→</span><span class="chip end">ຮັບ ຄືນ</span></div>
-    <ul>
-      <li>ຮັບ ຝາກ ເຄື່ອງ ຂອງ ພະນັກງານ/ໜ່ວຍງານ ໄວ້ ຊົ່ວຄາວ · ດຶງ ທະບຽນ ຈາກ Inventory/Equipment ໃສ່ ລະຫັດ ອັດຕະໂນມັດ · ຖ່າຍ ຮູບ ຕໍ່ ລາຍການ.</li>
-    </ul>
-  </div>
-
-  <div class="mod">
-    <h3 class="sub">6.4 ເບີກ ວັດສະດຸ <span class="en">/ Request</span></h3>
-    <div class="flow"><span class="chip">ຮ້ອງຂໍ</span><span class="arr">→</span><span class="chip">ອະນຸມັດ</span><span class="arr">→</span><span class="chip">ກວດ Validate</span><span class="arr">→</span><span class="chip">ຈ່າຍ ອອກ Dispatch</span><span class="arr">→</span><span class="chip end">ຮັບ</span></div>
-    <ul>
-      <li>ຂໍ ເບີກ ວັດສະດຸ ອອກ ຈາກ ສາງ · ຕິດຕາມ ສະຖານະ SAP (PR/FR) · Purpose / WO ໃນ ລິສ · ຮັບ ບາງ ສ່ວນ ໄດ້.</li>
-    </ul>
-  </div>
-
-  <div class="mod">
-    <h3 class="sub">6.5 ເຄື່ອງມື ແລະ ບຳລຸງຮັກສາ <span class="en">/ Equipment &amp; Tools</span></h3>
-    <p>3 ສ່ວນ: ທະບຽນ ເຄື່ອງ · ການ ກວດ ສະພາບ (Inspection) · ບຳລຸງຮັກສາ (Maintenance).</p>
-    <ul>
-      <li><b>ທະບຽນ</b> — asset code, ຊັບສິນ, ໝວດ, Owner (ພະແນກ), ຈຳນວນ ຕາມ ສະຖານະ, ຮູບ.</li>
-      <li><b>ກວດ ສະພາບ</b> — ເຊັກລິສ ຕາມ ແມ່ແບບ (EV/ນ້ຳມັນ, ຮອບ). ຂໍ້ <b>ບໍ່ ຜ່ານ → ສ້າງ ໃບ ສ້ອມ (CM) ອັດຕະໂນມັດ</b>.</li>
-      <li><b>ບຳລຸງຮັກສາ</b> — PM/CM · <b>ວາງແຜນ vs ລົງມື</b> · ຮູບ/ຄລິບ ຫຼັກຖານ ຕອນ ມີ ບັນຫາ · ຫົວໜ້າ ຮັບຊາບ → PDF.</li>
-    </ul>
-  </div>
-
-  <div class="mod">
-    <h3 class="sub">6.6 ກວດ ສະຖານທີ່ <span class="en">/ Area Inspection</span></h3>
-    <p>ກວດ ຄວາມ ປອດໄພ/ຄວາມ ຮຽບຮ້ອຍ ຂອງ ສະຖານທີ່ ເຮັດ ວຽກ ຕາມ ເຊັກລິສ (ວັນ/ອາທິດ/ເດືອນ).</p>
-    <div class="flow"><span class="chip">ເລືອກ ແມ່ແບບ</span><span class="arr">→</span><span class="chip">ໝາຍ C/NC/NA ຕໍ່ ຂໍ້</span><span class="arr">→</span><span class="chip">ຮູບ ຂໍ້ NC + ພາບ ລວມ</span><span class="arr">→</span><span class="chip end">ຫົວໜ້າ ຮັບຊາບ → PDF</span></div>
-    <ul><li>ຂໍ້ <b>NC</b> ຕ້ອງ ໃສ່ ໝາຍເຫດ ແກ້ໄຂ + ຮູບ ຫຼັກຖານ · ຮູບ ພາບ ລວມ ຂອງ ສະຖານທີ່ · ວັນ ກວດ ຄັ້ງ ໜ້າ ຄິດ ອັດຕະໂນມັດ.</li></ul>
-  </div>
-
-  <div class="mod">
-    <h3 class="sub">6.7 ຈຳໜ່າຍ ເຄື່ອງ ຊຳລຸດ <span class="en">/ Disposal</span></h3>
-    <div class="flow"><span class="chip">ຜູ້ ເຮັດລິສ</span><span class="arr">→</span><span class="chip">ຄະນະກຳມະການ</span><span class="arr">→</span><span class="chip">ວິຊາການ</span><span class="arr">→</span><span class="chip">ຜູ້ ຈັດການ</span><span class="arr">→</span><span class="chip">ຜູ້ ບໍລິຫານ</span><span class="arr">→</span><span class="chip end">ຈຳໜ່າຍ</span></div>
-    <ul>
-      <li>ດຶງ ຈາກ 4 ແຫຼ່ງ (Inventory / Equipment / Deposit / ພິມ ໃໝ່) · ໃສ່ ເຫດຜົນ + ຮູບ.</li>
-      <li><b>ເຊັນ ຮັບຮອງ 5 ຝ່າຍ</b> ຕາມ ລຳດັບ → ອະນຸມັດ ຈົບ → <b>ອັບເດດ ທະບຽນ ຕົ້ນທາງ ອັດຕະໂນມັດ</b> (Equipment→retired · Inventory→ปิด · Deposit→disposed) · PDF ລາຍເຊັນ 5 ຝ່າຍ.</li>
-    </ul>
-  </div>
-
-  <div class="mod">
-    <h3 class="sub">6.8 ແຈ້ງ ເຄື່ອງ ຜິດ / ສົ່ງ ອອກ <span class="en">/ DA · OGA</span></h3>
-    <ul>
-      <li><b>DA</b> (ແຈ້ງ supplier ສົ່ງ ເຄື່ອງ ຜິດ/ຂາດ/ເກີນ/ເສຍ): Warehouse ແຈ້ງ → Purchasing ກວດ → Leader ອະນຸມັດ → ແກ້ໄຂ · 3 ລາຍເຊັນ ໃນ PDF.</li>
-      <li><b>OGA</b> (ໃບ ສົ່ງ ເຄື່ອງ ອອກ): ຈ່າຍ ອອກ → ສົ່ງ ຮອດ · driver/truck/ນ້ຳໜັກ · PDF.</li>
-    </ul>
-  </div>
-
-  <div class="mod">
-    <h3 class="sub">6.9 ບັນຊີ ສິນຄ້າ / ງານ ວາງສະແດງ <span class="en">/ Catalog · Expo</span></h3>
-    <ul>
-      <li><b>Catalog</b> — ບັນຊີ ສິນຄ້າ supplier (ລາຄາ net, ບໍ່ ລວມ VAT) · supplier ແກ້ ຂອງ ຕົນ.</li>
-      <li><b>Expo</b> — ບັນທຶກ ການ ໄປ ງານ ວາງສະແດງ (ງານ → ບໍລິສັດ → ຜູ້ ຕິດຕໍ່ → ໄຟລ໌ → report).</li>
-    </ul>
-  </div>
-
-  <div class="mod">
-    <h3 class="sub">6.10 ບໍລິຫານ ລະບົບ <span class="en">/ Administration (Settings)</span></h3>
-    <ul>
-      <li>Users + Roles &amp; Permissions (RBAC) · ໂຄງສ້າງ ອົງກອນ + ບ່ອນຕັ້ງ · UoM · Suppliers · Translations · ຄ່າ ລະບົບ (currency/VAT/letterhead).</li>
-      <li>Backup / Restore (super_admin) · <b>Audit Log</b> (ບັນທຶກ ການ ກະທຳ ທັງ ໝົດ) · Reports.</li>
-    </ul>
-  </div>
-
-  <!-- 7 -->
-  <h2 class="sec">7. ບັນທຶກ ແລະ ເອກະສານ <span class="en">/ Records &amp; Documents</span></h2>
-  <table class="t"><thead><tr><th style="width:30%">ບັນທຶກ / Record</th><th>ບ່ອນ ເກັບ / Where</th></tr></thead><tbody>
-    <tr><td>ໃບ PDF ທຸກ ໂມດູລ (ຫົວ SCU-WID)</td><td>ພິມ ຈາກ ໜ້າ ລາຍລະອຽດ ຂອງ ແຕ່ ລະ ໃບ</td></tr>
-    <tr><td>ຮູບ ຫຼັກຖານ (ຝັງ ວັນທີ+ເວລາ)</td><td>ຕິດ ກັບ ໃບ ໃນ ລະບົບ</td></tr>
-    <tr><td>Deleted Log (ລາຍການ ທີ່ ລຶບ + ເຫດຜົນ)</td><td>ແຕ່ ລະ ໂມດູລ · ກູ້ຄືນ ໄດ້</td></tr>
-    <tr><td>Audit Log (ປະຫວັດ ການ ກະທຳ)</td><td>Settings → Audit</td></tr>
-  </tbody></table>
-
-  <!-- 8 -->
-  <h2 class="sec">8. ຄວາມ ປອດໄພ ແລະ ຂໍ້ມູນ <span class="en">/ Security &amp; Data Protection</span></h2>
+  <h2 id="s1-3"><span>1.3 Maintenance</span><span class="en">/ ການ ບຳລຸງ ຮັກສາ</span></h2>
+  <p class="lo">ເອກະສານ ນີ້ ຄຸ້ມຄອງ ໂດຍ Warehouse Information Division, ທົບທວນ ຢ່າງ ໜ້ອຍ ປີ ລະ ຄັ້ງ ຫຼື ເມື່ອ ລະບົບ ມີ ການ ປ່ຽນແປງ ໃຫຍ່. ການ ບຳລຸງ ຮັກສາ ລະບົບ ລວມ ມີ:</p>
   <ul>
-    <li>ຄວບຄຸມ ສິດ ຕາມ ບົດບາດ (RBAC) · ເຫັນ ຂໍ້ມູນ ສະເພາະ ຂອບເຂດ ຕົນ · Gate::before ໃຫ້ super_admin.</li>
-    <li>ລະຫັດ ຜ່ານ ເຂົ້າ ລະຫັດ (bcrypt) · ບັງຄັບ HTTPS · cookie ປອດໄພ · ຈຳກັດ ຄວາມ ພະຍາຍາມ login.</li>
-    <li>ບັນຊີ ຖືກ ລັອກ → ຕັດ session ທັນທີ · ທຸກ ການ ກະທຳ ບັນທຶກ Audit · backup ຖານ ຂໍ້ມູນ ເປັນ ປົກກະຕິ.</li>
-    <li>ຮູບ/ໄຟລ໌ upload ຈຳກັດ ປະເພດ (jpg/png/webp) · ຊື່ ໄຟລ໌ ສຸ່ມ ປອດໄພ.</li>
+    <li><b>ອັບເດດ dependency + ກວດ ຊ່ອງ ໂຫວ່</b> — <span style="color:var(--faint)">composer audit</span> ເປັນ ປົກກະຕິ; ປັບປຸງ ຊຸດ ໂປຣແກຣມ ທີ່ ມີ CVE.</li>
+    <li><b>Backup ຖານ ຂໍ້ມູນ</b> — backup ກ່ອນ ທຸກ ການ ປ່ຽນແປງ + ຕາມ ຮອບ; ມີ ໜ້າ Backup/Restore ໃນ ລະບົບ.</li>
+    <li><b>ຕິດຕາມ log + ແກ້ໄຂ</b> — ເຝົ້າ ລະວັງ error log ແລະ Audit Log; ແກ້ໄຂ ບັນຫາ ຕາມ ຂັ້ນຕອນ ຄວບຄຸມ ການ ປ່ຽນແປງ (ຂໍ້ 2.6).</li>
+  </ul>
+  <p class="en">Owned by the Warehouse Information Division; reviewed at least yearly or on major change. System maintenance covers dependency updates + vulnerability scanning, regular backups, and log/audit monitoring with controlled remediation.</p>
+
+  <h2 id="s1-4"><span>1.4 Definitions</span><span class="en">/ ນິຍາມ ແລະ ຄຳ ຫຍໍ້</span></h2>
+  <table class="tbl">
+    <tr><th style="width:22%">ຄຳ / Term</th><th>ຄວາມ ໝາຍ / Meaning</th></tr>
+    <tr><td>WH</td><td>ລະບົບ ຄຸ້ມຄອງ ສາງ (ແອັບ ນີ້) / Warehouse Information System</td></tr>
+    <tr><td>SDLC</td><td>ວົງຈອນ ການ ພັດທະນາ ຊອບແວ / Software Development Life Cycle</td></tr>
+    <tr><td>UAT</td><td>ການ ທົດສອບ ຮັບຮອງ ໂດຍ ຜູ້ ໃຊ້ / User Acceptance Testing</td></tr>
+    <tr><td>RBAC</td><td>ຄວບຄຸມ ສິດ ຕາມ ບົດບາດ / Role-Based Access Control (24 menus × 6 actions)</td></tr>
+    <tr><td>Repo / Git</td><td>ບ່ອນ ເກັບ ໂຄ້ດ + ຄວບຄຸມ ເວີຊັນ (GitHub) / source version-control repository</td></tr>
+    <tr><td>VPS</td><td>ເຄື່ອງ ແມ່ຂ່າຍ ສ່ວນ ຕົວ / Virtual Private Server (host)</td></tr>
+    <tr><td>UAT / Prod env</td><td>wh.homesang.pro (ທົດສອບ/ໃຊ້ ປັດຈຸບັນ) · wh.namtheun2.com (ຕົວ ຈິງ)</td></tr>
+    <tr><td>.env / APP_KEY</td><td>ໄຟລ໌ ຄ່າ ຕັ້ງ + ກະ​ແຈ ເຂົ້າ ລະຫັດ (ຄວາມ ລັບ — ບໍ່ commit) / secrets, never committed</td></tr>
+  </table>
+  <div class="foot"><span>SCU-WID-SOP-WH-001 · v1.0</span><span>1. Overview</span></div>
+</section>
+
+<!-- ══════════ 2. PROCEDURE ══════════ -->
+<section class="page sheet">
+  <h1 id="s2"><span class="num">2</span> PROCEDURE <span class="en">/ ຂັ້ນຕອນ ປະຕິບັດ</span></h1>
+
+  <!-- 2.1 -->
+  <h2 id="s2-1"><span>2.1 Business Requirement Definition</span><span class="en">/ ກຳນົດ ຄວາມ ຕ້ອງການ</span></h2>
+  <h3>2.1.1 Purpose <span class="en">/ ຈຸດປະສົງ</span></h3>
+  <p class="lo">ເກັບ ກຳ ແລະ ບັນທຶກ ຄວາມ ຕ້ອງການ ທຸລະກິດ ຂອງ ວຽກ ສາງ ໃຫ້ ຄົບ ຖ້ວນ, ເພື່ອ ໃຫ້ ການ ພັດທະນາ ຢູ່ ຕົງ ຕາມ ຄວາມ ຕ້ອງການ ຈິງ.</p>
+  <p class="en">Capture and document the warehouse business needs the system must meet, so development targets real requirements.</p>
+  <h3>2.1.2 Workflow <span class="en">/ ຂັ້ນຕອນ</span></h3>
+  <div class="flow"><span class="step">ເກັບ ຄວາມ ຕ້ອງການ</span><span class="arw">→</span><span class="step">ວິເຄາະ + ຈັດ ໝວດ ໂມດູລ</span><span class="arw">→</span><span class="step">ຂຽນ ເອກະສານ</span><span class="arw">→</span><span class="step">ຢືນຢັນ ກັບ ຜູ້ ໃຊ້/ຫົວໜ້າ</span></div>
+  <h3>2.1.3 Details <span class="en">/ ລາຍລະອຽດ</span></h3>
+  <ul>
+    <li><b>ທົດແທນ ລະບົບ ເກົ່າ WIBT (Firebase)</b> ດ້ວຍ ລະບົບ ໃໝ່ ທີ່ ຄຸ້ມຄອງ ຄົບ ວົງຈອນ ສາງ ແລະ ຮອງຮັບ ພາສາ ລາວ ເຕັມ ຮູບແບບ.</li>
+    <li><b>ຂອບເຂດ ໂມດູລ:</b> ສາງ ວັດສະດຸ, ຢືມ, ຝາກ, ເບີກ, ເຄື່ອງມື+ບຳລຸງຮັກສາ, ກວດ ສະຖານທີ່, ຈຳໜ່າຍ, DA/OGA, ບັນຊີ ສິນຄ້າ, ງານ ວາງສະແດງ, ບໍລິຫານ ລະບົບ.</li>
+    <li><b>ຂໍ້ ກຳນົດ ຫຼັກ:</b> ຄວບຄຸມ ສິດ ຕາມ ບົດບາດ (RBAC 24 ເມນູ), soft-delete + ເຫດຜົນ, ໃບ PDF ຫົວ ທາງ ການ SCU-WID, Audit Log ບັນທຶກ ທຸກ ການ ກະທຳ.</li>
+    <li><b>ຍ້າຍ ຂໍ້ມູນ:</b> ຂໍ້ມູນ ການ ຢືມ ທີ່ ໃຊ້ ຢູ່ ຈິງ ໃນ ລະບົບ ເກົ່າ ຕ້ອງ ຍ້າຍ ເຂົ້າ ລະບົບ ໃໝ່ ໂດຍ ຮັກສາ ຄົບ.</li>
   </ul>
 
-  <!-- 9 -->
-  <h2 class="sec">9. ອ້າງອີງ <span class="en">/ References</span></h2>
+  <!-- 2.2 -->
+  <h2 id="s2-2"><span>2.2 Solution Design and Development</span><span class="en">/ ອອກແບບ ແລະ ພັດທະນາ</span></h2>
+  <h3>2.2.1 Purpose <span class="en">/ ຈຸດປະສົງ</span></h3>
+  <p class="lo">ອອກແບບ ໂຄງສ້າງ ທີ່ ໝັ້ນຄົງ, ປອດໄພ ແລະ ບຳລຸງ ຮັກສາ ໄດ້ ງ່າຍ, ແລ້ວ ພັດທະນາ ໂມດູລ ໃຫ້ ຕົງ ຕາມ ຂໍ້ ກຳນົດ.</p>
+  <p class="en">Design a maintainable, secure architecture and build the modules to specification.</p>
+  <h3>2.2.2 Workflow <span class="en">/ ຂັ້ນຕອນ</span></h3>
+  <div class="flow"><span class="step">ອອກແບບ schema + UI</span><span class="arw">→</span><span class="step">ພັດທະນາ ໂມດູລ</span><span class="arw">→</span><span class="step">ຂຽນ test (Pest)</span><span class="arw">→</span><span class="step">review + ປັບປຸງ</span><span class="arw">→</span><span class="step">commit</span></div>
+  <h3>2.2.3 Details <span class="en">/ ລາຍລະອຽດ</span></h3>
   <ul>
-    <li>ຄູ່ມື ນຳໃຊ້ WH (User Manual) · ຄູ່ມື ພ້ອມ ຮູບ (Illustrated Manual) · ບົດ ນຳສະເໜີ (Presentation).</li>
-    <li>ຟອມ ທາງ ການ SCU-WID (ຫົວ ຈົດໝາຍ + ລາຍເຊັນ ໃນ PDF).</li>
+    <li><b>ເຕັກໂນໂລຢີ:</b> Laravel 12 · Livewire 3 / Volt · MySQL · Pest (ຊຸດ ທົດສອບ ອັດຕະໂນມັດ) · spatie/permission (RBAC).</li>
+    <li><b>ມາດຕະຖານ ດຽວ ກັນ:</b> ໜ້າ ຕາ ຮ່ວມ (app-header + sticky), ຟອມ validation ພາສາ ລາວ (ແຈ້ງ ເຕືອນ ສີ ເຫຼືອງ), ລະບົບ ແປ/ແທນ ຄຳ ທົ່ວ ແອັບ.</li>
+    <li><b>ຄວບຄຸມ ຂໍ້ມູນ:</b> soft-delete + ເຫດຜົນ + Deleted Log + restore ທົ່ວ ລະບົບ; ຮູບແບບ checklist + ຫຼັກຖານ (ຮູບ/ຄລິບ); ໃບ PDF ຫົວ SCU-WID + ລາຍເຊັນ.</li>
+    <li><b>ຄວາມ ລັບ:</b> ໂຄ້ດ ຢູ່ GitHub (private); ໄຟລ໌ ຄວາມ ລັບ (.env, APP_KEY) ບໍ່ ຖືກ commit.</li>
+  </ul>
+  <div class="foot"><span>SCU-WID-SOP-WH-001 · v1.0</span><span>2. Procedure — 2.1–2.2</span></div>
+</section>
+
+<section class="page sheet">
+  <!-- 2.3 -->
+  <h2 id="s2-3"><span>2.3 User Acceptance Testing (UAT)</span><span class="en">/ ທົດສອບ ຮັບຮອງ ໂດຍ ຜູ້ ໃຊ້</span></h2>
+  <h3>2.3.1 Purpose <span class="en">/ ຈຸດປະສົງ</span></h3>
+  <p class="lo">ຢືນຢັນ ວ່າ ແຕ່ ລະ ໂມດູລ ໃຊ້ ໄດ້ ຕົງ ຕາມ ຄວາມ ຄາດ ຫວັງ ຂອງ ທຸລະກິດ ກ່ອນ ນຳ ໃຊ້ ຕົວ ຈິງ.</p>
+  <p class="en">Confirm each module meets business expectations before go-live.</p>
+  <h3>2.3.2 Workflow <span class="en">/ ຂັ້ນຕອນ</span></h3>
+  <div class="flow"><span class="step">ຕິດຕັ້ງ ໃສ່ UAT</span><span class="arw">→</span><span class="step">ຜູ້ ໃຊ້ ທົດສອບ ຕົວ ຈິງ</span><span class="arw">→</span><span class="step">ບັນທຶກ ບັນຫາ</span><span class="arw">→</span><span class="step">ແກ້ໄຂ</span><span class="arw">→</span><span class="step">ທົດສອບ ຄືນ</span><span class="arw">→</span><span class="step">ຮັບຮອງ</span></div>
+  <h3>2.3.3 Details <span class="en">/ ລາຍລະອຽດ</span></h3>
+  <ul>
+    <li><b>ສະພາບ ແວດ ລ້ອມ UAT:</b> wh.homesang.pro (Hostinger VPS · Ubuntu 24.04 · nginx + PHP 8.3 + MySQL · SSL).</li>
+    <li><b>ຍ່າງ ຜ່ານ ຕົວ ຈິງ:</b> ທົດສອບ login ແລະ ຍ່າງ ຜ່ານ ທຸກ ໂມດູລ (13/13) ຜ່ານ ຄົບ.</li>
+    <li><b>ທົດສອບ ຫຼາຍ ຄົນ:</b> ໃຫ້ ເພື່ອນ ຮ່ວມ ງານ ທົດສອບ ຈາກ ເຄື່ອງ/ໂທລະສັບ ອື່ນ ຜ່ານ cloudflared tunnel.</li>
+    <li><b>ທົດສອບ ອັດຕະໂນມັດ:</b> ຊຸດ Pest 422 ກໍລະນີ ຜ່ານ ໝົດ (regression ກ່ອນ ທຸກ ຄັ້ງ ທີ່ deploy).</li>
   </ul>
 
-  <!-- 10 -->
-  <h2 class="sec">10. ປະຫວັດ ການ ດັດແກ້ <span class="en">/ Revision History</span></h2>
-  <table class="t"><thead><tr><th style="width:12%">ລຸ້ນ</th><th style="width:18%">ວັນທີ</th><th>ລາຍລະອຽດ / Description</th><th style="width:18%">ໂດຍ / By</th></tr></thead><tbody>
-    <tr><td>1.0</td><td>__________</td><td>ອອກ ໃຊ້ ຄັ້ງ ທຳ ອິດ · Initial issue</td><td>__________</td></tr>
+  <!-- 2.4 -->
+  <h2 id="s2-4"><span>2.4 System Penetration Testing</span><span class="en">/ ທົດສອບ ຄວາມ ປອດໄພ</span></h2>
+  <h3>2.4.1 Purpose <span class="en">/ ຈຸດປະສົງ</span></h3>
+  <p class="lo">ຄົ້ນ ຫາ ແລະ ແກ້ໄຂ ຊ່ອງ ໂຫວ່ ດ້ານ ຄວາມ ປອດໄພ ກ່ອນ ຂຶ້ນ ຕົວ ຈິງ — ປົກ ປ້ອງ ຂໍ້ມູນ ແລະ ການ ເຂົ້າ ເຖິງ.</p>
+  <p class="en">Find and remediate security vulnerabilities before production; protect data and access.</p>
+  <h3>2.4.2 Workflow <span class="en">/ ຂັ້ນຕອນ</span></h3>
+  <div class="flow"><span class="step">ກວດ static + dynamic</span><span class="arw">→</span><span class="step">ບັນທຶກ ຊ່ອງ ໂຫວ່</span><span class="arw">→</span><span class="step">ແກ້ໄຂ</span><span class="arw">→</span><span class="step">ກວດ ຄືນ</span><span class="arw">→</span><span class="step">ຢືນຢັນ ສະອາດ</span></div>
+  <h3>2.4.3 Details <span class="en">/ ລາຍລະອຽດ</span></h3>
+  <ul>
+    <li><b>ຄວບຄຸມ ສິດ + IDOR:</b> RBAC ຄົບ ທຸກ ເມນູ; ແກ້ ໃຫ້ ຜູ້ ໃຊ້ ເຂົ້າ ໄດ້ ສະເພາະ ຂອບເຂດ ຕົນ (ເຄື່ອງມື / ຈຳໜ່າຍ / DA-OGA ຕາມ ພະແນກ ຫຼື ເຈົ້າ ຂອງ).</li>
+    <li><b>Auth / session:</b> ລະຫັດ ເຂົ້າ ລະຫັດ (bcrypt) · ບັງຄັບ HTTPS · cookie ປອດໄພ · ຈຳກັດ ຄວາມ ພະຍາຍາມ login · ຕັດ session ບັນຊີ ທີ່ ຖືກ ປິດ · ບັງຄັບ ປ່ຽນ ລະຫັດ ຄັ້ງ ທຳ ອິດ.</li>
+    <li><b>Input / file:</b> ແກ້ path-traversal ຕອນ ນຳ ເຂົ້າ ຮູບ (ຢືນຢັນ ເສັ້ນທາງ) · ຊື່ ໄຟລ໌ ຮູບ ສຸ່ມ ປອດໄພ (CSPRNG) · ຈຳກັດ ປະເພດ ໄຟລ໌ upload.</li>
+    <li><b>Concurrency:</b> ລັອກ ແຖວ (lockForUpdate) ຕອນ ຮັບ ຄືນ ຢືມ ແລະ ອອກ ເລກ ໃບ · ໃຊ້ DB transaction · unique index ກັນ ເລກ ຊ້ຳ.</li>
+    <li><b>Dependencies:</b> ອັບເດດ ຊຸດ ທີ່ ມີ CVE (dompdf, guzzle, commonmark); <span style="color:var(--faint)">composer audit</span> = clean.</li>
+    <li><b>Prod gates:</b> <span style="color:var(--faint)">APP_ENV=production · APP_DEBUG=false · SESSION_SECURE_COOKIE=true · TRUSTED_PROXIES ≠ '*'</span>.</li>
+    <li><b>ການ ສະແດງ ຜົນ + algorithm:</b> ກວດ ການ ອອກ ຂໍ້ມູນ ແລະ ຂັ້ນຕອນ ຄິດໄລ່ ທັງ ໝົດ = ສະອາດ (escape ຄົບ, ບໍ່ ຮົ່ວ ຂໍ້ມູນ ຂ້າມ ຂອບເຂດ).</li>
+    <li><b>Live host:</b> TLS / security headers / cookies ໃນ ໂຮສ ຈິງ ກວດ ຜ່ານ ສະອາດ.</li>
+  </ul>
+  <div class="foot"><span>SCU-WID-SOP-WH-001 · v1.0</span><span>2. Procedure — 2.3–2.4</span></div>
+</section>
+
+<section class="page sheet">
+  <!-- 2.5 -->
+  <h2 id="s2-5"><span>2.5 Deployment &amp; Verification</span><span class="en">/ ຕິດຕັ້ງ ແລະ ກວດ ຢືນຢັນ</span></h2>
+  <h3>2.5.1 Purpose <span class="en">/ ຈຸດປະສົງ</span></h3>
+  <p class="lo">ຕິດຕັ້ງ ເວີຊັນ ທີ່ ທົດສອບ ແລ້ວ ໃສ່ ໂຮສ ເປົ້າ ໝາຍ ຢ່າງ ໝັ້ນຄົງ ແລະ ກວດ ຢືນຢັນ ກ່ອນ ໃຊ້ ງານ.</p>
+  <p class="en">Deploy the tested build to the target host reliably and verify it before use.</p>
+  <h3>2.5.2 Workflow <span class="en">/ ຂັ້ນຕອນ</span></h3>
+  <div class="flow"><span class="step">ແພັກ + backup</span><span class="arw">→</span><span class="step">ຕິດຕັ້ງ (composer/.env/migrate/seed)</span><span class="arw">→</span><span class="step">storage + cache</span><span class="arw">→</span><span class="step">restart service</span><span class="arw">→</span><span class="step">ກວດ ຢືນຢັນ</span></div>
+  <h3>2.5.3 Details <span class="en">/ ລາຍລະອຽດ</span></h3>
+  <ul>
+    <li><b>ຂັ້ນຕອນ ຕິດຕັ້ງ:</b> <span style="color:var(--faint)">composer install --no-dev</span> · ຄັດລອກ .env + <span style="color:var(--faint)">key:generate</span> · <span style="color:var(--faint)">migrate --force</span> · seed (RBAC, super_admin, ແມ່ແບບ) · <span style="color:var(--faint)">storage:link</span> · config/route/view cache · ຕັ້ງ ສິດ storage + bootstrap/cache.</li>
+    <li><b>ຍ້າຍ ຂໍ້ມູນ ຢືມ:</b> <span style="color:var(--faint)">borrow:import-json --refresh</span> + <span style="color:var(--faint)">import-photos</span> (78 ໃບ, 142 ຮູບ) — ອ່ານ ຈາກ ແຫຼ່ງ ເກົ່າ ແບບ read-only ເທົ່ານັ້ນ.</li>
+    <li><b>ກວດ ຫຼັງ ຕິດຕັ້ງ:</b> ນັບ ໃບ ຢືມ = 78 (returned 58 / active 20) · login super_admin · ຍ່າງ ຜ່ານ ເມນູ.</li>
+    <li><b>ໂຄງສ້າງ server:</b> wh.homesang.pro (UAT/ໃຊ້ ປັດຈຸບັນ) → wh.namtheun2.com (ຕົວ ຈິງ, cutover). <b>ຕ້ອງ restart php8.3-fpm ຫຼັງ deploy</b> (ລ້າງ OPcache).</li>
+  </ul>
+  <div class="note">🔐 ກ່ອນ go-live ຕ້ອງ ຢືນຢັນ: APP_DEBUG=false · SESSION_SECURE_COOKIE=true · TRUSTED_PROXIES = IP edge ຈິງ · APP_KEY + SUPER_ADMIN_PASSWORD ຕັ້ງ ແລ້ວ · SMTP ຈິງ (ບໍ່ ດັ່ງນັ້ນ ລິ້ງ ຕັ້ງ ລະຫັດ ຈະ ຂຽນ ລົງ log).</div>
+
+  <!-- 2.6 -->
+  <h2 id="s2-6"><span>2.6 Version Control &amp; Change Management</span><span class="en">/ ຄວບຄຸມ ເວີຊັນ ແລະ ການ ປ່ຽນແປງ</span></h2>
+  <h3>2.6.1 Access Control to Source Code <span class="en">/ ຄວບຄຸມ ການ ເຂົ້າ ເຖິງ ໂຄ້ດ</span></h3>
+  <ul>
+    <li>ໂຄ້ດ ຢູ່ GitHub (private repo <span style="color:var(--faint)">sonehomesang/WIS</span>); ໃຫ້ ສິດ ສະເພາະ ຜູ້ ກ່ຽວຂ້ອງ.</li>
+    <li>ຄວາມ ລັບ (.env, APP_KEY, ລະຫັດ DB, service account) <b>ບໍ່ commit</b> — ຢູ່ ໃນ .gitignore, ຕັ້ງ ໃນ server ໂດຍ ກົງ.</li>
+  </ul>
+  <h3>2.6.2 Software Version Control <span class="en">/ ຄວບຄຸມ ເວີຊັນ</span></h3>
+  <ul>
+    <li>ໃຊ້ Git, branch ຫຼັກ <span style="color:var(--faint)">main</span>; commit ມີ ຂໍ້ຄວາມ ຊັດເຈນ (feat/fix/docs + scope); ປະຫວັດ ຄົບ ກວດສອບ ໄດ້.</li>
+    <li>deploy ຜ່ານ <span style="color:var(--faint)">git pull</span> (assets ມາ ພ້ອມ); ສາມາດ ຍ້ອນ (rollback) ຄືນ commit ເກົ່າ ໄດ້.</li>
+  </ul>
+  <h3>2.6.3 Change Management <span class="en">/ ຄຸ້ມຄອງ ການ ປ່ຽນແປງ</span></h3>
+  <ul>
+    <li>ທຸກ ການ ປ່ຽນແປງ: ທົດສອບ ໃນ dev → commit → deploy ໃສ່ UAT → ຢືນຢັນ → ຈຶ່ງ ຂຶ້ນ prod.</li>
+    <li>Backup ຖານ ຂໍ້ມູນ (mysqldump) ກ່ອນ ປ່ຽນ; ໃຊ້ migration ຄຸ້ມຄອງ schema; restart service ຫຼັງ deploy.</li>
+    <li>Audit Log ບັນທຶກ ການ ກະທຳ ໃນ ລະບົບ; ໜ້າ Backup/Restore ຢູ່ ໃນ ເມນູ ບໍລິຫານ.</li>
+  </ul>
+  <h3>2.6.4 External Vendors <span class="en">/ ຜູ້ ໃຫ້ ບໍລິການ ພາຍ ນອກ</span></h3>
+  <ul>
+    <li>ໄອທີ / vendor ຮັບຜິດຊອບ ຕິດຕັ້ງ ຢູ່ wh.namtheun2.com ຕາມ ຊຸດ cutover ທີ່ ມອບ ໃຫ້ (ໂຄ້ດ + ຂໍ້ມູນ + runbook).</li>
+    <li>ການ ເຂົ້າ ເຖິງ ຂໍ້ມູນ ຕົວ ຈິງ ຂອງ ລະບົບ ເກົ່າ (WIBT / Firebase) ເປັນ <b>read-only</b> ເທົ່ານັ້ນ.</li>
+    <li>ບໍລິການ ພາຍ ນອກ ອື່ນ: Google Cloud / Firebase (ລະບົບ ເກົ່າ, ໃຊ້ ຍ້າຍ ຂໍ້ມູນ), SMTP mail, VPS host — ຄວບຄຸມ ສິດ + ຄວາມ ລັບ ຕາມ ຂໍ້ 2.6.1.</li>
+  </ul>
+  <div class="foot"><span>SCU-WID-SOP-WH-001 · v1.0</span><span>2. Procedure — 2.5–2.6</span></div>
+</section>
+
+<!-- ══════════ REVISION ══════════ -->
+<section class="page sheet">
+  <h1 id="rev">Revision History <span class="en">/ ປະຫວັດ ການ ດັດແກ້</span></h1>
+  <table class="tbl">
+    <tr><th style="width:12%">ລຸ້ນ / Ver.</th><th style="width:20%">ວັນທີ / Date</th><th>ລາຍລະອຽດ / Description</th><th style="width:18%">ໂດຍ / By</th></tr>
+    <tr><td>1.0</td><td>____________</td><td>ອອກ ໃຊ້ ຄັ້ງ ທຳ ອິດ / Initial issue</td><td>____________</td></tr>
     <tr><td></td><td></td><td></td><td></td></tr>
-  </tbody></table>
-
-  <div class="foot">WH — Warehouse Information System · Nam Theun 2 Power Company · SCU-WID-SOP-WH-001 · Version 1.0 · Page __ of __</div>
-
-</div>
+    <tr><td></td><td></td><td></td><td></td></tr>
+  </table>
+  <p class="en" style="margin-top:18px">ເອກະສານ ອ້າງອີງ / References: ຄູ່ມື ນຳໃຊ້ WH · ຄູ່ມື ພ້ອມ ຮູບ · ບົດ ນຳສະເໜີ · ຟອມ ທາງ ການ SCU-WID · ຊຸດ cutover wh.namtheun2.com.</p>
+  <div class="foot"><span>SCU-WID-SOP-WH-001 · v1.0</span><span>Revision History</span></div>
+</section>
