@@ -36,6 +36,9 @@ class Create extends Component
 
     public string $remark = '';
 
+    /** ເຈົ້າ ຂອງ ເຄື່ອງ ຝາກ (ດຶງ ຈາກ ຜູ້ ໃຊ້). Default = ຜູ້ ສ້າງ. */
+    public ?int $owner_user_id = null;
+
     /** ພະແນກ ເຈົ້າ ຂອງ ເຄື່ອງ (Org Unit derived). Default = ຜູ້ ສ້າງ. */
     public ?int $owner_dept_id = null;
 
@@ -53,6 +56,7 @@ class Create extends Component
     {
         abort_unless(auth()->user()->can('deposit.create'), 403);
         $this->deposit_date = Carbon::today()->toDateString();
+        $this->owner_user_id = auth()->id();
         $this->owner_dept_id = auth()->user()->department_id;
         $this->items = [$this->blankItem()];
     }
@@ -197,6 +201,7 @@ class Create extends Component
             'expected_arrival' => $this->expected_arrival ?: null,
             'expected_claim_date' => $this->expected_claim_date ?: null,
             'remark' => $this->remark ?: null,
+            'owner_user_id' => $this->owner_user_id,
             'owner_dept_id' => $this->owner_dept_id,
             'owner_unit_id' => $this->owner_dept_id ? \App\Models\Department::find($this->owner_dept_id)?->unit_id : null,
             'items' => $this->items,
@@ -223,6 +228,7 @@ class Create extends Component
         return view('livewire.deposit.create', [
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(),
             'departments' => \App\Models\Department::where('is_active', true)->with('unit:id,name')->orderBy('name')->get(['id', 'name', 'unit_id']),
+            'ownerUsers' => \App\Models\User::where('status', 'active')->orderBy('display_name')->get(['id', 'display_name', 'email']),
         ]);
     }
 }

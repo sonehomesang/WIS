@@ -44,13 +44,16 @@ class DepositService
         return DB::transaction(function () use ($data, $actor) {
             $depositDate = Carbon::parse($data['deposit_date'] ?? Carbon::today());
 
+            // ເຈົ້າ ຂອງ = ຜູ້ ໃຊ້ ທີ່ ເລືອກ (ດຶງ ຈາກ ຖານ ຂໍ້ມູນ); ຖ້າ ບໍ່ ເລືອກ = ຜູ້ ສ້າງ.
+            $owner = ! empty($data['owner_user_id']) ? (\App\Models\User::find($data['owner_user_id']) ?? $actor) : $actor;
+
             $record = DepositRecord::create([
                 'request_number' => $this->nextNumber((int) $depositDate->year),
-                'owner_user_id' => $actor->id,
-                'owner_email' => mb_strtolower($actor->email),
-                'owner_name' => $actor->display_name ?? $actor->email,
-                'owner_unit_id' => $data['owner_unit_id'] ?? $actor->unit_id ?? null,
-                'owner_dept_id' => $data['owner_dept_id'] ?? $actor->department_id ?? null,
+                'owner_user_id' => $owner->id,
+                'owner_email' => mb_strtolower($owner->email),
+                'owner_name' => $owner->display_name ?? $owner->email,
+                'owner_unit_id' => $data['owner_unit_id'] ?? $owner->unit_id ?? null,
+                'owner_dept_id' => $data['owner_dept_id'] ?? $owner->department_id ?? null,
                 'request_type' => $data['request_type'] ?? 'walk_in',
                 'item_category' => $data['item_category'] ?? null,
                 'origin_source' => $data['origin_source'] ?? null,

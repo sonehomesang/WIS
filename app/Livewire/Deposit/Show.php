@@ -288,7 +288,7 @@ class Show extends Component
         abort_unless($this->canEdit(), 403);
         $r = $this->record;
         $this->ef = [
-            'owner_name' => $r->owner_name, 'owner_dept_id' => $r->owner_dept_id,
+            'owner_user_id' => $r->owner_user_id, 'owner_dept_id' => $r->owner_dept_id,
             'item_category' => $r->item_category, 'origin_source' => $r->origin_source,
             'deposit_reason' => $r->deposit_reason, 'expected_duration' => $r->expected_duration,
             'deposit_date' => $r->deposit_date?->toDateString(), 'expected_claim_date' => $r->expected_claim_date?->toDateString(),
@@ -311,7 +311,7 @@ class Show extends Component
     {
         abort_unless($this->canEdit(), 403);
         $this->validate([
-            'ef.owner_name' => ['required', 'string', 'max:256'],
+            'ef.owner_user_id' => ['required', 'exists:users,id'],
             'ef.owner_dept_id' => ['nullable', 'exists:departments,id'],
             'ef.item_category' => ['nullable', 'string', 'max:256'],
             'ef.origin_source' => ['nullable', 'string', 'max:500'],
@@ -335,8 +335,11 @@ class Show extends Component
 
         $r = $this->record;
         $deptId = $this->ef['owner_dept_id'] ?: null;
+        $owner = \App\Models\User::find($this->ef['owner_user_id'] ?? null);
         $r->fill([
-            'owner_name' => $this->ef['owner_name'],
+            'owner_user_id' => $owner?->id ?? $r->owner_user_id,
+            'owner_name' => $owner ? ($owner->display_name ?? $owner->email) : $r->owner_name,
+            'owner_email' => $owner ? mb_strtolower($owner->email) : $r->owner_email,
             'owner_dept_id' => $deptId,
             'owner_unit_id' => $deptId ? \App\Models\Department::find($deptId)?->unit_id : null,
             'item_category' => $this->ef['item_category'] ?: null,
@@ -407,6 +410,7 @@ class Show extends Component
             'deletable' => $this->canDelete(),
             'isOwner' => auth()->id() === $this->record->owner_user_id,
             'departments' => \App\Models\Department::where('is_active', true)->with('unit:id,name')->orderBy('name')->get(['id', 'name', 'unit_id']),
+            'ownerUsers' => \App\Models\User::where('status', 'active')->orderBy('display_name')->get(['id', 'display_name', 'email']),
         ]);
     }
 }

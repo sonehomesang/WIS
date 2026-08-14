@@ -31,6 +31,10 @@
                 @error('origin_source')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
+                <label class="block text-gray-600 mb-1">ເຈົ້າ ຂອງ ເຄື່ອງ / Owner <span class="text-xs text-gray-400">(ດຶງ ຈາກ ຜູ້ ໃຊ້)</span></label>
+                <select wire:model="owner_user_id" class="w-full rounded-md border-gray-300 text-sm"><option value="">—</option>@foreach ($ownerUsers as $ou)<option value="{{ $ou->id }}">{{ $ou->display_name ?: $ou->email }}</option>@endforeach</select>
+            </div>
+            <div>
                 <label class="block text-gray-600 mb-1">ພະແນກ ເຈົ້າ ຂອງ / Department <span class="text-xs text-gray-400">(ໃຊ້ ຄຸມ ສິດ ຈຳໜ່າຍ)</span></label>
                 <select wire:model="owner_dept_id" class="w-full rounded-md border-gray-300 text-sm"><option value="">—</option>@foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}@if ($d->unit) · {{ $d->unit->name }}@endif</option>@endforeach</select>
             </div>
