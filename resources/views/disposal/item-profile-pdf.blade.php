@@ -72,9 +72,30 @@
         .chip.on { background: #fde8e8; color: #b91c1c; border-color: #f3c0c0; font-weight: bold; }
         .clevel { border: 1px dashed #b45309; background: #fdf3e3; padding: 5px 8px; font-size: 9px; margin-top: 6px; }
         .muted { color: #6b7280; font-size: 8px; }
+        @if (! empty($preview))
+        /* screen preview: toolbar + centred sheet · footer flows (not fixed) */
+        body { background: #eef1f5; }
+        .previewbar { position: sticky; top: 0; z-index: 10; display: flex; gap: 10px; align-items: center; background: #1e3a5f; color: #fff; padding: 10px 16px; font-family: system-ui, sans-serif; font-size: 13px; }
+        .previewbar a, .previewbar button { font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px; padding: 6px 12px; border: 1px solid rgba(255,255,255,.5); color: #fff; background: transparent; cursor: pointer; }
+        .previewbar a.primary { background: #fff; color: #1e3a5f; border-color: #fff; }
+        .previewbar .sp { flex: 1; }
+        .previewsheet { max-width: 820px; margin: 18px auto 40px; background: #fff; padding: 26px 34px 20px; box-shadow: 0 2px 16px rgba(20,34,48,.12); }
+        .page-footer { position: static !important; margin-top: 22px; }
+        @media print { .previewbar { display: none; } .previewsheet { box-shadow: none; margin: 0; max-width: none; padding: 0; } body { background: #fff; } }
+        @endif
     </style>
 </head>
 <body>
+    @if (! empty($preview))
+        <div class="previewbar">
+            <span>👁 ພຣີວິວ · {{ $record->request_number }} · ລາຍການ #{{ $item->id }}</span>
+            <span class="sp"></span>
+            <a href="{{ route('disposal.item.pdf', [$record, $item]) }}" class="primary">⬇ ດາວໂຫຼດ PDF</a>
+            <button onclick="window.print()">🖨 ພິມ / Save</button>
+            <a href="{{ route('disposal.show', $record) }}">← ກັບ ໄປ ແກ້ໄຂ</a>
+        </div>
+        <div class="previewsheet">
+    @endif
     {{-- letterhead (same 2-col header as DA/OGA) --}}
     <table style="margin-bottom:6px;">
         <tr>
@@ -188,5 +209,6 @@
     </div>
 
     @include('pdf._footer')
+    @if (! empty($preview))</div>@endif
 </body>
 </html>

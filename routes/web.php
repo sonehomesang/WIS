@@ -163,8 +163,8 @@ Route::get('disposal/{record}/pdf', function (DisposalRecord $record) {
     return PdfExport::download('disposal.pdf', ['record' => $record], "disposal-{$record->request_number}.pdf");
 })->middleware(['auth', 'verified'])->name('disposal.pdf');
 
-// Per-item disposal profile (letterhead PDF + condition + photos + endorsement)
-Route::get('disposal/{record}/item/{item}/pdf', function (DisposalRecord $record, App\Models\DisposalItem $item) {
+// Per-item disposal profile — shared view-data resolver (condition + photos + owner + endorsement)
+$disposalProfileData = function (DisposalRecord $record, App\Models\DisposalItem $item): array {
     $u = auth()->user();
     abort_unless($u->can('disposal.view') && App\Livewire\Disposal\Show::canAccess($record), 403);
     abort_unless($item->record_id === $record->id, 404);
@@ -189,8 +189,17 @@ Route::get('disposal/{record}/item/{item}/pdf', function (DisposalRecord $record
         }
     }
 
-    return PdfExport::download('disposal.item-profile-pdf',
-        ['record' => $record, 'item' => $item, 'source' => $source, 'ownerDept' => $ownerDept, 'ownerUnit' => $ownerUnit],
+    return ['record' => $record, 'item' => $item, 'source' => $source, 'ownerDept' => $ownerDept, 'ownerUnit' => $ownerUnit];
+};
+
+// Preview the profile in-app (HTML) before exporting the file
+Route::get('disposal/{record}/item/{item}/preview', function (DisposalRecord $record, App\Models\DisposalItem $item) use ($disposalProfileData) {
+    return view('disposal.item-profile-pdf', $disposalProfileData($record, $item) + ['preview' => true]);
+})->middleware(['auth', 'verified'])->name('disposal.item.preview');
+
+// Export the profile as a letterhead PDF
+Route::get('disposal/{record}/item/{item}/pdf', function (DisposalRecord $record, App\Models\DisposalItem $item) use ($disposalProfileData) {
+    return PdfExport::download('disposal.item-profile-pdf', $disposalProfileData($record, $item),
         "disposal-item-{$record->request_number}-{$item->id}.pdf");
 })->middleware(['auth', 'verified'])->name('disposal.item.pdf');
 

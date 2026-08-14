@@ -47,7 +47,10 @@
                         </div>
                     @endif
                     @if (! empty($it->photos))<div class="flex gap-1 flex-wrap">@foreach ($it->photos as $p)<img src="{{ \Illuminate\Support\Facades\Storage::url($p) }}" class="w-14 h-14 rounded object-cover border border-gray-200" />@endforeach</div>@endif
-                    <div><a href="{{ route('disposal.item.pdf', [$record, $it]) }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-gray-700 border border-gray-300 rounded-md px-2.5 py-1 hover:bg-gray-50">📄 ໂປຣຟາຍ / Profile PDF</a></div>
+                    <div class="flex gap-2">
+                        <a href="{{ route('disposal.item.preview', [$record, $it]) }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-white bg-sky-600 rounded-md px-2.5 py-1 hover:bg-sky-700">👁 ພຣີວິວ / Preview</a>
+                        <a href="{{ route('disposal.item.pdf', [$record, $it]) }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-gray-700 border border-gray-300 rounded-md px-2.5 py-1 hover:bg-gray-50">📄 PDF</a>
+                    </div>
                 </div>
             @endforeach
         </div>
@@ -110,7 +113,7 @@
         </div>
         @else
         {{-- ══ EDIT FORM (ໃບ ຍັງ ດຳເນີນ ຢູ່) ══ --}}
-        <div class="bg-amber-50/60 border border-amber-200 rounded-lg px-4 py-2 text-sm text-amber-800">✏️ ໂໝດ ແກ້ໄຂ — ໃບ ນີ້ ຍັງ ດຳເນີນ ຢູ່ ({{ $record->statusLabel() }}) ຈຶ່ງ ແກ້ໄຂ ໄດ້. ເມື່ອ ຈຳໜ່າຍ ສຳເລັດ ຈະ ຖືກ ລັອກ.</div>
+        <div class="bg-amber-50/60 border border-amber-200 rounded-lg px-4 py-2 text-sm text-amber-800">✏️ ໂໝດ ແກ້ໄຂ — ໃບ ນີ້ ຍັງ ດຳເນີນ ຢູ່ ({{ $record->statusLabel() }}) ຈຶ່ງ ແກ້ໄຂ ໄດ້. ຕື່ມ ຂໍ້ມູນ ທີ່ ຈຳເປັນ (ໂດຍ ສະເພາະ <b>ຄຳ ແນະນຳ ຕໍ່ C-Level</b>) → 💾 ບັນທຶກ → 👁 ພຣີວິວ ກ່ອນ ອອກ ເປັນ PDF. ເມື່ອ ຈຳໜ່າຍ ສຳເລັດ ຈະ ຖືກ ລັອກ.</div>
 
         {{-- record header fields --}}
         <div class="bg-white border border-gray-100 rounded-lg p-4 grid gap-3 sm:grid-cols-2">
