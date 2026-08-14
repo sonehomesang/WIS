@@ -108,7 +108,7 @@
                             <td x-show="cols.category" x-cloak class="px-4 py-2 text-xs text-gray-600 whitespace-nowrap">{{ $it->category ?: '—' }}</td>
                             <td x-show="cols.qty" x-cloak class="px-4 py-2 text-gray-600 whitespace-nowrap">{{ $it->quantity }}@if ($it->unit) {{ $it->unit }}@endif</td>
                             <td x-show="cols.location" x-cloak class="px-4 py-2 text-gray-600 text-xs whitespace-nowrap">{{ collect([$it->location?->name, $it->building?->name, $it->room?->name, $it->shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
-                            <td x-show="cols.status" x-cloak class="px-4 py-2 whitespace-nowrap"><span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span></td>
+                            <td x-show="cols.status" x-cloak class="px-4 py-2 whitespace-nowrap"><span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>@if ($it->condition_status && $it->condition_status !== 'in_service')<span class="block mt-1 text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($it->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($it->condition_status) }}</span>@endif</td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $it->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
@@ -137,7 +137,7 @@
                             @endif
                             <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
                         </div>
-                        <span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>
+                        <span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>@if ($it->condition_status && $it->condition_status !== 'in_service')<span class="text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($it->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($it->condition_status) }}</span>@endif
                     </div>
                     <div class="text-xs text-gray-500 mt-1"><span class="font-mono text-gray-400">{{ $it->slug }}</span> · Qty {{ $it->quantity }} {{ $it->unit }} · {{ collect([$it->location?->name, $it->building?->name])->filter()->implode(' / ') ?: '—' }}</div>
                     @if ($showDeleted)
@@ -192,6 +192,7 @@
                     <div><label class="block text-sm text-gray-600 mb-1">Room</label><select wire:model="room_id" @disabled(! $building_id) class="w-full rounded-md border-gray-300 text-sm disabled:bg-gray-50"><option value="">—</option>@foreach ($formRooms as $r)<option value="{{ $r->id }}">{{ $r->name }}</option>@endforeach</select></div>
                     <div><label class="block text-sm text-gray-600 mb-1">Shelf</label><input type="text" wire:model="shelf_label" placeholder="A-3-2" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     <div><label class="block text-sm text-gray-600 mb-1">Status</label><select wire:model="status" class="w-full rounded-md border-gray-300 text-sm"><option value="available">available</option><option value="borrowed">borrowed</option><option value="maintenance">maintenance</option><option value="low-stock">low-stock</option></select></div>
+                    <div><label class="block text-sm text-gray-600 mb-1">ສະຖານະພາບ (Condition)</label><select wire:model="condition_status" class="w-full rounded-md border-gray-300 text-sm">@foreach (\App\Support\ConditionStatus::options() as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach</select>@error('condition_status')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror</div>
                     <div class="md:col-span-2"><label class="block text-sm text-gray-600 mb-1">ລາຍລະອຽດ</label><textarea wire:model="description" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
 
                     <div class="md:col-span-2">

@@ -66,6 +66,8 @@ class Index extends Component
 
     public string $status = 'available';
 
+    public string $condition_status = 'in_service';
+
     public bool $is_active = true;
 
     /** @var array<int, TemporaryUploadedFile> */
@@ -139,6 +141,7 @@ class Index extends Component
         $this->room_id = $m->room_id;
         $this->shelf_label = $m->shelf_label ?? '';
         $this->status = $m->status;
+        $this->condition_status = $m->condition_status ?? 'in_service';
         $this->is_active = (bool) $m->is_active;
         $this->newPhotos = [];
         $this->loadPhotos($m);
@@ -170,6 +173,7 @@ class Index extends Component
             'room_id' => ['nullable', 'exists:rooms,id'],
             'shelf_label' => ['nullable', 'string', 'max:64'],
             'status' => ['required', 'in:available,borrowed,maintenance,low-stock'],
+            'condition_status' => ['required', \App\Support\ConditionStatus::rule()],
             'is_active' => ['boolean'],
             'newPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
             'newPhotos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
@@ -186,10 +190,20 @@ class Index extends Component
         $payload['is_active'] = $this->is_active;
         $payload['updated_by'] = $uid;
 
+        $newCond = $payload['condition_status'] ?? 'in_service';
+
         if ($this->editingId) {
             $item = InventoryItem::findOrFail($this->editingId);
+            if ($item->condition_status !== $newCond) {   // stamp who/when on change
+                $payload['condition_set_at'] = now();
+                $payload['condition_set_by'] = $uid;
+            }
             $item->update($payload);
         } else {
+            if ($newCond !== 'in_service') {
+                $payload['condition_set_at'] = now();
+                $payload['condition_set_by'] = $uid;
+            }
             $payload['slug'] = $this->uniqueSlug($data['name']);
             $payload['created_by'] = $uid;
             $item = InventoryItem::create($payload);
@@ -303,6 +317,7 @@ class Index extends Component
         $this->room_id = null;
         $this->shelf_label = '';
         $this->status = 'available';
+        $this->condition_status = 'in_service';
         $this->is_active = true;
         $this->newPhotos = [];
         $this->existingPhotos = [];
