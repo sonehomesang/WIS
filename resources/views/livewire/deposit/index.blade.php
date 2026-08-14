@@ -53,6 +53,7 @@
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລະຫັດຊັບສິນ <span class="text-gray-400">(Fixed)</span></th>
                         <th class="text-left font-semibold px-4 py-2 min-w-[13rem]">ບ່ອນເກັບ <span class="text-gray-400">(Storage)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ວັນທີຝາກ <span class="text-gray-400">(Date)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖານະພາບ <span class="text-gray-400">(Condition)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖານະ <span class="text-gray-400">(Status)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍລະອຽດ <span class="text-gray-400">(Actions)</span></th>
                     </tr>
@@ -80,6 +81,14 @@
                                 <div class="text-gray-700 font-medium">{{ $r->deposit_date?->format('M d, Y') }}</div>
                                 <div class="text-gray-400 mt-1">{{ $r->request_type === 'pre_request' ? 'PRE-REQUEST' : 'WALK-IN' }}</div>
                             </td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap">
+                                @php $conds = $r->items->pluck('condition_status')->filter(fn ($c) => $c && $c !== 'in_service')->unique(); @endphp
+                                @forelse ($conds as $cs)
+                                    <span class="inline-block text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($cs) }}">{{ \App\Support\ConditionStatus::shortLabel($cs) }}</span>
+                                @empty
+                                    <span class="text-xs text-gray-400">ໃຊ້ ດີ</span>
+                                @endforelse
+                            </td>
                             <td class="px-4 py-2 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
                             <td class="px-4 py-2 align-top whitespace-nowrap">
                                 @if ($showDeleted)
@@ -92,7 +101,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີລາຍການຝາກ</td></tr>
+                        <tr><td colspan="10" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີລາຍການຝາກ</td></tr>
                     @endforelse
                 </tbody>
             </table>

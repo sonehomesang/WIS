@@ -50,3 +50,22 @@ test('with no disposable statuses selected it errors and pulls nothing', functio
     // still just the initial blank row
     expect($c->get('items'))->toHaveCount(1);
 });
+
+test('auto-pull also grabs a disposable deposit item by status', function () {
+    $rec = app(App\Services\DepositService::class)->createDraft([
+        'request_type' => 'walk_in', 'item_category' => 'Tools', 'origin_source' => 'X',
+        'deposit_reason' => 'r', 'deposit_date' => now()->toDateString(),
+        'items' => [['item_name' => 'Broken drill', 'qty' => 1, 'condition_status' => 'beyond_repair']],
+    ], auth()->user());
+    $depItem = $rec->items()->first();
+    expect($depItem->condition_status)->toBe('beyond_repair');
+
+    $c = Livewire::test(Create::class)
+        ->set('pullSources', ['inventory' => false, 'equipment' => false, 'deposit' => true])
+        ->call('autoPull')->assertHasNoErrors();
+
+    $items = $c->get('items');
+    expect($items)->toHaveCount(1);
+    expect($items[0]['source_type'])->toBe('deposit');
+    expect((int) $items[0]['source_id'])->toBe($depItem->id);
+});
