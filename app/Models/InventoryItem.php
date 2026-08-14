@@ -18,13 +18,21 @@ class InventoryItem extends Model
         'quantity', 'min_quantity', 'unit',
         'location_id', 'building_id', 'room_id', 'shelf_label',
         'status', 'is_active', 'qr_code', 'created_by', 'updated_by', 'deleted_reason', 'deleted_by',
+        'condition_status', 'condition_note', 'condition_set_at', 'condition_set_by',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'quantity' => 'integer',
         'min_quantity' => 'integer',
+        'condition_set_at' => 'datetime',
     ];
+
+    /** Items whose lifecycle status makes them eligible for disposal. */
+    public function scopeDisposable($query)
+    {
+        return $query->whereIn('condition_status', \App\Support\ConditionStatus::DISPOSABLE);
+    }
 
     public function location(): BelongsTo
     {

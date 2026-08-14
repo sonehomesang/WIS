@@ -16,7 +16,14 @@ class DepositItem extends Model
         'qty' => 'integer',
         'estimated_value' => 'decimal:2',
         'sort_order' => 'integer',
+        'condition_set_at' => 'datetime',
     ];
+
+    /** Deposit items whose lifecycle status makes them eligible for disposal. */
+    public function scopeDisposable($query)
+    {
+        return $query->whereIn('condition_status', \App\Support\ConditionStatus::DISPOSABLE);
+    }
 
     public function record(): BelongsTo
     {

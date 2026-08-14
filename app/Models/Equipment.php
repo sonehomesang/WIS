@@ -25,13 +25,21 @@ class Equipment extends Model
         'quantity', 'unit_id', 'status_counts',
         'location', 'loc_bin', 'responsible_name', 'responsible_user_id', 'photo_path', 'purchase_date',
         'notes', 'created_by', 'updated_by', 'deleted_reason', 'deleted_by',
+        'condition_status', 'condition_note', 'condition_set_at', 'condition_set_by',
     ];
 
     protected $casts = [
         'purchase_date' => 'date',
         'quantity' => 'integer',
         'status_counts' => 'array',
+        'condition_set_at' => 'datetime',
     ];
+
+    /** Assets whose lifecycle status makes them eligible for disposal. */
+    public function scopeDisposable($query)
+    {
+        return $query->whereIn('condition_status', \App\Support\ConditionStatus::DISPOSABLE);
+    }
 
     public function unit(): BelongsTo
     {
