@@ -74,6 +74,7 @@ class Create extends Component
             'recommendation' => '', 'recommendation_detail' => '',
             'estimated_value' => '', 'currency' => '',
             'history' => [],   // [{date,kind,problem,action,include}]
+            'photos' => [],    // path[] ດຶງ ຈາກ ຮູບ ຂອງ ແຫຼ່ງ (ຝາກ/ອຸປະກອນ/ສາງ)
         ];
     }
 
@@ -141,39 +142,59 @@ class Create extends Component
         $this->items[$i]['source_type'] = $source;
         $this->items[$i]['source_id'] = $id;
         $this->items[$i]['history'] = [];
+        $this->items[$i]['photos'] = [];
 
         if ($source === 'equipment') {
-            $e = Equipment::find($id);
+            $e = Equipment::with('photos')->find($id);
             if (! $e) {
                 return;
             }
             $this->items[$i]['asset_code'] = $e->asset_code;
             $this->items[$i]['fixed_asset_no'] = $e->fixed_asset_no ?? '';
             $this->items[$i]['unit'] = $this->items[$i]['unit'] ?: ($e->unit?->name ?? '');
+            $this->items[$i]['photos'] = $this->grabSourcePhotos($e->photos->pluck('path')->all(), $e->photo_path ?? null);
             $name = $e->name;
             $this->items[$i]['history'] = $this->pullEquipmentHistory($id);
         } elseif ($source === 'inventory') {
-            $x = InventoryItem::find($id);
+            $x = InventoryItem::with('photos')->find($id);
             if (! $x) {
                 return;
             }
             $this->items[$i]['asset_code'] = $x->slug;
             $this->items[$i]['unit'] = $this->items[$i]['unit'] ?: ($x->unit ?? '');
+            $this->items[$i]['photos'] = $this->grabSourcePhotos($x->photos->pluck('path')->all());
             $name = $x->name;
         } else { // deposit
-            $x = DepositItem::find($id);
+            $x = DepositItem::with('photos')->find($id);
             if (! $x) {
                 return;
             }
             $this->items[$i]['asset_code'] = $x->asset_code ?? '';
             $this->items[$i]['fixed_asset_no'] = $x->fixed_asset_no ?? '';
             $this->items[$i]['unit'] = $this->items[$i]['unit'] ?: ($x->unit ?? '');
+            $this->items[$i]['photos'] = $this->grabSourcePhotos($x->photos->pluck('path')->all());
             $name = $x->item_name;
         }
         if (trim((string) ($this->items[$i]['item_name'] ?? '')) === '') {
             $this->items[$i]['item_name'] = $name;
         }
         $this->assetMatches[$i] = [];
+    }
+
+    /**
+     * ດຶງ path ຮູບ ຈາກ ແຫຼ່ງ (ສູງ ສຸດ 6 ຮູບ · ຮອງຮັບ photo_path ດ່ຽວ ຂອງ ອຸປະກອນ).
+     *
+     * @param  array<int,?string>  $paths
+     * @return array<int,string>
+     */
+    protected function grabSourcePhotos(array $paths, ?string $fallback = null): array
+    {
+        $paths = array_values(array_filter($paths));
+        if (empty($paths) && $fallback) {
+            $paths = [$fallback];
+        }
+
+        return array_slice($paths, 0, 6);
     }
 
     public function openPull(): void
@@ -422,14 +443,14 @@ class Create extends Component
             'items' => $payloadItems,
         ], auth()->user());
 
-        // ຮູບ ຕໍ່ item → ເກັບ ໄຟລ໌ + ຝັງ path ໃສ່ item.photos
+        // ຮູບ ຕໍ່ item → ຮູບ ທີ່ ດຶງ ຈາກ ແຫຼ່ງ (ຝາກ/ອຸປະກອນ/ສາງ) ຄົງ ໄວ້ + ຕໍ່ ດ້ວຍ ຮູບ ທີ່ ອັບ ໂຫຼດ ໃໝ່
         foreach ($record->items as $idx => $item) {
-            $paths = [];
+            $paths = array_values($item->photos ?? []);   // ຮູບ ຈາກ ແຫຼ່ງ (ຝັງ ຕອນ createDraft)
             foreach (array_values($this->photos[$idx] ?? []) as $file) {
                 $paths[] = $file->store("disposal/{$record->id}/{$item->id}", 'public');
             }
             if ($paths) {
-                $item->update(['photos' => $paths]);
+                $item->update(['photos' => array_values($paths)]);
             }
         }
 

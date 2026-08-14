@@ -69,3 +69,28 @@ test('auto-pull also grabs a disposable deposit item by status', function () {
     expect($items[0]['source_type'])->toBe('deposit');
     expect((int) $items[0]['source_id'])->toBe($depItem->id);
 });
+
+test('pulling a deposit item carries its photos into the disposal item (for the profile)', function () {
+    $rec = app(App\Services\DepositService::class)->createDraft([
+        'request_type' => 'walk_in', 'item_category' => 'Tools', 'origin_source' => 'X',
+        'deposit_reason' => 'r', 'deposit_date' => now()->toDateString(),
+        'items' => [['item_name' => 'Broken drill', 'qty' => 1, 'condition_status' => 'beyond_repair']],
+    ], auth()->user());
+    $depItem = $rec->items()->first();
+    // deposit item has 2 evidence photos
+    $depItem->photos()->create(['kind' => 'deposit', 'path' => 'deposit/1/1/a.jpg', 'sort_order' => 0]);
+    $depItem->photos()->create(['kind' => 'deposit', 'path' => 'deposit/1/1/b.jpg', 'sort_order' => 1]);
+
+    $c = Livewire::test(Create::class)
+        ->set('pullSources', ['inventory' => false, 'equipment' => false, 'deposit' => true])
+        ->call('autoPull')->assertHasNoErrors();
+
+    // the pulled row carries the deposit photos
+    $items = $c->get('items');
+    expect($items[0]['photos'])->toBe(['deposit/1/1/a.jpg', 'deposit/1/1/b.jpg']);
+
+    // and they persist onto the saved DisposalItem
+    $c->call('save');
+    $disp = App\Models\DisposalRecord::latest('id')->first();
+    expect($disp->items()->first()->photos)->toBe(['deposit/1/1/a.jpg', 'deposit/1/1/b.jpg']);
+});
