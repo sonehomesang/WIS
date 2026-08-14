@@ -16,7 +16,7 @@ class InventoryItem extends Model
     protected $fillable = [
         'slug', 'name', 'description', 'category', 'brand', 'model', 'serial_number',
         'quantity', 'min_quantity', 'unit',
-        'location_id', 'building_id', 'room_id', 'shelf_label',
+        'location_id', 'building_id', 'room_id', 'shelf_label', 'department_id',
         'status', 'is_active', 'qr_code', 'created_by', 'updated_by', 'deleted_reason', 'deleted_by',
         'condition_status', 'condition_note', 'condition_set_at', 'condition_set_by',
     ];
@@ -47,6 +47,12 @@ class InventoryItem extends Model
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
+    }
+
+    /** ພະແນກ ເຈົ້າ ຂອງ (Org Unit derived via department.unit). */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 
     /** ຜູ້ ທີ່ ລຶບ item ນີ້ (ສຳລັບ deleted log). */

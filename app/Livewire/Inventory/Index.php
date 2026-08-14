@@ -64,6 +64,8 @@ class Index extends Component
 
     public string $shelf_label = '';
 
+    public ?int $department_id = null;
+
     public string $status = 'available';
 
     public string $condition_status = 'in_service';
@@ -140,6 +142,7 @@ class Index extends Component
         $this->building_id = $m->building_id;
         $this->room_id = $m->room_id;
         $this->shelf_label = $m->shelf_label ?? '';
+        $this->department_id = $m->department_id;
         $this->status = $m->status;
         $this->condition_status = $m->condition_status ?? 'in_service';
         $this->is_active = (bool) $m->is_active;
@@ -172,6 +175,7 @@ class Index extends Component
             'building_id' => ['nullable', 'exists:buildings,id'],
             'room_id' => ['nullable', 'exists:rooms,id'],
             'shelf_label' => ['nullable', 'string', 'max:64'],
+            'department_id' => ['nullable', 'exists:departments,id'],
             'status' => ['required', 'in:available,borrowed,maintenance,low-stock'],
             'condition_status' => ['required', \App\Support\ConditionStatus::rule()],
             'is_active' => ['boolean'],
@@ -316,6 +320,7 @@ class Index extends Component
         $this->building_id = null;
         $this->room_id = null;
         $this->shelf_label = '';
+        $this->department_id = null;
         $this->status = 'available';
         $this->condition_status = 'in_service';
         $this->is_active = true;
@@ -366,6 +371,7 @@ class Index extends Component
             ],
             'prefixCounts' => InventoryItem::prefixCounts(),
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(),
+            'departments' => \App\Models\Department::where('is_active', true)->with('unit:id,name')->orderBy('name')->get(['id', 'name', 'unit_id']),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'formBuildings' => $this->location_id ? Building::where('location_id', $this->location_id)->where('is_active', true)->orderBy('name')->get() : collect(),
             'formRooms' => $this->building_id ? Room::where('building_id', $this->building_id)->where('is_active', true)->orderBy('name')->get() : collect(),
