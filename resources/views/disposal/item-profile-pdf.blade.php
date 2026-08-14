@@ -2,7 +2,9 @@
     use App\Support\ConditionStatus;
     use App\Support\PdfExport;
 
-    $img = fn ($path) => PdfExport::thumb($path, 220);
+    // auto-scale (contain) — whole photo fits its frame, never cropped
+    $imgBig = fn ($path) => PdfExport::thumbContain($path, 380, 300);
+    $imgSm = fn ($path) => PdfExport::thumbContain($path, 320, 150);
     $fmt = fn ($d) => $d?->format('d/m/Y') ?? '—';
 
     // photos (JSON array of paths) — show up to 3 as evidence
@@ -48,15 +50,17 @@
         .sec { font-weight: bold; color: #1e3a5f; font-size: 11px; margin: 10px 0 4px; }
         .kv td { padding: 3px 5px; font-size: 9.5px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
         .kv td.k { color: #6b7280; font-weight: bold; width: 46%; }
-        /* evidence photos: big left (rowspan 2) + two stacked on the right */
-        .ph td { border: 1px solid #999; padding: 4px; text-align: center; vertical-align: top; }
+        /* evidence photos: big left (rowspan 2) + two stacked on the right;
+           images auto-scaled to fit (contain), centred in a light frame */
+        .ph td { border: 1px solid #999; padding: 4px; text-align: center; vertical-align: top; background: #eef2f7; }
         .ph td.big { width: 58%; }
         .ph td.sm { width: 42%; }
-        .ph .cap { font-size: 8px; color: #fff; background: #1e3a5f; font-weight: bold; padding: 1px 6px; border-radius: 3px; display: inline-block; margin-bottom: 3px; }
-        .ph img.big { width: 100%; max-height: 250px; object-fit: cover; }
-        .ph img.sm { width: 100%; max-height: 112px; object-fit: cover; }
+        .ph .cap { font-size: 8px; color: #fff; background: #1e3a5f; font-weight: bold; padding: 1px 6px; border-radius: 3px; display: inline-block; margin-bottom: 4px; }
+        .ph .frame { text-align: center; }
+        .ph img.big { max-width: 100%; max-height: 290px; }
+        .ph img.sm { max-width: 100%; max-height: 122px; }
         .ph .none { color: #9ca3af; font-size: 8px; padding: 24px 0; }
-        .ph .stamp { font-size: 8px; color: #374151; font-family: 'DejaVu Sans Mono', monospace; text-align: right; margin-top: 2px; }
+        .ph .stamp { font-size: 8px; color: #374151; font-family: 'DejaVu Sans Mono', monospace; text-align: right; margin-top: 3px; }
         .split td { vertical-align: top; }
         .en { table-layout: fixed; margin-top: 2px; }
         .en .rec { font-weight: bold; color: #b91c1c; }
@@ -96,8 +100,8 @@
         <tr>
             <td class="big" rowspan="2">
                 <div class="cap">{{ $photoLabels[0] }}</div>
-                @if (isset($photos[0]) && ($src = $img($photos[0])))
-                    <img class="big" src="{{ $src }}" alt="">
+                @if (isset($photos[0]) && ($src = $imgBig($photos[0])))
+                    <div class="frame"><img class="big" src="{{ $src }}" alt=""></div>
                     <div class="stamp">{{ $fmt($record->created_at) }}</div>
                 @else
                     <div class="none">— ບໍ່ ມີ ຮູບ —</div>
@@ -105,8 +109,8 @@
             </td>
             <td class="sm">
                 <div class="cap">{{ $photoLabels[1] }}</div>
-                @if (isset($photos[1]) && ($src = $img($photos[1])))
-                    <img class="sm" src="{{ $src }}" alt="">
+                @if (isset($photos[1]) && ($src = $imgSm($photos[1])))
+                    <div class="frame"><img class="sm" src="{{ $src }}" alt=""></div>
                     <div class="stamp">{{ $fmt($record->created_at) }}</div>
                 @else
                     <div class="none">— ບໍ່ ມີ ຮູບ —</div>
@@ -116,8 +120,8 @@
         <tr>
             <td class="sm">
                 <div class="cap">{{ $photoLabels[2] }}</div>
-                @if (isset($photos[2]) && ($src = $img($photos[2])))
-                    <img class="sm" src="{{ $src }}" alt="">
+                @if (isset($photos[2]) && ($src = $imgSm($photos[2])))
+                    <div class="frame"><img class="sm" src="{{ $src }}" alt=""></div>
                     <div class="stamp">{{ $fmt($record->created_at) }}</div>
                 @else
                     <div class="none">— ບໍ່ ມີ ຮູບ —</div>

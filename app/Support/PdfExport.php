@@ -86,4 +86,53 @@ class PdfExport
             return null;
         }
     }
+
+    /**
+     * Base64 data-URI of a public-disk image, scaled DOWN to *fit inside*
+     * $maxW × $maxH (contain), keeping aspect ratio — never cropped, never
+     * upscaled.
+     *
+     * DomPDF ignores `object-fit: contain`, so we bake the fit here: the
+     * embedded image already has the right shape, and the blade only has to
+     * centre it inside a fixed frame. This is what evidence photos want —
+     * the whole item visible, auto-scaled to the box — instead of the
+     * centre-cropped square that thumb() produces.
+     */
+    public static function thumbContain(?string $path, int $maxW = 360, int $maxH = 300): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        try {
+            $abs = Storage::disk('public')->path($path);
+            if (! is_file($abs)) {
+                return null;
+            }
+
+            $data = file_get_contents($abs);
+
+            if (function_exists('imagecreatefromstring') && ($src = @imagecreatefromstring($data))) {
+                $w = imagesx($src);
+                $h = imagesy($src);
+                $scale = min($maxW / $w, $maxH / $h, 1);   // never upscale
+                $nw = max(1, (int) round($w * $scale));
+                $nh = max(1, (int) round($h * $scale));
+                $dst = imagecreatetruecolor($nw, $nh);
+                imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));   // flatten alpha → white
+                imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+                ob_start();
+                imagejpeg($dst, null, 85);
+                $out = ob_get_clean();
+                imagedestroy($src);
+                imagedestroy($dst);
+
+                return 'data:image/jpeg;base64,'.base64_encode($out);
+            }
+
+            return 'data:image/jpeg;base64,'.base64_encode($data);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
 }
