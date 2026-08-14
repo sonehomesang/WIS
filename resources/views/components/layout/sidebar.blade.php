@@ -62,7 +62,7 @@
         {{-- Top-level menu --}}
         <nav class="px-2 py-4 space-y-1">
             @foreach ($nav as $item)
-                @if (($item['always'] ?? false) || $u->can($item['menu'].'.view'))
+                @if ((($item['always'] ?? false) || $u->can($item['menu'].'.view')) && \App\Support\Modules::enabled($item['menu']))
                     @php $active = $item['route'] !== '#' && request()->routeIs($item['menu']); @endphp
                     <a href="{{ $item['route'] }}" @if($item['route'] !== '#') wire:navigate @endif
                        class="{{ $linkBase }} {{ $active ? $linkActive : $linkIdle }}">

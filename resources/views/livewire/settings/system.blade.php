@@ -26,6 +26,25 @@
         {{-- Borrow workflow — ທະຍອຍ ຮັບຄືນ --}}
         <div class="bg-white rounded-lg border border-gray-100 p-5 space-y-3">
             <div class="font-medium text-gray-800">ຂັ້ນຕອນ ການ ຢືມ (Borrow Workflow)</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">ຂັ້ນ ຮັບຊາບ (Acknowledge)</label>
+                    <select wire:model="borrowAcknowledge" class="w-full rounded-md border-gray-300 text-sm">
+                        <option value="off">ປິດ — ບໍ່ ຕ້ອງ ຮັບຊາບ</option>
+                        <option value="optional">ຕາມ ໃບ — ຂຶ້ນ ກັບ ຄຳ ຂໍ (optional)</option>
+                        <option value="required">ບັງຄັບ ຮັບຊາບ ທຸກ ໃບ</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">ຂັ້ນ ອະນຸມັດ (Approve)</label>
+                    <select wire:model="borrowApprove" class="w-full rounded-md border-gray-300 text-sm">
+                        <option value="required">ບັງຄັບ ອະນຸມັດ (ຄ່າ ເລີ່ມຕົ້ນ)</option>
+                        <option value="off">ປິດ — ບໍ່ ຕ້ອງ ອະນຸມັດ</option>
+                    </select>
+                </div>
+            </div>
+            @error('borrowAcknowledge')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+            @error('borrowApprove')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
             <label class="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" wire:model="borrowPartialReturn" class="mt-1 rounded border-gray-300 text-sky-600" />
                 <span class="text-sm text-gray-700">
@@ -34,6 +53,22 @@
                 </span>
             </label>
             @can('settings.edit')<div class="pt-1"><button wire:click="saveBorrowWorkflow" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 hover:bg-sky-700">Save</button></div>@endcan
+        </div>
+
+        {{-- Modules on/off (feature flags) --}}
+        <div class="bg-white rounded-lg border border-gray-100 p-5 space-y-3 md:max-w-md">
+            <div>
+                <h3 class="font-medium text-gray-800">🧩 ໂມດູລ ທີ່ ເປີດ ໃຊ້ (Active Modules)</h3>
+                <p class="text-xs text-gray-500">ຕິກ ໝາຍ = ເປີດ ໃຊ້. ປິດ ໂມດູລ ທີ່ ບໍ່ ໃຊ້ → ຫາຍ ຈາກ ເມນູ ແລະ ເຂົ້າ ໜ້າ ນັ້ນ ບໍ່ ໄດ້. ໂມດູລ ຫຼັກ (Dashboard · Inventory · Settings) ເປີດ ຕະຫຼອດ.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                @foreach (\App\Support\Modules::LABELS as $key => $label)
+                    <label class="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" wire:model="modules.{{ $key }}" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" /> {{ $label }}
+                    </label>
+                @endforeach
+            </div>
+            @can('settings.edit')<div class="pt-1"><button wire:click="saveModules" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 hover:bg-sky-700">Save modules</button></div>@endcan
         </div>
 
         {{-- Currency --}}

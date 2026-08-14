@@ -27,6 +27,14 @@ class System extends Component
     /** ໂໝດ ທະຍອຍ ສົ່ງ ຍ່ອຍ / ທະຍອຍ ຮັບຄືນ (workflow.borrow.partial_return). */
     public bool $borrowPartialReturn = false;
 
+    /** ຂັ້ນ ຮັບຊາບ (off|optional|required) ແລະ ອະນຸມັດ (required|off) ຂອງ ການ ຢືມ. */
+    public string $borrowAcknowledge = 'optional';
+
+    public string $borrowApprove = 'required';
+
+    /** @var array<string,bool> ໂມດູລ ເປີດ/ປິດ (feature flags). */
+    public array $modules = [];
+
     // ── Currency ──
     public string $curPrimary = 'THB';
 
@@ -82,6 +90,13 @@ class System extends Component
 
         $wfBorrow = Setting::get('workflow', [])['borrow'] ?? [];
         $this->borrowPartialReturn = ($wfBorrow['partial_return'] ?? 'off') === 'on';
+        $this->borrowAcknowledge = $wfBorrow['acknowledge'] ?? 'optional';
+        $this->borrowApprove = $wfBorrow['approve'] ?? 'required';
+
+        $mods = Setting::get('modules', []);
+        foreach (\App\Support\Modules::TOGGLEABLE as $mk) {
+            $this->modules[$mk] = (bool) ($mods[$mk] ?? true);
+        }
 
         $cur = Setting::get('currency', []);
         $this->curPrimary = $cur['primary'] ?? 'THB';
@@ -121,11 +136,28 @@ class System extends Component
     public function saveBorrowWorkflow(): void
     {
         abort_unless(auth()->user()->can('settings.edit'), 403);
+        $this->validate([
+            'borrowAcknowledge' => ['required', 'in:off,optional,required'],
+            'borrowApprove' => ['required', 'in:off,required'],
+        ]);
         $wf = Setting::get('workflow', []);
         $borrow = $wf['borrow'] ?? [];
+        $borrow['acknowledge'] = $this->borrowAcknowledge;
+        $borrow['approve'] = $this->borrowApprove;
         $borrow['partial_return'] = $this->borrowPartialReturn ? 'on' : 'off';
         $wf['borrow'] = $borrow;
         Setting::put('workflow', $wf, auth()->id());
+        $this->dispatch('saved');
+    }
+
+    public function saveModules(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $out = [];
+        foreach (\App\Support\Modules::TOGGLEABLE as $mk) {
+            $out[$mk] = (bool) ($this->modules[$mk] ?? true);
+        }
+        Setting::put('modules', $out, auth()->id());
         $this->dispatch('saved');
     }
 

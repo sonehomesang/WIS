@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureActiveUser;
+use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\MustChangePassword;
 use App\Http\Middleware\ReplaceTerms;
 use App\Http\Middleware\SecurityHeaders;
@@ -26,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // ຕັດ session ທັນທີ ຖ້າ ບັນຊີ ຖືກ lock/deactivate ຫຼັງ login (M1).
         $middleware->appendToGroup('web', EnsureActiveUser::class);
+
+        // 404 ໂມດູລ ທີ່ admin ປິດ ໄວ້ ໃນ Settings (feature flag).
+        $middleware->appendToGroup('web', EnsureModuleEnabled::class);
 
         // Trust reverse-proxy headers (X-Forwarded-Proto/Host) so HTTPS is detected
         // behind cloudflared tunnel / nginx — otherwise asset URLs come out as http://
