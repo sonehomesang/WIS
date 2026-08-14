@@ -177,8 +177,20 @@ Route::get('disposal/{record}/item/{item}/pdf', function (DisposalRecord $record
         default => null,
     };
 
+    // owning Org Unit + Department (Unit derived from department)
+    $ownerDept = $ownerUnit = null;
+    if ($source) {
+        if ($item->source_type === 'deposit') {
+            $ownerDept = $source->record?->department?->name;
+            $ownerUnit = $source->record?->unit?->name;
+        } else {
+            $ownerDept = $source->department?->name;
+            $ownerUnit = $source->department?->unit?->name;
+        }
+    }
+
     return PdfExport::download('disposal.item-profile-pdf',
-        ['record' => $record, 'item' => $item, 'source' => $source],
+        ['record' => $record, 'item' => $item, 'source' => $source, 'ownerDept' => $ownerDept, 'ownerUnit' => $ownerUnit],
         "disposal-item-{$record->request_number}-{$item->id}.pdf");
 })->middleware(['auth', 'verified'])->name('disposal.item.pdf');
 

@@ -105,6 +105,8 @@
     <table class="kv">
         <tr><td class="k">ຊື່ ເຄື່ອງ / Item</td><td>{{ $item->item_name }}</td></tr>
         @if ($item->fixed_asset_no)<tr><td class="k">ທະບຽນ ຊັບສິນ / Fixed asset</td><td>{{ $item->fixed_asset_no }}</td></tr>@endif
+        @if (! empty($ownerDept))<tr><td class="k">ພະແນກ ເຈົ້າ ຂອງ / Owner dept</td><td>{{ $ownerDept }}</td></tr>@endif
+        @if (! empty($ownerUnit))<tr><td class="k">ໜ່ວຍງານ / Org Unit</td><td>{{ $ownerUnit }}</td></tr>@endif
         @if ($cond)<tr><td class="k">ສະຖານະພາບ / Condition</td><td>{{ ConditionStatus::label($cond) }}</td></tr>@endif
         @if ($purchase)<tr><td class="k">ວັນ ຮັບ ເຂົ້າ / Received</td><td>{{ $fmt($purchase) }}</td></tr>@endif
         @if ($item->condition)<tr><td class="k">ສະພາບ / State</td><td>{{ $item->condition }}</td></tr>@endif

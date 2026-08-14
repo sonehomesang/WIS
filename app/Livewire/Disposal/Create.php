@@ -233,22 +233,51 @@ class Create extends Component
         ));
     }
 
+    /**
+     * Owning-department clamp: a department-scoped preparer may only touch
+     * their own department's assets. Broad roles / super_admin → null (no clamp).
+     * Mirrors the record-dept clamp in save(). Returns -1 (fail-closed) if a
+     * scoped user has no department.
+     */
+    protected function scopeDeptId(): ?int
+    {
+        $u = auth()->user();
+        if ($u->is_super_admin) {
+            return null;
+        }
+        // transactionScope precedence: all > department > assigned > own.
+        // Only 'department' users (line_manager, department_admin) are clamped
+        // to their own department's assets; all/assigned pull broadly.
+        if ($u->transactionScope() === 'department') {
+            return $u->department_id ?? -1;
+        }
+
+        return null;
+    }
+
     /** @return array<int, array{0:string,1:int}> */
     protected function pullQuery(array $statuses): array
     {
+        $dept = $this->scopeDeptId();
         $out = [];
         if (! empty($this->pullSources['equipment'])) {
-            foreach (Equipment::whereIn('condition_status', $statuses)->orderBy('asset_code')->limit(300)->pluck('id') as $id) {
+            foreach (Equipment::whereIn('condition_status', $statuses)
+                ->when($dept !== null, fn ($q) => $q->where('department_id', $dept))
+                ->orderBy('asset_code')->limit(300)->pluck('id') as $id) {
                 $out[] = ['equipment', (int) $id];
             }
         }
         if (! empty($this->pullSources['inventory'])) {
-            foreach (InventoryItem::whereIn('condition_status', $statuses)->orderBy('slug')->limit(300)->pluck('id') as $id) {
+            foreach (InventoryItem::whereIn('condition_status', $statuses)
+                ->when($dept !== null, fn ($q) => $q->where('department_id', $dept))
+                ->orderBy('slug')->limit(300)->pluck('id') as $id) {
                 $out[] = ['inventory', (int) $id];
             }
         }
         if (! empty($this->pullSources['deposit'])) {
-            foreach (DepositItem::whereIn('condition_status', $statuses)->orderByDesc('id')->limit(300)->pluck('id') as $id) {
+            foreach (DepositItem::whereIn('condition_status', $statuses)
+                ->when($dept !== null, fn ($q) => $q->whereHas('record', fn ($r) => $r->where('owner_dept_id', $dept)))
+                ->orderByDesc('id')->limit(300)->pluck('id') as $id) {
                 $out[] = ['deposit', (int) $id];
             }
         }
@@ -262,15 +291,19 @@ class Create extends Component
         if (empty($statuses)) {
             return 0;
         }
+        $dept = $this->scopeDeptId();
         $n = 0;
         if (! empty($this->pullSources['equipment'])) {
-            $n += Equipment::whereIn('condition_status', $statuses)->count();
+            $n += Equipment::whereIn('condition_status', $statuses)
+                ->when($dept !== null, fn ($q) => $q->where('department_id', $dept))->count();
         }
         if (! empty($this->pullSources['inventory'])) {
-            $n += InventoryItem::whereIn('condition_status', $statuses)->count();
+            $n += InventoryItem::whereIn('condition_status', $statuses)
+                ->when($dept !== null, fn ($q) => $q->where('department_id', $dept))->count();
         }
         if (! empty($this->pullSources['deposit'])) {
-            $n += DepositItem::whereIn('condition_status', $statuses)->count();
+            $n += DepositItem::whereIn('condition_status', $statuses)
+                ->when($dept !== null, fn ($q) => $q->whereHas('record', fn ($r) => $r->where('owner_dept_id', $dept)))->count();
         }
 
         return $n;
@@ -344,6 +377,26 @@ class Create extends Component
             if (isset($exists[$st]) && $sid && ! $exists[$st]($sid)) {
                 $this->addError("items.$i.item_name", 'ແຫຼ່ງ ທີ່ ດຶງ ບໍ່ ພົບ ໃນ ທະບຽນ.');
                 throw ValidationException::withMessages(['items' => 'invalid source_id']);
+            }
+        }
+
+        // ກັນ ຂ້າມ ພະແນກ: ຜູ້ ໃຊ້ ທີ່ ຖືກ scope ພະແນກ ຈຳໜ່າຍ ໄດ້ ສະເພາະ ເຄື່ອງ ຂອງ ພະແນກ ຕົນ.
+        if (($dept = $this->scopeDeptId()) !== null) {
+            foreach (array_values($this->items) as $i => $it) {
+                $sid = $it['source_id'] ?? null;
+                if (! $sid) {
+                    continue;
+                }
+                $ownDept = match ($it['source_type'] ?? 'new') {
+                    'equipment' => Equipment::whereKey($sid)->value('department_id'),
+                    'inventory' => InventoryItem::whereKey($sid)->value('department_id'),
+                    'deposit' => optional(DepositItem::find($sid))->record?->owner_dept_id,
+                    default => null,
+                };
+                if ($ownDept !== null && (int) $ownDept !== (int) $dept) {
+                    $this->addError("items.$i.item_name", 'ບໍ່ ແມ່ນ ເຄື່ອງ ຂອງ ພະແນກ ທ່ານ — ຈຳໜ່າຍ ບໍ່ ໄດ້.');
+                    throw ValidationException::withMessages(['items' => 'foreign department asset']);
+                }
             }
         }
 
