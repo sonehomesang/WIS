@@ -31,6 +31,10 @@
                 @error('origin_source')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
+                <label class="block text-gray-600 mb-1">ພະແນກ ເຈົ້າ ຂອງ / Department <span class="text-xs text-gray-400">(ໃຊ້ ຄຸມ ສິດ ຈຳໜ່າຍ)</span></label>
+                <select wire:model="owner_dept_id" class="w-full rounded-md border-gray-300 text-sm"><option value="">—</option>@foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}@if ($d->unit) · {{ $d->unit->name }}@endif</option>@endforeach</select>
+            </div>
+            <div>
                 <label class="block text-gray-600 mb-1">ໄລຍະເວລາທີ່ຄາດ (Duration) <span class="text-red-500">*</span></label>
                 <input type="text" wire:model="expected_duration" placeholder="ເຊັ່ນ: 7 ມື້, 1 ເດືອນ" class="w-full rounded-md border-gray-300 text-sm" />
                 @error('expected_duration')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
