@@ -258,6 +258,7 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                         <div><label class="block text-gray-600 mb-1">ເຈົ້າຂອງ</label><input type="text" wire:model="ef.owner_name" class="w-full rounded-md border-gray-300 text-sm" />@error('ef.owner_name')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
+                        <div><label class="block text-gray-600 mb-1">ພະແນກ ເຈົ້າ ຂອງ / Department <span class="text-xs text-gray-400">(ຄຸມ ສິດ ຈຳໜ່າຍ)</span></label><select wire:model="ef.owner_dept_id" class="w-full rounded-md border-gray-300 text-sm"><option value="">—</option>@foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}@if ($d->unit) · {{ $d->unit->name }}@endif</option>@endforeach</select>@error('ef.owner_dept_id')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
                         <div><label class="block text-gray-600 mb-1">ປະເພດ</label><input type="text" wire:model="ef.item_category" class="w-full rounded-md border-gray-300 text-sm" /></div>
                         <div><label class="block text-gray-600 mb-1">ແຫຼ່ງທີ່ມາ</label><input type="text" wire:model="ef.origin_source" class="w-full rounded-md border-gray-300 text-sm" /></div>
                         <div><label class="block text-gray-600 mb-1">ໄລຍະເວລາ</label><input type="text" wire:model="ef.expected_duration" class="w-full rounded-md border-gray-300 text-sm" /></div>
