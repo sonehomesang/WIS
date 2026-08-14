@@ -12,8 +12,13 @@
             <div><label class="block text-gray-600 mb-1">ໝາຍເຫດ</label><input type="text" wire:model="note" class="w-full rounded-md border-gray-300 text-sm" /></div>
         </div>
 
+        @if (session('pullOk'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">✓ {{ session('pullOk') }}</div>@endif
+
         <div class="space-y-2">
-            <div class="text-sm font-medium text-gray-600">ລາຍການ ຈຳໜ່າຍ ({{ count($items) }})</div>
+            <div class="flex items-center justify-between gap-2">
+                <div class="text-sm font-medium text-gray-600">ລາຍການ ຈຳໜ່າຍ ({{ count($items) }})</div>
+                @can('disposal.create')<button type="button" wire:click="openPull" class="text-sm text-red-700 border border-red-200 rounded-md px-3 py-1.5 hover:bg-red-50 whitespace-nowrap">🗑 ດຶງ ອັດຕະໂນມັດ ຕາມ ສະຖານະພາບ</button>@endcan
+            </div>
 
             @foreach ($items as $i => $row)
                 @php $src = $row['source_type'] ?? 'equipment'; @endphp
@@ -108,5 +113,45 @@
                 <button wire:click="save(true)" wire:loading.attr="disabled" wire:target="save,photos" class="text-sm text-white bg-indigo-600 rounded-md px-4 py-2 hover:bg-indigo-700 disabled:opacity-50">ສົ່ງ ຂໍ ອະນຸມັດ</button>
             </div>
         </div>
+
+        {{-- auto-pull dialog --}}
+        @if ($showPull)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden">
+                    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+                        <div class="font-medium text-gray-800">🗑 ດຶງ ໄປ ຈຳໜ່າຍ ອັດຕະໂນມັດ</div>
+                        <button wire:click="$set('showPull', false)" class="text-gray-400 hover:text-gray-700">✕</button>
+                    </div>
+                    <div class="px-5 py-4 space-y-4 text-sm">
+                        <div>
+                            <div class="text-xs font-semibold text-gray-400 uppercase mb-2">① ດຶງ ຈາກ ແຫຼ່ງ</div>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach (['inventory' => 'Inventory', 'equipment' => 'Equipment', 'deposit' => 'Deposit'] as $sk => $sl)
+                                    <label class="inline-flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 cursor-pointer" :class="''">
+                                        <input type="checkbox" wire:model.live="pullSources.{{ $sk }}" class="rounded border-gray-300 text-sky-600" /> {{ $sl }}
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-xs font-semibold text-gray-400 uppercase mb-2">② ດຶງ ເຄື່ອງ ທີ່ ຢູ່ ໃນ ສະຖານະ</div>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach (\App\Support\ConditionStatus::DISPOSABLE as $cs)
+                                    <label class="inline-flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 cursor-pointer">
+                                        <input type="checkbox" wire:model.live="pullStatuses.{{ $cs }}" class="rounded border-gray-300 text-sky-600" /> {{ \App\Support\ConditionStatus::shortLabel($cs) }}
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-600 bg-gray-50 border border-dashed border-gray-200 rounded-lg px-3 py-2">🔎 ພົບ <b>{{ $pullCount }}</b> ລາຍການ ທີ່ ກົງ ເງື່ອນ ໄຂ — ພ້ອມ ດຶງ ເຂົ້າ ໃບ ຈຳໜ່າຍ.</div>
+                        @error('pull')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 border-t border-gray-200 bg-gray-50">
+                        <button wire:click="$set('showPull', false)" class="text-sm border border-gray-300 rounded-md px-4 py-2 hover:bg-white">ຍົກເລີກ</button>
+                        <button wire:click="autoPull" wire:loading.attr="disabled" wire:target="autoPull" class="text-sm text-white bg-indigo-600 rounded-md px-4 py-2 hover:bg-indigo-700 disabled:opacity-50">ດຶງ ອອກ {{ $pullCount }} ລາຍການ →</button>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 </div>

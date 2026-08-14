@@ -39,11 +39,23 @@ class Create extends Component
     /** @var array<int, array<int, array{source:string,id:int,code:string,fixed:?string,name:string}>> */
     public array $assetMatches = [];
 
+    // ── auto-pull to disposal (by condition-status) ──
+    public bool $showPull = false;
+
+    /** @var array<string,bool> */
+    public array $pullSources = ['inventory' => true, 'equipment' => true, 'deposit' => true];
+
+    /** @var array<string,bool> */
+    public array $pullStatuses = [];
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('disposal.create'), 403);
         $this->department_id = auth()->user()->department_id;
         $this->items = [$this->blankItem()];
+        foreach (\App\Support\ConditionStatus::DISPOSABLE as $s) {
+            $this->pullStatuses[$s] = true;
+        }
 
         // preload ຈາກ ທະບຽນ ຕົ້ນທາງ (ປຸ່ມ "→ Disposal") — ?add=equipment:10
         if (preg_match('/^(inventory|equipment|deposit):(\d+)$/', (string) request()->query('add', ''), $m)) {
@@ -162,6 +174,106 @@ class Create extends Component
             $this->items[$i]['item_name'] = $name;
         }
         $this->assetMatches[$i] = [];
+    }
+
+    public function openPull(): void
+    {
+        $this->resetErrorBag('pull');
+        $this->showPull = true;
+    }
+
+    /** ດຶງ ເຄື່ອງ ທີ່ ຢູ່ ໃນ ສະຖານະພາບ ທີ່ ເລືອກ ເຂົ້າ ໃບ ຈຳໜ່າຍ ອັດຕະໂນມັດ. */
+    public function autoPull(): void
+    {
+        abort_unless(auth()->user()->can('disposal.create'), 403);
+        $statuses = $this->selectedStatuses();
+        if (empty($statuses)) {
+            $this->addError('pull', 'ເລືອກ ຢ່າງ ໜ້ອຍ 1 ສະຖານະ.');
+
+            return;
+        }
+
+        $existing = [];
+        foreach ($this->items as $it) {
+            if ($it['source_id']) {
+                $existing[$it['source_type'].':'.$it['source_id']] = true;
+            }
+        }
+
+        $added = 0;
+        foreach ($this->pullQuery($statuses) as [$source, $id]) {
+            if (isset($existing[$source.':'.$id])) {
+                continue;
+            }
+            $this->items[] = $this->blankItem();
+            $this->pickAsset(array_key_last($this->items), $source, $id);
+            $existing[$source.':'.$id] = true;
+            $added++;
+        }
+
+        // ຖິ້ມ ແຖວ ຫວ່າງ ເລີ່ມຕົ້ນ ຖ້າ ຍັງ ບໍ່ ໄດ້ ຕື່ມ
+        $this->items = array_values(array_filter(
+            $this->items,
+            fn ($it) => $it['source_id'] || trim((string) $it['item_name']) !== ''
+        ));
+        if (empty($this->items)) {
+            $this->items = [$this->blankItem()];
+        }
+
+        $this->showPull = false;
+        session()->flash('pullOk', "ດຶງ ເຂົ້າ {$added} ລາຍການ ຕາມ ສະຖານະພາບ.");
+    }
+
+    /** @return array<int, string> */
+    protected function selectedStatuses(): array
+    {
+        return array_values(array_intersect(
+            array_keys(array_filter($this->pullStatuses)),
+            \App\Support\ConditionStatus::DISPOSABLE
+        ));
+    }
+
+    /** @return array<int, array{0:string,1:int}> */
+    protected function pullQuery(array $statuses): array
+    {
+        $out = [];
+        if (! empty($this->pullSources['equipment'])) {
+            foreach (Equipment::whereIn('condition_status', $statuses)->orderBy('asset_code')->limit(300)->pluck('id') as $id) {
+                $out[] = ['equipment', (int) $id];
+            }
+        }
+        if (! empty($this->pullSources['inventory'])) {
+            foreach (InventoryItem::whereIn('condition_status', $statuses)->orderBy('slug')->limit(300)->pluck('id') as $id) {
+                $out[] = ['inventory', (int) $id];
+            }
+        }
+        if (! empty($this->pullSources['deposit'])) {
+            foreach (DepositItem::whereIn('condition_status', $statuses)->orderByDesc('id')->limit(300)->pluck('id') as $id) {
+                $out[] = ['deposit', (int) $id];
+            }
+        }
+
+        return $out;
+    }
+
+    public function pullCount(): int
+    {
+        $statuses = $this->selectedStatuses();
+        if (empty($statuses)) {
+            return 0;
+        }
+        $n = 0;
+        if (! empty($this->pullSources['equipment'])) {
+            $n += Equipment::whereIn('condition_status', $statuses)->count();
+        }
+        if (! empty($this->pullSources['inventory'])) {
+            $n += InventoryItem::whereIn('condition_status', $statuses)->count();
+        }
+        if (! empty($this->pullSources['deposit'])) {
+            $n += DepositItem::whereIn('condition_status', $statuses)->count();
+        }
+
+        return $n;
     }
 
     /**
@@ -283,6 +395,7 @@ class Create extends Component
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'reasons' => DisposalRecord::REASONS,
             'recommendations' => DisposalRecord::RECOMMENDATIONS,
+            'pullCount' => $this->showPull ? $this->pullCount() : 0,
         ]);
     }
 }
