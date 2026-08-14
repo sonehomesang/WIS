@@ -80,7 +80,7 @@
                     @foreach ($record->items as $idx => $it)
                         <div class="border border-gray-200 rounded-md p-3">
                             <div class="flex items-center justify-between">
-                                <div class="font-medium text-gray-800">#{{ $idx + 1 }} {{ $it->item_name }} <span class="text-gray-400">×{{ $it->qty }}{{ $it->unit ? ' '.$it->unit : '' }}</span></div>
+                                <div class="font-medium text-gray-800">#{{ $idx + 1 }} {{ $it->item_name }} <span class="text-gray-400">×{{ $it->qty }}{{ $it->unit ? ' '.$it->unit : '' }}</span>@if ($it->condition_status && $it->condition_status !== 'in_service') <span class="text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($it->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($it->condition_status) }}</span>@endif</div>
                                 @if ($it->estimated_value)<div class="text-xs text-gray-500">{{ number_format($it->estimated_value, 2) }} {{ $it->currency }}</div>@endif
                             </div>
                             @if ($it->asset_code || $it->fixed_asset_no)
@@ -282,6 +282,7 @@
                                 <div><label class="block text-xs text-gray-500 mb-1">ມູນຄ່າ</label><input type="number" step="0.01" wire:model="ei.{{ $it->id }}.estimated_value" class="w-full rounded-md border-gray-300 text-sm" /></div>
                                 <div class="sm:col-span-3"><label class="block text-xs text-gray-500 mb-1">ລາຍລະອຽດ</label><input type="text" wire:model="ei.{{ $it->id }}.description" class="w-full rounded-md border-gray-300 text-sm" /></div>
                                 <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ສະພາບຝາກ</label><input type="text" wire:model="ei.{{ $it->id }}.condition_on_deposit" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                                <div class="sm:col-span-3"><label class="block text-xs text-gray-500 mb-1">ສະຖານະພາບ (Condition)</label><select wire:model="ei.{{ $it->id }}.condition_status" class="w-full rounded-md border-gray-300 text-sm">@foreach (\App\Support\ConditionStatus::options() as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach</select></div>
                                 <div><label class="block text-xs text-gray-500 mb-1">ສະກຸນ</label><select wire:model="ei.{{ $it->id }}.currency" class="w-full rounded-md border-gray-300 text-sm"><option value="">—</option><option value="LAK">LAK</option><option value="THB">THB</option><option value="USD">USD</option></select></div>
                                 <div class="sm:col-span-6">
                                     <label class="block text-xs text-gray-500 mb-1">ເພີ່ມຮູບ (deposit)</label>

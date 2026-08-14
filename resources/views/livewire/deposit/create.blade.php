@@ -139,6 +139,10 @@
                                 <label class="block text-xs text-gray-500 mb-1">ສະພາບຕອນຝາກ</label>
                                 <input type="text" wire:model="items.{{ $i }}.condition_on_deposit" class="w-full rounded-md border-gray-300 text-sm" />
                             </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs text-gray-500 mb-1">ສະຖານະພາບ (Condition)</label>
+                                <select wire:model="items.{{ $i }}.condition_status" class="w-full rounded-md border-gray-300 text-sm">@foreach (\App\Support\ConditionStatus::options() as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach</select>
+                            </div>
                         </div>
                         @if (count($items) > 1)<button wire:click="removeItem({{ $i }})" type="button" class="text-gray-400 hover:text-red-600 p-1 mt-5" title="ລຶບ">✕</button>@endif
                     </div>

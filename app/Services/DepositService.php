@@ -66,6 +66,7 @@ class DepositService
             ]);
 
             foreach (array_values($data['items'] ?? []) as $i => $it) {
+                $cs = $it['condition_status'] ?? 'in_service';
                 $record->items()->create([
                     'item_id' => $it['item_id'] ?? null,
                     'item_name' => $it['item_name'],
@@ -77,6 +78,9 @@ class DepositService
                     'estimated_value' => ($it['estimated_value'] ?? null) !== null && $it['estimated_value'] !== '' ? $it['estimated_value'] : null,
                     'currency' => $it['currency'] ?? null,
                     'condition_on_deposit' => $it['condition_on_deposit'] ?? null,
+                    'condition_status' => $cs,
+                    'condition_set_at' => $cs !== 'in_service' ? now() : null,
+                    'condition_set_by' => $cs !== 'in_service' ? optional($actor)->id : null,
                     'sort_order' => $i,
                 ]);
             }

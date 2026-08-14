@@ -56,7 +56,7 @@ class Create extends Component
     protected function blankItem(): array
     {
         // asset_source = ແຫຼ່ງ ຂອງ ທະບຽນເຄື່ອງ: 'inventory' | 'equipment' | 'new' (UI ຢ່າງດຽວ — ບໍ່ ບັນທຶກ).
-        return ['item_name' => '', 'asset_source' => 'inventory', 'asset_code' => '', 'fixed_asset_no' => '', 'description' => '', 'qty' => 1, 'unit' => '', 'estimated_value' => '', 'currency' => '', 'condition_on_deposit' => ''];
+        return ['item_name' => '', 'asset_source' => 'inventory', 'asset_code' => '', 'fixed_asset_no' => '', 'description' => '', 'qty' => 1, 'unit' => '', 'estimated_value' => '', 'currency' => '', 'condition_on_deposit' => '', 'condition_status' => 'in_service'];
     }
 
     public function addItem(): void

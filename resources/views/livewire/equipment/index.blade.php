@@ -104,6 +104,7 @@
                                             @if ($bd[$s] > 0)<span class="text-xs rounded px-1.5 py-0.5 {{ $badge($s) }}">{{ $bd[$s] }} {{ $statusLabel[$s] }}</span>@endif
                                         @endforeach
                                     </div>
+                                    @if ($e->condition_status && $e->condition_status !== 'in_service')<span class="inline-block mt-1 text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($e->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($e->condition_status) }}</span>@endif
                                 </td>
                                 <td class="px-3 py-2 text-gray-600 truncate">
                                     @php $bws = $e->currentBorrowers(); @endphp
@@ -395,6 +396,11 @@
                     </div>
                     <div class="md:col-span-2 text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-md px-3 py-2">
                         ໃຊ້ງານ = ຈຳນວນ ລວມ − ຊ່ອມແປງ − ຢຸດໃຊ້. ເຄື່ອງ ໃໝ່ ປ່ອຍ ຊ່ອມ/ຢຸດ = 0 → <b>ໃຊ້ງານ ໝົດ</b>. ປັບ ຕໍ່ ຕອນ ກວດກາ.
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm text-gray-600 mb-1">ສະຖານະພາບ (Condition) — ໃຊ້ ຄັດ ເຄື່ອງ ໄປ ຈຳໜ່າຍ</label>
+                        <select wire:model="condition_status" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">@foreach (\App\Support\ConditionStatus::options() as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach</select>
+                        @error('condition_status')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">ວັນທີ ຊື້/ຮັບ</label>

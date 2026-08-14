@@ -77,6 +77,8 @@ class Index extends Component
 
     public int $qtyRetired = 0;
 
+    public string $condition_status = 'in_service';
+
     public ?string $purchase_date = null;
 
     public string $notes = '';
@@ -233,6 +235,7 @@ class Index extends Component
         $b = $e->statusBreakdown();
         $this->qtyRepair = $b['repair'];
         $this->qtyRetired = $b['retired'];
+        $this->condition_status = $e->condition_status ?? 'in_service';
         $this->purchase_date = $e->purchase_date?->toDateString();
         $this->notes = $e->notes ?? '';
         $this->existingPhotos = $e->photos->map(fn ($p) => ['id' => $p->id, 'url' => Storage::url($p->path)])->all();
@@ -266,6 +269,7 @@ class Index extends Component
             'unit_id' => ['nullable', 'exists:uoms,id'],
             'qtyRepair' => ['integer', 'min:0'],
             'qtyRetired' => ['integer', 'min:0'],
+            'condition_status' => ['required', \App\Support\ConditionStatus::rule()],
             'purchase_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'newPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
@@ -314,15 +318,25 @@ class Index extends Component
             'quantity' => $this->quantity,
             'unit_id' => $data['unit_id'] ?: null,
             'status_counts' => ['active' => $active, 'repair' => $this->qtyRepair, 'retired' => $this->qtyRetired],
+            'condition_status' => $data['condition_status'],
             'purchase_date' => $data['purchase_date'] ?: null,
             'notes' => $data['notes'] ?: null,
             'updated_by' => auth()->id(),
         ];
 
+        $newCond = $data['condition_status'];
         if ($this->editingId) {
             $e = Equipment::findOrFail($this->editingId);
+            if ($e->condition_status !== $newCond) {   // stamp who/when on change
+                $attrs['condition_set_at'] = now();
+                $attrs['condition_set_by'] = auth()->id();
+            }
             $e->update($attrs);
         } else {
+            if ($newCond !== 'in_service') {
+                $attrs['condition_set_at'] = now();
+                $attrs['condition_set_by'] = auth()->id();
+            }
             $e = Equipment::create($attrs + ['created_by' => auth()->id()]);
         }
 
@@ -906,6 +920,7 @@ class Index extends Component
         $this->unit_id = null;
         $this->qtyRepair = 0;
         $this->qtyRetired = 0;
+        $this->condition_status = 'in_service';
         $this->purchase_date = null;
         $this->notes = '';
         $this->newPhotos = [];

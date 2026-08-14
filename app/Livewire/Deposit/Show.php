@@ -294,6 +294,7 @@ class Show extends Component
             'description' => $it->description, 'qty' => $it->qty, 'unit' => $it->unit,
             'estimated_value' => $it->estimated_value, 'currency' => $it->currency,
             'condition_on_deposit' => $it->condition_on_deposit, 'condition_on_claim' => $it->condition_on_claim,
+            'condition_status' => $it->condition_status ?? 'in_service',
         ]])->all();
         $this->ep = [];
         $this->resetErrorBag();
@@ -321,6 +322,7 @@ class Show extends Component
             'ei.*.qty' => ['required', 'integer', 'min:1'],
             'ei.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
             'ei.*.currency' => ['nullable', 'in:LAK,THB,USD'],
+            'ei.*.condition_status' => ['required', \App\Support\ConditionStatus::rule()],
             'ep.*.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
@@ -354,6 +356,9 @@ class Show extends Component
                     'currency' => $f['currency'] ?: null,
                     'condition_on_deposit' => $f['condition_on_deposit'] ?: null,
                     'condition_on_claim' => $f['condition_on_claim'] ?: null,
+                    'condition_status' => $cs = ($f['condition_status'] ?? 'in_service'),
+                    'condition_set_at' => $it->condition_status !== $cs ? now() : $it->condition_set_at,
+                    'condition_set_by' => $it->condition_status !== $cs ? auth()->id() : $it->condition_set_by,
                 ]);
             }
             foreach (['deposit', 'stored', 'claim'] as $kind) {
