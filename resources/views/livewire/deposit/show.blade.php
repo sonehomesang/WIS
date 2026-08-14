@@ -105,6 +105,11 @@
                                     @endforeach
                                 </div>
                             @endif
+                            @can('disposal.create')
+                                @if (in_array($record->status, ['stored', 'needs_fix']))
+                                    <div class="mt-2"><a href="{{ route('disposal.create', ['add' => 'deposit:' . $it->id]) }}" wire:navigate class="inline-flex items-center text-xs text-red-700 border border-red-200 rounded-md px-2.5 py-1 hover:bg-red-50" title="ຂໍ ຈຳໜ່າຍ ເຄື່ອງ ຝາກ ນີ້ (Send to disposal)">🗑 → Disposal</a></div>
+                                @endif
+                            @endcan
                         </div>
                     @endforeach
                 </div>
