@@ -14,6 +14,7 @@
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <x-page-subheader :back="route('disposal')" back-label="ລາຍການ" :record="$record->request_number" :status="$record->statusLabel()" :status-class="$badge($record->status)">
             <x-slot:actions>
+                @if ($canEdit && ! $editing)<button wire:click="openEdit" class="inline-flex items-center gap-1 text-sm text-amber-700 border border-amber-300 rounded-md px-3 py-1.5 hover:bg-amber-50">✏️ ແກ້ໄຂ</button>@endif
                 <a href="{{ route('disposal.pdf', $record) }}" target="_blank" class="inline-flex items-center gap-1 text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
             </x-slot>
         </x-page-subheader>
@@ -23,6 +24,7 @@
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror
         @if ($record->reject_reason && $record->status === 'draft')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">↩ ຖືກ ຕີ ກັບ: {{ $record->reject_reason }}</div>@endif
 
+        @if (! $editing)
         {{-- ① ລາຍການ --}}
         <div class="bg-white border border-gray-100 rounded-lg divide-y divide-gray-100">
             @foreach ($record->items as $it)
@@ -106,6 +108,144 @@
             @endif
             @can('disposal.delete')<span class="ml-auto"></span><button wire:click="openDelete" class="text-red-600 border border-red-200 rounded px-3 py-1.5 hover:bg-red-50">🗑 ລຶບ</button>@endcan
         </div>
+        @else
+        {{-- ══ EDIT FORM (ໃບ ຍັງ ດຳເນີນ ຢູ່) ══ --}}
+        <div class="bg-amber-50/60 border border-amber-200 rounded-lg px-4 py-2 text-sm text-amber-800">✏️ ໂໝດ ແກ້ໄຂ — ໃບ ນີ້ ຍັງ ດຳເນີນ ຢູ່ ({{ $record->statusLabel() }}) ຈຶ່ງ ແກ້ໄຂ ໄດ້. ເມື່ອ ຈຳໜ່າຍ ສຳເລັດ ຈະ ຖືກ ລັອກ.</div>
+
+        {{-- record header fields --}}
+        <div class="bg-white border border-gray-100 rounded-lg p-4 grid gap-3 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+                <label class="block text-xs text-gray-500 mb-1">ຫົວຂໍ້ / Title</label>
+                <input type="text" wire:model="editTitle" class="w-full rounded-md border-gray-300 text-sm" placeholder="ຫົວຂໍ້ ໃບ ຈຳໜ່າຍ (optional)" />
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">ພະແນກ / Department</label>
+                <select wire:model="editDept" class="w-full rounded-md border-gray-300 text-sm">
+                    <option value="">—</option>
+                    @foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">ໝາຍເຫດ / Note</label>
+                <input type="text" wire:model="editNote" class="w-full rounded-md border-gray-300 text-sm" placeholder="optional" />
+            </div>
+        </div>
+
+        <datalist id="edit-uoms">@foreach ($uoms as $u)<option value="{{ $u->name }}"></option>@endforeach</datalist>
+
+        {{-- item rows --}}
+        @foreach ($ef as $i => $row)
+            <div class="bg-white border border-gray-100 rounded-lg p-4 space-y-3" wire:key="ef-{{ $i }}">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="text-sm font-medium text-gray-700">ລາຍການ #{{ $i + 1 }}
+                        <span class="text-xs font-normal rounded-full px-2 py-0.5 {{ ($row['source_type'] ?? 'new') === 'new' ? 'bg-gray-100 text-gray-500' : 'bg-sky-50 text-sky-700' }}">{{ ($row['source_type'] ?? 'new') === 'new' ? 'ໃໝ່ / new' : strtoupper($row['source_type']) }}</span>
+                    </div>
+                    <button wire:click="removeEditItem({{ $i }})" class="text-xs text-red-600 border border-red-200 rounded px-2 py-1 hover:bg-red-50">✕ ຖອດ ອອກ</button>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs text-gray-500 mb-1">ຊື່ ເຄື່ອງ / Item name <span class="text-red-500">*</span></label>
+                        <input type="text" wire:model="ef.{{ $i }}.item_name" class="w-full rounded-md border-gray-300 text-sm" />
+                        @error("ef.$i.item_name")<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">ລະຫັດ ເຄື່ອງ / Asset code</label>
+                        <input type="text" wire:model="ef.{{ $i }}.asset_code" class="w-full rounded-md border-gray-300 text-sm font-mono" />
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">ທະບຽນ ຊັບສິນ / Fixed asset no.</label>
+                        <input type="text" wire:model="ef.{{ $i }}.fixed_asset_no" class="w-full rounded-md border-gray-300 text-sm font-mono" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">ຈຳນວນ / Qty <span class="text-red-500">*</span></label>
+                            <input type="number" min="1" wire:model="ef.{{ $i }}.qty" class="w-full rounded-md border-gray-300 text-sm" />
+                            @error("ef.$i.qty")<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">ໜ່ວຍ / Unit</label>
+                            <input type="text" list="edit-uoms" wire:model="ef.{{ $i }}.unit" class="w-full rounded-md border-gray-300 text-sm" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">ສະພາບ / Condition (ຂໍ້ຄວາມ)</label>
+                        <input type="text" wire:model="ef.{{ $i }}.condition" class="w-full rounded-md border-gray-300 text-sm" placeholder="ເຊັ່ນ: ຮ່າງກາຍ ແຕກ, ບໍ່ ຕິດ ໄຟ…" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">ເຫດຜົນ / Reason</label>
+                            <select wire:model="ef.{{ $i }}.reason" class="w-full rounded-md border-gray-300 text-sm">
+                                <option value="">—</option>
+                                @foreach ($reasons as $rz)<option value="{{ $rz }}">{{ $rz }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">ລາຍລະອຽດ ເຫດຜົນ</label>
+                            <input type="text" wire:model="ef.{{ $i }}.reason_detail" class="w-full rounded-md border-gray-300 text-sm" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">ຄຳ ແນະນຳ / Recommendation</label>
+                            <select wire:model="ef.{{ $i }}.recommendation" class="w-full rounded-md border-gray-300 text-sm">
+                                <option value="">—</option>
+                                @foreach ($recommendations as $rc)<option value="{{ $rc }}">{{ $rc }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">ລາຍລະອຽດ ຄຳ ແນະນຳ</label>
+                            <input type="text" wire:model="ef.{{ $i }}.recommendation_detail" class="w-full rounded-md border-gray-300 text-sm" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">ມູນຄ່າ ຄົງ ເຫຼືອ / Value</label>
+                            <input type="number" step="0.01" min="0" wire:model="ef.{{ $i }}.estimated_value" class="w-full rounded-md border-gray-300 text-sm" />
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">ສະກຸນ ເງິນ / Currency</label>
+                            <select wire:model="ef.{{ $i }}.currency" class="w-full rounded-md border-gray-300 text-sm">
+                                <option value="">—</option><option value="LAK">LAK</option><option value="THB">THB</option><option value="USD">USD</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- photos --}}
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">ຮູບ ຫຼັກຖານ / Photos</label>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        @foreach (($row['photos'] ?? []) as $p => $path)
+                            <div class="relative" wire:key="ef-{{ $i }}-ph-{{ $p }}">
+                                <img src="{{ \Illuminate\Support\Facades\Storage::url($path) }}" class="w-16 h-16 rounded object-cover border border-gray-200" />
+                                <button wire:click="removeExistingPhoto({{ $i }}, {{ $p }})" type="button" class="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full w-5 h-5 text-xs leading-none">✕</button>
+                            </div>
+                        @endforeach
+                        @if (isset($newPhotos[$i]))
+                            @foreach ($newPhotos[$i] as $f)
+                                <img src="{{ $f->temporaryUrl() }}" class="w-16 h-16 rounded object-cover border border-emerald-300" wire:key="ef-{{ $i }}-np-{{ $loop->index }}" />
+                            @endforeach
+                        @endif
+                        <label class="w-16 h-16 rounded border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xl cursor-pointer hover:bg-gray-50">
+                            +<input type="file" wire:model="newPhotos.{{ $i }}" multiple accept="image/*" class="hidden" />
+                        </label>
+                    </div>
+                    <div wire:loading wire:target="newPhotos.{{ $i }}" class="text-xs text-gray-400 mt-1">ກຳລັງ ອັບ ໂຫຼດ…</div>
+                    @error("newPhotos.$i.*")<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                </div>
+            </div>
+        @endforeach
+
+        <button wire:click="addEditItem" class="text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-1.5 hover:bg-sky-50">+ ເພີ່ມ ລາຍການ ໃໝ່</button>
+
+        {{-- save / cancel --}}
+        <div class="bg-white border border-gray-100 rounded-lg px-5 py-3 flex flex-wrap gap-2 items-center text-sm sticky bottom-4 shadow-lg">
+            <button wire:click="saveEdit" wire:loading.attr="disabled" class="text-white bg-emerald-600 rounded px-4 py-1.5 hover:bg-emerald-700">💾 ບັນທຶກ</button>
+            <button wire:click="cancelEdit" class="border rounded px-4 py-1.5 hover:bg-gray-50">ຍົກເລີກ</button>
+            <span wire:loading wire:target="saveEdit" class="text-xs text-gray-400">ກຳລັງ ບັນທຶກ…</span>
+        </div>
+        @endif
     </div>
 
     {{-- sign modal --}}

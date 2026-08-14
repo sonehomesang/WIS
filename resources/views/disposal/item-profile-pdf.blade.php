@@ -23,6 +23,7 @@
             'role_lo' => $lo, 'role_en' => $en,
             'name' => $rows->map(fn ($s) => $s->name)->filter()->implode(' · ') ?: '—',
             'date' => $first?->signed_at ? $fmt($first->signed_at).' '.$first->signed_at->format('H:i') : '—',
+            'comment' => $rows->map(fn ($s) => $s->comment)->filter()->implode(' · ') ?: '',
             'signed' => $rows->count() > 0,
         ];
     };
@@ -46,12 +47,19 @@
         .lbl { background: #f3f4f6; font-weight: bold; white-space: nowrap; }
         .sec { font-weight: bold; color: #1e3a5f; font-size: 11px; margin: 10px 0 4px; }
         .kv td { padding: 3px 5px; font-size: 9.5px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
-        .kv td.k { color: #6b7280; font-weight: bold; width: 42%; }
-        .ph td { border: 1px solid #999; padding: 3px; text-align: center; vertical-align: top; width: 33%; }
-        .ph .cap { font-size: 8px; color: #374151; font-weight: bold; margin-bottom: 2px; }
-        .ph img { width: 100%; max-height: 120px; object-fit: cover; }
-        .ph .none { color: #9ca3af; font-size: 8px; padding: 30px 0; }
+        .kv td.k { color: #6b7280; font-weight: bold; width: 46%; }
+        /* evidence photos: big left (rowspan 2) + two stacked on the right */
+        .ph td { border: 1px solid #999; padding: 4px; text-align: center; vertical-align: top; }
+        .ph td.big { width: 58%; }
+        .ph td.sm { width: 42%; }
+        .ph .cap { font-size: 8px; color: #fff; background: #1e3a5f; font-weight: bold; padding: 1px 6px; border-radius: 3px; display: inline-block; margin-bottom: 3px; }
+        .ph img.big { width: 100%; max-height: 250px; object-fit: cover; }
+        .ph img.sm { width: 100%; max-height: 112px; object-fit: cover; }
+        .ph .none { color: #9ca3af; font-size: 8px; padding: 24px 0; }
+        .ph .stamp { font-size: 8px; color: #374151; font-family: 'DejaVu Sans Mono', monospace; text-align: right; margin-top: 2px; }
+        .split td { vertical-align: top; }
         .en { table-layout: fixed; margin-top: 2px; }
+        .en .rec { font-weight: bold; color: #b91c1c; }
         .en th { border: 1px solid #555; background: #f3f4f6; padding: 3px 5px; font-size: 8.5px; text-align: left; }
         .en td { border: 1px solid #555; padding: 4px 5px; font-size: 9px; vertical-align: top; }
         .en .role { font-weight: bold; }
@@ -82,48 +90,74 @@
     </table>
     <div style="border-bottom:2px solid #1e3a5f; margin-bottom:10px;"></div>
 
-    {{-- A · photos --}}
-    <div class="sec">A · ຮູບ ຫຼັກຖານ / Evidence photos</div>
+    {{-- A · photos — big left (Overall) + two stacked right (ID plate, Damage) --}}
+    <div class="sec">A · ຮູບ ຫຼັກຖານ / Evidence photos (≥3 · date-stamped)</div>
     <table class="ph">
         <tr>
-            @for ($i = 0; $i < 3; $i++)
-                <td>
-                    <div class="cap">{{ $photoLabels[$i] }}</div>
-                    @if (isset($photos[$i]) && ($src = $img($photos[$i])))
-                        <img src="{{ $src }}" alt="">
-                        <div class="muted">{{ $fmt($record->created_at) }}</div>
-                    @else
-                        <div class="none">— ບໍ່ ມີ ຮູບ —</div>
-                    @endif
-                </td>
-            @endfor
+            <td class="big" rowspan="2">
+                <div class="cap">{{ $photoLabels[0] }}</div>
+                @if (isset($photos[0]) && ($src = $img($photos[0])))
+                    <img class="big" src="{{ $src }}" alt="">
+                    <div class="stamp">{{ $fmt($record->created_at) }}</div>
+                @else
+                    <div class="none">— ບໍ່ ມີ ຮູບ —</div>
+                @endif
+            </td>
+            <td class="sm">
+                <div class="cap">{{ $photoLabels[1] }}</div>
+                @if (isset($photos[1]) && ($src = $img($photos[1])))
+                    <img class="sm" src="{{ $src }}" alt="">
+                    <div class="stamp">{{ $fmt($record->created_at) }}</div>
+                @else
+                    <div class="none">— ບໍ່ ມີ ຮູບ —</div>
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="sm">
+                <div class="cap">{{ $photoLabels[2] }}</div>
+                @if (isset($photos[2]) && ($src = $img($photos[2])))
+                    <img class="sm" src="{{ $src }}" alt="">
+                    <div class="stamp">{{ $fmt($record->created_at) }}</div>
+                @else
+                    <div class="none">— ບໍ່ ມີ ຮູບ —</div>
+                @endif
+            </td>
         </tr>
     </table>
 
-    {{-- B · item details --}}
-    <div class="sec">B · ຂໍ້ມູນ ເຄື່ອງ / Item details</div>
-    <table class="kv">
-        <tr><td class="k">ຊື່ ເຄື່ອງ / Item</td><td>{{ $item->item_name }}</td></tr>
-        @if ($item->fixed_asset_no)<tr><td class="k">ທະບຽນ ຊັບສິນ / Fixed asset</td><td>{{ $item->fixed_asset_no }}</td></tr>@endif
-        @if (! empty($ownerDept))<tr><td class="k">ພະແນກ ເຈົ້າ ຂອງ / Owner dept</td><td>{{ $ownerDept }}</td></tr>@endif
-        @if (! empty($ownerUnit))<tr><td class="k">ໜ່ວຍງານ / Org Unit</td><td>{{ $ownerUnit }}</td></tr>@endif
-        @if ($cond)<tr><td class="k">ສະຖານະພາບ / Condition</td><td>{{ ConditionStatus::label($cond) }}</td></tr>@endif
-        @if ($purchase)<tr><td class="k">ວັນ ຮັບ ເຂົ້າ / Received</td><td>{{ $fmt($purchase) }}</td></tr>@endif
-        @if ($item->condition)<tr><td class="k">ສະພາບ / State</td><td>{{ $item->condition }}</td></tr>@endif
-        <tr><td class="k">ຈຳນວນ / Qty</td><td>{{ $item->qty }} {{ $item->unit }}</td></tr>
-        <tr><td class="k">ເຫດຜົນ / Reason</td><td>{{ $item->reason ?: '—' }}@if ($item->reason_detail) · {{ $item->reason_detail }}@endif</td></tr>
-        @if ($item->estimated_value)<tr><td class="k">ມູນຄ່າ ຄົງ ເຫຼືອ / Residual value</td><td>{{ number_format((float) $item->estimated_value, 2) }} {{ $item->currency }}</td></tr>@endif
+    {{-- B · item details (left) + C · timeline (right) --}}
+    <table class="split" style="margin-top:6px;">
+        <tr>
+            <td style="width:50%; padding-right:9px;">
+                <div class="sec" style="margin-top:0;">B · ຂໍ້ມູນ ເຄື່ອງ / Item details</div>
+                <table class="kv">
+                    <tr><td class="k">ຊື່ ເຄື່ອງ / Item</td><td>{{ $item->item_name }}</td></tr>
+                    @if ($item->fixed_asset_no)<tr><td class="k">ທະບຽນ ຊັບສິນ / Fixed asset</td><td>{{ $item->fixed_asset_no }}</td></tr>@endif
+                    @if (! empty($ownerDept))<tr><td class="k">ພະແນກ ເຈົ້າ ຂອງ / Owner dept</td><td>{{ $ownerDept }}</td></tr>@endif
+                    @if (! empty($ownerUnit))<tr><td class="k">ໜ່ວຍງານ / Org Unit</td><td>{{ $ownerUnit }}</td></tr>@endif
+                    @if ($cond)<tr><td class="k">ສະຖານະພາບ / Condition</td><td>{{ ConditionStatus::label($cond) }}</td></tr>@endif
+                    @if ($purchase)<tr><td class="k">ວັນ ຮັບ ເຂົ້າ / Received</td><td>{{ $fmt($purchase) }}</td></tr>@endif
+                    @if ($item->condition)<tr><td class="k">ສະພາບ / State</td><td>{{ $item->condition }}</td></tr>@endif
+                    <tr><td class="k">ຈຳນວນ / Qty</td><td>{{ $item->qty }} {{ $item->unit }}</td></tr>
+                    <tr><td class="k">ເຫດຜົນ / Reason</td><td>{{ $item->reason ?: '—' }}@if ($item->reason_detail) · {{ $item->reason_detail }}@endif</td></tr>
+                    @if ($item->estimated_value)<tr><td class="k">ມູນຄ່າ ຄົງ ເຫຼືອ / Residual value</td><td>{{ number_format((float) $item->estimated_value, 2) }} {{ $item->currency }}</td></tr>@endif
+                </table>
+            </td>
+            <td style="width:50%; padding-left:9px; border-left:1px solid #e5e7eb;">
+                <div class="sec" style="margin-top:0;">C · ປະຫວັດ / Timeline</div>
+                @if (! empty($item->history))
+                    <table class="kv">
+                        @foreach ($item->history as $h)
+                            <tr><td class="k">{{ $h['date'] ?? '' }}</td><td>{{ $h['problem'] ?? '' }}@if (! empty($h['action'])) → {{ $h['action'] }}@endif</td></tr>
+                        @endforeach
+                    </table>
+                @else
+                    <div class="muted" style="padding:6px 4px;">— ບໍ່ ມີ ປະຫວັດ ບັນຫາ / ສ້ອມແປງ —</div>
+                @endif
+            </td>
+        </tr>
     </table>
-
-    {{-- C · history / timeline --}}
-    @if (! empty($item->history))
-        <div class="sec">C · ປະຫວັດ / Timeline</div>
-        <table class="kv">
-            @foreach ($item->history as $h)
-                <tr><td class="k">{{ $h['date'] ?? '' }}</td><td>{{ $h['problem'] ?? '' }}@if (! empty($h['action'])) → {{ $h['action'] }}@endif</td></tr>
-            @endforeach
-        </table>
-    @endif
 
     {{-- D · recommendation & endorsement --}}
     <div class="sec">D · ຄຳ ແນະນຳ &amp; ຮັບຮອງ / Recommendation &amp; Endorsement</div>
@@ -134,12 +168,13 @@
         <span class="muted">&nbsp;(ທຳລາຍ · ຂາຍ ເສດ · ບໍລິຈາກ · ສົ່ງ ຄືນ)</span>
     </div>
     <table class="en">
-        <tr><th style="width:26%">ຂັ້ນ / Role</th><th style="width:44%">ຜູ້ ຮັບຮອງ / Endorser</th><th style="width:30%">ລາຍເຊັນ + ວັນເວລາ / Signed</th></tr>
+        <tr><th style="width:22%">ຂັ້ນ / Role</th><th style="width:34%">ຄຳ ເຫັນ ຮັບຮອງ / Endorsement</th><th style="width:14%">ແນະນຳ / Rec.</th><th style="width:30%">ລາຍເຊັນ + ວັນເວລາ / Signed</th></tr>
         @foreach ($endorsers as $e)
             <tr>
                 <td class="role">{{ $e['role_lo'] }}<br><span class="muted">{{ $e['role_en'] }}</span></td>
-                <td>{{ $e['name'] }}</td>
-                <td>@if ($e['signed'])<span class="stamp">{{ $e['name'] }} · {{ $e['date'] }}</span>@else <span class="muted">— ລໍ ເຊັນ —</span>@endif</td>
+                <td>{{ $e['comment'] ?: ($e['signed'] ? '✓ ຮັບຮອງ' : '—') }}</td>
+                <td class="rec">{{ $item->recommendation ?: '—' }}</td>
+                <td>@if ($e['signed'])<span class="stamp">{{ $e['name'] }}<br>{{ $e['date'] }}</span>@else <span class="muted">— ລໍ ເຊັນ —</span>@endif</td>
             </tr>
         @endforeach
     </table>

@@ -88,7 +88,7 @@ class Index extends Component
         $showingDeleted = $this->showDeleted && $this->canManageDeleted();
 
         $records = DisposalRecord::query()
-            ->with(['preparedBy', 'department'])
+            ->with(['preparedBy', 'department', 'items'])
             ->withCount('items')
             ->when($showingDeleted, fn ($q) => $q->onlyTrashed()->with('deletedBy'))
             ->where(fn ($q) => $this->scopeFor($q))

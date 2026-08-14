@@ -49,6 +49,7 @@
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ໄອດີ <span class="text-gray-400">(DP No.)</span></th>
                         <th class="text-left font-semibold px-4 py-2">ເຈົ້າຂອງ <span class="text-gray-400">(Owner)</span></th>
                         <th class="text-left font-semibold px-4 py-2 w-full">ເຄື່ອງຝາກ <span class="text-gray-400">(Items)</span></th>
+                        <th class="text-center font-semibold px-4 py-2 whitespace-nowrap">ຈຳນວນ <span class="text-gray-400">(Qty)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລະຫັດເຄື່ອງ <span class="text-gray-400">(Asset)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລະຫັດຊັບສິນ <span class="text-gray-400">(Fixed)</span></th>
                         <th class="text-left font-semibold px-4 py-2 min-w-[13rem]">ບ່ອນເກັບ <span class="text-gray-400">(Storage)</span></th>
@@ -70,9 +71,14 @@
                                     @else<div class="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-xs">📦</div>@endif
                                     <div class="min-w-0">
                                         <div class="font-medium text-gray-800 truncate max-w-xs">{{ $first?->item_name ?? '—' }}@if ($r->items->count() > 1) <span class="text-gray-400 text-xs">+{{ $r->items->count() - 1 }}</span>@endif</div>
-                                        <div class="text-xs text-gray-400">Qty: {{ $r->items->sum('qty') }}@if ($r->item_category) · {{ Str::limit($r->item_category, 24) }}@endif</div>
+                                        @if ($r->item_category)<div class="text-xs text-gray-400">{{ Str::limit($r->item_category, 30) }}</div>@endif
                                     </div>
                                 </div>
+                            </td>
+                            <td class="px-4 py-2 align-top text-center whitespace-nowrap">
+                                <span class="font-semibold text-gray-800 tabular-nums">{{ $r->items->sum('qty') }}</span>
+                                @if ($first?->unit)<span class="text-xs text-gray-400"> {{ $first->unit }}</span>@endif
+                                @if ($r->items->count() > 1)<div class="text-[11px] text-gray-400">{{ $r->items->count() }} ລາຍການ</div>@endif
                             </td>
                             <td class="px-4 py-2 align-top text-xs whitespace-nowrap font-mono {{ $first?->asset_code ? 'text-gray-700' : 'text-gray-300' }}">{{ $first?->asset_code ?: '—' }}@if ($r->items->count() > 1)<span class="text-gray-300" title="ຫຼາຍ ລາຍການ"> …</span>@endif</td>
                             <td class="px-4 py-2 align-top text-xs whitespace-nowrap font-mono {{ $first?->fixed_asset_no ? 'text-gray-700' : 'text-gray-300' }}">{{ $first?->fixed_asset_no ?: '—' }}</td>
@@ -101,7 +107,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="10" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີລາຍການຝາກ</td></tr>
+                        <tr><td colspan="11" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີລາຍການຝາກ</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -8,6 +8,9 @@
         'cancelled' => 'bg-gray-100 text-gray-400',
         default => 'bg-gray-100 text-gray-600',
     };
+    // ໃບ ຍັງ ດຳເນີນ ຢູ່ (ຮ່າງ/ກຳລັງ ຮັບຮອງ/ອະນຸມັດ) = ແກ້ໄຂ ໄດ້ · ສຳເລັດ ແລ້ວ (ຈຳໜ່າຍ/ຍົກເລີກ/ຕີ ກັບ) = ລັອກ
+    $canEdit = fn ($r) => ! in_array($r->status, ['disposed', 'cancelled', 'rejected'])
+        && (auth()->user()->can('disposal.edit') || $r->prepared_by_user_id === auth()->id() || auth()->user()->is_super_admin);
 @endphp
 
 <div class="pb-6">
@@ -38,8 +41,8 @@
                 <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ໄອດີ (DS)</th>
-                        <th class="text-left font-semibold px-4 py-2 w-full">ຫົວຂໍ້</th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ຈຳນວນ</th>
+                        <th class="text-left font-semibold px-4 py-2 w-full">ເຄື່ອງ <span class="text-gray-400 font-normal">(Items)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ຈຳນວນ <span class="text-gray-400 font-normal">(Qty)</span></th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ຜູ້ ເຮັດລິສ</th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ວັນທີ</th>
                         <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖານະ</th>
@@ -50,8 +53,22 @@
                     @forelse ($records as $r)
                         <tr wire:key="ds-{{ $r->id }}" class="hover:bg-gray-50">
                             <td class="px-4 py-2 align-top whitespace-nowrap"><a href="{{ route('disposal.show', $r) }}" wire:navigate class="font-mono text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
-                            <td class="px-4 py-2 align-top w-full">{{ $r->title ?: '—' }}@if ($r->department)<span class="text-xs text-gray-400"> · {{ $r->department->name }}</span>@endif</td>
-                            <td class="px-4 py-2 align-top whitespace-nowrap text-gray-600">{{ $r->items_count }} ລາຍການ</td>
+                            <td class="px-4 py-2 align-top w-full">
+                                @php $fi = $r->items->first(); $ph = $fi->photos[0] ?? null; @endphp
+                                <div class="flex gap-2">
+                                    @if ($ph)<img src="{{ \Illuminate\Support\Facades\Storage::url($ph) }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
+                                    @else<div class="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-sm">🗑</div>@endif
+                                    <div class="min-w-0">
+                                        <div class="font-medium text-gray-800 truncate max-w-sm">{{ $fi?->item_name ?: ($r->title ?: '—') }}@if ($r->items_count > 1) <span class="text-gray-400 text-xs">+{{ $r->items_count - 1 }}</span>@endif</div>
+                                        <div class="text-xs text-gray-400 truncate max-w-sm">
+                                            @if ($fi?->asset_code)<span class="font-mono">{{ $fi->asset_code }}</span>@endif
+                                            @if ($fi?->asset_code && $r->department) · @endif
+                                            @if ($r->department){{ $r->department->name }}@elseif ($r->title && $fi){{ Str::limit($r->title, 30) }}@endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-2 align-top whitespace-nowrap text-gray-700"><span class="font-semibold tabular-nums">{{ $r->items->sum('qty') }}</span> <span class="text-xs text-gray-400">({{ $r->items_count }} ລາຍການ)</span></td>
                             <td class="px-4 py-2 align-top whitespace-nowrap text-gray-600">{{ $r->prepared_by_name ?? '—' }}</td>
                             <td class="px-4 py-2 align-top whitespace-nowrap text-gray-500 text-xs">{{ $r->created_at?->format('d/m/Y') }}</td>
                             <td class="px-4 py-2 align-top whitespace-nowrap"><span class="inline-flex text-xs font-medium rounded-full px-2.5 py-1 {{ $badge($r->status) }}">{{ $statusLabels[$r->status] ?? $r->status }}</span></td>
@@ -60,6 +77,7 @@
                                     <button wire:click="restore({{ $r->id }})" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
                                     @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif
                                 @else
+                                    @if ($canEdit($r))<a href="{{ route('disposal.show', [$r, 'edit' => 1]) }}" wire:navigate class="text-xs text-amber-700 border border-amber-300 rounded-md px-3 py-1.5 hover:bg-amber-50 inline-block mr-1">✏️ ແກ້ໄຂ</a>@endif
                                     <a href="{{ route('disposal.show', $r) }}" wire:navigate class="text-xs text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 inline-block">ເບິ່ງ</a>
                                 @endif
                             </td>
