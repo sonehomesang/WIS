@@ -86,6 +86,7 @@
                                     <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນລາຍການນີ້?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50 inline-block">↩ ກູ້ຄືນ</button>
                                     @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif
                                 @else
+                                    @can('deposit.edit')<a href="{{ route('deposit.show', [$r, 'edit' => 1]) }}" wire:navigate class="text-xs text-amber-700 border border-amber-300 rounded-md px-3 py-1.5 hover:bg-amber-50 inline-block mr-1">✏️ ແກ້ໄຂ</a>@endcan
                                     <a href="{{ route('deposit.show', $r) }}" wire:navigate class="text-xs text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 inline-block">View Details</a>
                                 @endif
                             </td>

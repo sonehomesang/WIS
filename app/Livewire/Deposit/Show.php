@@ -79,6 +79,11 @@ class Show extends Component
         $deptScoped = $u->transactionScope() === 'department' && $u->department_id && $record->owner_dept_id === $u->department_id;
         abort_unless($this->isStaff() || $record->owner_user_id === $u->id || $deptScoped, 403);
         $this->record = $record;
+
+        // ເປີດ ໂດຍ ກົງ ຈາກ ປຸ່ມ "ແກ້ໄຂ" ໃນ ໜ້າ ລິສ (?edit=1)
+        if (request()->boolean('edit') && $this->canEdit()) {
+            $this->openEdit();
+        }
     }
 
     protected function isStaff(): bool
