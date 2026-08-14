@@ -163,6 +163,25 @@ Route::get('disposal/{record}/pdf', function (DisposalRecord $record) {
     return PdfExport::download('disposal.pdf', ['record' => $record], "disposal-{$record->request_number}.pdf");
 })->middleware(['auth', 'verified'])->name('disposal.pdf');
 
+// Per-item disposal profile (letterhead PDF + condition + photos + endorsement)
+Route::get('disposal/{record}/item/{item}/pdf', function (DisposalRecord $record, App\Models\DisposalItem $item) {
+    $u = auth()->user();
+    abort_unless($u->can('disposal.view') && App\Livewire\Disposal\Show::canAccess($record), 403);
+    abort_unless($item->record_id === $record->id, 404);
+    $record->load(['signoffs', 'department', 'preparedBy']);
+
+    $source = match ($item->source_type) {
+        'equipment' => App\Models\Equipment::find($item->source_id),
+        'inventory' => App\Models\InventoryItem::find($item->source_id),
+        'deposit' => App\Models\DepositItem::find($item->source_id),
+        default => null,
+    };
+
+    return PdfExport::download('disposal.item-profile-pdf',
+        ['record' => $record, 'item' => $item, 'source' => $source],
+        "disposal-item-{$record->request_number}-{$item->id}.pdf");
+})->middleware(['auth', 'verified'])->name('disposal.item.pdf');
+
 Route::get('disposal/{record}', App\Livewire\Disposal\Show::class)
     ->middleware(['auth', 'verified'])
     ->name('disposal.show');

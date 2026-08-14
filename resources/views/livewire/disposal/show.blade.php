@@ -45,6 +45,7 @@
                         </div>
                     @endif
                     @if (! empty($it->photos))<div class="flex gap-1 flex-wrap">@foreach ($it->photos as $p)<img src="{{ \Illuminate\Support\Facades\Storage::url($p) }}" class="w-14 h-14 rounded object-cover border border-gray-200" />@endforeach</div>@endif
+                    <div><a href="{{ route('disposal.item.pdf', [$record, $it]) }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-gray-700 border border-gray-300 rounded-md px-2.5 py-1 hover:bg-gray-50">📄 ໂປຣຟາຍ / Profile PDF</a></div>
                 </div>
             @endforeach
         </div>
