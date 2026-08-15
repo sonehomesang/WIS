@@ -60,7 +60,7 @@
                             <th class="text-center font-semibold px-4 py-2.5 whitespace-nowrap">ຈຳນວນ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ລະຫັດເຄື່ອງ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ຊັບສິນ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 w-full min-w-[15rem]">ບ່ອນເກັບ</th>
+                            <th class="text-left font-semibold px-4 py-2.5 w-56 min-w-[12rem] max-w-[16rem]">ບ່ອນເກັບ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ວັນທີຝາກ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ສະຖານະພາບ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ສະຖານະ</th>
@@ -90,9 +90,9 @@
                                 </td>
                                 <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap">@if ($first?->asset_code)<span class="font-mono bg-gray-50 text-gray-600 border border-gray-200 rounded px-1.5 py-0.5">{{ $first->asset_code }}</span>@if ($r->items->count() > 1)<span class="text-gray-300"> …</span>@endif @else<span class="text-gray-300">—</span>@endif</td>
                                 <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap font-mono {{ $first?->fixed_asset_no ? 'text-gray-600' : 'text-gray-300' }}">{{ $first?->fixed_asset_no ?: '—' }}</td>
-                                <td class="px-4 py-2.5 align-top text-xs text-gray-600 w-full min-w-[15rem]">
+                                <td class="px-4 py-2.5 align-top text-xs text-gray-600 w-56 min-w-[12rem] max-w-[16rem]">
                                     @php $storage = collect([$r->storage_location, $r->storage_shelf_label])->filter()->implode(' / '); @endphp
-                                    <span class="line-clamp-2" title="{{ $storage }}">{{ $storage ?: '—' }}</span>
+                                    <span class="block whitespace-normal break-words line-clamp-3" title="{{ $storage }}">{{ $storage ?: '—' }}</span>
                                 </td>
                                 <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap">
                                     <div class="text-gray-700 font-medium">{{ $r->deposit_date?->format('M d, Y') }}</div>
