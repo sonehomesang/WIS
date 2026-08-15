@@ -18,6 +18,11 @@
 /public/storage
 /storage/*.key
 /storage/pail
+# DB dumps / backups must never be committed (contain user rows, hashes, sessions)
+/storage/backups/
+*.sql
+*.sqlite
+*.dump
 /vendor
 Homestead.json
 Homestead.yaml

@@ -20,6 +20,6 @@
     "dependencies": {
         "chart.js": "^4.5.1",
         "html-to-image": "^1.11.13",
-        "jspdf": "^3.0.4"
+        "jspdf": "^4.2.1"
     }
 }

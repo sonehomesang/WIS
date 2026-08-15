@@ -62,22 +62,26 @@ class Reports extends Component
         $summary = $this->summary();
         $range = ($this->from ?: '—').' → '.($this->to ?: '—');
 
-        return response()->streamDownload(function () use ($summary, $range) {
+        // Neutralise CSV formula injection: prefix cells that a spreadsheet would
+        // evaluate (= + - @ TAB CR) with a single quote. Same guard as Audit/NotificationLog exports.
+        $safe = fn ($v) => is_string($v) && $v !== '' && str_contains("=+-@\t\r", $v[0]) ? "'".$v : $v;
+
+        return response()->streamDownload(function () use ($summary, $range, $safe) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['Report range', $range]);
+            fputcsv($out, ['Report range', $safe($range)]);
             fputcsv($out, []);
             fputcsv($out, ['Module', 'Status', 'Count']);
             foreach ($summary as $m) {
                 if (! $m['byStatus']) {
-                    fputcsv($out, [$m['label'], '(ບໍ່ມີ)', 0]);
+                    fputcsv($out, [$safe($m['label']), '(ບໍ່ມີ)', 0]);
 
                     continue;
                 }
                 foreach ($m['byStatus'] as $status => $count) {
-                    fputcsv($out, [$m['label'], $status, $count]);
+                    fputcsv($out, [$safe($m['label']), $safe((string) $status), $count]);
                 }
-                fputcsv($out, [$m['label'].' — TOTAL', '', $m['total']]);
+                fputcsv($out, [$safe($m['label'].' — TOTAL'), '', $m['total']]);
             }
             fclose($out);
         }, 'report-'.now()->format('Ymd-Hi').'.csv', ['Content-Type' => 'text/csv']);

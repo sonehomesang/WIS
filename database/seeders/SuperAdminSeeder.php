@@ -36,11 +36,12 @@ class SuperAdminSeeder extends Seeder
                     'password' => Hash::make($password),
                     'status' => 'active',
                     'auth_provider' => 'password',
-                    'is_super_admin' => true,
                     'email_verified_at' => now(),
                 ]
             );
 
+            // is_super_admin is guarded (not in $fillable) — set it explicitly.
+            $user->forceFill(['is_super_admin' => true])->save();
             $user->syncRoles(['super_admin']);
         }
     }
