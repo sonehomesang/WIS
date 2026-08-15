@@ -56,11 +56,11 @@
                         <tr class="text-[11px] uppercase tracking-wide">
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ໄອດີ (DP)</th>
                             <th class="text-left font-semibold px-4 py-2.5">ເຈົ້າຂອງ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 w-full">ເຄື່ອງຝາກ</th>
+                            <th class="text-left font-semibold px-4 py-2.5 min-w-[13rem]">ເຄື່ອງຝາກ</th>
                             <th class="text-center font-semibold px-4 py-2.5 whitespace-nowrap">ຈຳນວນ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ລະຫັດເຄື່ອງ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ຊັບສິນ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 min-w-[12rem]">ບ່ອນເກັບ</th>
+                            <th class="text-left font-semibold px-4 py-2.5 w-full min-w-[15rem]">ບ່ອນເກັບ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ວັນທີຝາກ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ສະຖານະພາບ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ສະຖານະ</th>
@@ -73,7 +73,7 @@
                             <tr wire:key="dp-{{ $r->id }}" class="hover:bg-sky-50/40 transition">
                                 <td class="px-4 py-2.5 align-top whitespace-nowrap"><a href="{{ route('deposit.show', $r) }}" wire:navigate class="font-mono text-sm font-medium text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
                                 <td class="px-4 py-2.5 align-top"><div class="font-semibold text-gray-800">{{ $r->owner_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->owner_email }}</div></td>
-                                <td class="px-4 py-2.5 align-top w-full">
+                                <td class="px-4 py-2.5 align-top min-w-[13rem]">
                                     <div class="flex gap-2.5">
                                         @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
                                         @else<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-lg">📦</div>@endif
@@ -90,7 +90,10 @@
                                 </td>
                                 <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap">@if ($first?->asset_code)<span class="font-mono bg-gray-50 text-gray-600 border border-gray-200 rounded px-1.5 py-0.5">{{ $first->asset_code }}</span>@if ($r->items->count() > 1)<span class="text-gray-300"> …</span>@endif @else<span class="text-gray-300">—</span>@endif</td>
                                 <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap font-mono {{ $first?->fixed_asset_no ? 'text-gray-600' : 'text-gray-300' }}">{{ $first?->fixed_asset_no ?: '—' }}</td>
-                                <td class="px-4 py-2.5 align-top text-xs text-gray-600 min-w-[12rem]">{{ collect([$r->storage_location, $r->storage_shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
+                                <td class="px-4 py-2.5 align-top text-xs text-gray-600 w-full min-w-[15rem]">
+                                    @php $storage = collect([$r->storage_location, $r->storage_shelf_label])->filter()->implode(' / '); @endphp
+                                    <span class="line-clamp-2" title="{{ $storage }}">{{ $storage ?: '—' }}</span>
+                                </td>
                                 <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap">
                                     <div class="text-gray-700 font-medium">{{ $r->deposit_date?->format('M d, Y') }}</div>
                                     <div class="text-[10px] uppercase tracking-wide text-gray-400 mt-0.5">{{ $r->request_type === 'pre_request' ? 'PRE-REQUEST' : 'WALK-IN' }}</div>
