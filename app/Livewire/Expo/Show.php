@@ -89,6 +89,19 @@ class Show extends Component
         abort_if($this->record->status === 'finalized', 403);
     }
 
+    /** ລຶບ = ຕ້ອງ ມີ ສິດ expo.delete (ຫຼື super_admin) — ຕ່າງ ຈາກ ແກ້ (expo.edit). */
+    protected function canDelete(): bool
+    {
+        $u = auth()->user();
+
+        return $u->is_super_admin || $u->can('expo.delete');
+    }
+
+    protected function guardDelete(): void
+    {
+        abort_unless($this->canDelete(), 403);
+    }
+
     // ── edit event meta ──
     public function openEvent(): void
     {
@@ -353,7 +366,7 @@ class Show extends Component
     // ── delete ──
     public function openDelete(): void
     {
-        $this->guardEdit();
+        $this->guardDelete();
         $this->reset(['deleteReason']);
         $this->resetErrorBag();
         $this->showDelete = true;
@@ -361,7 +374,7 @@ class Show extends Component
 
     public function deleteRecord()
     {
-        $this->guardEdit();
+        $this->guardDelete();
         $this->validate(['deleteReason' => ['required', 'string', 'max:500']]);
         $this->record->forceFill(['deleted_reason' => $this->deleteReason, 'deleted_by' => auth()->id()])->save();
         $this->record->delete();
@@ -377,6 +390,7 @@ class Show extends Component
         return view('livewire.expo.show', [
             'record' => $this->record,
             'editable' => $this->canEdit(),
+            'deletable' => $this->canDelete(),
             'availableUsers' => User::whereNotIn('id', $this->record->attendees->pluck('user_id'))
                 ->orderBy('display_name')->get(['id', 'display_name', 'email']),
         ]);

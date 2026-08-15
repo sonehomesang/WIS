@@ -231,7 +231,10 @@ class Show extends Component
     // ── soft delete ──
     protected function canDelete(): bool
     {
-        return $this->canEdit() && in_array($this->record->status, ['draft', 'cancelled', 'rejected', 'completed'], true);
+        $u = auth()->user();
+
+        return ($u->is_super_admin || $u->can('request.delete'))
+            && in_array($this->record->status, ['draft', 'cancelled', 'rejected', 'completed'], true);
     }
 
     public function openDelete(): void

@@ -348,7 +348,9 @@ class Show extends Component
     // ── soft delete (admin/borrow.edit; ສະເພາະ draft/cancelled/rejected/returned) ──
     protected function canDelete(): bool
     {
-        return $this->canEdit()
+        $u = auth()->user();
+
+        return ($u->is_super_admin || $u->can('borrow.delete'))
             && in_array($this->record->status, ['draft', 'cancelled', 'rejected', 'returned'], true);
     }
 

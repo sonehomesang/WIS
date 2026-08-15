@@ -18,7 +18,7 @@
                     @else<button wire:click="reopen" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">↩ ເປີດແກ້ໄຂຄືນ</button>@endif
                 @endif
                 <a href="{{ route('expo.pdf', $record) }}" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF report</a>
-                @if ($editable)<button wire:click="openDelete" class="text-sm text-red-600 border border-red-200 rounded-md px-3 py-1.5 hover:bg-red-50">🗑</button>@endif
+                @if ($deletable)<button wire:click="openDelete" class="text-sm text-red-600 border border-red-200 rounded-md px-3 py-1.5 hover:bg-red-50">🗑</button>@endif
             </x-slot>
         </x-page-subheader>
 

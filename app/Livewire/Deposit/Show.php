@@ -254,7 +254,10 @@ class Show extends Component
 
     protected function canDelete(): bool
     {
-        return $this->canEdit() && in_array($this->record->status, ['draft', 'cancelled', 'claimed'], true);
+        $u = auth()->user();
+
+        return ($u->is_super_admin || $u->can('deposit.delete'))
+            && in_array($this->record->status, ['draft', 'cancelled', 'claimed'], true);
     }
 
     public function openDelete(): void
