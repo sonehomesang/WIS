@@ -23,19 +23,26 @@ use App\Livewire\Settings\System;
 use App\Livewire\Settings\Translations;
 use App\Livewire\Settings\Uom;
 use App\Livewire\Settings\Users;
+use App\Models\AreaInspection;
 use App\Models\BorrowRecord;
 use App\Models\Department;
+use App\Models\DepositItem;
 use App\Models\DepositRecord;
 use App\Models\DiscrepancyAdvice;
+use App\Models\DisposalItem;
 use App\Models\DisposalRecord;
+use App\Models\Equipment;
 use App\Models\EquipmentInspection;
 use App\Models\EquipmentMaintenance;
+use App\Models\ExpoContact;
 use App\Models\ExpoEvent;
+use App\Models\InventoryItem;
 use App\Models\MaterialRequest;
 use App\Models\OutwardsGoodsAdvice;
 use App\Models\Setting;
 use App\Support\PdfExport;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 // ໜ້າ ທຳອິດ: login ແລ້ວ → dashboard, ຍັງ → ໜ້າ login (ບໍ່ ມີ ໜ້າ welcome ເກົ່າ ແລ້ວ).
 Route::get('/', fn () => redirect()->route(auth()->check() ? 'dashboard' : 'login'))->name('home');
@@ -164,15 +171,15 @@ Route::get('disposal/{record}/pdf', function (DisposalRecord $record) {
 })->middleware(['auth', 'verified'])->name('disposal.pdf');
 
 // Per-item disposal profile — shared view-data resolver (condition + photos + owner + endorsement)
-$disposalProfileData = function (DisposalRecord $record, App\Models\DisposalItem $item): array {
+$disposalProfileData = function (DisposalRecord $record, DisposalItem $item): array {
     abort_unless(App\Livewire\Disposal\Show::canOpen($record), 403);
     abort_unless($item->record_id === $record->id, 404);
     $record->load(['signoffs', 'department', 'preparedBy']);
 
     $source = match ($item->source_type) {
-        'equipment' => App\Models\Equipment::find($item->source_id),
-        'inventory' => App\Models\InventoryItem::find($item->source_id),
-        'deposit' => App\Models\DepositItem::find($item->source_id),
+        'equipment' => Equipment::find($item->source_id),
+        'inventory' => InventoryItem::find($item->source_id),
+        'deposit' => DepositItem::find($item->source_id),
         default => null,
     };
 
@@ -192,12 +199,12 @@ $disposalProfileData = function (DisposalRecord $record, App\Models\DisposalItem
 };
 
 // Preview the profile in-app (HTML) before exporting the file
-Route::get('disposal/{record}/item/{item}/preview', function (DisposalRecord $record, App\Models\DisposalItem $item) use ($disposalProfileData) {
+Route::get('disposal/{record}/item/{item}/preview', function (DisposalRecord $record, DisposalItem $item) use ($disposalProfileData) {
     return view('disposal.item-profile-pdf', $disposalProfileData($record, $item) + ['preview' => true]);
 })->middleware(['auth', 'verified'])->name('disposal.item.preview');
 
 // Export the profile as a letterhead PDF
-Route::get('disposal/{record}/item/{item}/pdf', function (DisposalRecord $record, App\Models\DisposalItem $item) use ($disposalProfileData) {
+Route::get('disposal/{record}/item/{item}/pdf', function (DisposalRecord $record, DisposalItem $item) use ($disposalProfileData) {
     return PdfExport::download('disposal.item-profile-pdf', $disposalProfileData($record, $item),
         "disposal-item-{$record->request_number}-{$item->id}.pdf");
 })->middleware(['auth', 'verified'])->name('disposal.item.pdf');
@@ -211,7 +218,7 @@ Route::get('area-inspection', App\Livewire\AreaInspection\Index::class)
     ->middleware(['auth', 'verified'])
     ->name('area-inspection');
 
-Route::get('area-inspection/{record}/pdf', function (App\Models\AreaInspection $record) {
+Route::get('area-inspection/{record}/pdf', function (AreaInspection $record) {
     abort_unless(auth()->user()->can('area_inspection.view'), 403);
     $record->load(['template', 'location', 'acknowledgedBy']);
 
@@ -354,6 +361,19 @@ Route::get('expo/{record}/pdf', function (ExpoEvent $record) {
 
     return PdfExport::download('expo.pdf', ['record' => $record], "expo-{$record->expo_number}.pdf");
 })->middleware(['auth', 'verified'])->name('expo.pdf');
+
+// Business-card image (third-party PII) — auth-gated, streamed from the private disk
+// (falls back to the legacy public path until `expo:privatize-cards` has run).
+Route::get('expo/contacts/{contact}/card', function (ExpoContact $contact) {
+    abort_unless(auth()->user()->can('expo.view'), 403);
+    abort_unless($contact->business_card_path, 404);
+    foreach (['local', 'public'] as $disk) {
+        if (Storage::disk($disk)->exists($contact->business_card_path)) {
+            return Storage::disk($disk)->response($contact->business_card_path);
+        }
+    }
+    abort(404);
+})->middleware(['auth', 'verified'])->name('expo.card');
 
 Route::get('expo/{record}', App\Livewire\Expo\Show::class)
     ->middleware(['auth', 'verified'])

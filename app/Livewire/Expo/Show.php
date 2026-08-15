@@ -267,7 +267,9 @@ class Show extends Component
         // whitelist — ກັນ mass-assign (company_id/created_by ຈາກ client array).
         $attrs = collect($this->kf)->only(['name', 'role', 'title', 'email', 'phone', 'app_contact', 'notes'])->all();
         if ($this->businessCard) {
-            $attrs['business_card_path'] = $this->businessCard->store("expo/{$this->record->id}/{$company->id}/cards", 'public');
+            // Business cards carry third-party PII (name/email/phone) — keep them off the
+            // public disk; they are served only through the auth-gated expo.card route.
+            $attrs['business_card_path'] = $this->businessCard->store("expo/{$this->record->id}/{$company->id}/cards", 'local');
         }
 
         if ($this->contactId) {
@@ -287,7 +289,8 @@ class Show extends Component
         $k = ExpoContact::whereHas('company', fn ($q) => $q->where('event_id', $this->record->id))->find($id);
         if ($k) {
             if ($k->business_card_path) {
-                Storage::disk('public')->delete($k->business_card_path);
+                Storage::disk('local')->delete($k->business_card_path);   // current location
+                Storage::disk('public')->delete($k->business_card_path);  // legacy (pre-privatize)
             }
             $k->delete();
             $this->record->refresh();

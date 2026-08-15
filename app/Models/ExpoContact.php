@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class ExpoContact extends Model
 {
@@ -19,6 +18,7 @@ class ExpoContact extends Model
 
     public function getCardUrlAttribute(): ?string
     {
-        return $this->business_card_path ? Storage::disk('public')->url($this->business_card_path) : null;
+        // Served through the auth-gated route (PII card lives on the private disk), not a public URL.
+        return $this->business_card_path ? route('expo.card', $this) : null;
     }
 }

@@ -9,6 +9,8 @@ use App\Models\ExpoEvent;
 use App\Models\User;
 use App\Services\ExpoService;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -187,4 +189,47 @@ test('show page can add and remove attendees', function () {
 test('non-permitted user cannot open expo index', function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => false]));
     Livewire::test(Index::class)->assertForbidden();
+});
+
+test('business card is stored on the private disk, never public (PII)', function () {
+    Storage::fake('local');
+    Storage::fake('public');
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $e = anExpo($admin);
+
+    Livewire::test(Show::class, ['record' => $e])
+        ->call('openCompany')->set('cf.name', 'Sinohydro')->set('cf.interest_level', 'hot')->call('saveCompany');
+    $c = ExpoCompany::where('event_id', $e->id)->first();
+
+    Livewire::test(Show::class, ['record' => $e])
+        ->call('openContact', $c->id)
+        ->set('kf.name', 'Ms Wang')->set('kf.role', 'representative')
+        ->set('businessCard', UploadedFile::fake()->image('card.jpg'))
+        ->call('saveContact')
+        ->assertHasNoErrors();
+
+    $k = ExpoContact::where('company_id', $c->id)->first();
+    expect($k->business_card_path)->not->toBeNull();
+    expect(Storage::disk('local')->exists($k->business_card_path))->toBeTrue();   // private ✓
+    expect(Storage::disk('public')->exists($k->business_card_path))->toBeFalse(); // NOT web-reachable
+});
+
+test('expo.card route is auth-gated on expo.view', function () {
+    Storage::fake('local');
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $e = anExpo($admin);
+    Livewire::test(Show::class, ['record' => $e])
+        ->call('openCompany')->set('cf.name', 'Harbin')->set('cf.interest_level', 'warm')->call('saveCompany');
+    $c = ExpoCompany::where('event_id', $e->id)->first();
+    $k = $c->contacts()->create(['name' => 'Card Holder', 'role' => 'agent', 'business_card_path' => "expo/{$e->id}/{$c->id}/cards/x.jpg"]);
+    Storage::disk('local')->put($k->business_card_path, 'JPEGBYTES');
+
+    // holder of expo.view → 200 + streams the file
+    $this->get(route('expo.card', $k))->assertOk();
+
+    // user without expo.view → 403
+    $this->actingAs(User::factory()->create(['is_super_admin' => false]));
+    $this->get(route('expo.card', $k))->assertForbidden();
 });
