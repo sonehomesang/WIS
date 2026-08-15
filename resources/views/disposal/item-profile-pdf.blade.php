@@ -6,6 +6,7 @@
     $imgBig = fn ($path) => PdfExport::thumbContain($path, 380, 300);
     $imgSm = fn ($path) => PdfExport::thumbContain($path, 320, 150);
     $fmt = fn ($d) => $d?->format('d/m/Y') ?? '—';
+    $jpgName = "disposal-item-{$record->request_number}-{$item->id}.jpg";
 
     // photos (JSON array of paths) — show up to 3 as evidence
     $photos = collect($item->photos ?? [])->take(3)->values();
@@ -91,7 +92,8 @@
             <span>👁 ພຣີວິວ · {{ $record->request_number }} · ລາຍການ #{{ $item->id }}</span>
             <span class="sp"></span>
             <a href="{{ route('disposal.item.pdf', [$record, $item]) }}" class="primary">⬇ ດາວໂຫຼດ PDF</a>
-            <button onclick="window.print()">🖨 ພິມ / Save</button>
+            <button id="dl-jpg" type="button">🖼 ດາວໂຫຼດ JPG</button>
+            <button type="button" onclick="window.print()">🖨 ພິມ</button>
             <a href="{{ route('disposal.show', $record) }}">← ກັບ ໄປ ແກ້ໄຂ</a>
         </div>
         <div class="previewsheet">
@@ -209,6 +211,27 @@
     </div>
 
     @include('pdf._footer')
-    @if (! empty($preview))</div>@endif
+    @if (! empty($preview))
+        </div>
+        <script src="{{ asset('vendor/html2canvas.min.js') }}"></script>
+        <script>
+            document.getElementById('dl-jpg').addEventListener('click', function () {
+                var btn = this, orig = btn.textContent;
+                var sheet = document.querySelector('.previewsheet');
+                if (typeof html2canvas !== 'function') { alert('html2canvas ໂຫຼດ ບໍ່ ໄດ້'); return; }
+                btn.disabled = true; btn.textContent = '⏳ ກຳລັງ ສ້າງ JPG…';
+                html2canvas(sheet, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false }).then(function (canvas) {
+                    var link = document.createElement('a');
+                    link.download = @json($jpgName ?? 'disposal-profile.jpg');
+                    link.href = canvas.toDataURL('image/jpeg', 0.92);
+                    document.body.appendChild(link); link.click(); link.remove();
+                    btn.disabled = false; btn.textContent = orig;
+                }).catch(function (e) {
+                    alert('ສ້າງ JPG ບໍ່ ສຳເລັດ: ' + e);
+                    btn.disabled = false; btn.textContent = orig;
+                });
+            });
+        </script>
+    @endif
 </body>
 </html>
