@@ -1,13 +1,13 @@
 @php
     $statusMeta = fn ($s) => match ($s) {
         'draft' => ['DRAFT', 'bg-gray-100 text-gray-600'],
-        'submitted' => ['SUBMITTED', 'bg-blue-50 text-blue-700'],
-        'approved' => ['APPROVED', 'bg-sky-50 text-sky-700'],
-        'validated' => ['VALIDATED', 'bg-cyan-50 text-cyan-700'],
-        'dispatched' => ['DISPATCHED', 'bg-amber-50 text-amber-700'],
-        'received' => ['RECEIVED', 'bg-emerald-50 text-emerald-700'],
-        'completed' => ['COMPLETED', 'bg-emerald-100 text-emerald-800'],
-        'rejected' => ['REJECTED', 'bg-red-50 text-red-700'],
+        'submitted' => ['SUBMITTED', 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'],
+        'approved' => ['APPROVED', 'bg-sky-50 text-sky-700 ring-1 ring-sky-200'],
+        'validated' => ['VALIDATED', 'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200'],
+        'dispatched' => ['DISPATCHED', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'],
+        'received' => ['RECEIVED', 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'],
+        'completed' => ['COMPLETED', 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200'],
+        'rejected' => ['REJECTED', 'bg-rose-50 text-rose-700 ring-1 ring-rose-200'],
         'cancelled' => ['CANCELLED', 'bg-gray-100 text-gray-400'],
         default => [strtoupper($s), 'bg-gray-100 text-gray-600'],
     };
@@ -16,79 +16,88 @@
 <div class="pb-6">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
         {{-- frozen header group: toolbar + chips freeze together --}}
-        <div class="sticky top-16 z-30 bg-gray-100">
-        {{-- toolbar --}}
-        <div class="flex flex-col gap-2 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3 lg:flex-nowrap">
-            <div class="flex flex-wrap items-center gap-2 min-w-0">
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ MR/ຜູ້ເບີກ/ຈຸດປະສົງ…" class="w-52 rounded-md border-gray-300 shadow-sm text-sm" />
-                <select wire:model.live="statusFilter" class="w-36 rounded-md border-gray-300 text-sm">
-                    <option value="">All Statuses</option>
-                    @foreach (['draft', 'submitted', 'approved', 'validated', 'dispatched', 'received', 'completed', 'rejected', 'cancelled'] as $st)
-                        <option value="{{ $st }}">{{ $st }}</option>
-                    @endforeach
-                </select>
+        <div class="sticky top-16 z-30 bg-gray-100/95 backdrop-blur">
+            <div class="flex flex-col gap-3 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3">
+                <div class="flex items-center gap-3 shrink-0">
+                    <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white flex items-center justify-center text-xl shadow-sm">📝</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">ເບີກ ເຄື່ອງ <span class="text-gray-400 text-sm font-normal">· Material Request</span></h2>
+                        <p class="text-sm text-gray-400">{{ number_format($records->total()) }} ໃບ</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="relative">
+                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔎</span>
+                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ MR/ຜູ້ເບີກ/ຈຸດປະສົງ…" class="w-56 pl-8 rounded-lg border-gray-300 text-sm" />
+                    </div>
+                    <select wire:model.live="statusFilter" class="w-36 rounded-lg border-gray-300 text-sm">
+                        <option value="">All Statuses</option>
+                        @foreach (['draft', 'submitted', 'approved', 'validated', 'dispatched', 'received', 'completed', 'rejected', 'cancelled'] as $st)
+                            <option value="{{ $st }}">{{ $st }}</option>
+                        @endforeach
+                    </select>
+                    @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
+                    @can('request.create')<a href="{{ route('request.create') }}" wire:navigate class="text-sm font-medium text-white bg-indigo-600 rounded-lg px-3.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 transition shadow-sm whitespace-nowrap">+ Request</a>@endcan
+                </div>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
-                @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
-                @can('request.create')<a href="{{ route('request.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ Request</a>@endcan
-            </div>
-        </div>
 
-        @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter, 'trailing' => number_format($records->total()).' records'])
+            @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter, 'trailing' => number_format($records->total()).' records'])
         </div>{{-- /frozen header group --}}
 
-        @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-2">{{ session('ok') }}</div>@endif
+        @if (session('ok'))<div class="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 mb-3">{{ session('ok') }}</div>@endif
 
         {{-- Desktop --}}
-        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-15rem)]">
-            <table class="w-full text-sm">
-                <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm">
-                    <tr>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ໄອດີ <span class="text-gray-400">(MR No.)</span></th>
-                        <th class="text-left font-semibold px-4 py-2">ຜູ້ເບີກ <span class="text-gray-400">(Requester)</span></th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍການ <span class="text-gray-400">(Items)</span></th>
-                        <th class="text-left font-semibold px-4 py-2 w-full">ຈຸດປະສົງ <span class="text-gray-400">(Purpose)</span></th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">WO <span class="text-gray-400">(ກ່ຽວຂ້ອງ)</span></th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ມູນຄ່າ <span class="text-gray-400">(Grand total)</span></th>
-                        <th class="text-left font-semibold px-4 py-2">Supplier</th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ສະຖານະ <span class="text-gray-400">(Status)</span></th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">SAP</th>
-                        <th class="text-left font-semibold px-4 py-2 whitespace-nowrap">ລາຍລະອຽດ</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @forelse ($records as $r)
-                        @php [$lbl, $cls] = $statusMeta($r->status); @endphp
-                        <tr wire:key="mr-{{ $r->id }}" class="hover:bg-gray-50">
-                            <td class="px-4 py-2 align-top whitespace-nowrap"><a href="{{ route('request.show', $r) }}" wire:navigate class="font-mono text-sm text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
-                            <td class="px-4 py-2 align-top"><div class="font-semibold text-gray-800">{{ $r->requester_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->requester_email }}</div></td>
-                            <td class="px-4 py-2 align-top text-gray-600 whitespace-nowrap">{{ $r->items->count() }} ລາຍການ<div class="text-xs text-gray-400">Qty {{ $r->items->sum('quantity') }}</div></td>
-                            <td class="px-4 py-2 align-top text-gray-600 w-full">{{ $r->purpose ?: '—' }}</td>
-                            <td class="px-4 py-2 align-top text-gray-600 whitespace-nowrap">{{ $r->wo_e_form ?: '—' }}@if ($r->request_type)<div class="text-xs text-gray-400">{{ $r->request_type }}</div>@endif</td>
-                            <td class="px-4 py-2 align-top text-gray-700 whitespace-nowrap"><span class="font-medium">{{ number_format($r->grand_total, 2) }}</span> <span class="text-xs text-gray-400">{{ $r->currency }}</span>@if ($r->vat_enabled)<div class="text-xs text-gray-400">+VAT {{ rtrim(rtrim(number_format($r->vat_rate, 2), '0'), '.') }}%</div>@endif</td>
-                            <td class="px-4 py-2 align-top text-xs text-gray-600">{{ $r->supplier?->name ?? '—' }}</td>
-                            <td class="px-4 py-2 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
-                            <td class="px-4 py-2 align-top whitespace-nowrap">@if ($r->sapStatusLabel())<span class="inline-flex items-center text-xs font-medium rounded-full px-2 py-0.5 bg-violet-50 text-violet-700">{{ $r->sapStatusLabel() }}</span>@else<span class="text-gray-300">—</span>@endif</td>
-                            <td class="px-4 py-2 align-top whitespace-nowrap">
-                                @if ($showDeleted)
-                                    <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນ?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
-                                @else
-                                    <a href="{{ route('request.show', $r) }}" wire:navigate class="text-xs text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 inline-block">View Details</a>
-                                @endif
-                            </td>
+        <div class="hidden md:block bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="overflow-auto max-h-[calc(100vh-16rem)]">
+                <table class="w-full text-sm">
+                    <thead class="sticky top-0 z-10 bg-slate-50 text-slate-500 border-b border-gray-200">
+                        <tr class="text-[11px] uppercase tracking-wide">
+                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ໄອດີ (MR)</th>
+                            <th class="text-left font-semibold px-4 py-2.5">ຜູ້ເບີກ</th>
+                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ລາຍການ</th>
+                            <th class="text-left font-semibold px-4 py-2.5 w-full">ຈຸດປະສົງ</th>
+                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">WO</th>
+                            <th class="text-right font-semibold px-4 py-2.5 whitespace-nowrap">ມູນຄ່າ</th>
+                            <th class="text-left font-semibold px-4 py-2.5">Supplier</th>
+                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ສະຖານະ</th>
+                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">SAP</th>
+                            <th class="text-right font-semibold px-4 py-2.5 whitespace-nowrap">ຈັດການ</th>
                         </tr>
-                    @empty
-                        <tr><td colspan="10" class="px-4 py-6 text-center text-gray-400">ຍັງບໍ່ມີໃບເບີກ</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse ($records as $r)
+                            @php [$lbl, $cls] = $statusMeta($r->status); @endphp
+                            <tr wire:key="mr-{{ $r->id }}" class="hover:bg-amber-50/40 transition">
+                                <td class="px-4 py-2.5 align-top whitespace-nowrap"><a href="{{ route('request.show', $r) }}" wire:navigate class="font-mono text-sm font-medium text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
+                                <td class="px-4 py-2.5 align-top"><div class="font-semibold text-gray-800">{{ $r->requester_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->requester_email }}</div></td>
+                                <td class="px-4 py-2.5 align-top text-gray-600 whitespace-nowrap">{{ $r->items->count() }} ລາຍການ<div class="text-xs text-gray-400">Qty {{ $r->items->sum('quantity') }}</div></td>
+                                <td class="px-4 py-2.5 align-top text-gray-600 w-full">{{ $r->purpose ?: '—' }}</td>
+                                <td class="px-4 py-2.5 align-top text-gray-600 whitespace-nowrap">@if ($r->wo_e_form)<span class="font-mono text-xs bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5 text-gray-600">{{ $r->wo_e_form }}</span>@else—@endif@if ($r->request_type)<div class="text-xs text-gray-400 mt-0.5">{{ $r->request_type }}</div>@endif</td>
+                                <td class="px-4 py-2.5 align-top text-gray-700 whitespace-nowrap text-right tabular-nums"><span class="font-medium">{{ number_format($r->grand_total, 2) }}</span> <span class="text-xs text-gray-400">{{ $r->currency }}</span>@if ($r->vat_enabled)<div class="text-xs text-gray-400">+VAT {{ rtrim(rtrim(number_format($r->vat_rate, 2), '0'), '.') }}%</div>@endif</td>
+                                <td class="px-4 py-2.5 align-top text-xs text-gray-600">{{ $r->supplier?->name ?? '—' }}</td>
+                                <td class="px-4 py-2.5 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
+                                <td class="px-4 py-2.5 align-top whitespace-nowrap">@if ($r->sapStatusLabel())<span class="inline-flex items-center text-xs font-medium rounded-full px-2 py-0.5 bg-violet-50 text-violet-700 ring-1 ring-violet-200">{{ $r->sapStatusLabel() }}</span>@else<span class="text-gray-300">—</span>@endif</td>
+                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-right">
+                                    @if ($showDeleted)
+                                        <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນ?" class="text-xs font-medium text-emerald-700 border border-emerald-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 transition">↩ ກູ້ຄືນ</button>
+                                    @else
+                                        <a href="{{ route('request.show', $r) }}" wire:navigate class="text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition inline-block">ເບິ່ງ</a>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="10" class="px-4 py-14 text-center text-gray-400"><div class="text-4xl mb-2">📝</div>ຍັງບໍ່ມີໃບເບີກ</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         {{-- Mobile --}}
-        <div class="md:hidden space-y-2">
+        <div class="md:hidden space-y-2.5">
             @forelse ($records as $r)
                 @php [$lbl, $cls] = $statusMeta($r->status); $tag = $showDeleted ? 'div' : 'a'; @endphp
-                <{{ $tag }} @if (! $showDeleted) href="{{ route('request.show', $r) }}" wire:navigate @endif wire:key="mmr-{{ $r->id }}" class="block bg-white border border-gray-100 rounded-lg p-3">
+                <{{ $tag }} @if (! $showDeleted) href="{{ route('request.show', $r) }}" wire:navigate @endif wire:key="mmr-{{ $r->id }}" class="block bg-white border border-gray-200 rounded-xl shadow-sm p-3.5">
                     <div class="flex items-start justify-between gap-2">
                         <div class="min-w-0">
                             <div class="font-mono text-xs text-indigo-600">{{ $r->request_number }}</div>
@@ -97,12 +106,12 @@
                             @if ($r->purpose)<div class="text-xs text-gray-500 truncate">{{ $r->purpose }}</div>@endif
                             @if ($r->wo_e_form || $r->sapStatusLabel())<div class="text-xs text-gray-400 truncate">@if ($r->wo_e_form)WO {{ $r->wo_e_form }}@endif @if ($r->sapStatusLabel())<span class="text-violet-600">SAP: {{ $r->sapStatusLabel() }}</span>@endif</div>@endif
                         </div>
-                        <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $cls }} shrink-0">{{ $lbl }}</span>
+                        <span class="text-xs font-semibold rounded-full px-2 py-0.5 {{ $cls }} shrink-0">{{ $lbl }}</span>
                     </div>
-                    @if ($showDeleted)<div class="mt-2 text-right"><button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນ?" class="text-xs text-emerald-700 border border-emerald-300 rounded-md px-3 py-1.5">↩ ກູ້ຄືນ</button></div>@endif
+                    @if ($showDeleted)<div class="mt-2 text-right"><button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນ?" class="text-xs font-medium text-emerald-700 border border-emerald-200 rounded-lg px-3 py-1.5">↩ ກູ້ຄືນ</button></div>@endif
                 </{{ $tag }}>
             @empty
-                <div class="text-center text-gray-400 py-6">ຍັງບໍ່ມີໃບເບີກ</div>
+                <div class="text-center text-gray-400 py-10"><div class="text-4xl mb-2">📝</div>ຍັງບໍ່ມີໃບເບີກ</div>
             @endforelse
         </div>
 
