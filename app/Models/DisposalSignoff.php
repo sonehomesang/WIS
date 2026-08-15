@@ -12,8 +12,20 @@ class DisposalSignoff extends Model
 
     protected $casts = [
         'signed_at' => 'datetime',
+        'notified_at' => 'datetime',
         'stage_order' => 'integer',
     ];
+
+    /** ມອບໝາຍ ໃຫ້ ຄົນ ແລ້ວ ແຕ່ ຍັງ ບໍ່ ທັນ ເຊັນ. */
+    public function isPending(): bool
+    {
+        return $this->user_id !== null && $this->signed_at === null && $this->decision !== 'rejected';
+    }
+
+    public function isSigned(): bool
+    {
+        return $this->signed_at !== null && $this->decision === 'approved';
+    }
 
     public function record(): BelongsTo
     {

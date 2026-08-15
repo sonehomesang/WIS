@@ -22,12 +22,15 @@
         $rows = $signs[$key] ?? collect();
         $first = $rows->first();
 
+        $signedRows = $rows->filter(fn ($s) => $s->signed_at !== null);
+
         return [
             'role_lo' => $lo, 'role_en' => $en,
             'name' => $rows->map(fn ($s) => $s->name)->filter()->implode(' · ') ?: '—',
             'date' => $first?->signed_at ? $fmt($first->signed_at).' '.$first->signed_at->format('H:i') : '—',
             'comment' => $rows->map(fn ($s) => $s->comment)->filter()->implode(' · ') ?: '',
-            'signed' => $rows->count() > 0,
+            'recommendation' => $rows->map(fn ($s) => $s->recommendation)->filter()->implode(' · ') ?: '',
+            'signed' => $signedRows->isNotEmpty(),
         ];
     };
     $endorsers = [
@@ -200,7 +203,7 @@
             <tr>
                 <td class="role">{{ $e['role_lo'] }}<br><span class="muted">{{ $e['role_en'] }}</span></td>
                 <td>{{ $e['comment'] ?: ($e['signed'] ? '✓ ຮັບຮອງ' : '—') }}</td>
-                <td class="rec">{{ $item->recommendation ?: '—' }}</td>
+                <td class="rec">{{ $e['recommendation'] ?: ($item->recommendation ?: '—') }}</td>
                 <td>@if ($e['signed'])<span class="stamp">{{ $e['name'] }}<br>{{ $e['date'] }}</span>@else <span class="muted">— ລໍ ເຊັນ —</span>@endif</td>
             </tr>
         @endforeach

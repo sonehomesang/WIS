@@ -1,7 +1,7 @@
 @php
     $badge = fn ($s) => match ($s) {
         'draft' => 'bg-gray-100 text-gray-600',
-        'committee_review', 'technical_review', 'manager_review', 'executive_review' => 'bg-amber-50 text-amber-700',
+        'in_review', 'committee_review', 'technical_review', 'manager_review', 'executive_review' => 'bg-amber-50 text-amber-700',
         'approved' => 'bg-sky-50 text-sky-700',
         'disposed' => 'bg-emerald-100 text-emerald-800',
         'rejected' => 'bg-red-50 text-red-700',

@@ -51,20 +51,24 @@ test('the DS counter increments per record within the year', function () {
     expect($b->request_number)->toBe('DS'.now()->year.'-0002');
 });
 
-test('submit moves draft to committee_review and stamps the preparer sign-off', function () {
+test('submit moves draft to in_review (needs an assigned endorser) and leaves endorsers pending', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $svc = app(DisposalService::class);
     $r = aDisposalDraft($admin);
 
+    // submit ຖືກ ບລັອກ ຖ້າ ຍັງ ບໍ່ ໄດ້ ມອບໝາຍ ຜູ້ ຮັບຮອງ
+    expect(fn () => $svc->transition($r, 'submit', $admin))->toThrow(ValidationException::class);
+
+    $svc->assignEndorsers($r, ['committee' => ['user_id' => $admin->id]], $admin);
     $svc->transition($r, 'submit', $admin);
     $r->refresh();
 
-    expect($r->status)->toBe('committee_review');
+    expect($r->status)->toBe('in_review');
     expect($r->prepared_at)->not->toBeNull();
-    $sign = $r->signoffs()->where('role_key', 'preparer')->first();
+    $sign = $r->signoffs()->where('role_key', 'committee')->first();
     expect($sign)->not->toBeNull();
-    expect($sign->signed_at)->not->toBeNull();
     expect($sign->user_id)->toBe($admin->id);
+    expect($sign->signed_at)->toBeNull();   // ຍັງ ບໍ່ ທັນ ເຊັນ
 });
 
 test('submit is blocked when the draft has no items', function () {

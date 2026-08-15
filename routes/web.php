@@ -157,7 +157,7 @@ Route::get('disposal/summary/pdf', function () {
 
 Route::get('disposal/{record}/pdf', function (DisposalRecord $record) {
     $u = auth()->user();
-    abort_unless($u->can('disposal.view') && App\Livewire\Disposal\Show::canAccess($record), 403); // ownership scope (IDOR guard)
+    abort_unless(App\Livewire\Disposal\Show::canOpen($record), 403); // ownership scope + assigned endorser (IDOR guard)
     $record->load(['items', 'signoffs', 'department', 'preparedBy']);
 
     return PdfExport::download('disposal.pdf', ['record' => $record], "disposal-{$record->request_number}.pdf");
@@ -165,8 +165,7 @@ Route::get('disposal/{record}/pdf', function (DisposalRecord $record) {
 
 // Per-item disposal profile — shared view-data resolver (condition + photos + owner + endorsement)
 $disposalProfileData = function (DisposalRecord $record, App\Models\DisposalItem $item): array {
-    $u = auth()->user();
-    abort_unless($u->can('disposal.view') && App\Livewire\Disposal\Show::canAccess($record), 403);
+    abort_unless(App\Livewire\Disposal\Show::canOpen($record), 403);
     abort_unless($item->record_id === $record->id, 404);
     $record->load(['signoffs', 'department', 'preparedBy']);
 

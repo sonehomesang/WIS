@@ -6,19 +6,22 @@ use App\Models\DepositItem;
 use App\Models\DisposalRecord;
 use App\Models\Equipment;
 use App\Models\InventoryItem;
+use App\Models\User;
+use App\Notifications\DisposalEndorsementRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * DisposalService — state machine ໃບ ຂໍ ຈຳໜ່າຍ ເຄື່ອງ ຊຳລຸດ (Phase 1: createDraft + submit + cancel).
+ * DisposalService — state machine ໃບ ຂໍ ຈຳໜ່າຍ ເຄື່ອງ ຊຳລຸດ.
  *
- * States: draft → committee_review → technical_review → manager_review → executive_review
- *              → approved → disposed | rejected(→draft) | cancelled
- *   submit  (preparer)  draft → committee_review   (stamp preparer sign-off)
- *   cancel  (preparer)  any non-final → cancelled
- *   sign    advance committee→technical→manager→executive→approved (stamp each stage sign-off)
- *   reject  any review stage → draft (with reason)
- *   dispose approved → disposed (confirm-then-update source registers: Equipment/Inventory/Deposit)
+ * ຮູບ ແບບ ຮັບຮອງ = "ມອບໝາຍ ຄົນ → ເຮັດ ອິດສະລະ" (parallel, ບໍ່ ຈຳກັດ ລຳດັບ):
+ * States: draft → in_review → approved → disposed | rejected/draft | cancelled
+ *   assignEndorsers  ມອບໝາຍ ຜູ້ ຮັບຮອງ ຕໍ່ 5 ບົດບາດ (draft)
+ *   submit           draft → in_review (ຣີເຊັດ ລາຍເຊັນ; ຕ້ອງ ມີ ຜູ້ ຮັບຮອງ ≥1)
+ *   endorse          ຜູ້ ຖືກ ມອບໝາຍ ເຊັນ ຊ່ອງ ຕົນ (ໃດ ກ່ອນ-ຫຼັງ ກໍ ໄດ້) → ຄົບ ທຸກ ຄົນ = approved
+ *   rejectEndorsement ຜູ້ ຮັບຮອງ ຕີ ກັບ → draft (with reason)
+ *   cancel           any non-final → cancelled
+ *   dispose          approved → disposed (confirm-then-update source registers)
  */
 class DisposalService
 {
@@ -89,8 +92,6 @@ class DisposalService
         return DB::transaction(function () use ($r, $action, $actor, $opts) {
             match ($action) {
                 'submit' => $this->doSubmit($r, $actor),
-                'sign' => $this->doSign($r, $actor, $opts),
-                'reject' => $this->doReject($r, $actor, $opts),
                 'dispose' => $this->doDispose($r, $actor, $opts),
                 'cancel' => $this->doCancel($r, $opts),
                 default => throw ValidationException::withMessages(['status' => "Unknown action: {$action}"]),
@@ -108,74 +109,143 @@ class DisposalService
     {
         $this->assert($r->status === 'draft', 'submit ໄດ້ ສະເພາະ draft.');
         $this->assert($r->items()->exists(), 'ຕ້ອງ ມີ ຢ່າງໜ້ອຍ 1 ລາຍການ.');
+        $this->assert($r->signoffs()->whereNotNull('user_id')->exists(), 'ຕ້ອງ ມອບໝາຍ ຜູ້ ຮັບຮອງ ຢ່າງໜ້ອຍ 1 ຄົນ ກ່ອນ ສົ່ງ.');
 
-        // ເລີ່ມ ຮອບ ເຊັນ ໃໝ່ ທຸກ ຄັ້ງ ທີ່ ສົ່ງ — ລ້າງ sign-off ຮອບ ກ່ອນ (ກັນ ໃບ ທີ່ ຖືກ reject
-        // ແລ້ວ resubmit ຄ້າງ sign-off ເກົ່າ → chain ຄ້າງ + preparer ຊ້ຳ). audit ຢູ່ disposal_history.
-        $r->signoffs()->delete();
+        // ຮອບ ຮັບຮອງ ໃໝ່: ຮັກສາ ການ ມອບໝາຍ ໄວ້ ແຕ່ ຣີເຊັດ ລາຍເຊັນ ໃຫ້ ເຊັນ ຄືນ ໃສ່ ລິສ ທີ່ ອາດ ຖືກ ແກ້.
+        $r->signoffs()->update([
+            'signed_at' => null, 'comment' => null, 'recommendation' => null,
+            'decision' => 'approved', 'notified_at' => null,
+        ]);
 
-        $r->status = 'committee_review';
+        $r->status = 'in_review';
         $r->prepared_at = now();
         $r->reject_reason = null;
-
-        // ຜູ້ ເຮັດລິສ ເຊັນ ຕອນ ສົ່ງ (ຂັ້ນ 1).
-        $r->signoffs()->create([
-            'role_key' => 'preparer',
-            'stage_order' => 1,
-            'user_id' => $actor->id,
-            'name' => $actor->display_name ?? $actor->email,
-            'decision' => 'approved',
-            'signed_at' => now(),
-        ]);
     }
 
-    /** ເຊັນ ຮັບຮອງ ຂັ້ນ ປັດຈຸບັນ → ຂຶ້ນ ຂັ້ນ ຕໍ່ໄປ. ຄະນະ = ໃສ່ ຫຼາຍ ຄົນ (opts['committee']=[{name,title}]). */
-    private function doSign(DisposalRecord $r, $actor, array $opts): void
+    /**
+     * ມອບໝາຍ ຜູ້ ຮັບຮອງ ຕໍ່ ບົດບາດ. $assignees: [role_key => ['user_id'=>?int, 'title'=>?string]].
+     * Upsert ແຖວ signoff (pending); ປ່ຽນ ຄົນ → ຣີເຊັດ ລາຍເຊັນ ແຖວ ນັ້ນ; ວ່າງ → ລຶບ ແຖວ.
+     *
+     * @return array<int, array{signoff: \App\Models\DisposalSignoff, user: User}> ແຖວ ໃໝ່ ທີ່ ຕ້ອງ ແຈ້ງ
+     */
+    public function assignEndorsers(DisposalRecord $r, array $assignees, $actor): array
     {
-        $stage = $r->currentStageKey();
-        $this->assert($stage !== null, 'ບໍ່ ຢູ່ ໃນ ຂັ້ນ ເຊັນ.');
+        return DB::transaction(function () use ($r, $assignees, $actor) {
+            $toNotify = [];
+            foreach (DisposalRecord::STAGES as $roleKey => $cfg) {
+                $sel = $assignees[$roleKey] ?? [];
+                $userId = ! empty($sel['user_id']) ? (int) $sel['user_id'] : null;
+                $title = ($sel['title'] ?? '') !== '' ? $sel['title'] : null;
+                $row = $r->signoffs()->where('role_key', $roleKey)->first();
 
-        if ($stage === 'committee') {
-            $members = array_values(array_filter($opts['committee'] ?? [], fn ($m) => trim((string) ($m['name'] ?? '')) !== ''));
-            $this->assert(count($members) >= 1, 'ຕ້ອງ ມີ ຄະນະກຳມະການ ຢ່າງໜ້ອຍ 1 ຄົນ.');
-            foreach ($members as $mem) {
-                $r->signoffs()->create([
-                    'role_key' => 'committee', 'stage_order' => 2,
-                    'name' => $mem['name'], 'title' => $mem['title'] ?? null,
-                    'decision' => 'approved', 'signed_at' => now(), 'comment' => $opts['comment'] ?? null,
-                ]);
+                if (! $userId) {
+                    $row?->delete();
+
+                    continue;
+                }
+
+                $user = User::find($userId);
+                if (! $user) {
+                    continue;
+                }
+                $name = $user->display_name ?: $user->email;
+
+                if (! $row) {
+                    $row = $r->signoffs()->create([
+                        'role_key' => $roleKey, 'stage_order' => $cfg['order'],
+                        'user_id' => $user->id, 'name' => $name, 'title' => $title,
+                        'decision' => 'approved', 'signed_at' => null, 'assigned_by' => $actor->id,
+                    ]);
+                    $toNotify[] = ['signoff' => $row, 'user' => $user];
+
+                    continue;
+                }
+
+                $changedUser = (int) $row->user_id !== $user->id;
+                $row->fill(['user_id' => $user->id, 'name' => $name, 'title' => $title, 'stage_order' => $cfg['order'], 'assigned_by' => $actor->id]);
+                if ($changedUser) {
+                    $row->forceFill(['signed_at' => null, 'comment' => null, 'recommendation' => null, 'decision' => 'approved', 'notified_at' => null]);
+                }
+                $row->save();
+                if ($row->isPending() && $row->notified_at === null) {
+                    $toNotify[] = ['signoff' => $row, 'user' => $user];
+                }
             }
-            $r->status = 'technical_review';
 
-            return;
+            return $toNotify;
+        });
+    }
+
+    /** ສົ່ງ ອີເມລ ລິ້ງ ຫາ ຜູ້ ຮັບຮອງ ທີ່ ຍັງ ຄ້າງ (pending + ຍັງ ບໍ່ ແຈ້ງ). @return int ຈຳນວນ ທີ່ ສົ່ງ */
+    public function notifyPendingEndorsers(DisposalRecord $r): int
+    {
+        if ($r->status !== 'in_review') {
+            return 0;
+        }
+        $sent = 0;
+        foreach ($r->signoffs()->whereNotNull('user_id')->whereNull('signed_at')->whereNull('notified_at')->get() as $row) {
+            $user = User::find($row->user_id);
+            if (! $user || ! $user->email) {
+                continue;
+            }
+            try {
+                $user->notify(new DisposalEndorsementRequest($r, $row->role_key));
+                $row->update(['notified_at' => now()]);
+                $sent++;
+            } catch (\Throwable $e) {
+                // ອີເມລ ລົ້ມ (SMTP ບໍ່ ຕັ້ງ) — ບໍ່ ຂັດ flow; ລິ້ງ ໃນ ແອັບ ຍັງ ໃຊ້ ໄດ້.
+            }
         }
 
-        $map = [
-            'technical' => ['order' => 3, 'next' => 'manager_review'],
-            'manager' => ['order' => 4, 'next' => 'executive_review'],
-            'executive' => ['order' => 5, 'next' => 'approved'],
-        ];
-        $cfg = $map[$stage];
-        $r->signoffs()->create([
-            'role_key' => $stage, 'stage_order' => $cfg['order'],
-            'user_id' => $actor->id, 'name' => $actor->display_name ?? $actor->email, 'title' => $opts['title'] ?? null,
-            'decision' => 'approved', 'signed_at' => now(), 'comment' => $opts['comment'] ?? null,
-        ]);
-        $r->status = $cfg['next'];
+        return $sent;
     }
 
-    /** ຕີ ກັບ → draft ພ້ອມ ເຫດຜົນ. */
-    private function doReject(DisposalRecord $r, $actor, array $opts): void
+    /** ຜູ້ ຖືກ ມອບໝາຍ ເຊັນ ຮັບຮອງ ຊ່ອງ ຕົນ (ອິດສະລະ ລຳດັບ). */
+    public function endorse(DisposalRecord $r, string $roleKey, $actor, array $opts = []): DisposalRecord
     {
-        $stage = $r->currentStageKey();
-        $this->assert($stage !== null, 'ຕີ ກັບ ບໍ່ ໄດ້ ໃນ ສະຖານະ ນີ້.');
-        $this->assert(! empty($opts['reason']), 'ຕ້ອງ ໃສ່ ເຫດຜົນ ຕີ ກັບ.');
-        $r->signoffs()->create([
-            'role_key' => $stage, 'stage_order' => 0,
-            'user_id' => $actor->id, 'name' => $actor->display_name ?? $actor->email,
-            'decision' => 'rejected', 'signed_at' => now(), 'comment' => $opts['reason'],
-        ]);
-        $r->status = 'draft';
-        $r->reject_reason = $opts['reason'];
+        return DB::transaction(function () use ($r, $roleKey, $actor, $opts) {
+            $row = $r->signoffs()->where('role_key', $roleKey)->first();
+            $this->assert($row !== null && $row->user_id !== null, 'ຍັງ ບໍ່ ໄດ້ ມອບໝາຍ ຊ່ອງ ນີ້.');
+            $this->assert($r->status === 'in_review', 'ຮັບຮອງ ໄດ້ ສະເພາະ ຕອນ ໃບ ຢູ່ ຮອບ ຮັບຮອງ.');
+            $this->assert((int) $row->user_id === (int) $actor->id || $actor->is_super_admin, 'ບໍ່ ແມ່ນ ຊ່ອງ ຮັບຮອງ ຂອງ ທ່ານ.');
+
+            $row->update([
+                'decision' => 'approved', 'signed_at' => now(),
+                'comment' => $opts['comment'] ?? null,
+                'recommendation' => $opts['recommendation'] ?? null,
+            ]);
+
+            $r->load('signoffs');
+            if ($r->endorsementComplete()) {
+                $r->status = 'approved';
+            }
+            $r->updated_by = $actor->id;
+            $r->save();
+            $this->recordHistory($r, 'endorse', $actor, $opts['comment'] ?? null);
+
+            return $r->refresh();
+        });
+    }
+
+    /** ຜູ້ ຖືກ ມອບໝາຍ ຕີ ກັບ ຊ່ອງ ຕົນ → ໃບ ກັບ draft ພ້ອມ ເຫດຜົນ. */
+    public function rejectEndorsement(DisposalRecord $r, string $roleKey, $actor, array $opts = []): DisposalRecord
+    {
+        return DB::transaction(function () use ($r, $roleKey, $actor, $opts) {
+            $row = $r->signoffs()->where('role_key', $roleKey)->first();
+            $this->assert($row !== null && $row->user_id !== null, 'ຍັງ ບໍ່ ໄດ້ ມອບໝາຍ ຊ່ອງ ນີ້.');
+            $this->assert($r->status === 'in_review', 'ຕີ ກັບ ໄດ້ ສະເພາະ ຕອນ ໃບ ຢູ່ ຮອບ ຮັບຮອງ.');
+            $this->assert((int) $row->user_id === (int) $actor->id || $actor->is_super_admin, 'ບໍ່ ແມ່ນ ຊ່ອງ ຮັບຮອງ ຂອງ ທ່ານ.');
+            $this->assert(! empty($opts['reason']), 'ຕ້ອງ ໃສ່ ເຫດຜົນ ຕີ ກັບ.');
+
+            $row->update(['decision' => 'rejected', 'signed_at' => now(), 'comment' => $opts['reason']]);
+            $r->status = 'draft';
+            $r->reject_reason = $opts['reason'];
+            $r->updated_by = $actor->id;
+            $r->save();
+            $this->recordHistory($r, 'endorse-reject', $actor, $opts['reason']);
+
+            return $r->refresh();
+        });
     }
 
     /** ອະນຸມັດ ສຳເລັດ → ຈຳໜ່າຍ; ຖ້າ update_registers=true → ອັບເດດ ທະບຽນ ຕົ້ນທາງ (Phase 6). */

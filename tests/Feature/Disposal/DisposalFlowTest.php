@@ -57,7 +57,7 @@ test('picking an equipment item pulls its problem/repair history into the form',
     expect($c->get('items')[0]['history'])->toHaveCount(2);   // 1 repair + 1 NG maintenance item
 });
 
-test('full sign-off chain: draft → 5 approvals → dispose retires the equipment', function () {
+test('parallel endorsement: assign 5 → submit → all endorse (any order) → approved → dispose retires equipment', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $e = Equipment::create(['asset_code' => 'DP-1', 'name' => 'Drill', 'quantity' => 3, 'status_counts' => ['active' => 3, 'repair' => 0, 'retired' => 0]]);
     $svc = app(DisposalService::class);
@@ -66,17 +66,20 @@ test('full sign-off chain: draft → 5 approvals → dispose retires the equipme
         'source_type' => 'equipment', 'source_id' => $e->id, 'item_name' => 'Drill', 'qty' => 2, 'reason' => 'ຊຳລຸດ',
     ]]], $admin);
 
+    // ມອບໝາຍ ທັງ 5 ບົດບາດ ໃຫ້ admin (super_admin ເຊັນ ໄດ້ ທຸກ ຊ່ອງ)
+    $roles = ['preparer', 'committee', 'technical', 'manager', 'executive'];
+    $svc->assignEndorsers($r, collect($roles)->mapWithKeys(fn ($k) => [$k => ['user_id' => $admin->id]])->all(), $admin);
+    expect($r->signoffs()->whereNotNull('user_id')->count())->toBe(5);
+
     $svc->transition($r, 'submit', $admin);
-    expect($r->refresh()->status)->toBe('committee_review');
+    expect($r->refresh()->status)->toBe('in_review');
 
-    $svc->transition($r, 'sign', $admin, ['committee' => [['name' => 'A', 'title' => 'ຫົວໜ້າ'], ['name' => 'B', 'title' => '']]]);
-    expect($r->refresh()->status)->toBe('technical_review');
-    expect($r->signoffs()->where('role_key', 'committee')->count())->toBe(2);
-
-    $svc->transition($r, 'sign', $admin);   // technical → manager_review
-    $svc->transition($r, 'sign', $admin);   // manager → executive_review
-    $svc->transition($r, 'sign', $admin);   // executive → approved
-    expect($r->refresh()->status)->toBe('approved');
+    // ເຊັນ ໃນ ລຳດັບ ສະຫຼັບ (executive ກ່ອນ) — ບໍ່ ຈຳກັດ ລຳດັບ
+    foreach (['executive', 'manager', 'preparer', 'technical', 'committee'] as $role) {
+        $r = $svc->endorse($r, $role, $admin, ['recommendation' => 'ທຳລາຍ', 'comment' => 'ok']);
+    }
+    expect($r->status)->toBe('approved');
+    expect($r->signoffs()->whereNotNull('signed_at')->count())->toBe(5);
 
     $svc->transition($r, 'dispose', $admin, ['update_registers' => true]);
     expect($r->refresh()->status)->toBe('disposed');
@@ -86,13 +89,14 @@ test('full sign-off chain: draft → 5 approvals → dispose retires the equipme
     expect($e->fresh()->statusBreakdown())->toBe(['active' => 1, 'repair' => 0, 'retired' => 2]);
 });
 
-test('reject at a review stage loops back to draft with the reason', function () {
+test('an assigned endorser can reject their row → record loops back to draft with the reason', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $svc = app(DisposalService::class);
     $r = $svc->createDraft(['items' => [['source_type' => 'new', 'item_name' => 'X', 'qty' => 1]]], $admin);
+    $svc->assignEndorsers($r, ['committee' => ['user_id' => $admin->id]], $admin);
     $svc->transition($r, 'submit', $admin);
 
-    $svc->transition($r, 'reject', $admin, ['reason' => 'ຂໍ້ມູນ ຜິດ']);
+    $svc->rejectEndorsement($r->refresh(), 'committee', $admin, ['reason' => 'ຂໍ້ມູນ ຜິດ']);
     $r->refresh();
     expect($r->status)->toBe('draft');
     expect($r->reject_reason)->toBe('ຂໍ້ມູນ ຜິດ');
@@ -147,16 +151,17 @@ test('confirmCancel is blocked for a signer who is neither the preparer nor a di
     $admin = User::factory()->create(['is_super_admin' => true]);
     $svc = app(DisposalService::class);
     $r = $svc->createDraft(['items' => [['source_type' => 'new', 'item_name' => 'X', 'qty' => 1]]], $admin);
+    $svc->assignEndorsers($r, ['committee' => ['user_id' => $admin->id]], $admin);
     $svc->transition($r, 'submit', $admin);
 
     $approver = User::factory()->create();
     $approver->syncRoles(['approver']);   // view+create+activate, NOT edit; not the preparer
     actingAs($approver);
 
-    Livewire::test(Show::class, ['record' => $r])
+    Livewire::test(Show::class, ['record' => $r->refresh()])
         ->call('confirmCancel')
         ->assertForbidden();
-    expect($r->fresh()->status)->toBe('committee_review');
+    expect($r->fresh()->status)->toBe('in_review');
 });
 
 test('the summary is department-clamped for a department_admin', function () {
@@ -196,30 +201,31 @@ test('the summary does not leak other departments to a plain disposal.view user 
         ->assertDontSee('ItemBB');   // ຫ້າມ ເຫັນ ພະແນກ ອື່ນ
 });
 
-test('reject at a later stage then resubmit gives a clean sign-off chain (audit M3)', function () {
+test('reject then resubmit resets signatures but keeps the endorser assignments (audit M3)', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $svc = app(DisposalService::class);
     $r = $svc->createDraft(['items' => [['source_type' => 'new', 'item_name' => 'X', 'qty' => 1]]], $admin);
 
+    $roles = ['preparer', 'committee', 'technical', 'manager', 'executive'];
+    $svc->assignEndorsers($r, collect($roles)->mapWithKeys(fn ($k) => [$k => ['user_id' => $admin->id]])->all(), $admin);
     $svc->transition($r, 'submit', $admin);
-    $svc->transition($r, 'sign', $admin, ['committee' => [['name' => 'A', 'title' => '']]]);   // → technical_review
-    expect($r->refresh()->status)->toBe('technical_review');
 
-    $svc->transition($r, 'reject', $admin, ['reason' => 'ຂໍ້ມູນ ຜິດ']);
+    // committee endorses, technical rejects → draft
+    $r = $svc->endorse($r->refresh(), 'committee', $admin, ['recommendation' => 'ທຳລາຍ']);
+    $svc->rejectEndorsement($r->refresh(), 'technical', $admin, ['reason' => 'ຂໍ້ມູນ ຜິດ']);
     expect($r->refresh()->status)->toBe('draft');
 
-    // resubmit → chain ໃໝ່ ສະອາດ (committee sign-off ເກົ່າ ຖືກ ລ້າງ, preparer ບໍ່ ຊ້ຳ)
+    // resubmit → ຮັກສາ ການ ມອບໝາຍ (5 ຄົນ) ແຕ່ ຣີເຊັດ ລາຍເຊັນ ໝົດ
     $svc->transition($r, 'submit', $admin);
-    expect($r->refresh()->status)->toBe('committee_review');
-    expect($r->signoffs()->where('role_key', 'committee')->count())->toBe(0);
-    expect($r->signoffs()->where('role_key', 'preparer')->count())->toBe(1);
+    expect($r->refresh()->status)->toBe('in_review');
+    expect($r->signoffs()->whereNotNull('user_id')->count())->toBe(5);
+    expect($r->signoffs()->whereNotNull('signed_at')->count())->toBe(0);
 
-    // ເດີນ ໜ້າ ຕໍ່ ຈົນ approved ໄດ້ ປົກກະຕິ
-    $svc->transition($r, 'sign', $admin, ['committee' => [['name' => 'A', 'title' => '']]]);
-    $svc->transition($r, 'sign', $admin);   // technical → manager
-    $svc->transition($r, 'sign', $admin);   // manager → executive
-    $svc->transition($r, 'sign', $admin);   // executive → approved
-    expect($r->refresh()->status)->toBe('approved');
+    // ເຊັນ ຄົບ ຈົນ approved ໄດ້ ປົກກະຕິ
+    foreach ($roles as $role) {
+        $r = $svc->endorse($r, $role, $admin, ['recommendation' => 'ທຳລາຍ']);
+    }
+    expect($r->status)->toBe('approved');
 });
 
 test('disposal create rejects a forged register source_id (audit)', function () {

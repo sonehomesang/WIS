@@ -34,21 +34,21 @@ class Show extends Component
     /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile[]> new photo uploads per item index */
     public array $newPhotos = [];
 
-    // sign (committee = ຫຼາຍ ຄົນ)
-    public bool $showSign = false;
+    /** ຜູ້ ຮັບຮອງ ທີ່ ມອບໝາຍ ຕໍ່ ບົດບາດ (ໃນ ໂໝດ ແກ້ໄຂ). role_key => ['user_id'=>?int, 'title'=>?string] */
+    public array $assignees = [];
 
-    /** @var array<int, array{name:string,title:string}> */
-    public array $committee = [];
+    // endorse — ຜູ້ ຖືກ ມອບໝາຍ ເຊັນ ຊ່ອງ ຕົນ (inline form)
+    public ?string $endorsingRole = null;
 
-    public string $signComment = '';
+    public bool $endorseRejectMode = false;
 
-    public string $signTitle = '';
+    public string $endComment = '';
 
-    // reject / cancel / dispose / delete
-    public bool $showReject = false;
+    public string $endRecommendation = '';
 
-    public string $rejectReason = '';
+    public string $endRejectReason = '';
 
+    // cancel / dispose / delete
     public bool $showCancel = false;
 
     public string $cancelReason = '';
@@ -63,9 +63,8 @@ class Show extends Component
 
     public function mount(DisposalRecord $record): void
     {
-        abort_unless(auth()->user()->can('disposal.view') && static::canAccess($record), 403);
+        abort_unless(static::canOpen($record), 403);
         $this->record = $record;
-        $this->committee = [['name' => '', 'title' => '']];
 
         // ?edit=1 ຈາກ ລິສ → ເປີດ ໂໝດ ແກ້ໄຂ ໂລດ (ຖ້າ ຍັງ ແກ້ ໄດ້)
         if (request()->boolean('edit') && $this->canEditRecord()) {
@@ -80,6 +79,21 @@ class Show extends Component
 
         return ! in_array($this->record->status, ['disposed', 'cancelled', 'rejected'], true)
             && ($u->can('disposal.edit') || $this->record->prepared_by_user_id === $u->id || $u->is_super_admin);
+    }
+
+    /** ຜູ້ ເປີດ ໃບ ໄດ້: (ມີ ສິດ disposal.view + ຢູ່ ໃນ scope) ຫຼື ເປັນ ຜູ້ ຮັບຮອງ ທີ່ ຖືກ ມອບໝາຍ
+     *  (ໄດ້ ຮັບ ອີເມລ ລິ້ງ) — ເຖິງ ບໍ່ ມີ ສິດ disposal.view ກໍ ເປີດ ໄດ້ ເພື່ອ ຮັບຮອງ. */
+    public static function canOpen(DisposalRecord $record): bool
+    {
+        $u = auth()->user();
+        if (! $u) {
+            return false;
+        }
+        if ($record->signoffs()->where('user_id', $u->id)->exists()) {
+            return true;
+        }
+
+        return $u->can('disposal.view') && static::canAccess($record);
     }
 
     /** ຂອບເຂດ ການ ເຫັນ ໃບ — ຄື Index::scopeFor: admin/warehouse/approver/manager ເຫັນ ໝົດ ·
@@ -108,11 +122,6 @@ class Show extends Component
         return $u->can('disposal.edit') || $this->record->prepared_by_user_id === $u->id || $u->is_super_admin;
     }
 
-    protected function canSign(): bool
-    {
-        return auth()->user()->can('disposal.activate') && $this->record->currentStageKey() !== null;
-    }
-
     protected function refreshRecord(): void
     {
         $this->record = $this->record->fresh(['items', 'signoffs', 'preparedBy', 'department']);
@@ -122,55 +131,96 @@ class Show extends Component
     {
         $u = auth()->user();
         abort_unless($u->can('disposal.create') && ($this->record->prepared_by_user_id === $u->id || $u->can('disposal.edit') || $u->is_super_admin), 403);
-        $this->act('submit');
-    }
-
-    public function addCommittee(): void
-    {
-        $this->committee[] = ['name' => '', 'title' => ''];
-    }
-
-    public function removeCommittee(int $i): void
-    {
-        unset($this->committee[$i]);
-        $this->committee = array_values($this->committee);
-        if (empty($this->committee)) {
-            $this->committee = [['name' => '', 'title' => '']];
+        try {
+            $svc = app(DisposalService::class);
+            $svc->transition($this->record, 'submit', $u);
+            $this->refreshRecord();
+            $sent = $svc->notifyPendingEndorsers($this->record);
+            session()->flash('ok', '✓ ສົ່ງ ຂໍ ຮັບຮອງ ແລ້ວ'.($sent ? " · ແຈ້ງ ຜູ້ ຮັບຮອງ {$sent} ຄົນ ທາງ ອີເມລ" : ''));
+        } catch (ValidationException $e) {
+            $this->addError('action', $e->validator->errors()->first());
         }
     }
 
-    public function openSign(): void
+    // ── endorsement (ຜູ້ ຖືກ ມອບໝາຍ ເຊັນ ຊ່ອງ ຕົນ) ──
+    /** signoff ຂອງ ບົດບາດ ນີ້ (ຫຼື null). */
+    protected function signoffFor(string $roleKey): ?\App\Models\DisposalSignoff
     {
-        abort_unless($this->canSign(), 403);
-        $this->committee = [['name' => '', 'title' => '']];
-        $this->signComment = '';
-        $this->signTitle = '';
-        $this->showSign = true;
+        return $this->record->signoffs->firstWhere('role_key', $roleKey);
     }
 
-    public function confirmSign(): void
+    /** auth user ເປັນ ຜູ້ ຖືກ ມອບໝາຍ ຂອງ ບົດບາດ ນີ້ + ຍັງ ບໍ່ ເຊັນ + ໃບ ຢູ່ ຮອບ ຮັບຮອງ. */
+    public function canEndorse(string $roleKey): bool
     {
-        abort_unless($this->canSign(), 403);
-        $opts = ['comment' => $this->signComment ?: null, 'title' => $this->signTitle ?: null];
-        if ($this->record->currentStageKey() === 'committee') {
-            $opts['committee'] = $this->committee;
+        $u = auth()->user();
+        $s = $this->signoffFor($roleKey);
+
+        return $this->record->status === 'in_review'
+            && $s !== null && $s->user_id !== null && $s->signed_at === null
+            && ((int) $s->user_id === (int) $u->id || $u->is_super_admin);
+    }
+
+    public function openEndorse(string $roleKey): void
+    {
+        abort_unless($this->canEndorse($roleKey), 403);
+        $this->endorsingRole = $roleKey;
+        $this->endorseRejectMode = false;
+        $this->endComment = '';
+        $this->endRecommendation = '';
+        $this->endRejectReason = '';
+        $this->resetErrorBag();
+    }
+
+    public function openEndorseReject(string $roleKey): void
+    {
+        abort_unless($this->canEndorse($roleKey), 403);
+        $this->endorsingRole = $roleKey;
+        $this->endorseRejectMode = true;
+        $this->endRejectReason = '';
+        $this->resetErrorBag();
+    }
+
+    public function cancelEndorse(): void
+    {
+        $this->endorsingRole = null;
+        $this->endorseRejectMode = false;
+    }
+
+    public function confirmEndorse(): void
+    {
+        $role = (string) $this->endorsingRole;
+        abort_unless($this->canEndorse($role), 403);
+        try {
+            app(DisposalService::class)->endorse($this->record, $role, auth()->user(), [
+                'comment' => $this->endComment ?: null,
+                'recommendation' => $this->endRecommendation ?: null,
+            ]);
+            $this->endorsingRole = null;
+            $this->refreshRecord();
+            session()->flash('ok', '✓ ບັນທຶກ ການ ຮັບຮອງ ຂອງ ທ່ານ ແລ້ວ');
+        } catch (ValidationException $e) {
+            $this->addError('action', $e->validator->errors()->first());
         }
-        $this->act('sign', $opts);
-        $this->showSign = false;
     }
 
-    public function openReject(): void
+    public function confirmEndorseReject(): void
     {
-        abort_unless($this->canSign(), 403);
-        $this->rejectReason = '';
-        $this->showReject = true;
-    }
+        $role = (string) $this->endorsingRole;
+        abort_unless($this->canEndorse($role), 403);
+        if (trim($this->endRejectReason) === '') {
+            $this->addError('endRejectReason', 'ຕ້ອງ ໃສ່ ເຫດຜົນ ຕີ ກັບ.');
 
-    public function confirmReject(): void
-    {
-        abort_unless($this->canSign(), 403);
-        $this->act('reject', ['reason' => $this->rejectReason]);
-        $this->showReject = false;
+            return;
+        }
+        try {
+            app(DisposalService::class)->rejectEndorsement($this->record, $role, auth()->user(), ['reason' => $this->endRejectReason]);
+            $this->endorsingRole = null;
+            $this->endorseRejectMode = false;
+            $this->refreshRecord();
+            session()->flash('ok', '↩ ຕີ ກັບ ໃບ ນີ້ ແລ້ວ — ກັບ ໄປ ຮ່າງ ເພື່ອ ແກ້ໄຂ');
+        } catch (ValidationException $e) {
+            $this->addError('action', $e->validator->errors()->first());
+        }
     }
 
     public function openCancel(): void
@@ -271,6 +321,15 @@ class Show extends Component
         if (empty($this->ef)) {
             $this->ef = [$this->blankEditItem()];
         }
+
+        // ໂຫຼດ ການ ມອບໝາຍ ຜູ້ ຮັບຮອງ ຕໍ່ ບົດບາດ
+        $this->record->loadMissing('signoffs');
+        $this->assignees = [];
+        foreach (array_keys(DisposalRecord::STAGES) as $roleKey) {
+            $s = $this->record->signoffs->firstWhere('role_key', $roleKey);
+            $this->assignees[$roleKey] = ['user_id' => $s?->user_id, 'title' => $s?->title ?? ''];
+        }
+
         $this->newPhotos = [];
         $this->resetErrorBag();
         $this->editing = true;
@@ -380,10 +439,19 @@ class Show extends Component
             'note' => $this->editNote ?: null,
         ]);
 
+        // ມອບໝາຍ ຜູ້ ຮັບຮອງ ຕໍ່ 5 ບົດບາດ + ແຈ້ງ ຄົນ ໃໝ່ (ຖ້າ ໃບ ຢູ່ ຮອບ ຮັບຮອງ ແລ້ວ)
+        $svc = app(DisposalService::class);
+        $svc->assignEndorsers($this->record, $this->assignees, auth()->user());
+        $notice = '';
+        if ($this->record->status === 'in_review') {
+            $sent = $svc->notifyPendingEndorsers($this->record->fresh());
+            $notice = $sent ? " · ແຈ້ງ ຜູ້ ຮັບຮອງ ໃໝ່ {$sent} ຄົນ" : '';
+        }
+
         $this->editing = false;
         $this->newPhotos = [];
         $this->refreshRecord();
-        session()->flash('ok', '✓ ບັນທຶກ ການ ແກ້ໄຂ ໃບ ຈຳໜ່າຍ ແລ້ວ');
+        session()->flash('ok', '✓ ບັນທຶກ ການ ແກ້ໄຂ ໃບ ຈຳໜ່າຍ ແລ້ວ'.$notice);
     }
 
     public function render(): View
@@ -396,9 +464,8 @@ class Show extends Component
             'recommendations' => DisposalRecord::RECOMMENDATIONS,
             'departments' => $this->editing ? Department::where('is_active', true)->orderBy('name')->get(['id', 'name']) : collect(),
             'uoms' => $this->editing ? Uom::where('is_active', true)->orderBy('name')->get(['id', 'name']) : collect(),
-            'canSign' => $this->canSign(),
+            'ownerUsers' => $this->editing ? \App\Models\User::where('status', 'active')->orderBy('display_name')->get(['id', 'display_name', 'email']) : collect(),
             'canEdit' => $this->canEditRecord(),
-            'currentStage' => $this->record->currentStageKey(),
         ]);
     }
 }

@@ -18,9 +18,11 @@ class DisposalRecord extends Model
     /** ຄຳແນະນຳ ສຳເລັດຮູບ. */
     public const RECOMMENDATIONS = ['ທຳລາຍ', 'ຂາຍ ເສດ', 'ບໍລິຈາກ', 'ສົ່ງ ຄືນ ຜູ້ສະໜອງ', 'ອື່ນໆ'];
 
-    /** ປ້າຍ ສະຖານະ (Lao). */
+    /** ປ້າຍ ສະຖານະ (Lao). in_review = ຮອບ ຮັບຮອງ ແບບ ຂະໜານ (assigned endorsers).
+     *  committee/technical/manager/executive_review = ຄ້າງ ຈາກ ຮູບ ແບບ linear ເກົ່າ (backward-compat). */
     public const STATUS_LABELS = [
-        'draft' => 'ຮ່າງ', 'committee_review' => 'ລໍ ຄະນະ ກວດ', 'technical_review' => 'ລໍ ວິຊາການ',
+        'draft' => 'ຮ່າງ', 'in_review' => 'ກຳລັງ ຮັບຮອງ',
+        'committee_review' => 'ລໍ ຄະນະ ກວດ', 'technical_review' => 'ລໍ ວິຊາການ',
         'manager_review' => 'ລໍ ຜູ້ຈັດການ', 'executive_review' => 'ລໍ ຜູ້ບໍລິຫານ', 'approved' => 'ອະນຸມັດ ແລ້ວ',
         'disposed' => 'ຈຳໜ່າຍ ແລ້ວ', 'rejected' => 'ຕີ ກັບ', 'cancelled' => 'ຍົກເລີກ',
     ];
@@ -94,5 +96,20 @@ class DisposalRecord extends Model
     public function isEditable(): bool
     {
         return $this->status === 'draft';
+    }
+
+    // ── assigned-endorser model ─────────────────────────────────────
+    /** signoff ທີ່ ມອບໝາຍ ໃຫ້ ຄົນ ແລ້ວ (user_id ≠ null). */
+    public function assignedSignoffs()
+    {
+        return $this->signoffs->filter(fn ($s) => $s->user_id !== null);
+    }
+
+    /** ຮັບຮອງ ຄົບ ບໍ — ມີ ຢ່າງໜ້ອຍ 1 ຜູ້ ຮັບຮອງ ແລະ ທຸກ ຄົນ ເຊັນ ຮັບຮອງ ແລ້ວ. */
+    public function endorsementComplete(): bool
+    {
+        $assigned = $this->assignedSignoffs();
+
+        return $assigned->isNotEmpty() && $assigned->every(fn ($s) => $s->isSigned());
     }
 }

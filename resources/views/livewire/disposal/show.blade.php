@@ -1,7 +1,7 @@
 @php
     $badge = fn ($s) => match ($s) {
         'draft' => 'bg-gray-100 text-gray-600',
-        'committee_review', 'technical_review', 'manager_review', 'executive_review' => 'bg-amber-50 text-amber-700',
+        'in_review', 'committee_review', 'technical_review', 'manager_review', 'executive_review' => 'bg-amber-50 text-amber-700',
         'approved' => 'bg-sky-50 text-sky-700', 'disposed' => 'bg-emerald-100 text-emerald-800',
         'rejected' => 'bg-red-50 text-red-700', 'cancelled' => 'bg-gray-100 text-gray-400',
         default => 'bg-gray-100 text-gray-600',
@@ -55,42 +55,71 @@
             @endforeach
         </div>
 
-        {{-- ② ຂັ້ນ ເຊັນ ຮັບຮອງ --}}
-        <div class="bg-white border border-gray-100 rounded-lg p-5">
-            <div class="text-sm font-medium text-gray-600 mb-3">ຂັ້ນ ຮັບຮອງ ຈຳໜ່າຍ</div>
+        {{-- ② ຄຳ ແນະນຳ & ຮັບຮອງ (ມອບໝາຍ ຄົນ · ເຮັດ ອິດສະລະ ບໍ່ ຈຳກັດ ລຳດັບ) --}}
+        <div class="bg-white border border-gray-100 rounded-lg p-5 space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
+                <div class="text-sm font-medium text-gray-600">ຄຳ ແນະນຳ &amp; ຮັບຮອງ <span class="text-gray-400 font-normal">/ Recommendation &amp; Endorsement</span></div>
+                @php $done = $record->signoffs->whereNotNull('user_id')->whereNotNull('signed_at')->count(); $tot = $record->signoffs->whereNotNull('user_id')->count(); @endphp
+                @if ($tot > 0)<span class="text-xs rounded-full px-2 py-0.5 {{ $done === $tot ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">ເຊັນ {{ $done }}/{{ $tot }}</span>@endif
+            </div>
+
             @foreach ($stages as $key => $st)
-                @php
-                    $rows = $signs[$key] ?? collect();
-                    $done = $rows->where('decision', 'approved')->count() > 0;
-                    $isCurrent = $currentStage === $key;
-                    $last = $loop->last;
-                @endphp
-                <div class="flex gap-3 items-stretch">
-                    <div class="flex flex-col items-center w-7">
-                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs {{ $done ? 'bg-emerald-100 text-emerald-700' : ($isCurrent ? 'bg-sky-600 text-white' : 'bg-gray-100 text-gray-400') }}">{{ $done ? '✓' : $st['order'] }}</div>
-                        @unless ($last)<div class="flex-1 w-px border-l-2 border-gray-100 my-1"></div>@endunless
+                @php $s = $record->signoffs->firstWhere('role_key', $key); @endphp
+                <div class="border border-gray-100 rounded-lg p-3" wire:key="endo-{{ $key }}">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <div class="text-sm font-medium text-gray-800">{{ $st['order'] }} · {{ $st['label'] }}</div>
+                            @if ($s && $s->user_id)<div class="text-xs text-gray-500">👤 {{ $s->name }}@if ($s->title) · {{ $s->title }}@endif</div>
+                            @else<div class="text-xs text-gray-400">— ຍັງ ບໍ່ ໄດ້ ມອບໝາຍ (ໃສ່ ຕອນ ແກ້ໄຂ) —</div>@endif
+                        </div>
+                        <div class="text-right whitespace-nowrap">
+                            @if ($s && $s->decision === 'rejected')<span class="text-xs font-medium rounded-full px-2 py-0.5 bg-red-50 text-red-700">✗ ຕີ ກັບ · {{ $dt($s->signed_at) }}</span>
+                            @elseif ($s && $s->signed_at)<span class="text-xs font-medium rounded-full px-2 py-0.5 bg-emerald-50 text-emerald-700">✓ ຮັບຮອງ · {{ $dt($s->signed_at) }} {{ $s->signed_at?->format('H:i') }}</span>
+                            @elseif ($s && $s->user_id)<span class="text-xs font-medium rounded-full px-2 py-0.5 bg-amber-50 text-amber-700">⏳ ລໍ ຮັບຮອງ</span>@endif
+                        </div>
                     </div>
-                    <div class="flex-1 pb-4">
-                        <div class="text-sm font-medium {{ $isCurrent ? 'text-sky-700' : ($done ? 'text-gray-800' : 'text-gray-400') }}">{{ $st['order'] }} · {{ $st['label'] }}</div>
-                        @if ($rows->count())
-                            <div class="text-xs text-gray-500 mt-0.5 space-y-0.5">
-                                @foreach ($rows as $s)<div>{{ $s->decision === 'rejected' ? '✗ ຕີ ກັບ' : '✓' }} {{ $s->name }}@if ($s->title) <span class="text-gray-400">({{ $s->title }})</span>@endif · {{ $dt($s->signed_at) }}@if ($s->comment) · {{ $s->comment }}@endif</div>@endforeach
+
+                    @if ($s && $s->signed_at && $s->decision === 'approved' && ($s->recommendation || $s->comment))
+                        <div class="mt-1 text-xs text-gray-600">@if ($s->recommendation)ແນະນຳ: <b class="text-red-700">{{ $s->recommendation }}</b>@endif @if ($s->comment)· {{ $s->comment }}@endif</div>
+                    @endif
+
+                    @if ($this->canEndorse($key))
+                        @if ($endorsingRole === $key && ! $endorseRejectMode)
+                            <div class="mt-3 space-y-2 bg-emerald-50/50 border border-emerald-100 rounded p-3">
+                                <div class="grid gap-2 sm:grid-cols-2">
+                                    <div><label class="block text-xs text-gray-500 mb-1">ຄຳ ແນະນຳ / Recommendation</label>
+                                        <select wire:model="endRecommendation" class="w-full rounded-md border-gray-300 text-sm"><option value="">—</option>@foreach ($recommendations as $rc)<option value="{{ $rc }}">{{ $rc }}</option>@endforeach</select></div>
+                                    <div><label class="block text-xs text-gray-500 mb-1">ຄຳ ເຫັນ / Comment</label>
+                                        <input type="text" wire:model="endComment" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button wire:click="confirmEndorse" class="text-sm text-white bg-emerald-600 rounded px-3 py-1.5 hover:bg-emerald-700">✓ ຢືນຢັນ ຮັບຮອງ</button>
+                                    <button wire:click="cancelEndorse" class="text-sm border rounded px-3 py-1.5">ຍົກເລີກ</button>
+                                </div>
                             </div>
-                        @elseif ($isCurrent && $canSign)
-                            <div class="mt-2 flex gap-2">
-                                <button wire:click="openSign" class="text-sm text-white bg-emerald-600 rounded-md px-3 py-1.5 hover:bg-emerald-700">✍ ຢັ້ງຢືນ / ເຊັນ</button>
-                                <button wire:click="openReject" class="text-sm text-red-600 border border-red-200 rounded-md px-3 py-1.5 hover:bg-red-50">ຕີ ກັບ</button>
+                        @elseif ($endorsingRole === $key && $endorseRejectMode)
+                            <div class="mt-3 space-y-2 bg-red-50/50 border border-red-100 rounded p-3">
+                                <label class="block text-xs text-gray-500">ເຫດຜົນ ຕີ ກັບ</label>
+                                <textarea wire:model="endRejectReason" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                                @error('endRejectReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                                <div class="flex gap-2">
+                                    <button wire:click="confirmEndorseReject" class="text-sm text-white bg-red-600 rounded px-3 py-1.5 hover:bg-red-700">ຢືນຢັນ ຕີ ກັບ</button>
+                                    <button wire:click="cancelEndorse" class="text-sm border rounded px-3 py-1.5">ຍົກເລີກ</button>
+                                </div>
                             </div>
                         @else
-                            <div class="text-xs text-gray-400 mt-0.5">{{ $isCurrent ? 'ລໍ ຖ້າ ຜູ້ ມີ ສິດ ເຊັນ' : 'ລໍ ຖ້າ' }}</div>
+                            <div class="mt-2 flex gap-2">
+                                <button wire:click="openEndorse('{{ $key }}')" class="text-sm text-white bg-emerald-600 rounded px-3 py-1.5 hover:bg-emerald-700">✍ ຮັບຮອງ ຊ່ອງ ຂອງ ຂ້ອຍ</button>
+                                <button wire:click="openEndorseReject('{{ $key }}')" class="text-sm text-red-600 border border-red-200 rounded px-3 py-1.5 hover:bg-red-50">ຕີ ກັບ</button>
+                            </div>
                         @endif
-                    </div>
+                    @endif
                 </div>
             @endforeach
 
             @if ($record->status === 'approved')
                 <div class="mt-2 rounded-md bg-emerald-50 border border-emerald-200 p-3 flex items-center justify-between gap-2 flex-wrap">
-                    <span class="text-sm text-emerald-800">✓ ອະນຸມັດ ຄົບ 5 ຝ່າຍ ແລ້ວ — ພ້ອມ ຈຳໜ່າຍ</span>
+                    <span class="text-sm text-emerald-800">✓ ຮັບຮອງ ຄົບ ທຸກ ຄົນ ແລ້ວ — ພ້ອມ ຈຳໜ່າຍ</span>
                     @can('disposal.activate')<button wire:click="openDispose" class="text-sm text-white bg-emerald-700 rounded-md px-3 py-1.5 hover:bg-emerald-800">ຢືນຢັນ ຈຳໜ່າຍ</button>@endcan
                 </div>
             @elseif ($record->status === 'disposed')
@@ -132,6 +161,26 @@
                 <label class="block text-xs text-gray-500 mb-1">ໝາຍເຫດ / Note</label>
                 <input type="text" wire:model="editNote" class="w-full rounded-md border-gray-300 text-sm" placeholder="optional" />
             </div>
+        </div>
+
+        {{-- ຜູ້ ຮັບຮອງ / endorsers (ມອບໝາຍ ຄົນ ຕໍ່ ບົດບາດ → ອີເມລ ລິ້ງ) --}}
+        <div class="bg-white border border-gray-100 rounded-lg p-4 space-y-2.5">
+            <div class="text-sm font-medium text-gray-700">ຜູ້ ຮັບຮອງ / Endorsers <span class="text-xs font-normal text-gray-400">— ມອບໝາຍ ຄົນ ຕໍ່ ບົດບາດ; ລະບົບ ຈະ ສົ່ງ ອີເມລ ລິ້ງ ໃຫ້ ມາ ຮັບຮອງ (ເຮັດ ອິດສະລະ, ບໍ່ ຈຳກັດ ລຳດັບ)</span></div>
+            @foreach ($stages as $key => $st)
+                <div class="grid gap-2 sm:grid-cols-2 items-end" wire:key="assign-{{ $key }}">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">{{ $st['order'] }} · {{ $st['label'] }}</label>
+                        <select wire:model="assignees.{{ $key }}.user_id" class="w-full rounded-md border-gray-300 text-sm">
+                            <option value="">— ບໍ່ ມອບໝາຍ —</option>
+                            @foreach ($ownerUsers as $ou)<option value="{{ $ou->id }}">{{ $ou->display_name ?: $ou->email }}</option>@endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">ຕຳແໜ່ງ / Title (optional)</label>
+                        <input type="text" wire:model="assignees.{{ $key }}.title" class="w-full rounded-md border-gray-300 text-sm" />
+                    </div>
+                </div>
+            @endforeach
         </div>
 
         <datalist id="edit-uoms">@foreach ($uoms as $u)<option value="{{ $u->name }}"></option>@endforeach</datalist>
@@ -250,41 +299,6 @@
         </div>
         @endif
     </div>
-
-    {{-- sign modal --}}
-    @if ($showSign)
-        <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
-            <div class="bg-white w-full md:max-w-md rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <h3 class="text-lg font-medium text-gray-800">✍ ຢັ້ງຢືນ / ເຊັນ — {{ $stages[$currentStage]['label'] ?? '' }}</h3>
-                @if ($currentStage === 'committee')
-                    <p class="text-xs text-gray-500">ໃສ່ ຄະນະກຳມະການ ຮ່ວມກວດ (ຫຼາຍ ຄົນ ໄດ້)</p>
-                    @foreach ($committee as $ci => $cm)
-                        <div class="flex gap-2" wire:key="cm-{{ $ci }}">
-                            <input type="text" wire:model="committee.{{ $ci }}.name" placeholder="ຊື່ ຄະນະ" class="flex-1 rounded-md border-gray-300 text-sm" />
-                            <input type="text" wire:model="committee.{{ $ci }}.title" placeholder="ຕຳແໜ່ງ" class="w-32 rounded-md border-gray-300 text-sm" />
-                            @if (count($committee) > 1)<button wire:click="removeCommittee({{ $ci }})" class="text-gray-400 hover:text-red-600 px-1">✕</button>@endif
-                        </div>
-                    @endforeach
-                    <button wire:click="addCommittee" class="text-xs text-sky-700">+ ເພີ່ມ ຄະນະ</button>
-                @else
-                    <div><label class="block text-sm text-gray-600 mb-1">ຕຳແໜ່ງ (optional)</label><input type="text" wire:model="signTitle" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                @endif
-                <div><label class="block text-sm text-gray-600 mb-1">ໝາຍເຫດ (optional)</label><textarea wire:model="signComment" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showSign', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="confirmSign" class="bg-emerald-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນ ເຊັນ</button></div>
-            </div>
-        </div>
-    @endif
-
-    {{-- reject modal --}}
-    @if ($showReject)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
-                <h3 class="font-medium text-red-700">ຕີ ກັບ ໃບ ຈຳໜ່າຍ</h3>
-                <textarea wire:model="rejectReason" rows="3" placeholder="ເຫດຜົນ ຕີ ກັບ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showReject', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="confirmReject" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນ ຕີ ກັບ</button></div>
-            </div>
-        </div>
-    @endif
 
     {{-- cancel modal --}}
     @if ($showCancel)
