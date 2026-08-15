@@ -2,7 +2,7 @@
     $badge = fn ($s) => match ($s) {
         'draft' => 'bg-gray-100 text-gray-600', 'acknowledged' => 'bg-blue-100 text-blue-700',
         'approved' => 'bg-sky-100 text-sky-700', 'active' => 'bg-indigo-100 text-indigo-700',
-        'overdue' => 'bg-red-100 text-red-700', 'returned' => 'bg-emerald-100 text-emerald-700',
+        'overdue' => 'bg-red-100 text-rose-700', 'returned' => 'bg-emerald-100 text-emerald-700',
         'cancelled' => 'bg-gray-100 text-gray-400', default => 'bg-gray-100 text-gray-600',
     };
     $typeLabel = match ($record->borrow_type) {
@@ -10,6 +10,15 @@
         'deposited_tools' => 'ເຄື່ອງຝາກຄືນ', 'others' => 'ອື່ນໆ', default => $record->borrow_type,
     };
     $st = $record->display_status;
+    $strip = match ($st) {
+        'returned' => 'from-emerald-500 to-teal-500',
+        'active' => 'from-indigo-500 to-violet-500',
+        'approved' => 'from-sky-500 to-cyan-500',
+        'acknowledged' => 'from-blue-500 to-indigo-500',
+        'overdue' => 'from-rose-500 to-red-500',
+        'cancelled' => 'from-gray-300 to-gray-400',
+        default => 'from-indigo-500 to-violet-500',
+    };
     $od = $record->days_left !== null && $record->days_left < 0 ? abs($record->days_left) : 0;
     $itemNames = $record->items->pluck('item_name')->implode(', ');
     $reminding = "{$record->borrower_name} ກະລຸນາສົ່ງ {$record->items->count()} ລາຍການ ({$itemNames}) ກັບຄືນ ໃນວັນທີ ".($record->planned_return_date?->format('M d, Y') ?? '—').'.';
@@ -19,14 +28,35 @@
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <x-page-subheader :back="route('borrow')" back-label="ລາຍການ ຢືມ" :record="$record->request_number" :status="strtoupper($st)" :status-class="$badge($st)">
             <x-slot:actions>
-                @if ($editable)<button type="button" wire:click="openEdit" class="text-sm text-white bg-amber-600 rounded-md px-3 py-1.5 hover:bg-amber-700">✏️ ແກ້ໄຂ</button>@endif
-                <button type="button" onclick="exportJpg('borrow-detail', 'borrow-{{ $record->request_number }}.jpg')" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">🖼 JPG</button>
-                <a href="{{ route('borrow.pdf', $record) }}" target="_blank" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
+                @if ($editable)<button type="button" wire:click="openEdit" class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition">✏️ ແກ້ໄຂ</button>@endif
+                <button type="button" onclick="exportJpg('borrow-detail', 'borrow-{{ $record->request_number }}.jpg')" class="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">🖼 JPG</button>
+                <a href="{{ route('borrow.pdf', $record) }}" target="_blank" class="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">📄 PDF</a>
             </x-slot>
         </x-page-subheader>
 
-        @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
-        @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror
+        {{-- ══ HERO ══ --}}
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="h-1.5 bg-gradient-to-r {{ $strip }}"></div>
+            <div class="p-5 flex items-start gap-4 flex-wrap">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br {{ $strip }} text-white flex items-center justify-center text-2xl shadow-sm shrink-0">🔄</div>
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-mono text-xl font-bold text-gray-900 tracking-tight">{{ $record->request_number }}</span>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $badge($st) }}">{{ strtoupper($st) }}</span>
+                        @if ($record->days_left !== null)<span class="text-xs font-medium {{ $record->days_left < 0 ? 'text-rose-600' : 'text-gray-400' }}">{{ $record->days_left < 0 ? 'ເກີນ '.abs($record->days_left).' ມື້' : 'ອີກ '.$record->days_left.' ມື້' }}</span>@endif
+                    </div>
+                    <div class="text-gray-500 text-sm mt-1">{{ $record->borrower_name }}@if ($record->unit) · {{ $record->unit->name }}@endif</div>
+                    <div class="flex items-center gap-x-4 gap-y-1 flex-wrap mt-2.5 text-xs text-gray-500">
+                        <span class="inline-flex items-center gap-1">🔄 {{ $record->items->count() }} ລາຍການ · {{ $record->items->sum('qty') }} ໜ່ວຍ</span>
+                        <span class="inline-flex items-center gap-1">📅 ຢືມ {{ $record->borrow_date?->format('d/m/Y') }}</span>
+                        <span class="inline-flex items-center gap-1">↩ ກຳນົດ {{ $record->planned_return_date?->format('d/m/Y') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (session('ok'))<div class="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5">{{ session('ok') }}</div>@endif
+        @error('action')<div class="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5">{{ $message }}</div>@enderror
 
         @php
             $dt = fn ($d) => $d?->format('d/m/Y H:i') ?? '—';
@@ -67,7 +97,7 @@
                 </tr>
                 <tr>
                     <td class="{{ $lbl }}">ກຳນົດວັນທີສົ່ງ / Due</td><td class="{{ $bd }}">{{ $d1($record->planned_return_date) }} <span class="text-gray-500">({{ $record->period_days }} ມື້)</span></td>
-                    <td class="{{ $lbl }}">ສະຖານະ / Status</td><td class="{{ $bd }} font-bold {{ $st === 'overdue' ? 'text-red-600' : ($st === 'returned' ? 'text-gray-600' : 'text-emerald-600') }}">{{ $statusLao }}</td>
+                    <td class="{{ $lbl }}">ສະຖານະ / Status</td><td class="{{ $bd }} font-bold {{ $st === 'overdue' ? 'text-rose-600' : ($st === 'returned' ? 'text-gray-600' : 'text-emerald-600') }}">{{ $statusLao }}</td>
                 </tr>
             </table>
 
@@ -122,7 +152,7 @@
                 <table class="w-full text-sm" style="border-collapse:collapse">
                     <tr>
                         <td class="{{ $lbl }}" style="width:20%">ສະຖານະຂໍຕໍ່ເວລາ</td>
-                        <td class="{{ $bd }}" style="width:30%">@php $em = ['pending' => ['Pending', 'text-amber-600'], 'approved' => ['Approved', 'text-emerald-600'], 'rejected' => ['Rejected', 'text-red-600'], 'none' => ['—', 'text-gray-400']]; [$et, $ec] = $em[$record->extension_status] ?? ['—', '']; @endphp<span class="font-bold {{ $ec }}">{{ $et }}</span></td>
+                        <td class="{{ $bd }}" style="width:30%">@php $em = ['pending' => ['Pending', 'text-amber-600'], 'approved' => ['Approved', 'text-emerald-600'], 'rejected' => ['Rejected', 'text-rose-600'], 'none' => ['—', 'text-gray-400']]; [$et, $ec] = $em[$record->extension_status] ?? ['—', '']; @endphp<span class="font-bold {{ $ec }}">{{ $et }}</span></td>
                         <td class="{{ $lbl }}" style="width:20%">ວັນທີຂໍຕໍ່ໄປຫາ</td><td class="{{ $bd }}" style="width:30%">{{ $d1($record->extension_proposed_date) }}</td>
                     </tr>
                     <tr><td class="{{ $lbl }}">ເຫດຜົນຂໍຕໍ່ເວລາ</td><td class="{{ $bd }} italic text-gray-700" colspan="3">{{ $record->extension_reason ?? '—' }}</td></tr>
@@ -193,35 +223,32 @@
                 </div>
             </div>
 
-            @if ($record->cancel_reason)<div class="text-red-600 text-xs">ເຫດຍົກເລີກ: {{ $record->cancel_reason }}</div>@endif
+            @if ($record->cancel_reason)<div class="text-rose-600 text-xs">ເຫດຍົກເລີກ: {{ $record->cancel_reason }}</div>@endif
         </div>
 
         {{-- actions --}}
-        <div class="bg-white rounded-lg border border-gray-100 px-5 py-3 flex flex-wrap gap-2 text-sm items-center sticky bottom-4 z-20 shadow-lg">
-            <span class="text-gray-400 mr-1">Actions:</span>
+        <div class="bg-white/95 backdrop-blur rounded-xl border border-gray-200 px-5 py-3 flex flex-wrap gap-2 text-sm items-center sticky bottom-4 z-20 shadow-lg">
             @if ($record->status === 'draft')
-                <button wire:click="submit" class="text-white bg-indigo-600 rounded px-3 py-1.5">ສົ່ງຂໍອະນຸມັດ</button>
-                <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">ຍົກເລີກ</button>
+                <button wire:click="submit" class="inline-flex items-center gap-1.5 text-white bg-indigo-600 font-medium rounded-lg px-4 py-2 hover:bg-indigo-700 transition shadow-sm">📤 ສົ່ງຂໍອະນຸມັດ</button>
+                <button wire:click="$set('showCancel', true)" class="text-gray-600 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50">ຍົກເລີກ</button>
             @elseif ($record->status === 'acknowledged')
-                @if ($steps['acknowledge'] && ! $record->acknowledged_at)<button wire:click="acknowledge" class="text-white bg-blue-600 rounded px-3 py-1.5">Acknowledge</button>@endif
-                @if ($steps['approve'])<button wire:click="approve" class="text-white bg-sky-600 rounded px-3 py-1.5">Approve</button>@endif
-                <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">Reject/ຍົກເລີກ</button>
+                @if ($steps['acknowledge'] && ! $record->acknowledged_at)<button wire:click="acknowledge" class="inline-flex items-center gap-1.5 text-white bg-blue-600 font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition shadow-sm">✓ Acknowledge</button>@endif
+                @if ($steps['approve'])<button wire:click="approve" class="inline-flex items-center gap-1.5 text-white bg-sky-600 font-medium rounded-lg px-4 py-2 hover:bg-sky-700 transition shadow-sm">✓ Approve</button>@endif
+                <button wire:click="$set('showCancel', true)" class="text-gray-600 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50">Reject/ຍົກເລີກ</button>
             @elseif ($record->status === 'approved')
-                <button wire:click="openTake" class="text-white bg-emerald-600 rounded px-3 py-1.5">ມອບເຄື່ອງ</button>
-                <button wire:click="$set('showCancel', true)" class="border rounded px-3 py-1.5">ຍົກເລີກ</button>
+                <button wire:click="openTake" class="inline-flex items-center gap-1.5 text-white bg-emerald-600 font-medium rounded-lg px-4 py-2 hover:bg-emerald-700 transition shadow-sm">📤 ມອບເຄື່ອງ</button>
+                <button wire:click="$set('showCancel', true)" class="text-gray-600 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50">ຍົກເລີກ</button>
             @elseif (in_array($record->status, ['active', 'overdue']))
-                {{-- step 1: ຜູ້ຢືມ ແຈ້ງສົ່ງຄືນ --}}
                 @if (! $record->borrower_return_ack)
-                    @if ($isBorrower || $editable)<button wire:click="openRequestReturn" class="text-white bg-amber-600 rounded px-3 py-1.5">📩 ແຈ້ງສົ່ງຄືນ</button>@endif
+                    @if ($isBorrower || $editable)<button wire:click="openRequestReturn" class="inline-flex items-center gap-1.5 text-white bg-amber-600 font-medium rounded-lg px-4 py-2 hover:bg-amber-700 transition shadow-sm">📩 ແຈ້ງສົ່ງຄືນ</button>@endif
                 @else
-                    <span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded px-2 py-1">📩 ຜູ້ຢືມແຈ້ງສົ່ງຄືນແລ້ວ{{ $record->borrower_return_date ? ' ('.$record->borrower_return_date->format('d/m/Y').')' : '' }} — ລໍ Warehouse ຢືນຢັນ</span>
+                    <span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-lg px-2.5 py-1.5">📩 ຜູ້ຢືມແຈ້ງສົ່ງຄືນແລ້ວ{{ $record->borrower_return_date ? ' ('.$record->borrower_return_date->format('d/m/Y').')' : '' }} — ລໍ Warehouse ຢືນຢັນ</span>
                 @endif
-                {{-- step 2: Warehouse ຮັບຄືນ --}}
                 @if ($partial)
-                    @if ($record->is_partially_returned)<span class="inline-flex items-center gap-1 text-xs bg-sky-50 text-sky-700 border border-sky-200 rounded px-2 py-1">📦 ຮັບຄືນ ບາງ ສ່ວນ ແລ້ວ · ຍັງ ຄ້າງ {{ $record->outstanding_qty }}</span>@endif
-                    @if ($editable)<button wire:click="openReceive" class="text-white bg-sky-600 rounded px-3 py-1.5">📦 ທະຍອຍ ຮັບຄືນ (ຄ້າງ {{ $record->outstanding_qty }})</button>@endif
+                    @if ($record->is_partially_returned)<span class="inline-flex items-center gap-1 text-xs bg-sky-50 text-sky-700 border border-sky-200 rounded-lg px-2.5 py-1.5">📦 ຮັບຄືນ ບາງ ສ່ວນ ແລ້ວ · ຍັງ ຄ້າງ {{ $record->outstanding_qty }}</span>@endif
+                    @if ($editable)<button wire:click="openReceive" class="inline-flex items-center gap-1.5 text-white bg-sky-600 font-medium rounded-lg px-4 py-2 hover:bg-sky-700 transition shadow-sm">📦 ທະຍອຍ ຮັບຄືນ (ຄ້າງ {{ $record->outstanding_qty }})</button>@endif
                 @else
-                    @if ($editable)<button wire:click="openReturn" class="text-white bg-sky-600 rounded px-3 py-1.5">✅ ຢືນຢັນຮັບຄືນ</button>@endif
+                    @if ($editable)<button wire:click="openReturn" class="inline-flex items-center gap-1.5 text-white bg-sky-600 font-medium rounded-lg px-4 py-2 hover:bg-sky-700 transition shadow-sm">✅ ຢືນຢັນຮັບຄືນ</button>@endif
                 @endif
             @else
                 <span class="text-gray-400">— ບໍ່ມີ action ({{ $record->status }})</span>
@@ -229,35 +256,35 @@
 
             @if ($deletable)
                 <span class="ml-auto"></span>
-                <button wire:click="openDelete" class="text-red-600 border border-red-200 rounded px-3 py-1.5 hover:bg-red-50">🗑 ລຶບ</button>
+                <button wire:click="openDelete" class="text-rose-600 border border-rose-200 rounded-lg px-3 py-2 hover:bg-rose-50 transition">🗑 ລຶບ</button>
             @endif
         </div>
 
         @if ($showCancel)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                <div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
+                <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
                     <h3 class="font-medium">ເຫດຜົນ (optional)</h3>
-                    <textarea wire:model="cancelReason" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                    <div class="flex justify-end gap-2"><button wire:click="$set('showCancel', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="cancel" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນຍົກເລີກ</button></div>
+                    <textarea wire:model="cancelReason" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
+                    <div class="flex justify-end gap-2"><button wire:click="$set('showCancel', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="cancel" class="bg-rose-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນຍົກເລີກ</button></div>
                 </div>
             </div>
         @endif
 
-        @php $fileCls = 'block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-2 file:rounded file:border-0 file:bg-sky-50 file:text-sky-700'; @endphp
+        @php $fileCls = 'block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-sky-50 file:text-sky-700 file:font-medium file:cursor-pointer hover:file:bg-sky-100'; @endphp
 
         {{-- confirmTake modal --}}
         @if ($showTake)
             <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
-                <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
                     <h3 class="text-lg font-medium text-gray-800">ມອບເຄື່ອງ — ຖ່າຍຮູບສະພາບ (ບັງຄັບ)</h3>
-                    @error('takePhotos')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    @error('takePhotos')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
                     @foreach ($record->items as $it)
                         <div class="border border-gray-200 rounded-md p-3 space-y-2">
                             <div class="text-sm font-medium text-gray-700">{{ $it->item_name }} <span class="text-gray-400">×{{ $it->qty }}</span></div>
                             <input type="file" wire:model="takePhotos.{{ $it->id }}" multiple accept="image/*" capture="environment" class="{{ $fileCls }}" />
                             <div wire:loading wire:target="takePhotos.{{ $it->id }}" class="text-xs text-gray-400">ກຳລັງອັບ…</div>
                             @if (! empty($takePhotos[$it->id]))<div class="flex gap-1 flex-wrap">@foreach ($takePhotos[$it->id] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" class="w-12 h-12 rounded object-cover border border-sky-200" />@endif @endforeach</div>@endif
-                            <textarea wire:model="takeCondition.{{ $it->id }}" rows="1" placeholder="ໝາຍເຫດສະພາບ (optional)…" class="w-full rounded-md border-gray-300 text-xs"></textarea>
+                            <textarea wire:model="takeCondition.{{ $it->id }}" rows="1" placeholder="ໝາຍເຫດສະພາບ (optional)…" class="w-full rounded-lg border-gray-300 text-xs"></textarea>
                         </div>
                     @endforeach
                     <div class="flex justify-end gap-2 pt-2">
@@ -271,19 +298,19 @@
         {{-- confirmReturn modal --}}
         @if ($showReturn)
             <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
-                <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
                     <h3 class="text-lg font-medium text-gray-800">ຮັບຄືນ — ຈຳນວນ + ຖ່າຍຮູບ (ບັງຄັບ)</h3>
-                    @error('returnPhotos')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    @error('returnPhotos')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
                     @foreach ($record->items as $it)
                         <div class="border border-gray-200 rounded-md p-3 space-y-2">
                             <div class="flex items-center justify-between">
                                 <div class="text-sm font-medium text-gray-700">{{ $it->item_name }} <span class="text-gray-400">/ ຢືມ {{ $it->qty }}</span></div>
-                                <label class="text-xs text-gray-500 flex items-center gap-1">ຄືນ <input type="number" min="0" max="{{ $it->outstanding_qty }}" wire:model="returnQty.{{ $it->id }}" class="w-16 rounded-md border-gray-300 text-xs" /></label>
+                                <label class="text-xs text-gray-500 flex items-center gap-1">ຄືນ <input type="number" min="0" max="{{ $it->outstanding_qty }}" wire:model="returnQty.{{ $it->id }}" class="w-16 rounded-lg border-gray-300 text-xs" /></label>
                             </div>
                             <input type="file" wire:model="returnPhotos.{{ $it->id }}" multiple accept="image/*" capture="environment" class="{{ $fileCls }}" />
                             <div wire:loading wire:target="returnPhotos.{{ $it->id }}" class="text-xs text-gray-400">ກຳລັງອັບ…</div>
                             @if (! empty($returnPhotos[$it->id]))<div class="flex gap-1 flex-wrap">@foreach ($returnPhotos[$it->id] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" class="w-12 h-12 rounded object-cover border border-sky-200" />@endif @endforeach</div>@endif
-                            <textarea wire:model="returnCondition.{{ $it->id }}" rows="1" placeholder="ໝາຍເຫດສະພາບ (optional)…" class="w-full rounded-md border-gray-300 text-xs"></textarea>
+                            <textarea wire:model="returnCondition.{{ $it->id }}" rows="1" placeholder="ໝາຍເຫດສະພາບ (optional)…" class="w-full rounded-lg border-gray-300 text-xs"></textarea>
                         </div>
                     @endforeach
                     <div class="flex justify-end gap-2 pt-2">
@@ -297,11 +324,11 @@
         {{-- ທະຍອຍ ຮັບຄືນ (partial receive) modal --}}
         @if ($showReceive)
             <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
-                <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+                <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
                     <h3 class="text-lg font-medium text-gray-800">📦 ທະຍອຍ ຮັບຄືນ — ຮັບ ເປັນ ລາຍການ/ຄັ້ງ</h3>
                     <p class="text-xs text-gray-500">ໃສ່ ຈຳນວນ ທີ່ ຮັບ ຄືນ ຄັ້ງ ນີ້ ຕໍ່ ລາຍການ (ຄ້າງ ໄວ້ ໄດ້). ໃບ ຈະ ປິດ ອັດຕະໂນມັດ ເມື່ອ ຄືນ ຄົບ ທຸກ ລາຍການ.</p>
-                    @error('receiveQty')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                    @error('receivePhotos')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    @error('receiveQty')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
+                    @error('receivePhotos')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
                     @foreach ($record->items as $it)
                         @php $out = $it->outstanding_qty; @endphp
                         <div class="border {{ $out > 0 ? 'border-gray-200' : 'border-emerald-200 bg-emerald-50/40' }} rounded-md p-3 space-y-2">
@@ -310,7 +337,7 @@
                                     <span class="text-gray-400 text-xs">/ ຢືມ {{ $it->qty }} · ຄືນ ແລ້ວ {{ $it->received_qty }} · ຄ້າງ {{ $out }}</span>
                                 </div>
                                 @if ($out > 0)
-                                    <label class="text-xs text-gray-500 flex items-center gap-1">ຮັບ ຄັ້ງ ນີ້ <input type="number" min="0" max="{{ $out }}" wire:model="receiveQty.{{ $it->id }}" class="w-16 rounded-md border-gray-300 text-xs" /></label>
+                                    <label class="text-xs text-gray-500 flex items-center gap-1">ຮັບ ຄັ້ງ ນີ້ <input type="number" min="0" max="{{ $out }}" wire:model="receiveQty.{{ $it->id }}" class="w-16 rounded-lg border-gray-300 text-xs" /></label>
                                 @else
                                     <span class="text-xs text-emerald-600 font-medium">✓ ຄືນ ຄົບ ແລ້ວ</span>
                                 @endif
@@ -319,13 +346,13 @@
                                 <input type="file" wire:model="receivePhotos.{{ $it->id }}" multiple accept="image/*" capture="environment" class="{{ $fileCls }}" />
                                 <div wire:loading wire:target="receivePhotos.{{ $it->id }}" class="text-xs text-gray-400">ກຳລັງອັບ…</div>
                                 @if (! empty($receivePhotos[$it->id]))<div class="flex gap-1 flex-wrap">@foreach ($receivePhotos[$it->id] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" class="w-12 h-12 rounded object-cover border border-sky-200" />@endif @endforeach</div>@endif
-                                <textarea wire:model="receiveCondition.{{ $it->id }}" rows="1" placeholder="ໝາຍເຫດສະພາບ (optional)…" class="w-full rounded-md border-gray-300 text-xs"></textarea>
+                                <textarea wire:model="receiveCondition.{{ $it->id }}" rows="1" placeholder="ໝາຍເຫດສະພາບ (optional)…" class="w-full rounded-lg border-gray-300 text-xs"></textarea>
                             @endif
                         </div>
                     @endforeach
                     <div class="grid grid-cols-2 gap-2">
-                        <div><label class="block text-xs text-gray-500 mb-1">ວັນທີ ຮັບ</label><input type="date" wire:model="receiveDate" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                        <div><label class="block text-xs text-gray-500 mb-1">ໝາຍເຫດ ຄັ້ງ ນີ້</label><input wire:model="receiveRemarks" placeholder="optional" class="w-full rounded-md border-gray-300 text-sm" /></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">ວັນທີ ຮັບ</label><input type="date" wire:model="receiveDate" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">ໝາຍເຫດ ຄັ້ງ ນີ້</label><input wire:model="receiveRemarks" placeholder="optional" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                     </div>
                     <div class="flex justify-end gap-2 pt-2">
                         <button wire:click="$set('showReceive', false)" class="border border-gray-300 rounded px-4 py-2 text-sm">ປິດ</button>
@@ -338,11 +365,11 @@
         {{-- extension request modal --}}
         @if ($showExtension)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                <div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
+                <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
                     <h3 class="font-medium text-gray-800">ຂໍຂະຫຍາຍເວລາ</h3>
-                    @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                    <div><label class="block text-sm text-gray-600 mb-1">ວັນທີສົ່ງໃໝ່</label><input type="date" wire:model="extProposedDate" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                    <div><label class="block text-sm text-gray-600 mb-1">ເຫດຜົນ</label><textarea wire:model="extReason" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
+                    @error('action')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
+                    <div><label class="block text-sm text-gray-600 mb-1">ວັນທີສົ່ງໃໝ່</label><input type="date" wire:model="extProposedDate" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                    <div><label class="block text-sm text-gray-600 mb-1">ເຫດຜົນ</label><textarea wire:model="extReason" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
                     <div class="flex justify-end gap-2"><button wire:click="$set('showExtension', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="requestExtension" class="bg-indigo-600 text-white rounded px-3 py-1.5 text-sm">ສົ່ງຄຳຂໍ</button></div>
                 </div>
             </div>
@@ -351,12 +378,12 @@
         {{-- borrower ແຈ້ງສົ່ງຄືນ (step 1) modal --}}
         @if ($showRequestReturn)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                <div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
+                <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
                     <h3 class="font-medium text-gray-800">📩 ແຈ້ງສົ່ງຄືນ</h3>
                     <p class="text-xs text-gray-500">ແຈ້ງວ່າຈະສົ່ງເຄື່ອງຄືນ — Warehouse ຈະຢືນຢັນຮັບຄືນ ແລະ ກວດສະພາບອີກຄັ້ງ.</p>
-                    @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                    <div><label class="block text-sm text-gray-600 mb-1">ວັນທີສົ່ງຄືນ</label><input type="date" wire:model="rrDate" class="w-full rounded-md border-gray-300 text-sm" />@error('rrDate')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
-                    <div><label class="block text-sm text-gray-600 mb-1">ໝາຍເຫດ (optional)</label><textarea wire:model="rrRemarks" rows="2" placeholder="ເຊັ່ນ: ສົ່ງບໍ່ຄົບ, ສະພາບ…" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
+                    @error('action')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
+                    <div><label class="block text-sm text-gray-600 mb-1">ວັນທີສົ່ງຄືນ</label><input type="date" wire:model="rrDate" class="w-full rounded-lg border-gray-300 text-sm" />@error('rrDate')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
+                    <div><label class="block text-sm text-gray-600 mb-1">ໝາຍເຫດ (optional)</label><textarea wire:model="rrRemarks" rows="2" placeholder="ເຊັ່ນ: ສົ່ງບໍ່ຄົບ, ສະພາບ…" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
                     <div class="flex justify-end gap-2"><button wire:click="$set('showRequestReturn', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="requestReturn" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນແຈ້ງສົ່ງຄືນ</button></div>
                 </div>
             </div>
@@ -365,12 +392,12 @@
         {{-- delete (soft) modal --}}
         @if ($showDelete)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                <div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
-                    <h3 class="font-medium text-red-700">🗑 ລຶບລາຍການຢືມ</h3>
+                <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
+                    <h3 class="font-medium text-rose-700">🗑 ລຶບລາຍການຢືມ</h3>
                     <p class="text-xs text-gray-500">ລາຍການຈະຖູກຍ້າຍໄປ Deleted Log (ສາມາດກູ້ຄືນໄດ້). ກະລຸນາໃສ່ເຫດຜົນ.</p>
-                    <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນການລຶບ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                    @error('deleteReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                    <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm disabled:opacity-50">ຢືນຢັນລຶບ</button></div>
+                    <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນການລຶບ…" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
+                    @error('deleteReason')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
+                    <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="bg-rose-600 text-white rounded px-3 py-1.5 text-sm disabled:opacity-50">ຢືນຢັນລຶບ</button></div>
                 </div>
             </div>
         @endif
@@ -378,20 +405,20 @@
         {{-- admin edit modal --}}
         @if ($showEdit)
             <div class="fixed inset-0 z-50 flex items-start md:items-center justify-center bg-black/40 md:p-4 overflow-y-auto">
-                <div class="bg-white w-full md:max-w-2xl rounded-lg p-5 space-y-4 my-4 max-h-[92vh] overflow-y-auto">
+                <div class="bg-white w-full md:max-w-2xl rounded-2xl p-5 space-y-4 shadow-xl my-4 max-h-[92vh] overflow-y-auto">
                     <h3 class="text-lg font-medium text-gray-800">✏️ ແກ້ໄຂ (Admin) — {{ $record->request_number }}</h3>
 
                     <div class="grid sm:grid-cols-2 gap-3 text-sm">
-                        <div><label class="block text-gray-600 mb-1">ຜູ້ຢືມ *</label><input wire:model="ef.borrower_name" class="w-full rounded-md border-gray-300 text-sm" />@error('ef.borrower_name')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
-                        <div><label class="block text-gray-600 mb-1">ຈຸດປະສົງ</label><input wire:model="ef.purpose" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                        <div><label class="block text-gray-600 mb-1">ຢືມວັນທີ</label><input type="date" wire:model="ef.borrow_date" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                        <div><label class="block text-gray-600 mb-1">ກຳນົດສົ່ງ</label><input type="date" wire:model="ef.planned_return_date" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                        <div><label class="block text-gray-600 mb-1">ໄລຍະ (ມື້)</label><input type="number" wire:model="ef.period_days" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                        <div><label class="block text-gray-600 mb-1">ວັນທີຜູ້ຢືມແຈ້ງສົ່ງ</label><input type="date" wire:model="ef.borrower_return_date" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                        <div><label class="block text-gray-600 mb-1">Approver</label><input wire:model="ef.approver_name" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                        <div><label class="block text-gray-600 mb-1">Manager (ack)</label><input wire:model="ef.acknowledge_name" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                        <div class="sm:col-span-2"><label class="block text-gray-600 mb-1">ໝາຍເຫດສົ່ງຄືນ (Return remarks)</label><textarea wire:model="ef.return_remarks" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
-                        <div class="sm:col-span-2"><label class="block text-gray-600 mb-1">ໝາຍເຫດຈາກສາງ (Admin notes)</label><textarea wire:model="ef.admin_notes" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
+                        <div><label class="block text-gray-600 mb-1">ຜູ້ຢືມ *</label><input wire:model="ef.borrower_name" class="w-full rounded-lg border-gray-300 text-sm" />@error('ef.borrower_name')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
+                        <div><label class="block text-gray-600 mb-1">ຈຸດປະສົງ</label><input wire:model="ef.purpose" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">ຢືມວັນທີ</label><input type="date" wire:model="ef.borrow_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">ກຳນົດສົ່ງ</label><input type="date" wire:model="ef.planned_return_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">ໄລຍະ (ມື້)</label><input type="number" wire:model="ef.period_days" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">ວັນທີຜູ້ຢືມແຈ້ງສົ່ງ</label><input type="date" wire:model="ef.borrower_return_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">Approver</label><input wire:model="ef.approver_name" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-gray-600 mb-1">Manager (ack)</label><input wire:model="ef.acknowledge_name" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div class="sm:col-span-2"><label class="block text-gray-600 mb-1">ໝາຍເຫດສົ່ງຄືນ (Return remarks)</label><textarea wire:model="ef.return_remarks" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
+                        <div class="sm:col-span-2"><label class="block text-gray-600 mb-1">ໝາຍເຫດຈາກສາງ (Admin notes)</label><textarea wire:model="ef.admin_notes" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
                     </div>
 
                     <div class="border-t pt-3 space-y-3">
@@ -399,9 +426,9 @@
                         @foreach ($record->items as $it)
                             <div class="border border-gray-200 rounded-md p-3 space-y-2">
                                 <div class="grid grid-cols-12 gap-2 text-sm">
-                                    <input wire:model="ei.{{ $it->id }}.item_name" class="col-span-6 rounded-md border-gray-300 text-sm" placeholder="ຊື່ລາຍການ" />
-                                    <input type="number" wire:model="ei.{{ $it->id }}.qty" class="col-span-3 rounded-md border-gray-300 text-sm" placeholder="ຈຳນວນ" />
-                                    <input type="number" wire:model="ei.{{ $it->id }}.return_qty" class="col-span-3 rounded-md border-gray-300 text-sm" placeholder="ຄືນ" />
+                                    <input wire:model="ei.{{ $it->id }}.item_name" class="col-span-6 rounded-lg border-gray-300 text-sm" placeholder="ຊື່ລາຍການ" />
+                                    <input type="number" wire:model="ei.{{ $it->id }}.qty" class="col-span-3 rounded-lg border-gray-300 text-sm" placeholder="ຈຳນວນ" />
+                                    <input type="number" wire:model="ei.{{ $it->id }}.return_qty" class="col-span-3 rounded-lg border-gray-300 text-sm" placeholder="ຄືນ" />
                                 </div>
                                 @if ($it->photos->count())
                                     <div class="flex gap-1 flex-wrap">
@@ -409,7 +436,7 @@
                                             <div class="relative" wire:key="ep-{{ $p->id }}">
                                                 <img src="{{ $p->url }}" alt="" class="w-12 h-12 object-cover border border-gray-300 rounded" />
                                                 <span class="absolute -bottom-1 left-0 right-0 text-center text-[8px] bg-gray-700 text-white">{{ $p->kind }}</span>
-                                                <button wire:click="removePhoto({{ $p->id }})" wire:confirm="ລຶບຮູບນີ້?" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-600 text-white rounded-full text-[10px] leading-none">×</button>
+                                                <button wire:click="removePhoto({{ $p->id }})" wire:confirm="ລຶບຮູບນີ້?" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[10px] leading-none">×</button>
                                             </div>
                                         @endforeach
                                     </div>
