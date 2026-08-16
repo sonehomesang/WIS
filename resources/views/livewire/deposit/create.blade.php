@@ -44,6 +44,16 @@
                     <input type="text" wire:model="origin_source" class="w-full rounded-lg border-gray-300 text-sm" />
                     @error('origin_source')<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
                 </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">ສະຖານະ ການ ໃຊ້ງານ (Functional)</label>
+                    <select wire:model="functional_status" class="w-full rounded-lg border-gray-300 text-sm">
+                        <option value="">— ເລືອກ —</option>
+                        <option value="usable">✅ ໃຊ້ ໄດ້ ປົກກະຕິ · Functional</option>
+                        <option value="partial">⚠️ ໃຊ້ ໄດ້ ບາງ ສ່ວນ · Partial</option>
+                        <option value="unusable">⛔ ໃຊ້ ບໍ່ ໄດ້ · Non-functional</option>
+                    </select>
+                    @error('functional_status')<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
+                </div>
                 @if ($request_type === 'legacy')
                     <div class="md:col-span-2 rounded-lg bg-amber-50/50 border border-amber-100 p-3">
                         <div class="text-xs font-semibold text-amber-700 mb-2 flex items-center gap-1.5"><span>📦</span> ເຄື່ອງຝາກເກົ່າ ທີ່ ຄ້າງ ໄວ້ ດົນ <span class="text-gray-400 font-normal">(ຂໍ້ມູນ ການ ຝາກ ເດີມ — ບໍ່ ບັງຄັບ)</span></div>

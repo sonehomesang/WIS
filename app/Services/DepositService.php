@@ -58,6 +58,7 @@ class DepositService
                 'request_type' => $data['request_type'] ?? 'walk_in',
                 'item_category' => $data['item_category'] ?? null,
                 'origin_source' => $data['origin_source'] ?? null,
+                'functional_status' => $data['functional_status'] ?? null,
                 'original_deposit_date' => ! empty($data['original_deposit_date']) ? Carbon::parse($data['original_deposit_date'])->toDateString() : null,
                 'original_receiver' => $data['original_receiver'] ?? null,
                 'deposit_reason' => $data['deposit_reason'] ?? null,

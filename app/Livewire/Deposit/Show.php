@@ -296,6 +296,7 @@ class Show extends Component
         $this->ef = [
             'owner_user_id' => $r->owner_user_id, 'owner_dept_id' => $r->owner_dept_id,
             'item_category' => $r->item_category, 'origin_source' => $r->origin_source,
+            'functional_status' => $r->functional_status,
             'original_deposit_date' => $r->original_deposit_date?->toDateString(), 'original_receiver' => $r->original_receiver,
             'deposit_reason' => $r->deposit_reason, 'expected_duration' => $r->expected_duration,
             'deposit_date' => $r->deposit_date?->toDateString(), 'expected_claim_date' => $r->expected_claim_date?->toDateString(),
@@ -322,6 +323,7 @@ class Show extends Component
             'ef.owner_dept_id' => ['nullable', 'exists:departments,id'],
             'ef.item_category' => ['nullable', 'string', 'max:256'],
             'ef.origin_source' => ['nullable', 'string', 'max:500'],
+            'ef.functional_status' => ['nullable', 'in:usable,partial,unusable'],
             'ef.original_deposit_date' => ['nullable', 'date'],
             'ef.original_receiver' => ['nullable', 'string', 'max:256'],
             'ef.deposit_reason' => ['nullable', 'string', 'max:1000'],
@@ -353,6 +355,7 @@ class Show extends Component
             'owner_unit_id' => $deptId ? Department::find($deptId)?->unit_id : null,
             'item_category' => $this->ef['item_category'] ?: null,
             'origin_source' => $this->ef['origin_source'] ?: null,
+            'functional_status' => $this->ef['functional_status'] ?: null,
             'original_deposit_date' => $this->ef['original_deposit_date'] ?: null,
             'original_receiver' => $this->ef['original_receiver'] ?: null,
             'deposit_reason' => $this->ef['deposit_reason'] ?: null,

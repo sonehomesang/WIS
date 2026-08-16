@@ -26,6 +26,9 @@ class Create extends Component
 
     public string $origin_source = '';
 
+    // ສະຖານະ ການ ໃຊ້ງານ / functional status ຂອງ ເຄື່ອງ (usable · partial · unusable)
+    public string $functional_status = '';
+
     // ເຄື່ອງຝາກເກົ່າ (legacy): ວັນທີ ຝາກ ຈິງ ໃນ ອະດີດ + ຜູ້ ຮັບ ຝາກ ຕອນ ນັ້ນ (ບໍ່ ບັງຄັບ)
     public string $original_deposit_date = '';
 
@@ -171,6 +174,7 @@ class Create extends Component
             'request_type' => ['required', 'in:walk_in,pre_request,legacy'],
             'item_category' => ['required', 'string', 'max:256'],
             'origin_source' => ['required', 'string', 'max:500'],
+            'functional_status' => ['nullable', 'in:usable,partial,unusable'],
             'original_deposit_date' => ['nullable', 'date'],
             'original_receiver' => ['nullable', 'string', 'max:256'],
             'deposit_reason' => ['required', 'string', 'max:1000'],
@@ -204,6 +208,7 @@ class Create extends Component
             'request_type' => $this->request_type,
             'item_category' => $this->item_category,
             'origin_source' => $this->origin_source,
+            'functional_status' => $this->functional_status ?: null,
             'original_deposit_date' => $this->original_deposit_date ?: null,
             'original_receiver' => $this->original_receiver ?: null,
             'deposit_reason' => $this->deposit_reason,

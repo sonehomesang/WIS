@@ -68,6 +68,7 @@
                     {!! $kv('ພະແນກ / Dept', e($record->department?->name)) !!}
                     {!! $kv('ປະເພດ / Category', e($record->item_category)) !!}
                     {!! $kv('ແຫຼ່ງທີ່ມາ / Origin', e($record->origin_source)) !!}
+                    @if ($record->functional_status){!! $kv('ສະຖານະ ໃຊ້ງານ / Functional', e(['usable' => '✅ ໃຊ້ ໄດ້ ປົກກະຕິ', 'partial' => '⚠️ ໃຊ້ ໄດ້ ບາງ ສ່ວນ', 'unusable' => '⛔ ໃຊ້ ບໍ່ ໄດ້'][$record->functional_status] ?? $record->functional_status)) !!}@endif
                     @if ($record->original_deposit_date){!! $kv('ວັນທີຝາກເດີມ / Orig. deposit', e($record->original_deposit_date?->format('d/m/Y'))) !!}@endif
                     @if ($record->original_receiver){!! $kv('ຜູ້ຮັບຝາກເດີມ / Orig. receiver', e($record->original_receiver)) !!}@endif
                     {!! $kv('ວັນທີຝາກ / Deposit', e($record->deposit_date?->format('d/m/Y'))) !!}
@@ -281,6 +282,7 @@
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ພະແນກ ເຈົ້າ ຂອງ / Department <span class="text-gray-400 font-normal">(ຄຸມ ສິດ ຈຳໜ່າຍ)</span></label><select wire:model="ef.owner_dept_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}@if ($d->unit) · {{ $d->unit->name }}@endif</option>@endforeach</select>@error('ef.owner_dept_id')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ປະເພດ</label><input type="text" wire:model="ef.item_category" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ແຫຼ່ງທີ່ມາ</label><input type="text" wire:model="ef.origin_source" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ສະຖານະ ການ ໃຊ້ງານ</label><select wire:model="ef.functional_status" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option><option value="usable">✅ ໃຊ້ ໄດ້ ປົກກະຕິ</option><option value="partial">⚠️ ໃຊ້ ໄດ້ ບາງ ສ່ວນ</option><option value="unusable">⛔ ໃຊ້ ບໍ່ ໄດ້</option></select></div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ວັນທີຝາກເດີມ <span class="text-gray-400 font-normal">(ເຄື່ອງຝາກເກົ່າ)</span></label><input type="date" wire:model="ef.original_deposit_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ຮັບຝາກເດີມ</label><input type="text" wire:model="ef.original_receiver" placeholder="ຊື່ ຜູ້ ຮັບ ຝາກ ຕອນ ນັ້ນ" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ໄລຍະເວລາ</label><input type="text" wire:model="ef.expected_duration" class="w-full rounded-lg border-gray-300 text-sm" /></div>
