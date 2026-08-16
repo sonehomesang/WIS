@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Livewire\Settings\Translations;
 use App\Models\Material;
 use App\Models\Setting;
 use App\Models\Translation;
@@ -54,8 +55,16 @@ class AppServiceProvider extends ServiceProvider
         // since the initial full-page load is already covered by the middleware
         // (avoids double-processing the same HTML twice).
         \Livewire\on('render', function ($component, $view) {
-            return function ($html) {
-                return request()->routeIs('*livewire.update')
+            // The Translations editor IS the replacement catalogue — its Livewire
+            // state carries the raw source strings (which are replacement keys), so
+            // re-applying the replacer to its own update HTML corrupts the editor
+            // inputs (they blank out on search/filter). Never translate the editor's
+            // own reactive updates; the full-page middleware still translates the
+            // surrounding settings chrome on load.
+            $isEditor = $component instanceof Translations;
+
+            return function ($html) use ($isEditor) {
+                return request()->routeIs('*livewire.update') && ! $isEditor
                     ? Translation::applyReplacements($html)
                     : $html;
             };

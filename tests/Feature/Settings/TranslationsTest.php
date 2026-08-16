@@ -69,16 +69,19 @@ test('the Translations page itself is also translated (chrome, not source cells)
     expect($html)->toContain('>🔄 ໂຫຼດ ຄຳ ໃໝ່');
 });
 
-test('Livewire update responses are translated (pagination/filter fix)', function () {
-    // Livewire AJAX updates return JSON, bypassing the HTTP middleware — so paginated
-    // /filtered content used to show raw wording. The render hook re-applies overrides.
+test('the Translations editor is excluded from the update render-hook (protects its inputs)', function () {
+    // The editor's Livewire state holds the raw catalogue source strings (replacement
+    // keys). Re-applying the replacer to its own update HTML corrupted the source/target
+    // editor cells (they blanked on search). So the editor is skipped by the render hook
+    // — its own chrome stays raw on update, but its inputs are never mangled.
     Translation::create(['type' => 'replace', 'source' => '🔄 ດຶງ ຄຳ ໃໝ່', 'target' => '🔄 ໂຫຼດ ຄຳ', 'is_active' => true]);
 
     $html = Livewire::test(TranslationsPage::class)
         ->set('search', 'x')   // a subsequent (update-route) render
         ->html();
 
-    expect($html)->toContain('🔄 ໂຫຼດ ຄຳ')->not->toContain('🔄 ດຶງ ຄຳ ໃໝ່');
+    // editor is NOT re-translated on its own update (protects the catalogue cells)
+    expect($html)->toContain('🔄 ດຶງ ຄຳ ໃໝ່')->not->toContain('🔄 ໂຫຼດ ຄຳ');
 });
 
 test('replacement only touches text nodes + safe attrs, never code', function () {
