@@ -1,7 +1,7 @@
 @php $fileCls = 'block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-sky-50 file:text-sky-700 file:font-medium file:cursor-pointer hover:file:bg-sky-100'; @endphp
 
 <div class="pb-10">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <x-page-subheader :back="route('deposit')" back-label="ລາຍການ ຝາກ" />
 
         {{-- ══ HERO ══ --}}
@@ -24,7 +24,7 @@
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex items-center gap-3 flex-wrap">
             <div class="text-sm font-semibold text-gray-700">ປະເພດ ການ ຝາກ</div>
             <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm ml-auto">
-                @foreach (['walk_in' => 'Walk-in · ນຳມາແລ້ວ', 'pre_request' => 'Pre-request · ສົ່ງລ່ວງໜ້າ'] as $v => $l)
+                @foreach (['walk_in' => 'Walk-in · ນຳມາແລ້ວ', 'pre_request' => 'Pre-request · ສົ່ງລ່ວງໜ້າ', 'legacy' => 'ເຄື່ອງຝາກເກົ່າ · ຄ້າງ ດົນ'] as $v => $l)
                     <button type="button" wire:click="$set('request_type', '{{ $v }}')" class="px-4 py-2 transition {{ $request_type === $v ? 'bg-sky-600 text-white' : 'text-gray-600 hover:bg-gray-50' }} {{ ! $loop->first ? 'border-l border-gray-200' : '' }}">{{ $l }}</button>
                 @endforeach
             </div>
@@ -44,6 +44,23 @@
                     <input type="text" wire:model="origin_source" class="w-full rounded-lg border-gray-300 text-sm" />
                     @error('origin_source')<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
                 </div>
+                @if ($request_type === 'legacy')
+                    <div class="md:col-span-2 rounded-lg bg-amber-50/50 border border-amber-100 p-3">
+                        <div class="text-xs font-semibold text-amber-700 mb-2 flex items-center gap-1.5"><span>📦</span> ເຄື່ອງຝາກເກົ່າ ທີ່ ຄ້າງ ໄວ້ ດົນ <span class="text-gray-400 font-normal">(ຂໍ້ມູນ ການ ຝາກ ເດີມ — ບໍ່ ບັງຄັບ)</span></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">ວັນທີຝາກເດີມ (Original deposit date)</label>
+                                <input type="date" wire:model="original_deposit_date" class="w-full rounded-lg border-gray-300 text-sm" />
+                                @error('original_deposit_date')<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ຮັບຝາກເດີມ (Original receiver)</label>
+                                <input type="text" wire:model="original_receiver" placeholder="ຊື່ ຜູ້ ຮັບ ຝາກ ຕອນ ນັ້ນ" class="w-full rounded-lg border-gray-300 text-sm" />
+                                @error('original_receiver')<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+                    </div>
+                @endif
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">ເຈົ້າ ຂອງ ເຄື່ອງ / Owner <span class="text-gray-400 font-normal">(ດຶງ ຈາກ ຜູ້ ໃຊ້)</span></label>
                     <select wire:model="owner_user_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($ownerUsers as $ou)<option value="{{ $ou->id }}">{{ $ou->display_name ?: $ou->email }}</option>@endforeach</select>

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\DepositRecord;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -45,7 +46,7 @@ class DepositService
             $depositDate = Carbon::parse($data['deposit_date'] ?? Carbon::today());
 
             // ເຈົ້າ ຂອງ = ຜູ້ ໃຊ້ ທີ່ ເລືອກ (ດຶງ ຈາກ ຖານ ຂໍ້ມູນ); ຖ້າ ບໍ່ ເລືອກ = ຜູ້ ສ້າງ.
-            $owner = ! empty($data['owner_user_id']) ? (\App\Models\User::find($data['owner_user_id']) ?? $actor) : $actor;
+            $owner = ! empty($data['owner_user_id']) ? (User::find($data['owner_user_id']) ?? $actor) : $actor;
 
             $record = DepositRecord::create([
                 'request_number' => $this->nextNumber((int) $depositDate->year),
@@ -57,6 +58,8 @@ class DepositService
                 'request_type' => $data['request_type'] ?? 'walk_in',
                 'item_category' => $data['item_category'] ?? null,
                 'origin_source' => $data['origin_source'] ?? null,
+                'original_deposit_date' => ! empty($data['original_deposit_date']) ? Carbon::parse($data['original_deposit_date'])->toDateString() : null,
+                'original_receiver' => $data['original_receiver'] ?? null,
                 'deposit_reason' => $data['deposit_reason'] ?? null,
                 'expected_duration' => $data['expected_duration'] ?? null,
                 'deposit_date' => $depositDate->toDateString(),

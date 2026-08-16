@@ -2,9 +2,12 @@
 
 namespace App\Livewire\Deposit;
 
+use App\Models\Department;
 use App\Models\DepositItemPhoto;
 use App\Models\DepositRecord;
+use App\Models\User;
 use App\Services\DepositService;
+use App\Support\ConditionStatus;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -293,6 +296,7 @@ class Show extends Component
         $this->ef = [
             'owner_user_id' => $r->owner_user_id, 'owner_dept_id' => $r->owner_dept_id,
             'item_category' => $r->item_category, 'origin_source' => $r->origin_source,
+            'original_deposit_date' => $r->original_deposit_date?->toDateString(), 'original_receiver' => $r->original_receiver,
             'deposit_reason' => $r->deposit_reason, 'expected_duration' => $r->expected_duration,
             'deposit_date' => $r->deposit_date?->toDateString(), 'expected_claim_date' => $r->expected_claim_date?->toDateString(),
             'storage_location' => $r->storage_location, 'storage_shelf_label' => $r->storage_shelf_label,
@@ -318,6 +322,8 @@ class Show extends Component
             'ef.owner_dept_id' => ['nullable', 'exists:departments,id'],
             'ef.item_category' => ['nullable', 'string', 'max:256'],
             'ef.origin_source' => ['nullable', 'string', 'max:500'],
+            'ef.original_deposit_date' => ['nullable', 'date'],
+            'ef.original_receiver' => ['nullable', 'string', 'max:256'],
             'ef.deposit_reason' => ['nullable', 'string', 'max:1000'],
             'ef.expected_duration' => ['nullable', 'string', 'max:128'],
             'ef.deposit_date' => ['nullable', 'date'],
@@ -332,21 +338,23 @@ class Show extends Component
             'ei.*.qty' => ['required', 'integer', 'min:1'],
             'ei.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
             'ei.*.currency' => ['nullable', 'in:LAK,THB,USD'],
-            'ei.*.condition_status' => ['required', \App\Support\ConditionStatus::rule()],
+            'ei.*.condition_status' => ['required', ConditionStatus::rule()],
             'ep.*.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
         $r = $this->record;
         $deptId = $this->ef['owner_dept_id'] ?: null;
-        $owner = \App\Models\User::find($this->ef['owner_user_id'] ?? null);
+        $owner = User::find($this->ef['owner_user_id'] ?? null);
         $r->fill([
             'owner_user_id' => $owner?->id ?? $r->owner_user_id,
             'owner_name' => $owner ? ($owner->display_name ?? $owner->email) : $r->owner_name,
             'owner_email' => $owner ? mb_strtolower($owner->email) : $r->owner_email,
             'owner_dept_id' => $deptId,
-            'owner_unit_id' => $deptId ? \App\Models\Department::find($deptId)?->unit_id : null,
+            'owner_unit_id' => $deptId ? Department::find($deptId)?->unit_id : null,
             'item_category' => $this->ef['item_category'] ?: null,
             'origin_source' => $this->ef['origin_source'] ?: null,
+            'original_deposit_date' => $this->ef['original_deposit_date'] ?: null,
+            'original_receiver' => $this->ef['original_receiver'] ?: null,
             'deposit_reason' => $this->ef['deposit_reason'] ?: null,
             'expected_duration' => $this->ef['expected_duration'] ?: null,
             'deposit_date' => $this->ef['deposit_date'] ?: $r->deposit_date,
@@ -412,8 +420,8 @@ class Show extends Component
             'editable' => $this->canEdit(),
             'deletable' => $this->canDelete(),
             'isOwner' => auth()->id() === $this->record->owner_user_id,
-            'departments' => \App\Models\Department::where('is_active', true)->with('unit:id,name')->orderBy('name')->get(['id', 'name', 'unit_id']),
-            'ownerUsers' => \App\Models\User::where('status', 'active')->orderBy('display_name')->get(['id', 'display_name', 'email']),
+            'departments' => Department::where('is_active', true)->with('unit:id,name')->orderBy('name')->get(['id', 'name', 'unit_id']),
+            'ownerUsers' => User::where('status', 'active')->orderBy('display_name')->get(['id', 'display_name', 'email']),
         ]);
     }
 }

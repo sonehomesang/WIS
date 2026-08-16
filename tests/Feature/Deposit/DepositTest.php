@@ -37,6 +37,32 @@ test('createDraft generates DP{year} number and history', function () {
     expect($r->history()->where('action', 'create')->exists())->toBeTrue();
 });
 
+test('legacy deposit type carries original deposit date + receiver, editable on show', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+
+    $r = app(DepositService::class)->createDraft([
+        'request_type' => 'legacy', 'item_category' => 'Tools', 'origin_source' => 'Old store',
+        'original_deposit_date' => '2019-06-01', 'original_receiver' => 'ທ້າວ ບຸນ',
+        'deposit_reason' => 'sitting long', 'expected_duration' => 'n/a', 'deposit_date' => now()->toDateString(),
+        'items' => [['item_name' => 'Dusty toolbox', 'qty' => 1]],
+    ], $admin);
+
+    expect($r->request_type)->toBe('legacy');
+    expect($r->original_deposit_date->format('Y-m-d'))->toBe('2019-06-01');
+    expect($r->original_receiver)->toBe('ທ້າວ ບຸນ');
+
+    Livewire::test(Show::class, ['record' => $r])
+        ->call('openEdit')
+        ->assertSet('ef.original_deposit_date', '2019-06-01')
+        ->assertSet('ef.original_receiver', 'ທ້າວ ບຸນ')
+        ->set('ef.original_receiver', 'ນາງ ຄຳ')
+        ->call('saveEdit')
+        ->assertHasNoErrors();
+
+    expect($r->refresh()->original_receiver)->toBe('ນາງ ຄຳ');
+});
+
 test('full happy path: submit → accept → stored → claimed', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $this->actingAs($admin);

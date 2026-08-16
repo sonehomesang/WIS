@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Deposit;
 
+use App\Models\Department;
 use App\Models\Equipment;
 use App\Models\InventoryItem;
 use App\Models\Uom;
+use App\Models\User;
 use App\Services\DepositService;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +25,11 @@ class Create extends Component
     public string $item_category = '';
 
     public string $origin_source = '';
+
+    // ເຄື່ອງຝາກເກົ່າ (legacy): ວັນທີ ຝາກ ຈິງ ໃນ ອະດີດ + ຜູ້ ຮັບ ຝາກ ຕອນ ນັ້ນ (ບໍ່ ບັງຄັບ)
+    public string $original_deposit_date = '';
+
+    public string $original_receiver = '';
 
     public string $deposit_reason = '';
 
@@ -161,9 +168,11 @@ class Create extends Component
         abort_unless(auth()->user()->can('deposit.create'), 403);
 
         $this->validate([
-            'request_type' => ['required', 'in:walk_in,pre_request'],
+            'request_type' => ['required', 'in:walk_in,pre_request,legacy'],
             'item_category' => ['required', 'string', 'max:256'],
             'origin_source' => ['required', 'string', 'max:500'],
+            'original_deposit_date' => ['nullable', 'date'],
+            'original_receiver' => ['nullable', 'string', 'max:256'],
             'deposit_reason' => ['required', 'string', 'max:1000'],
             'expected_duration' => ['required', 'string', 'max:128'],
             'deposit_date' => ['required', 'date'],
@@ -195,6 +204,8 @@ class Create extends Component
             'request_type' => $this->request_type,
             'item_category' => $this->item_category,
             'origin_source' => $this->origin_source,
+            'original_deposit_date' => $this->original_deposit_date ?: null,
+            'original_receiver' => $this->original_receiver ?: null,
             'deposit_reason' => $this->deposit_reason,
             'expected_duration' => $this->expected_duration,
             'deposit_date' => $this->deposit_date,
@@ -203,7 +214,7 @@ class Create extends Component
             'remark' => $this->remark ?: null,
             'owner_user_id' => $this->owner_user_id,
             'owner_dept_id' => $this->owner_dept_id,
-            'owner_unit_id' => $this->owner_dept_id ? \App\Models\Department::find($this->owner_dept_id)?->unit_id : null,
+            'owner_unit_id' => $this->owner_dept_id ? Department::find($this->owner_dept_id)?->unit_id : null,
             'items' => $this->items,
         ], auth()->user());
 
@@ -227,8 +238,8 @@ class Create extends Component
     {
         return view('livewire.deposit.create', [
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(),
-            'departments' => \App\Models\Department::where('is_active', true)->with('unit:id,name')->orderBy('name')->get(['id', 'name', 'unit_id']),
-            'ownerUsers' => \App\Models\User::where('status', 'active')->orderBy('display_name')->get(['id', 'display_name', 'email']),
+            'departments' => Department::where('is_active', true)->with('unit:id,name')->orderBy('name')->get(['id', 'name', 'unit_id']),
+            'ownerUsers' => User::where('status', 'active')->orderBy('display_name')->get(['id', 'display_name', 'email']),
         ]);
     }
 }

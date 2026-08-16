@@ -42,7 +42,7 @@
                         <span class="font-mono text-xl font-bold text-gray-900 tracking-tight">{{ $record->request_number }}</span>
                         <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $scls }}">{{ $slbl }}</span>
                     </div>
-                    <div class="text-gray-500 text-sm mt-1">{{ $record->owner_name }}@if ($record->unit) · {{ $record->unit->name }}@endif · {{ $record->request_type === 'pre_request' ? 'Pre-request' : 'Walk-in' }}</div>
+                    <div class="text-gray-500 text-sm mt-1">{{ $record->owner_name }}@if ($record->unit) · {{ $record->unit->name }}@endif · {{ ['walk_in' => 'Walk-in', 'pre_request' => 'Pre-request', 'legacy' => 'ເຄື່ອງຝາກເກົ່າ'][$record->request_type] ?? 'Walk-in' }}</div>
                     <div class="flex items-center gap-x-4 gap-y-1 flex-wrap mt-2.5 text-xs text-gray-500">
                         <span class="inline-flex items-center gap-1">📦 {{ $record->items->count() }} ລາຍການ · {{ $record->items->sum('qty') }} ໜ່ວຍ</span>
                         <span class="inline-flex items-center gap-1">📅 ຝາກ {{ $record->deposit_date?->format('d/m/Y') }}</span>
@@ -68,6 +68,8 @@
                     {!! $kv('ພະແນກ / Dept', e($record->department?->name)) !!}
                     {!! $kv('ປະເພດ / Category', e($record->item_category)) !!}
                     {!! $kv('ແຫຼ່ງທີ່ມາ / Origin', e($record->origin_source)) !!}
+                    @if ($record->original_deposit_date){!! $kv('ວັນທີຝາກເດີມ / Orig. deposit', e($record->original_deposit_date?->format('d/m/Y'))) !!}@endif
+                    @if ($record->original_receiver){!! $kv('ຜູ້ຮັບຝາກເດີມ / Orig. receiver', e($record->original_receiver)) !!}@endif
                     {!! $kv('ວັນທີຝາກ / Deposit', e($record->deposit_date?->format('d/m/Y'))) !!}
                     {!! $kv('ໄລຍະ / Duration', e($record->expected_duration)) !!}
                     {!! $kv('ຄາດເອົາຄືນ / Exp. claim', e($record->expected_claim_date?->format('d/m/Y'))) !!}
@@ -279,6 +281,8 @@
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ພະແນກ ເຈົ້າ ຂອງ / Department <span class="text-gray-400 font-normal">(ຄຸມ ສິດ ຈຳໜ່າຍ)</span></label><select wire:model="ef.owner_dept_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}@if ($d->unit) · {{ $d->unit->name }}@endif</option>@endforeach</select>@error('ef.owner_dept_id')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ປະເພດ</label><input type="text" wire:model="ef.item_category" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ແຫຼ່ງທີ່ມາ</label><input type="text" wire:model="ef.origin_source" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ວັນທີຝາກເດີມ <span class="text-gray-400 font-normal">(ເຄື່ອງຝາກເກົ່າ)</span></label><input type="date" wire:model="ef.original_deposit_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ຮັບຝາກເດີມ</label><input type="text" wire:model="ef.original_receiver" placeholder="ຊື່ ຜູ້ ຮັບ ຝາກ ຕອນ ນັ້ນ" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ໄລຍະເວລາ</label><input type="text" wire:model="ef.expected_duration" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ວັນທີຝາກ</label><input type="date" wire:model="ef.deposit_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ຄາດເອົາຄືນ</label><input type="date" wire:model="ef.expected_claim_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>

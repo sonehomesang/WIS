@@ -15,6 +15,7 @@ class DepositRecord extends Model
 
     protected $casts = [
         'deposit_date' => 'date',
+        'original_deposit_date' => 'date',
         'expected_arrival' => 'date',
         'expected_claim_date' => 'date',
         'actual_claim_date' => 'date',
