@@ -26,8 +26,13 @@
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <x-page-subheader :back="route('disposal')" back-label="ລາຍການ">
             <x-slot:actions>
+                {{-- ໜຶ່ງ ຈຸດ: Preview / PDF (ໂປຣຟາຍ ເຄື່ອງ, ມີ ຮູບ) / ແກ້ໄຂ — ລຽງ ກັນ --}}
+                @php $firstItem = $record->items->first(); @endphp
+                @if ($firstItem)
+                    <a href="{{ route('disposal.item.preview', [$record, $firstItem]) }}" target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-sky-600 rounded-lg px-3 py-1.5 hover:bg-sky-700 transition">👁 ພຣີວິວ</a>
+                    <a href="{{ route('disposal.item.pdf', [$record, $firstItem]) }}" target="_blank" class="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">📄 PDF</a>
+                @endif
                 @if ($canEdit && ! $editing)<button wire:click="openEdit" class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition">✏️ ແກ້ໄຂ</button>@endif
-                <a href="{{ route('disposal.pdf', $record) }}" target="_blank" class="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">📄 PDF</a>
             </x-slot>
         </x-page-subheader>
 
@@ -115,10 +120,13 @@
                             <div class="mt-3 flex gap-1.5 flex-wrap">@foreach (array_slice($it->photos, 1) as $p)<img src="{{ \Illuminate\Support\Facades\Storage::url($p) }}" class="w-14 h-14 rounded-lg object-cover border border-gray-200" />@endforeach</div>
                         @endif
 
-                        <div class="mt-3 pt-3 border-t border-gray-100 flex gap-2">
-                            <a href="{{ route('disposal.item.preview', [$record, $it]) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-medium text-white bg-sky-600 rounded-lg px-3 py-1.5 hover:bg-sky-700 transition">👁 ພຣີວິວ</a>
-                            <a href="{{ route('disposal.item.pdf', [$record, $it]) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">📄 PDF</a>
-                        </div>
+                        {{-- ຕໍ່ ລາຍການ: ສະແດງ ສະເພາະ ເມື່ອ ມີ ຫຼາຍ ລາຍການ (ໃບ ລາຍການ ດຽວ ໃຊ້ ປຸ່ມ ເທິງ ຫົວ) --}}
+                        @if ($record->items->count() > 1)
+                            <div class="mt-3 pt-3 border-t border-gray-100 flex gap-2">
+                                <a href="{{ route('disposal.item.preview', [$record, $it]) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-medium text-white bg-sky-600 rounded-lg px-3 py-1.5 hover:bg-sky-700 transition">👁 ພຣີວິວ ລາຍການ ນີ້</a>
+                                <a href="{{ route('disposal.item.pdf', [$record, $it]) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">📄 PDF ລາຍການ ນີ້</a>
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             </div>
