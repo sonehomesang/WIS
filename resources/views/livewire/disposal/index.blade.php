@@ -49,8 +49,9 @@
                         <tr class="text-[11px] uppercase tracking-wide">
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ໄອດີ (DS)</th>
                             <th class="text-left font-semibold px-4 py-2.5 w-full">ເຄື່ອງ (Items)</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ວັນທີຝາກເດີມ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ຜູ້ຮັບຝາກເດີມ</th>
+                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ເຈົ້າຂອງ (Org Unit / Dept)</th>
+                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ທະບຽນຊັບສິນ</th>
+                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ລະຫັດຂອງສາງ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ຈຳນວນ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ຜູ້ ເຮັດລິສ</th>
                             <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ວັນທີ</th>
@@ -76,8 +77,12 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-gray-600 text-xs tabular-nums">{{ $r->original_deposit_date?->format('d/m/Y') ?? '—' }}</td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-gray-600 text-xs">{{ $r->original_receiver ?: '—' }}</td>
+                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-xs">
+                                    @if ($r->department)<div class="text-gray-700 font-medium">{{ $r->department->unit?->name ?? '—' }}</div><div class="text-gray-400">{{ $r->department->name }}</div>
+                                    @else<span class="text-gray-300">—</span>@endif
+                                </td>
+                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-xs font-mono {{ $fi?->fixed_asset_no ? 'text-gray-600' : 'text-gray-300' }}">{{ $fi?->fixed_asset_no ?: '—' }}@if ($fi?->fixed_asset_no && $r->items_count > 1)<span class="text-gray-300"> …</span>@endif</td>
+                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-xs">@if ($fi?->asset_code)<span class="font-mono bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5 text-gray-600">{{ $fi->asset_code }}</span>@if ($r->items_count > 1)<span class="text-gray-300"> …</span>@endif @else<span class="text-gray-300">—</span>@endif</td>
                                 <td class="px-4 py-2.5 align-top whitespace-nowrap text-gray-700"><span class="font-semibold tabular-nums">{{ $r->items->sum('qty') }}</span> <span class="text-xs text-gray-400">({{ $r->items_count }} ລາຍການ)</span></td>
                                 <td class="px-4 py-2.5 align-top whitespace-nowrap text-gray-600">{{ $r->prepared_by_name ?? '—' }}</td>
                                 <td class="px-4 py-2.5 align-top whitespace-nowrap text-gray-500 text-xs tabular-nums">{{ $r->created_at?->format('d/m/Y') }}</td>
@@ -93,7 +98,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="9" class="px-4 py-14 text-center text-gray-400">
+                            <tr><td colspan="10" class="px-4 py-14 text-center text-gray-400">
                                 <div class="text-4xl mb-2">🗑️</div>
                                 {{ $showDeleted ? 'ບໍ່ ມີ ໃບ ຈຳໜ່າຍ ທີ່ ຖືກ ລຶບ' : 'ຍັງ ບໍ່ ມີ ໃບ ຈຳໜ່າຍ — ກົດ “+ ຈຳໜ່າຍ” ເພື່ອ ສ້າງ' }}
                             </td></tr>
