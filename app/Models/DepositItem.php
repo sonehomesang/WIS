@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ConditionStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -22,7 +23,7 @@ class DepositItem extends Model
     /** Deposit items whose lifecycle status makes them eligible for disposal. */
     public function scopeDisposable($query)
     {
-        return $query->whereIn('condition_status', \App\Support\ConditionStatus::DISPOSABLE);
+        return $query->whereIn('condition_status', ConditionStatus::disposable());
     }
 
     public function record(): BelongsTo

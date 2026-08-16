@@ -59,7 +59,7 @@ class Create extends Component
         abort_unless(auth()->user()->can('disposal.create'), 403);
         $this->department_id = auth()->user()->department_id;
         $this->items = [$this->blankItem()];
-        foreach (ConditionStatus::DISPOSABLE as $s) {
+        foreach (ConditionStatus::disposable() as $s) {
             $this->pullStatuses[$s] = true;
         }
 
@@ -256,7 +256,7 @@ class Create extends Component
     {
         return array_values(array_intersect(
             array_keys(array_filter($this->pullStatuses)),
-            ConditionStatus::DISPOSABLE
+            ConditionStatus::disposable()
         ));
     }
 

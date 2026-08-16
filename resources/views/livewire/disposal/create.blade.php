@@ -166,7 +166,7 @@
                         <div>
                             <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">② ດຶງ ເຄື່ອງ ທີ່ ຢູ່ ໃນ ສະຖານະ</div>
                             <div class="flex flex-wrap gap-2">
-                                @foreach (\App\Support\ConditionStatus::DISPOSABLE as $cs)
+                                @foreach (\App\Support\ConditionStatus::disposable() as $cs)
                                     <label class="inline-flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-gray-50 transition">
                                         <input type="checkbox" wire:model.live="pullStatuses.{{ $cs }}" class="rounded border-gray-300 text-sky-600" /> {{ \App\Support\ConditionStatus::shortLabel($cs) }}
                                     </label>

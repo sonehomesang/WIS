@@ -10,6 +10,7 @@ use App\Livewire\Equipment\MaintenanceTemplates;
 use App\Livewire\Inventory\Index;
 use App\Livewire\Settings\Audit;
 use App\Livewire\Settings\Backup;
+use App\Livewire\Settings\ConditionStatuses;
 use App\Livewire\Settings\Email;
 use App\Livewire\Settings\Facilities;
 use App\Livewire\Settings\NotificationLog;
@@ -407,6 +408,10 @@ Route::get('settings/facilities', Facilities::class)
 Route::get('settings/uom', Uom::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.uom');
+
+Route::get('settings/condition-statuses', ConditionStatuses::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.condition-statuses');
 
 Route::get('settings/suppliers', Suppliers::class)
     ->middleware(['auth', 'verified'])

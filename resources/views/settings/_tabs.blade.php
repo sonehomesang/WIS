@@ -6,6 +6,7 @@
         ['label' => 'Roles & permissions', 'perm' => 'roles.view', 'route' => 'settings.roles'],
         ['label' => 'Organization', 'perm' => 'units.view', 'route' => 'settings.organization', 'match' => ['settings.organization', 'settings.facilities']],
         ['label' => 'Units of measure', 'perm' => 'units.view', 'route' => 'settings.uom'],
+        ['label' => 'ສະຖານະພາບ ເຄື່ອງ', 'perm' => 'settings.view', 'route' => 'settings.condition-statuses'],
         ['label' => 'Suppliers', 'perm' => 'supplier.view', 'route' => 'settings.suppliers'],
         ['label' => 'Audit log', 'perm' => 'audit.view', 'route' => 'settings.audit'],
         ['label' => 'Reports', 'perm' => 'reports.view', 'route' => 'settings.reports'],

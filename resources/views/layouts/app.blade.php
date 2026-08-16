@@ -64,6 +64,7 @@
                         'settings.organization' => 'Organization',
                         'settings.facilities' => 'Organization',
                         'settings.uom' => 'Units of measure',
+                        'settings.condition-statuses' => 'ສະຖານະພາບ ເຄື່ອງ · Condition statuses',
                         'settings.suppliers' => 'Suppliers',
                         'settings.suppliers.show' => 'Supplier detail',
                         'settings.notifications' => 'Notifications',
