@@ -252,7 +252,9 @@ class Show extends Component
     {
         $u = auth()->user();
 
-        return $u->is_super_admin || $u->can('deposit.edit');
+        // ຖືກ ດຶງ ເຂົ້າ ໃບ ຈຳໜ່າຍ (disposal) ຫຼື ຈຳໜ່າຍ ແລ້ວ (disposed) = ລິສ ຕາຍ, ລັອກ ແກ້ໄຂ
+        return ($u->is_super_admin || $u->can('deposit.edit'))
+            && ! in_array($this->record->status, ['disposal', 'disposed'], true);
     }
 
     protected function canDelete(): bool

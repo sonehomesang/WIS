@@ -56,6 +56,7 @@
         @error('action')<div class="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5">{{ $message }}</div>@enderror
         @if ($record->status === 'needs_fix' && $record->needs_fix_reason)<div class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">⚠ ຕ້ອງປັບແກ້: {{ $record->needs_fix_reason }}</div>@endif
         @if ($record->status === 'cancelled' && $record->cancel_reason)<div class="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5">ຍົກເລີກ: {{ $record->cancel_reason }}</div>@endif
+        @if (in_array($record->status, ['disposal', 'disposed'], true))<div class="text-sm {{ $record->status === 'disposed' ? 'text-gray-100 bg-gray-800 border-gray-800' : 'text-rose-700 bg-rose-50 border-rose-200' }} border rounded-xl px-4 py-2.5">🗑 {{ $record->status === 'disposed' ? 'ຈຳໜ່າຍ ແລ້ວ — ເຄື່ອງ ບໍ່ ມີ ຕົວຕົນ ແລ້ວ (ລິສ ຕາຍ · ລັອກ).' : 'ຖືກ ດຶງ ໄປ ໃບ ຈຳໜ່າຍ — ລັອກ ການ ແກ້ໄຂ.' }}</div>@endif
 
         <div id="deposit-detail" class="space-y-4">
             {{-- ① general info --}}

@@ -6,6 +6,7 @@ use App\Notifications\DisposalEndorsementRequest;
 use App\Services\DisposalService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
@@ -43,8 +44,8 @@ test('only the assigned user may endorse their row — a different user is forbi
     expect($r->fresh()->status)->toBe('in_review');
     $r = $this->svc->endorse($r, 'committee', $endorser, ['recommendation' => 'ຂາຍ ເສດ', 'comment' => 'ok']);
 
-    // sole endorser signed → approved
-    expect($r->status)->toBe('approved');
+    // sole endorser signed → C-Level ຄົບ → ຈຳໜ່າຍ ສຳເລັດ (disposed)
+    expect($r->status)->toBe('disposed');
     $s = $r->signoffs()->where('role_key', 'committee')->first();
     expect($s->signed_at)->not->toBeNull();
     expect($s->recommendation)->toBe('ຂາຍ ເສດ');
@@ -56,7 +57,7 @@ test('a non-assigned user cannot endorse (service guards it)', function () {
     $r = reviewRecord($this->svc, $this->admin, $endorser);
 
     expect(fn () => $this->svc->endorse($r, 'committee', $stranger, []))
-        ->toThrow(Illuminate\Validation\ValidationException::class);
+        ->toThrow(ValidationException::class);
     expect($r->fresh()->status)->toBe('in_review');
 });
 

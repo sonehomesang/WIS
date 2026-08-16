@@ -116,6 +116,8 @@ class Index extends Component
             $chip('stored', 'ເກັບໄວ້', $counts['stored'] ?? 0),
             $chip('needs_fix', 'ຕ້ອງແກ້', $counts['needs_fix'] ?? 0, true),
             $chip('claimed', 'ເອົາຄືນແລ້ວ', $counts['claimed'] ?? 0),
+            $chip('disposal', 'ກຳລັງຈຳໜ່າຍ', $counts['disposal'] ?? 0),
+            $chip('disposed', 'ຈຳໜ່າຍແລ້ວ', $counts['disposed'] ?? 0),
             $chip('draft', 'draft', $counts['draft'] ?? 0),
             $chip('cancelled', 'ຍົກເລີກ', $counts['cancelled'] ?? 0),
         ];

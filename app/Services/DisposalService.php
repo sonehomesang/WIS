@@ -3,12 +3,14 @@
 namespace App\Services;
 
 use App\Models\DepositItem;
+use App\Models\DepositRecord;
 use App\Models\DisposalRecord;
 use App\Models\DisposalSignoff;
 use App\Models\Equipment;
 use App\Models\InventoryItem;
 use App\Models\User;
 use App\Notifications\DisposalEndorsementRequest;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -83,10 +85,43 @@ class DisposalService
                 ]);
             }
 
+            $this->lockSourceDeposits($record);   // ເຄື່ອງຝາກ ທີ່ ດຶງ ເຂົ້າ → ລັອກ ເປັນ 'disposal'
             $this->recordHistory($record, 'create', $actor);
 
             return $record;
         });
+    }
+
+    /** deposit records ທີ່ ຖືກ ອ້າງ ອີງ ໂດຍ item ຂອງ ໃບ ນີ້ (source_type='deposit'). */
+    public function linkedDepositRecords(DisposalRecord $r): Collection
+    {
+        $depItemIds = $r->items()->where('source_type', 'deposit')->whereNotNull('source_id')->pluck('source_id');
+        if ($depItemIds->isEmpty()) {
+            return collect();
+        }
+        $recIds = DepositItem::whereIn('id', $depItemIds)->pluck('record_id')->unique()->filter();
+
+        return DepositRecord::whereIn('id', $recIds)->get();
+    }
+
+    /** ພໍ ດຶງ ເຄື່ອງຝາກ ເຂົ້າ ໃບ ຈຳໜ່າຍ → ລັອກ deposit (status='disposal', ແກ້ ບໍ່ ໄດ້). */
+    public function lockSourceDeposits(DisposalRecord $r): void
+    {
+        foreach ($this->linkedDepositRecords($r) as $dep) {
+            if (! in_array($dep->status, ['disposal', 'disposed', 'cancelled'], true)) {
+                $dep->update(['status' => 'disposal']);
+            }
+        }
+    }
+
+    /** ໃບ ຈຳໜ່າຍ ຖືກ ຍົກເລີກ/ລຶບ → ປົດ ລັອກ deposit (status='disposal' → 'stored'). */
+    public function unlockSourceDeposits(DisposalRecord $r): void
+    {
+        foreach ($this->linkedDepositRecords($r) as $dep) {
+            if ($dep->status === 'disposal') {
+                $dep->update(['status' => 'stored']);
+            }
+        }
     }
 
     /** ປະຕິບັດ transition. */
@@ -220,7 +255,11 @@ class DisposalService
 
             $r->load('signoffs');
             if ($r->endorsementComplete()) {
-                $r->status = 'approved';
+                // C-Level ເຊັນ ຄົບ → ຈຳໜ່າຍ ສຳເລັດ ທັນທີ + ອັບເດດ ທະບຽນ ຕົ້ນທາງ (ປິດ deposit ເປັນ 'disposed')
+                $r->status = 'disposed';
+                $this->updateSourceRegisters($r);
+                $r->registers_updated_at = now();
+                $r->registers_updated_by = $actor->id;
             }
             $r->updated_by = $actor->id;
             $r->save();
@@ -278,6 +317,8 @@ class DisposalService
                 $inv->update(['is_active' => false]);
             } elseif ($it->source_type === 'deposit' && ($di = DepositItem::find($it->source_id))) {
                 $di->update(['condition_on_claim' => 'ຈຳໜ່າຍ (disposed) · '.$r->request_number]);
+                // ປິດ deposit ເປັນ ລິສ ຕາຍ — ເຄື່ອງ ບໍ່ ມີ ຕົວຕົນ ແລ້ວ
+                DepositRecord::whereKey($di->record_id)->update(['status' => 'disposed']);
             }
         }
     }
@@ -285,6 +326,7 @@ class DisposalService
     private function doCancel(DisposalRecord $r, array $opts): void
     {
         $this->assert(! in_array($r->status, ['disposed', 'cancelled'], true), 'ຍົກເລີກ ບໍ່ ໄດ້ ໃນ ສະຖານະ ນີ້.');
+        $this->unlockSourceDeposits($r);   // ປົດ ລັອກ ເຄື່ອງຝາກ ທີ່ ດຶງ ໄວ້
         $r->status = 'cancelled';
         $r->cancel_reason = $opts['reason'] ?? null;
         $r->cancelled_at = now();

@@ -282,6 +282,7 @@ class Show extends Component
     {
         abort_unless(auth()->user()->can('disposal.delete'), 403);
         $this->validate(['deleteReason' => ['required', 'string', 'max:500']], ['deleteReason.required' => 'ກະລຸນາ ໃສ່ ເຫດຜົນ ການ ລຶບ.']);
+        app(DisposalService::class)->unlockSourceDeposits($this->record);   // ປົດ ລັອກ ເຄື່ອງຝາກ ທີ່ ດຶງ ໄວ້
         $this->record->forceFill(['deleted_reason' => $this->deleteReason, 'deleted_by' => auth()->id()])->save();
         $this->record->delete();
         session()->flash('ok', '✓ ລຶບ '.$this->record->request_number.' (ຍ້າຍ ໄປ Deleted Log)');
@@ -455,6 +456,7 @@ class Show extends Component
 
         // ມອບໝາຍ ຜູ້ ຮັບຮອງ ຕໍ່ 5 ບົດບາດ + ແຈ້ງ ຄົນ ໃໝ່ (ຖ້າ ໃບ ຢູ່ ຮອບ ຮັບຮອງ ແລ້ວ)
         $svc = app(DisposalService::class);
+        $svc->lockSourceDeposits($this->record);   // ເຄື່ອງຝາກ ທີ່ ເພີ່ມ ຕອນ ແກ້ໄຂ → ລັອກ ນຳ
         $svc->assignEndorsers($this->record, $this->assignees, auth()->user());
         $notice = '';
         if ($this->record->status === 'in_review') {

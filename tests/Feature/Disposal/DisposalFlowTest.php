@@ -9,6 +9,7 @@ use App\Models\DisposalRecord;
 use App\Models\Equipment;
 use App\Models\Unit;
 use App\Models\User;
+use App\Services\DepositService;
 use App\Services\DisposalService;
 use Database\Seeders\RolePermissionSeeder;
 use Livewire\Livewire;
@@ -78,15 +79,47 @@ test('parallel endorsement: assign 5 → submit → all endorse (any order) → 
     foreach (['executive', 'manager', 'preparer', 'technical', 'committee'] as $role) {
         $r = $svc->endorse($r, $role, $admin, ['recommendation' => 'ທຳລາຍ', 'comment' => 'ok']);
     }
-    expect($r->status)->toBe('approved');
+    // C-Level ເຊັນ ຄົບ → ຈຳໜ່າຍ ສຳເລັດ ທັນທີ + ອັບເດດ ທະບຽນ ຕົ້ນທາງ ອັດຕະໂນມັດ
+    expect($r->status)->toBe('disposed');
     expect($r->signoffs()->whereNotNull('signed_at')->count())->toBe(5);
-
-    $svc->transition($r, 'dispose', $admin, ['update_registers' => true]);
-    expect($r->refresh()->status)->toBe('disposed');
     expect($r->registers_updated_at)->not->toBeNull();
 
     // 2 of 3 units moved to retired
     expect($e->fresh()->statusBreakdown())->toBe(['active' => 1, 'repair' => 0, 'retired' => 2]);
+});
+
+test('deposit lifecycle: pull locks deposit to disposal, all-sign disposes it, cancel unlocks', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $svc = app(DisposalService::class);
+
+    // a stored deposit with one item
+    $dep = app(DepositService::class)->createDraft([
+        'request_type' => 'walk_in', 'item_category' => 'Tools', 'origin_source' => 'x',
+        'deposit_reason' => 'r', 'expected_duration' => '1m', 'deposit_date' => now()->toDateString(),
+        'items' => [['item_name' => 'Old pump', 'qty' => 1]],
+    ], $admin);
+    $dep->update(['status' => 'stored']);
+    $depItem = $dep->items()->first();
+
+    // pull that deposit item into a disposal → deposit locks to 'disposal'
+    $r = $svc->createDraft(['items' => [[
+        'source_type' => 'deposit', 'source_id' => $depItem->id, 'item_name' => 'Old pump', 'qty' => 1, 'reason' => 'ຊຳລຸດ',
+    ]]], $admin);
+    expect($dep->refresh()->status)->toBe('disposal');
+
+    // cancel the disposal → deposit unlocks back to 'stored'
+    $svc->transition($r, 'cancel', $admin, ['reason' => 'ຍົກເລີກ']);
+    expect($dep->refresh()->status)->toBe('stored');
+
+    // pull again, assign, submit, all endorse → deposit becomes 'disposed'
+    $r2 = $svc->createDraft(['items' => [[
+        'source_type' => 'deposit', 'source_id' => $depItem->id, 'item_name' => 'Old pump', 'qty' => 1, 'reason' => 'ຊຳລຸດ',
+    ]]], $admin);
+    expect($dep->refresh()->status)->toBe('disposal');
+    $svc->assignEndorsers($r2, ['committee' => ['user_id' => $admin->id]], $admin);
+    $svc->transition($r2, 'submit', $admin);
+    $svc->endorse($r2->refresh(), 'committee', $admin, ['recommendation' => 'ທຳລາຍ']);
+    expect($dep->refresh()->status)->toBe('disposed');
 });
 
 test('an assigned endorser can reject their row → record loops back to draft with the reason', function () {
@@ -221,11 +254,11 @@ test('reject then resubmit resets signatures but keeps the endorser assignments 
     expect($r->signoffs()->whereNotNull('user_id')->count())->toBe(5);
     expect($r->signoffs()->whereNotNull('signed_at')->count())->toBe(0);
 
-    // ເຊັນ ຄົບ ຈົນ approved ໄດ້ ປົກກະຕິ
+    // ເຊັນ ຄົບ → ຈຳໜ່າຍ ສຳເລັດ ທັນທີ (disposed)
     foreach ($roles as $role) {
         $r = $svc->endorse($r, $role, $admin, ['recommendation' => 'ທຳລາຍ']);
     }
-    expect($r->status)->toBe('approved');
+    expect($r->status)->toBe('disposed');
 });
 
 test('disposal create rejects a forged register source_id (audit)', function () {

@@ -6,9 +6,13 @@
         'stored' => ['STORED', 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'],
         'needs_fix' => ['NEEDS FIX', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'],
         'claimed' => ['CLAIMED', 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200'],
+        'disposal' => ['DISPOSAL', 'bg-rose-50 text-rose-700 ring-1 ring-rose-200'],
+        'disposed' => ['DISPOSED', 'bg-gray-800 text-gray-100'],
         'cancelled' => ['CANCELLED', 'bg-gray-100 text-gray-400'],
         default => [strtoupper($s), 'bg-gray-100 text-gray-600'],
     };
+    // ຖືກ ດຶງ ໄປ ຈຳໜ່າຍ = ລິສ ຕາຍ, ລັອກ ແກ້ໄຂ
+    $locked = fn ($s) => in_array($s, ['disposal', 'disposed'], true);
 @endphp
 
 <div class="pb-6">
@@ -112,7 +116,7 @@
                                         <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນລາຍການນີ້?" class="text-xs font-medium text-emerald-700 border border-emerald-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 transition inline-block">↩ ກູ້ຄືນ</button>
                                         @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate ml-auto" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif
                                     @else
-                                        @can('deposit.edit')<a href="{{ route('deposit.show', [$r, 'edit' => 1]) }}" wire:navigate class="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition inline-block mr-1">✏️ ແກ້ໄຂ</a>@endcan
+                                        @can('deposit.edit')@unless ($locked($r->status))<a href="{{ route('deposit.show', [$r, 'edit' => 1]) }}" wire:navigate class="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition inline-block mr-1">✏️ ແກ້ໄຂ</a>@endunless @endcan
                                         <a href="{{ route('deposit.show', $r) }}" wire:navigate class="text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition inline-block">ເບິ່ງ</a>
                                     @endif
                                 </td>
