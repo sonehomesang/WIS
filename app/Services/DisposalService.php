@@ -73,6 +73,7 @@ class DisposalService
                     'qty' => max(1, (int) ($it['qty'] ?? 1)),
                     'unit' => $it['unit'] ?? null,
                     'condition' => $it['condition'] ?? null,
+                    'functional_status' => in_array($it['functional_status'] ?? null, ['usable', 'partial', 'unusable'], true) ? $it['functional_status'] : null,
                     'reason' => ($it['reason'] ?? null) ?: null,
                     'reason_detail' => ($it['reason_detail'] ?? null) ?: null,
                     'recommendation' => ($it['recommendation'] ?? null) ?: null,

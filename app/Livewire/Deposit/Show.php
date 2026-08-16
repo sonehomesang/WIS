@@ -10,6 +10,7 @@ use App\Services\DepositService;
 use App\Support\ConditionStatus;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -61,6 +62,11 @@ class Show extends Component
     public array $claimCondition = [];
 
     // ── delete ──
+    // ── admin: ຄືນ ສະຖານະ ໃບ (super_admin ເທົ່ານັ້ນ — ແກ້ ຄວາມ ຜິດ / ທົດສອບ) ──
+    public bool $showStatusReset = false;
+
+    public string $resetStatus = '';
+
     public bool $showDelete = false;
 
     public string $deleteReason = '';
@@ -288,6 +294,33 @@ class Show extends Component
         session()->flash('ok', '✓ ລຶບ (ຍ້າຍໄປ deleted log)');
 
         return $this->redirect(route('deposit'), navigate: true);
+    }
+
+    // ── admin: ຄືນ ສະຖານະ ໃບ (super_admin) ──
+    public function openStatusReset(): void
+    {
+        abort_unless(auth()->user()->is_super_admin, 403);
+        $this->resetStatus = $this->record->status;
+        $this->resetErrorBag();
+        $this->showStatusReset = true;
+    }
+
+    public function applyStatusReset(): void
+    {
+        abort_unless(auth()->user()->is_super_admin, 403);
+        $valid = ['draft', 'submitted', 'accepted', 'stored', 'needs_fix', 'claimed', 'cancelled', 'disposal', 'disposed'];
+        $this->validate(['resetStatus' => ['required', Rule::in($valid)]]);
+
+        $old = $this->record->status;
+        $this->record->update(['status' => $this->resetStatus]);
+        $u = auth()->user();
+        $this->record->history()->create([
+            'action' => 'status_reset', 'status' => $this->resetStatus, 'user_id' => $u->id,
+            'user_name' => $u->display_name ?? $u->email, 'comment' => "admin ຄືນ ສະຖານະ: {$old} → {$this->resetStatus}", 'created_at' => now(),
+        ]);
+        $this->record->refresh();
+        $this->showStatusReset = false;
+        session()->flash('ok', '✓ ຕັ້ງ ສະຖານະ ໃໝ່ (admin): '.$this->resetStatus);
     }
 
     // ── admin edit ──

@@ -37,6 +37,28 @@ test('createDraft generates DP{year} number and history', function () {
     expect($r->history()->where('action', 'create')->exists())->toBeTrue();
 });
 
+test('only a super admin can reset a deposit status (correction)', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+    $r = aDepositDraft($admin);
+    $r->update(['status' => 'claimed']);   // e.g. wrongly claimed
+
+    // super admin resets claimed → stored
+    Livewire::test(Show::class, ['record' => $r])
+        ->call('openStatusReset')
+        ->set('resetStatus', 'stored')
+        ->call('applyStatusReset')
+        ->assertHasNoErrors();
+    expect($r->refresh()->status)->toBe('stored');
+    expect($r->history()->where('action', 'status_reset')->exists())->toBeTrue();
+
+    // a non-super warehouse user cannot
+    $staff = User::factory()->create(['is_super_admin' => false]);
+    $staff->syncRoles(['warehouse_staff']);
+    $this->actingAs($staff);
+    Livewire::test(Show::class, ['record' => $r->fresh()])->call('openStatusReset')->assertForbidden();
+});
+
 test('legacy deposit type carries original deposit date + receiver, editable on show', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $this->actingAs($admin);

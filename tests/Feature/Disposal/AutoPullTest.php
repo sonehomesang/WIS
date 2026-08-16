@@ -1,9 +1,11 @@
 <?php
 
 use App\Livewire\Disposal\Create;
+use App\Models\DisposalRecord;
 use App\Models\Equipment;
 use App\Models\InventoryItem;
 use App\Models\User;
+use App\Services\DepositService;
 use Database\Seeders\RolePermissionSeeder;
 use Livewire\Livewire;
 
@@ -52,11 +54,12 @@ test('with no disposable statuses selected it errors and pulls nothing', functio
 });
 
 test('auto-pull also grabs a disposable deposit item by status', function () {
-    $rec = app(App\Services\DepositService::class)->createDraft([
+    $rec = app(DepositService::class)->createDraft([
         'request_type' => 'walk_in', 'item_category' => 'Tools', 'origin_source' => 'X',
         'deposit_reason' => 'r', 'deposit_date' => now()->toDateString(),
         'items' => [['item_name' => 'Broken drill', 'qty' => 1, 'condition_status' => 'beyond_repair']],
     ], auth()->user());
+    $rec->update(['status' => 'stored']);   // ເຄື່ອງ ຝາກ ຢູ່ ສາງ ຈິງ → ດຶງ ໄປ ຈຳໜ່າຍ ໄດ້
     $depItem = $rec->items()->first();
     expect($depItem->condition_status)->toBe('beyond_repair');
 
@@ -70,12 +73,40 @@ test('auto-pull also grabs a disposable deposit item by status', function () {
     expect((int) $items[0]['source_id'])->toBe($depItem->id);
 });
 
+test('a non-present deposit (claimed) is not pullable, and functional flows from the deposit', function () {
+    // present + functional=partial → pullable and inherits functional
+    $present = app(DepositService::class)->createDraft([
+        'request_type' => 'walk_in', 'item_category' => 'Tools', 'origin_source' => 'X',
+        'deposit_reason' => 'r', 'deposit_date' => now()->toDateString(), 'functional_status' => 'partial',
+        'items' => [['item_name' => 'Old pump', 'qty' => 1, 'condition_status' => 'beyond_repair']],
+    ], auth()->user());
+    $present->update(['status' => 'stored']);
+
+    // claimed (owner already took it back) → excluded from pull
+    $claimed = app(DepositService::class)->createDraft([
+        'request_type' => 'walk_in', 'item_category' => 'Tools', 'origin_source' => 'X',
+        'deposit_reason' => 'r', 'deposit_date' => now()->toDateString(),
+        'items' => [['item_name' => 'Gone item', 'qty' => 1, 'condition_status' => 'beyond_repair']],
+    ], auth()->user());
+    $claimed->update(['status' => 'claimed']);
+
+    $c = Livewire::test(Create::class)
+        ->set('pullSources', ['inventory' => false, 'equipment' => false, 'deposit' => true])
+        ->call('autoPull')->assertHasNoErrors();
+
+    $items = $c->get('items');
+    expect($items)->toHaveCount(1);                                    // only the present one
+    expect((int) $items[0]['source_id'])->toBe($present->items()->first()->id);
+    expect($items[0]['functional_status'])->toBe('partial');          // inherited from the deposit
+});
+
 test('pulling a deposit item carries its photos into the disposal item (for the profile)', function () {
-    $rec = app(App\Services\DepositService::class)->createDraft([
+    $rec = app(DepositService::class)->createDraft([
         'request_type' => 'walk_in', 'item_category' => 'Tools', 'origin_source' => 'X',
         'deposit_reason' => 'r', 'deposit_date' => now()->toDateString(),
         'items' => [['item_name' => 'Broken drill', 'qty' => 1, 'condition_status' => 'beyond_repair']],
     ], auth()->user());
+    $rec->update(['status' => 'stored']);   // ເຄື່ອງ ຝາກ ຢູ່ ສາງ ຈິງ → ດຶງ ໄປ ຈຳໜ່າຍ ໄດ້
     $depItem = $rec->items()->first();
     // deposit item has 2 evidence photos
     $depItem->photos()->create(['kind' => 'deposit', 'path' => 'deposit/1/1/a.jpg', 'sort_order' => 0]);
@@ -91,6 +122,6 @@ test('pulling a deposit item carries its photos into the disposal item (for the 
 
     // and they persist onto the saved DisposalItem
     $c->call('save');
-    $disp = App\Models\DisposalRecord::latest('id')->first();
+    $disp = DisposalRecord::latest('id')->first();
     expect($disp->items()->first()->photos)->toBe(['deposit/1/1/a.jpg', 'deposit/1/1/b.jpg']);
 });

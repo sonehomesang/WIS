@@ -346,6 +346,15 @@
                         <label class="block text-xs font-medium text-gray-500 mb-1">ສະພາບ / Condition</label>
                         <input type="text" wire:model="ef.{{ $i }}.condition" class="w-full rounded-lg border-gray-300 text-sm" placeholder="ເຊັ່ນ: ຮ່າງກາຍ ແຕກ, ບໍ່ ຕິດ ໄຟ…" />
                     </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">ສະຖານະ ການ ໃຊ້ງານ / Functional</label>
+                        <select wire:model="ef.{{ $i }}.functional_status" class="w-full rounded-lg border-gray-300 text-sm">
+                            <option value="">— ເລືອກ —</option>
+                            <option value="usable">✅ ໃຊ້ ໄດ້ ປົກກະຕິ</option>
+                            <option value="partial">⚠️ ໃຊ້ ໄດ້ ບາງ ສ່ວນ</option>
+                            <option value="unusable">⛔ ໃຊ້ ບໍ່ ໄດ້</option>
+                        </select>
+                    </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1">ເຫດຜົນ / Reason</label>

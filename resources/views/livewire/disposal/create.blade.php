@@ -87,7 +87,18 @@
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ໜ່ວຍ</label><input type="text" wire:model="items.{{ $i }}.unit" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                     </div>
 
-                    <div><label class="block text-xs font-medium text-gray-500 mb-1">ສະພາບ ປັດຈຸບັນ</label><input type="text" wire:model="items.{{ $i }}.condition" placeholder="ເຊັ່ນ: ມໍເຕີ ໄໝ້ · ໃຊ້ ບໍ່ ໄດ້" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ສະພາບ ປັດຈຸບັນ</label><input type="text" wire:model="items.{{ $i }}.condition" placeholder="ເຊັ່ນ: ມໍເຕີ ໄໝ້ · ໃຊ້ ບໍ່ ໄດ້" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ສະຖານະ ການ ໃຊ້ງານ (Functional) <span class="text-gray-400 font-normal">— ດຶງ ຈາກ ເຄື່ອງຝາກ ຖ້າ ມີ</span></label>
+                            <select wire:model="items.{{ $i }}.functional_status" class="w-full rounded-lg border-gray-300 text-sm">
+                                <option value="">— ເລືອກ —</option>
+                                <option value="usable">✅ ໃຊ້ ໄດ້ ປົກກະຕິ · Functional</option>
+                                <option value="partial">⚠️ ໃຊ້ ໄດ້ ບາງ ສ່ວນ · Partial</option>
+                                <option value="unusable">⛔ ໃຊ້ ບໍ່ ໄດ້ · Non-functional</option>
+                            </select>
+                        </div>
+                    </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="rounded-lg bg-rose-50/40 border border-rose-100 p-2.5">

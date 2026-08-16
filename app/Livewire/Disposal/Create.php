@@ -76,6 +76,7 @@ class Create extends Component
             'source_type' => 'equipment', 'source_id' => null,
             'item_name' => '', 'asset_code' => '', 'fixed_asset_no' => '',
             'qty' => 1, 'unit' => '', 'condition' => '',
+            'functional_status' => '',   // ໄຫຼ ຈາກ Deposit ຕອນ ດຶງ · ພິມ ເອງ ໄດ້
             'reason' => '', 'reason_detail' => '',
             'recommendation' => '', 'recommendation_detail' => '',
             'estimated_value' => '', 'currency' => '',
@@ -129,6 +130,7 @@ class Create extends Component
                 ->orderBy('slug')->limit(6)->get(['id', 'slug', 'name'])
                 ->map(fn ($x) => ['source' => 'inventory', 'id' => $x->id, 'code' => $x->slug, 'fixed' => null, 'name' => $x->name])->all(),
             'deposit' => DepositItem::query()
+                ->whereHas('record', fn ($r) => $r->whereIn('status', self::DEPOSIT_PULLABLE))   // ເຄື່ອງ ຍັງ ຢູ່ ສາງ ເທົ່ານັ້ນ
                 ->where(fn ($q) => $q->where('item_name', 'like', "%{$term}%")->orWhere('asset_code', 'like', "%{$term}%"))
                 ->orderByDesc('id')->limit(6)->get(['id', 'item_name', 'asset_code', 'fixed_asset_no'])
                 ->map(fn ($x) => ['source' => 'deposit', 'id' => $x->id, 'code' => $x->asset_code ?: '—', 'fixed' => $x->fixed_asset_no, 'name' => $x->item_name])->all(),
@@ -171,7 +173,7 @@ class Create extends Component
             $this->items[$i]['photos'] = $this->grabSourcePhotos($x->photos->pluck('path')->all());
             $name = $x->name;
         } else { // deposit
-            $x = DepositItem::with('photos')->find($id);
+            $x = DepositItem::with('photos', 'record')->find($id);
             if (! $x) {
                 return;
             }
@@ -179,6 +181,8 @@ class Create extends Component
             $this->items[$i]['fixed_asset_no'] = $x->fixed_asset_no ?? '';
             $this->items[$i]['unit'] = $this->items[$i]['unit'] ?: ($x->unit ?? '');
             $this->items[$i]['photos'] = $this->grabSourcePhotos($x->photos->pluck('path')->all());
+            // functional ໄຫຼ ຈາກ ໃບ ຝາກ (ບໍ່ ທັບ ຄ່າ ທີ່ ພິມ ໄວ້ ແລ້ວ)
+            $this->items[$i]['functional_status'] = $this->items[$i]['functional_status'] ?: ($x->record?->functional_status ?? '');
             $name = $x->item_name;
         }
         if (trim((string) ($this->items[$i]['item_name'] ?? '')) === '') {
@@ -282,6 +286,9 @@ class Create extends Component
         return null;
     }
 
+    /** ສະຖານະ deposit ທີ່ ເຄື່ອງ ຍັງ ຢູ່ ໃນ ສາງ ຈິງ → ດຶງ ໄປ ຈຳໜ່າຍ ໄດ້ (ບໍ່ ລວມ claimed/cancelled/ໃນ-disposal). */
+    public const DEPOSIT_PULLABLE = ['accepted', 'stored', 'needs_fix'];
+
     /** @return array<int, array{0:string,1:int}> */
     protected function pullQuery(array $statuses): array
     {
@@ -303,6 +310,7 @@ class Create extends Component
         }
         if (! empty($this->pullSources['deposit'])) {
             foreach (DepositItem::whereIn('condition_status', $statuses)
+                ->whereHas('record', fn ($r) => $r->whereIn('status', self::DEPOSIT_PULLABLE))
                 ->when($dept !== null, fn ($q) => $q->whereHas('record', fn ($r) => $r->where('owner_dept_id', $dept)))
                 ->orderByDesc('id')->limit(300)->pluck('id') as $id) {
                 $out[] = ['deposit', (int) $id];
@@ -330,6 +338,7 @@ class Create extends Component
         }
         if (! empty($this->pullSources['deposit'])) {
             $n += DepositItem::whereIn('condition_status', $statuses)
+                ->whereHas('record', fn ($r) => $r->whereIn('status', self::DEPOSIT_PULLABLE))
                 ->when($dept !== null, fn ($q) => $q->whereHas('record', fn ($r) => $r->where('owner_dept_id', $dept)))->count();
         }
 
@@ -386,6 +395,7 @@ class Create extends Component
             'items.*.item_name' => ['required', 'string', 'max:256'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
             'items.*.asset_code' => ['nullable', 'string', 'max:64'],
+            'items.*.functional_status' => ['nullable', 'in:usable,partial,unusable'],
             'items.*.reason' => ['nullable', 'string', 'max:128'],
             'items.*.recommendation' => ['nullable', 'string', 'max:128'],
             'items.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
@@ -398,7 +408,7 @@ class Create extends Component
         $exists = [
             'inventory' => fn ($id) => InventoryItem::whereKey($id)->exists(),
             'equipment' => fn ($id) => Equipment::whereKey($id)->exists(),
-            'deposit' => fn ($id) => DepositItem::whereKey($id)->exists(),
+            'deposit' => fn ($id) => DepositItem::whereKey($id)->whereHas('record', fn ($r) => $r->whereIn('status', self::DEPOSIT_PULLABLE))->exists(),
         ];
         foreach (array_values($this->items) as $i => $it) {
             $st = $it['source_type'] ?? 'new';

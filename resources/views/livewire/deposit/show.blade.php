@@ -28,6 +28,7 @@
         <x-page-subheader :back="route('deposit')" back-label="ລາຍການ ຝາກ">
             <x-slot:actions>
                 @if ($editable)<button wire:click="openEdit" class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition">✏️ ແກ້ໄຂ</button>@endif
+                @if (auth()->user()->is_super_admin)<button wire:click="openStatusReset" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-200 transition" title="ຄືນ ສະຖານະ (admin)">🔧 ສະຖານະ</button>@endif
                 <a href="{{ route('deposit.pdf', $record) }}" class="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">📄 PDF</a>
             </x-slot>
         </x-page-subheader>
@@ -267,6 +268,26 @@
                     <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນການລຶບ…" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
                     @error('deleteReason')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
                     <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50">ປິດ</button><button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="bg-rose-600 text-white rounded-lg px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-rose-700">ຢືນຢັນລຶບ</button></div>
+                </div>
+            </div>
+        @endif
+
+        {{-- admin: ຄືນ ສະຖານະ ໃບ (super_admin) --}}
+        @if ($showStatusReset)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
+                    <h3 class="font-semibold text-slate-700">🔧 ຄືນ ສະຖານະ ໃບ (admin)</h3>
+                    <p class="text-xs text-gray-500">ສຳລັບ ແກ້ ຄວາມ ຜິດ / ທົດສອບ ເທົ່ານັ້ນ. ຕັ້ງ ສະຖານະ ໃບ ໃໝ່ ໂດຍ ກົງ (ບໍ່ ຜ່ານ ໂຟລ).</p>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">ສະຖານະ ໃໝ່</label>
+                        <select wire:model="resetStatus" class="w-full rounded-lg border-gray-300 text-sm">
+                            @foreach (['draft' => 'draft', 'submitted' => 'submitted (ລໍ ຮັບ)', 'accepted' => 'accepted (ຮັບ ແລ້ວ)', 'stored' => 'stored (ເກັບ ໄວ້)', 'needs_fix' => 'needs_fix (ຕ້ອງ ແກ້)', 'claimed' => 'claimed (ເອົາ ຄືນ ແລ້ວ)', 'cancelled' => 'cancelled (ຍົກເລີກ)', 'disposal' => 'disposal (ກຳລັງ ຈຳໜ່າຍ)', 'disposed' => 'disposed (ຈຳໜ່າຍ ແລ້ວ)'] as $sv => $sl)
+                                <option value="{{ $sv }}">{{ $sl }}</option>
+                            @endforeach
+                        </select>
+                        @error('resetStatus')<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="flex justify-end gap-2"><button wire:click="$set('showStatusReset', false)" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50">ປິດ</button><button wire:click="applyStatusReset" class="bg-slate-700 text-white rounded-lg px-3 py-1.5 text-sm hover:bg-slate-800">ຕັ້ງ ສະຖານະ</button></div>
                 </div>
             </div>
         @endif

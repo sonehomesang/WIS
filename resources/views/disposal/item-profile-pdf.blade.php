@@ -169,6 +169,8 @@
                     @if ($cond)<tr><td class="k">ສະຖານະພາບ / Condition</td><td>{{ ConditionStatus::label($cond) }}</td></tr>@endif
                     @if ($purchase)<tr><td class="k">ວັນ ຮັບ ເຂົ້າ / Received</td><td>{{ $fmt($purchase) }}</td></tr>@endif
                     @if ($item->condition)<tr><td class="k">ສະພາບ / State</td><td>{{ $item->condition }}</td></tr>@endif
+                    @php $fnLbl = ['usable' => 'ໃຊ້ ໄດ້ ປົກກະຕິ · Functional', 'partial' => 'ໃຊ້ ໄດ້ ບາງ ສ່ວນ · Partial', 'unusable' => 'ໃຊ້ ບໍ່ ໄດ້ · Non-functional']; @endphp
+                    @if ($item->functional_status)<tr><td class="k">ສະຖານະ ໃຊ້ງານ / Functional</td><td>{{ $fnLbl[$item->functional_status] ?? $item->functional_status }}</td></tr>@endif
                     <tr><td class="k">ຈຳນວນ / Qty</td><td>{{ $item->qty }} {{ $item->unit }}</td></tr>
                     <tr><td class="k">ເຫດຜົນ / Reason</td><td>{{ $item->reason ?: '—' }}@if ($item->reason_detail) · {{ $item->reason_detail }}@endif</td></tr>
                     @if ($item->estimated_value)<tr><td class="k">ມູນຄ່າ ຄົງ ເຫຼືອ / Residual value</td><td>{{ number_format((float) $item->estimated_value, 2) }} {{ $item->currency }}</td></tr>@endif
