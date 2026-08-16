@@ -43,6 +43,7 @@ class DisposalRecord extends Model
         'prepared_at' => 'datetime',
         'cancelled_at' => 'datetime',
         'registers_updated_at' => 'datetime',
+        'original_deposit_date' => 'date',
     ];
 
     public function items(): HasMany

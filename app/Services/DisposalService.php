@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\DepositItem;
 use App\Models\DisposalRecord;
+use App\Models\DisposalSignoff;
 use App\Models\Equipment;
 use App\Models\InventoryItem;
 use App\Models\User;
@@ -51,6 +52,8 @@ class DisposalService
                 'title' => $data['title'] ?? null,
                 'department_id' => $data['department_id'] ?? $actor->department_id ?? null,
                 'note' => $data['note'] ?? null,
+                'original_deposit_date' => $data['original_deposit_date'] ?? null,
+                'original_receiver' => $data['original_receiver'] ?? null,
                 'prepared_by_name' => $actor->display_name ?? $actor->email,
                 'created_by' => $actor->id,
                 'updated_by' => $actor->id,
@@ -126,7 +129,7 @@ class DisposalService
      * ມອບໝາຍ ຜູ້ ຮັບຮອງ ຕໍ່ ບົດບາດ. $assignees: [role_key => ['user_id'=>?int, 'title'=>?string]].
      * Upsert ແຖວ signoff (pending); ປ່ຽນ ຄົນ → ຣີເຊັດ ລາຍເຊັນ ແຖວ ນັ້ນ; ວ່າງ → ລຶບ ແຖວ.
      *
-     * @return array<int, array{signoff: \App\Models\DisposalSignoff, user: User}> ແຖວ ໃໝ່ ທີ່ ຕ້ອງ ແຈ້ງ
+     * @return array<int, array{signoff: DisposalSignoff, user: User}> ແຖວ ໃໝ່ ທີ່ ຕ້ອງ ແຈ້ງ
      */
     public function assignEndorsers(DisposalRecord $r, array $assignees, $actor): array
     {

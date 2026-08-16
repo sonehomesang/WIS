@@ -11,6 +11,7 @@ use App\Models\EquipmentMaintenance;
 use App\Models\InventoryItem;
 use App\Models\Uom;
 use App\Services\DisposalService;
+use App\Support\ConditionStatus;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -29,6 +30,11 @@ class Create extends Component
     public ?int $department_id = null;
 
     public string $note = '';
+
+    // ເຄື່ອງຝາກເກົ່າ: ໃບ ຈຳໜ່າຍ ເຄື່ອງ ຝາກ ທີ່ ຄ້າງ ໄວ້ ດົນ (ບໍ່ ບັງຄັບ).
+    public string $original_deposit_date = '';
+
+    public string $original_receiver = '';
 
     /** @var array<int, array<string, mixed>> */
     public array $items = [];
@@ -53,7 +59,7 @@ class Create extends Component
         abort_unless(auth()->user()->can('disposal.create'), 403);
         $this->department_id = auth()->user()->department_id;
         $this->items = [$this->blankItem()];
-        foreach (\App\Support\ConditionStatus::DISPOSABLE as $s) {
+        foreach (ConditionStatus::DISPOSABLE as $s) {
             $this->pullStatuses[$s] = true;
         }
 
@@ -250,7 +256,7 @@ class Create extends Component
     {
         return array_values(array_intersect(
             array_keys(array_filter($this->pullStatuses)),
-            \App\Support\ConditionStatus::DISPOSABLE
+            ConditionStatus::DISPOSABLE
         ));
     }
 
@@ -374,6 +380,8 @@ class Create extends Component
             'title' => ['nullable', 'string', 'max:256'],
             'department_id' => ['nullable', 'exists:departments,id'],
             'note' => ['nullable', 'string', 'max:1000'],
+            'original_deposit_date' => ['nullable', 'date'],
+            'original_receiver' => ['nullable', 'string', 'max:256'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_name' => ['required', 'string', 'max:256'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
@@ -440,6 +448,8 @@ class Create extends Component
             'title' => $this->title ?: null,
             'department_id' => $deptId,
             'note' => $this->note ?: null,
+            'original_deposit_date' => $this->original_deposit_date ?: null,
+            'original_receiver' => $this->original_receiver ?: null,
             'items' => $payloadItems,
         ], auth()->user());
 

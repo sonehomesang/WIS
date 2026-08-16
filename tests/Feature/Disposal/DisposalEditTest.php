@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Disposal\Show;
+use App\Models\DisposalRecord;
 use App\Models\User;
 use App\Services\DisposalService;
 use Database\Seeders\RolePermissionSeeder;
@@ -11,7 +12,7 @@ beforeEach(function () {
     $this->actingAs(User::factory()->create(['is_super_admin' => true]));
 });
 
-function makeDisposalDraft(): App\Models\DisposalRecord
+function makeDisposalDraft(): DisposalRecord
 {
     return app(DisposalService::class)->createDraft([
         'title' => 'Old title',
@@ -86,4 +87,31 @@ test('a cancelled record is locked — cannot be edited', function () {
     $rec->forceFill(['status' => 'cancelled'])->save();
 
     expect(Livewire::test(Show::class, ['record' => $rec])->instance()->canEditRecord())->toBeFalse();
+});
+
+test('old-deposit fields save via createDraft and are editable', function () {
+    // create carries the two new fields through the service
+    $rec = app(DisposalService::class)->createDraft([
+        'title' => 'Old deposit disposal',
+        'original_deposit_date' => '2021-03-15',
+        'original_receiver' => 'ທ້າວ ສົມ',
+        'items' => [['source_type' => 'new', 'item_name' => 'Abandoned pallet', 'qty' => 1]],
+    ], auth()->user());
+
+    expect($rec->original_deposit_date->format('Y-m-d'))->toBe('2021-03-15');
+    expect($rec->original_receiver)->toBe('ທ້າວ ສົມ');
+
+    // openEdit prefills, saveEdit persists changes to both fields
+    Livewire::test(Show::class, ['record' => $rec])
+        ->call('openEdit')
+        ->assertSet('editOrigDate', '2021-03-15')
+        ->assertSet('editOrigReceiver', 'ທ້າວ ສົມ')
+        ->set('editOrigReceiver', 'ນາງ ດາວ')
+        ->set('editOrigDate', '2020-01-02')
+        ->call('saveEdit')
+        ->assertHasNoErrors();
+
+    $rec->refresh();
+    expect($rec->original_receiver)->toBe('ນາງ ດາວ');
+    expect($rec->original_deposit_date->format('Y-m-d'))->toBe('2020-01-02');
 });

@@ -1,5 +1,5 @@
 <div class="pb-10">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <x-page-subheader :back="route('disposal')" back-label="ລາຍການ ຈຳໜ່າຍ">
             <x-slot:hint>ບັນທຶກ ຮ່າງ → ມອບໝາຍ ຜູ້ ຮັບຮອງ → ສົ່ງ ຂໍ ຮັບຮອງ</x-slot>
         </x-page-subheader>
@@ -25,6 +25,15 @@
                 <div class="sm:col-span-2"><label class="block text-xs font-medium text-gray-500 mb-1">ຫົວຂໍ້ / ຊຸດ</label><input type="text" wire:model="title" placeholder="ເຊັ່ນ: ຈຳໜ່າຍ ເຄື່ອງມື ຊຳລຸດ ໄຕມາດ 3" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                 <div><label class="block text-xs font-medium text-gray-500 mb-1">ພະແນກ</label><select wire:model="department_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach</select></div>
                 <div><label class="block text-xs font-medium text-gray-500 mb-1">ໝາຍເຫດ</label><input type="text" wire:model="note" class="w-full rounded-lg border-gray-300 text-sm" placeholder="optional" /></div>
+
+                {{-- ເຄື່ອງຝາກເກົ່າ ທີ່ ຄ້າງ ໄວ້ ດົນ (optional) --}}
+                <div class="sm:col-span-4 border-t border-dashed border-gray-200 pt-3 mt-1">
+                    <div class="text-xs font-semibold text-amber-700 mb-2 flex items-center gap-1.5"><span>📦</span> ເຄື່ອງຝາກເກົ່າ ທີ່ ຄ້າງ ໄວ້ ດົນ <span class="text-gray-400 font-normal">(ຖ້າ ເປັນ ການ ຈຳໜ່າຍ ເຄື່ອງ ຝາກ — ບໍ່ ບັງຄັບ)</span></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ວັນທີຝາກເດີມ (Original deposit date)</label><input type="date" wire:model="original_deposit_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ຮັບຝາກເດີມ (Original receiver)</label><input type="text" wire:model="original_receiver" placeholder="ຊື່ ຜູ້ ຮັບ ຝາກ ຕອນ ນັ້ນ" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                    </div>
+                </div>
             </div>
         </div>
 

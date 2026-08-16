@@ -4,12 +4,15 @@ namespace App\Livewire\Disposal;
 
 use App\Models\Department;
 use App\Models\DisposalRecord;
+use App\Models\DisposalSignoff;
 use App\Models\Uom;
+use App\Models\User;
 use App\Services\DisposalService;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
@@ -28,10 +31,15 @@ class Show extends Component
 
     public string $editNote = '';
 
+    // ເຄື່ອງຝາກເກົ່າ (optional)
+    public string $editOrigDate = '';
+
+    public string $editOrigReceiver = '';
+
     /** @var array<int, array<string, mixed>> item edit rows */
     public array $ef = [];
 
-    /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile[]> new photo uploads per item index */
+    /** @var array<int, TemporaryUploadedFile[]> new photo uploads per item index */
     public array $newPhotos = [];
 
     /** ຜູ້ ຮັບຮອງ ທີ່ ມອບໝາຍ ຕໍ່ ບົດບາດ (ໃນ ໂໝດ ແກ້ໄຂ). role_key => ['user_id'=>?int, 'title'=>?string] */
@@ -144,7 +152,7 @@ class Show extends Component
 
     // ── endorsement (ຜູ້ ຖືກ ມອບໝາຍ ເຊັນ ຊ່ອງ ຕົນ) ──
     /** signoff ຂອງ ບົດບາດ ນີ້ (ຫຼື null). */
-    protected function signoffFor(string $roleKey): ?\App\Models\DisposalSignoff
+    protected function signoffFor(string $roleKey): ?DisposalSignoff
     {
         return $this->record->signoffs->firstWhere('role_key', $roleKey);
     }
@@ -300,6 +308,8 @@ class Show extends Component
         $this->editTitle = $this->record->title ?? '';
         $this->editDept = $this->record->department_id;
         $this->editNote = $this->record->note ?? '';
+        $this->editOrigDate = $this->record->original_deposit_date?->format('Y-m-d') ?? '';
+        $this->editOrigReceiver = $this->record->original_receiver ?? '';
         $this->ef = $this->record->items->map(fn ($it) => [
             'id' => $it->id,
             'source_type' => $it->source_type,
@@ -375,6 +385,8 @@ class Show extends Component
             'editTitle' => ['nullable', 'string', 'max:256'],
             'editDept' => ['nullable', 'exists:departments,id'],
             'editNote' => ['nullable', 'string', 'max:1000'],
+            'editOrigDate' => ['nullable', 'date'],
+            'editOrigReceiver' => ['nullable', 'string', 'max:256'],
             'ef' => ['required', 'array', 'min:1'],
             'ef.*.item_name' => ['required', 'string', 'max:256'],
             'ef.*.qty' => ['required', 'integer', 'min:1'],
@@ -437,6 +449,8 @@ class Show extends Component
             'title' => $this->editTitle ?: null,
             'department_id' => $this->editDept,
             'note' => $this->editNote ?: null,
+            'original_deposit_date' => $this->editOrigDate ?: null,
+            'original_receiver' => $this->editOrigReceiver ?: null,
         ]);
 
         // ມອບໝາຍ ຜູ້ ຮັບຮອງ ຕໍ່ 5 ບົດບາດ + ແຈ້ງ ຄົນ ໃໝ່ (ຖ້າ ໃບ ຢູ່ ຮອບ ຮັບຮອງ ແລ້ວ)
@@ -464,7 +478,7 @@ class Show extends Component
             'recommendations' => DisposalRecord::RECOMMENDATIONS,
             'departments' => $this->editing ? Department::where('is_active', true)->orderBy('name')->get(['id', 'name']) : collect(),
             'uoms' => $this->editing ? Uom::where('is_active', true)->orderBy('name')->get(['id', 'name']) : collect(),
-            'ownerUsers' => $this->editing ? \App\Models\User::where('status', 'active')->orderBy('display_name')->get(['id', 'display_name', 'email']) : collect(),
+            'ownerUsers' => $this->editing ? User::where('status', 'active')->orderBy('display_name')->get(['id', 'display_name', 'email']) : collect(),
             'canEdit' => $this->canEditRecord(),
         ]);
     }

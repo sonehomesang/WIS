@@ -23,7 +23,7 @@
 @endphp
 
 <div class="pb-10">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <x-page-subheader :back="route('disposal')" back-label="ລາຍການ">
             <x-slot:actions>
                 @if ($canEdit && ! $editing)<button wire:click="openEdit" class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition">✏️ ແກ້ໄຂ</button>@endif
@@ -48,6 +48,8 @@
                             <span class="inline-flex items-center gap-1">📦 {{ $record->items->count() }} ລາຍການ · {{ $record->items->sum('qty') }} ໜ່ວຍ</span>
                             @if ($record->preparedBy)<span class="inline-flex items-center gap-1">👤 {{ $record->preparedBy->display_name ?? $record->preparedBy->email }}</span>@endif
                             <span class="inline-flex items-center gap-1">📅 {{ $dt($record->created_at) }}</span>
+                            @if ($record->original_deposit_date)<span class="inline-flex items-center gap-1 text-amber-700">📦 ຝາກເດີມ {{ $record->original_deposit_date->format('d/m/Y') }}</span>@endif
+                            @if ($record->original_receiver)<span class="inline-flex items-center gap-1 text-amber-700">🙎 ຮັບຝາກ {{ $record->original_receiver }}</span>@endif
                         </div>
                     </div>
                 </div>
@@ -244,6 +246,19 @@
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">ໝາຍເຫດ / Note</label>
                     <input type="text" wire:model="editNote" class="w-full rounded-lg border-gray-300 text-sm" placeholder="optional" />
+                </div>
+                <div class="sm:col-span-2 border-t border-dashed border-gray-200 pt-3">
+                    <div class="text-xs font-semibold text-amber-700 mb-2 flex items-center gap-1.5"><span>📦</span> ເຄື່ອງຝາກເກົ່າ ທີ່ ຄ້າງ ໄວ້ ດົນ <span class="text-gray-400 font-normal">(ບໍ່ ບັງຄັບ)</span></div>
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ວັນທີຝາກເດີມ / Original deposit date</label>
+                            <input type="date" wire:model="editOrigDate" class="w-full rounded-lg border-gray-300 text-sm" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ຮັບຝາກເດີມ / Original receiver</label>
+                            <input type="text" wire:model="editOrigReceiver" class="w-full rounded-lg border-gray-300 text-sm" placeholder="ຊື່ ຜູ້ ຮັບ ຝາກ ຕອນ ນັ້ນ" />
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
