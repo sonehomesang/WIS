@@ -180,7 +180,7 @@ class Create extends Component
             $this->items[$i]['asset_code'] = $x->asset_code ?? '';
             $this->items[$i]['fixed_asset_no'] = $x->fixed_asset_no ?? '';
             $this->items[$i]['unit'] = $this->items[$i]['unit'] ?: ($x->unit ?? '');
-            $this->items[$i]['photos'] = $this->grabSourcePhotos($x->photos->pluck('path')->all());
+            $this->items[$i]['photos'] = $this->grabSourcePhotos($x->orderedPhotoPaths());
             // functional ໄຫຼ ຈາກ ໃບ ຝາກ (ບໍ່ ທັບ ຄ່າ ທີ່ ພິມ ໄວ້ ແລ້ວ)
             $this->items[$i]['functional_status'] = $this->items[$i]['functional_status'] ?: ($x->record?->functional_status ?? '');
             $name = $x->item_name;

@@ -61,7 +61,7 @@ class BackfillDisposalPhotos extends Command
     protected function sourcePhotos(string $source, int $id): array
     {
         $paths = match ($source) {
-            'deposit' => optional(DepositItem::with('photos')->find($id))?->photos->pluck('path')->all() ?? [],
+            'deposit' => optional(DepositItem::with('photos')->find($id))?->orderedPhotoPaths() ?? [],
             'inventory' => optional(InventoryItem::with('photos')->find($id))?->photos->pluck('path')->all() ?? [],
             'equipment' => (function () use ($id) {
                 $e = Equipment::with('photos')->find($id);
