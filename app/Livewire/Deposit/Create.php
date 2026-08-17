@@ -20,7 +20,7 @@ class Create extends Component
 {
     use WithFileUploads;
 
-    public string $request_type = 'walk_in';
+    public string $request_type = 'legacy';   // default = ເຄື່ອງຝາກເກົ່າ · ຄ້າງ ດົນ
 
     public string $item_category = '';
 
