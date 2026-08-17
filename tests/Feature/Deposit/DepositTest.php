@@ -75,17 +75,17 @@ test('step-1 draft saves with just item name + qty + storage location (office fi
     expect($item->record->status)->toBe('draft');
 });
 
-test('camera and gallery photos both accumulate onto the item (no overwrite)', function () {
+test('camera and gallery photos both accumulate onto a slot (no overwrite)', function () {
     Storage::fake('public');
     $this->actingAs(User::factory()->create(['is_super_admin' => true]));
 
     $c = Livewire::test(Create::class)
-        ->set('camUpload.0', [UploadedFile::fake()->image('cam1.jpg')])   // camera shot 1
-        ->set('camUpload.0', [UploadedFile::fake()->image('cam2.jpg')])   // camera shot 2
-        ->set('galUpload.0', [UploadedFile::fake()->image('gal1.jpg')]);  // from gallery
+        ->set('camUpload.0.damage', [UploadedFile::fake()->image('cam1.jpg')])   // camera shot 1
+        ->set('camUpload.0.damage', [UploadedFile::fake()->image('cam2.jpg')])   // camera shot 2
+        ->set('galUpload.0.damage', [UploadedFile::fake()->image('gal1.jpg')]);  // from gallery
 
-    expect($c->get('photos.0'))->toHaveCount(3);   // accumulated, not replaced
-    expect($c->get('camUpload'))->toBe([]);        // temp cleared after absorb
+    expect($c->get('photos.0.damage'))->toHaveCount(3);   // accumulated, not replaced
+    expect($c->get('camUpload'))->toBe([]);               // temp cleared after absorb
 });
 
 test('only a super admin can reset a deposit status (correction)', function () {

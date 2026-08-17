@@ -56,14 +56,21 @@ class Create extends Component
     /** @var array<int, array{item_name:string, asset_code:string, fixed_asset_no:string, description:string, qty:int, unit:string, estimated_value:string, currency:string, condition_on_deposit:string}> */
     public array $items = [];
 
-    /** @var array<int, TemporaryUploadedFile[]> ຮູບ deposit ຕໍ່ item (index) — ຄັງ ຖາວອນ */
+    /** @var array<int, array<string, TemporaryUploadedFile[]>> ຮູບ deposit ຕໍ່ item (index) ຕໍ່ slot — ຄັງ ຖາວອນ */
     public array $photos = [];
 
-    /** @var array<int, TemporaryUploadedFile[]> ຮູບ ຈາກ ກ້ອງ (ຊົ່ວຄາວ → merge ເຂົ້າ photos) */
+    /** @var array<int, array<string, TemporaryUploadedFile[]>> ຮູບ ຈາກ ກ້ອງ (ຊົ່ວຄາວ → merge ເຂົ້າ photos) */
     public array $camUpload = [];
 
-    /** @var array<int, TemporaryUploadedFile[]> ຮູບ ຈາກ ແກເລີຣີ (ຊົ່ວຄາວ → merge ເຂົ້າ photos) */
+    /** @var array<int, array<string, TemporaryUploadedFile[]>> ຮູບ ຈາກ ແກເລີຣີ (ຊົ່ວຄາວ → merge ເຂົ້າ photos) */
     public array $galUpload = [];
+
+    /** ມູມ ຮູບ ຝາກ ຕອນ ຮັບ — ແຍກ ອິດສະລະ, ແຕ່ ລະ ຊ່ອງ ຮັບ ໄດ້ ຈາກ ກ້ອງ ແລະ ແກເລີຣີ. [label, icon] */
+    public const PHOTO_SLOTS = [
+        'overall' => ['ຮູບ ໂດຍ ລວມ (Zoom-out)', '🔍'],
+        'id' => ['ຮູບ ລະຫັດ ເຄື່ອງ / ຊັບສິນ', '🏷️'],
+        'damage' => ['ຈຸດ ທີ່ ເປ ເພ / ເສຍ', '⚠️'],
+    ];
 
     /** @var array<int, array<int, array{source:string,id:int,code:string,fixed:?string,name:string}>>
      *  ຜົນ ຄົ້ນ ຕໍ່ ແຖວ item (index) — ຈາກ Inventory ຫຼື Equipment ຕາມ ແຫຼ່ງ ທີ່ ເລືອກ. */
@@ -110,20 +117,28 @@ class Create extends Component
 
     protected function absorbPhotos(string $prop, $key): void
     {
-        $i = (int) $key;
-        $files = $this->{$prop}[$i] ?? [];
+        // $key = "{itemIndex}.{slot}" ເຊັ່ນ "0.overall"
+        [$i, $slot] = array_pad(explode('.', (string) $key, 2), 2, null);
+        $i = (int) $i;
+        if (! array_key_exists($slot, self::PHOTO_SLOTS)) {
+            return;
+        }
+        $files = $this->{$prop}[$i][$slot] ?? [];
         $files = array_values(array_filter(is_array($files) ? $files : [$files]));
         if ($files) {
-            $this->photos[$i] = array_merge($this->photos[$i] ?? [], $files);
+            $this->photos[$i][$slot] = array_merge($this->photos[$i][$slot] ?? [], $files);
         }
-        unset($this->{$prop}[$i]);
+        unset($this->{$prop}[$i][$slot]);
+        if (empty($this->{$prop}[$i])) {
+            unset($this->{$prop}[$i]);
+        }
     }
 
-    public function removePhoto(int $i, int $j): void
+    public function removePhoto(int $i, string $slot, int $j): void
     {
-        if (isset($this->photos[$i][$j])) {
-            unset($this->photos[$i][$j]);
-            $this->photos[$i] = array_values($this->photos[$i]);
+        if (isset($this->photos[$i][$slot][$j])) {
+            unset($this->photos[$i][$slot][$j]);
+            $this->photos[$i][$slot] = array_values($this->photos[$i][$slot]);
         }
     }
 
@@ -238,13 +253,13 @@ class Create extends Component
             'items.*.storage_location' => ['nullable', 'string', 'max:256'],
             'items.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
             'items.*.currency' => ['nullable', 'in:LAK,THB,USD'],
-            'photos.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'photos.*.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ], [], ['item_category' => 'ປະເພດ', 'origin_source' => 'ແຫຼ່ງທີ່ມາ', 'deposit_reason' => 'ເຫດຜົນ', 'expected_duration' => 'ໄລຍະເວລາ']);
 
-        // submit → ບັງຄັບ ≥1 ຮູບ ຕໍ່ລາຍການ (evidence)
+        // submit → ບັງຄັບ ≥1 ຮູບ ຕໍ່ລາຍການ (ຢ່າງໜ້ອຍ 1 ຊ່ອງ ໃນ 3 ມູມ) (evidence)
         if ($submit) {
             foreach ($this->items as $i => $it) {
-                if (empty($this->photos[$i])) {
+                if (empty(array_filter($this->photos[$i] ?? []))) {
                     $this->addError('photos', 'ຕ້ອງມີຢ່າງໜ້ອຍ 1 ຮູບ ສຳລັບລາຍການທີ '.($i + 1).' ກ່ອນສົ່ງ.');
                     throw ValidationException::withMessages(['photos' => 'photo required']);
                 }
@@ -270,11 +285,14 @@ class Create extends Component
             'items' => $this->items,
         ], auth()->user());
 
-        // ເກັບຮູບ deposit ຕໍ່ item (ຕາມ index)
+        // ເກັບຮູບ deposit ຕໍ່ item (ຕາມ index) ແຍກ 3 ມູມ (slot): overall · id · damage
         foreach ($record->items as $idx => $item) {
-            foreach (array_values($this->photos[$idx] ?? []) as $sort => $file) {
-                $path = $file->store("deposit/{$record->id}/{$item->id}", 'public');
-                $item->photos()->create(['kind' => 'deposit', 'path' => $path, 'sort_order' => $sort]);
+            $sort = 0;
+            foreach (array_keys(self::PHOTO_SLOTS) as $slot) {
+                foreach (array_values($this->photos[$idx][$slot] ?? []) as $file) {
+                    $path = $file->store("deposit/{$record->id}/{$item->id}", 'public');
+                    $item->photos()->create(['kind' => 'deposit', 'slot' => $slot, 'path' => $path, 'sort_order' => $sort++]);
+                }
             }
         }
 

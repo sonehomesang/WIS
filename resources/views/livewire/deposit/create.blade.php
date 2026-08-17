@@ -174,33 +174,42 @@
                         </div>
                     </div>
 
-                    {{-- ② ຖ່າຍ ຮູບ (ໜ້າງານ) — ກ້ອງ ຫຼື ແກເລີຣີ --}}
+                    {{-- ② ຖ່າຍ ຮູບ (ໜ້າງານ) — ແຍກ 3 ມູມ · ແຕ່ ລະ ຊ່ອງ ຮັບ ຈາກ ກ້ອງ ຫຼື ແກເລີຣີ --}}
                     <div class="rounded-lg bg-sky-50/40 border border-sky-100 p-3">
-                        <label class="block text-xs font-semibold text-sky-700 mb-1.5">📸 ຮູບ ເຄື່ອງ — <span class="text-rose-500">ຖ່າຍ ≥1 (ແນະນຳ 3 ຮູບ) ກ່ອນ ສົ່ງ</span></label>
-                        <div class="flex gap-2 flex-wrap">
-                            <label class="cursor-pointer inline-flex items-center gap-1.5 text-sm font-medium text-white bg-sky-600 rounded-lg px-3.5 py-2 hover:bg-sky-700 transition">
-                                📷 ຖ່າຍ ຮູບ
-                                <input type="file" wire:model="camUpload.{{ $i }}" accept="image/*" capture="environment" multiple class="hidden" />
-                            </label>
-                            <label class="cursor-pointer inline-flex items-center gap-1.5 text-sm font-medium text-sky-700 bg-white border border-sky-200 rounded-lg px-3.5 py-2 hover:bg-sky-50 transition">
-                                🖼 ແກເລີຣີ
-                                <input type="file" wire:model="galUpload.{{ $i }}" accept="image/*" multiple class="hidden" />
-                            </label>
-                        </div>
-                        <div wire:loading wire:target="camUpload.{{ $i }},galUpload.{{ $i }}" class="text-xs text-sky-500 mt-1">⏳ ກຳລັງ ອັບ…</div>
-                        @if (! empty($photos[$i]))
-                            <div class="flex gap-1.5 flex-wrap mt-2">
-                                @foreach ($photos[$i] as $j => $f)
-                                    @if ($f->isPreviewable())
-                                        <div class="relative group">
-                                            <img src="{{ $f->temporaryUrl() }}" alt="" class="w-16 h-16 rounded-lg object-cover border-2 border-sky-200" />
-                                            <button type="button" wire:click="removePhoto({{ $i }}, {{ $j }})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs leading-none shadow" title="ລຶບ ຮູບ">×</button>
+                        <label class="block text-xs font-semibold text-sky-700 mb-2">📸 ຮູບ ຫຼັກຖານ — <span class="text-gray-400 font-normal">ແຍກ 3 ມູມ · ຖ່າຍ ຫຼື ເລືອກ ຈາກ ຄັງ ໄດ້ ທຸກ ຊ່ອງ</span></label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            @foreach (\App\Livewire\Deposit\Create::PHOTO_SLOTS as $slot => $meta)
+                                @php $slotFiles = $photos[$i][$slot] ?? []; @endphp
+                                <div wire:key="ph-{{ $i }}-{{ $slot }}" class="rounded-lg border border-sky-100 bg-white p-2.5 flex flex-col gap-2">
+                                    <div class="text-[11px] font-semibold text-gray-600 flex items-center gap-1 min-h-[2rem]"><span class="text-base leading-none">{{ $meta[1] }}</span><span>{{ $meta[0] }}</span></div>
+                                    <div class="flex gap-1.5">
+                                        <label class="flex-1 cursor-pointer inline-flex items-center justify-center gap-1 text-xs font-medium text-white bg-sky-600 rounded-lg px-2 py-1.5 hover:bg-sky-700 transition">
+                                            📷 <span class="hidden lg:inline">ຖ່າຍ</span>
+                                            <input type="file" wire:model="camUpload.{{ $i }}.{{ $slot }}" accept="image/*" capture="environment" multiple class="hidden" />
+                                        </label>
+                                        <label class="flex-1 cursor-pointer inline-flex items-center justify-center gap-1 text-xs font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded-lg px-2 py-1.5 hover:bg-sky-100 transition">
+                                            🖼 <span class="hidden lg:inline">ຄັງ</span>
+                                            <input type="file" wire:model="galUpload.{{ $i }}.{{ $slot }}" accept="image/*" multiple class="hidden" />
+                                        </label>
+                                    </div>
+                                    <div wire:loading wire:target="camUpload.{{ $i }}.{{ $slot }},galUpload.{{ $i }}.{{ $slot }}" class="text-[10px] text-sky-500">⏳ ກຳລັງ ອັບ…</div>
+                                    @if (! empty($slotFiles))
+                                        <div class="flex gap-1.5 flex-wrap">
+                                            @foreach ($slotFiles as $j => $f)
+                                                @if ($f->isPreviewable())
+                                                    <div class="relative group">
+                                                        <img src="{{ $f->temporaryUrl() }}" alt="" class="w-14 h-14 rounded-lg object-cover border-2 border-sky-200" />
+                                                        <button type="button" wire:click="removePhoto({{ $i }}, '{{ $slot }}', {{ $j }})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs leading-none shadow" title="ລຶບ ຮູບ">×</button>
+                                                    </div>
+                                                @endif
+                                            @endforeach
                                         </div>
+                                    @else
+                                        <div class="text-[10px] text-gray-300 italic">ຍັງ ບໍ່ ມີ ຮູບ</div>
                                     @endif
-                                @endforeach
-                            </div>
-                            <p class="text-[11px] text-gray-400 mt-1">{{ count($photos[$i]) }} ຮູບ · ກົດ × ເພື່ອ ລຶບ</p>
-                        @endif
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
 
                     {{-- ③ ຈຳນວນ · ບ່ອນຈັດເກັບ · ສະຖານະ (+ optional ທີ່ admin ເປີດ) --}}

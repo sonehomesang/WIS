@@ -19,6 +19,7 @@
         default => 'from-sky-500 to-cyan-500',
     };
     $kindTag = ['deposit' => 'D', 'stored' => 'S', 'claim' => 'C'];
+    $slotTag = ['overall' => '🔍 ລວມ', 'id' => '🏷️ ລະຫັດ', 'damage' => '⚠️ ເປເພ'];
     $fileCls = 'block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-sky-50 file:text-sky-700 file:font-medium file:cursor-pointer hover:file:bg-sky-100';
     $kv = fn ($label, $value) => '<div><div class="text-xs text-gray-400">'.$label.'</div><div class="text-gray-800 mt-0.5">'.($value ?: '—').'</div></div>';
 @endphp
@@ -131,7 +132,7 @@
                                     @foreach ($it->photos as $p)
                                         <div class="relative">
                                             <img src="{{ $p->url }}" alt="" class="w-16 h-16 rounded-lg object-cover border border-gray-200" />
-                                            <span class="absolute top-0 left-0 bg-black/60 text-white text-[9px] font-semibold px-1 rounded-br-md rounded-tl-lg">{{ $kindTag[$p->kind] ?? $p->kind }}</span>
+                                            <span class="absolute top-0 left-0 bg-black/60 text-white text-[9px] font-semibold px-1 rounded-br-md rounded-tl-lg">{{ ($slotTag[$p->slot] ?? null) ?: ($kindTag[$p->kind] ?? $p->kind) }}</span>
                                             @if ($editable)<button wire:click="removePhoto({{ $p->id }})" wire:confirm="ລຶບຮູບນີ້?" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 text-white rounded-full text-[10px] leading-none shadow hover:bg-rose-700">×</button>@endif
                                         </div>
                                     @endforeach
