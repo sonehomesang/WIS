@@ -172,13 +172,14 @@ class Create extends Component
 
         $this->validate([
             'request_type' => ['required', 'in:walk_in,pre_request,legacy'],
-            'item_category' => ['required', 'string', 'max:256'],
-            'origin_source' => ['required', 'string', 'max:500'],
+            // ຂໍ້ມູນ ທົ່ວໄປ = ຂັ້ນ 2 (ຫ້ອງການ) → ບໍ່ ບັງຄັບ ຕອນ ບັນທຶກ ໜ້າງານ
+            'item_category' => ['nullable', 'string', 'max:256'],
+            'origin_source' => ['nullable', 'string', 'max:500'],
             'functional_status' => ['nullable', 'in:usable,partial,unusable'],
             'original_deposit_date' => ['nullable', 'date'],
             'original_receiver' => ['nullable', 'string', 'max:256'],
-            'deposit_reason' => ['required', 'string', 'max:1000'],
-            'expected_duration' => ['required', 'string', 'max:128'],
+            'deposit_reason' => ['nullable', 'string', 'max:1000'],
+            'expected_duration' => ['nullable', 'string', 'max:128'],
             'deposit_date' => ['required', 'date'],
             'expected_arrival' => ['nullable', 'date'],
             'expected_claim_date' => ['nullable', 'date'],

@@ -1,7 +1,7 @@
 @php $fileCls = 'block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-sky-50 file:text-sky-700 file:font-medium file:cursor-pointer hover:file:bg-sky-100'; @endphp
 
 <div class="pb-10">
-    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-4">
         <x-page-subheader :back="route('deposit')" back-label="ລາຍການ ຝາກ" />
 
         {{-- ══ HERO ══ --}}
@@ -30,9 +30,9 @@
             </div>
         </div>
 
-        {{-- general info --}}
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="px-4 py-2.5 bg-gray-50/70 border-b border-gray-100 flex items-center gap-2.5"><span class="w-6 h-6 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center text-xs">📋</span><h3 class="text-sm font-semibold text-gray-700">ຂໍ້ມູນ ທົ່ວໄປ</h3></div>
+        {{-- ══ ຂັ້ນຕອນ 2 · ຫ້ອງການ: ຂໍ້ມູນ ທົ່ວໄປ (ຫົວໜ້າ ເພີ່ມ) ══ --}}
+        <div class="order-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="px-4 py-2.5 bg-gray-50/70 border-b border-gray-100 flex items-center gap-2.5"><span class="w-7 h-7 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-bold">2</span><div><h3 class="text-sm font-semibold text-gray-700">ຂໍ້ມູນ ທົ່ວໄປ</h3><p class="text-[11px] text-gray-400">ຫ້ອງການ · ຫົວໜ້າ ທີມ ເພີ່ມ ຕໍ່ (ບໍ່ ບັງຄັບ ຕອນ ບັນທຶກ ຮ່າງ)</p></div></div>
             <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">ປະເພດເຄື່ອງ (Category) <span class="text-rose-500">*</span></label>
@@ -111,11 +111,15 @@
             </div>
         </div>
 
-        {{-- items --}}
-        <div class="flex items-center justify-between gap-2 pt-1">
+        {{-- ══ ຂັ້ນຕອນ 1 · ໜ້າງານ: ລາຍການ ເຄື່ອງ + ຮູບ ══ --}}
+        <div class="order-1 flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-sm">📦</span>
-                <h3 class="text-sm font-semibold text-gray-700">ລາຍການ ເຄື່ອງ <span class="text-gray-400 font-normal">({{ count($items) }})</span></h3>
+                <span class="w-7 h-7 rounded-lg bg-sky-600 text-white flex items-center justify-center text-sm font-bold">1</span>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-700">ລາຍການ ເຄື່ອງ + ຮູບ <span class="text-gray-400 font-normal">({{ count($items) }})</span></h3>
+                    <p class="text-[11px] text-gray-400">ໜ້າງານ · ໄວ: ຊື່ · ລະຫັດ · ຖ່າຍ ຮູບ · ຈຳນວນ · ສະຖານະ → ບັນທຶກ ຮ່າງ</p>
+                </div>
             </div>
             <button wire:click="addItem" type="button" class="text-sm font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded-lg px-3 py-1.5 hover:bg-sky-100 transition">+ ເພີ່ມລາຍການ</button>
         </div>
@@ -124,95 +128,96 @@
         <div class="space-y-2.5">
             @foreach ($items as $i => $row)
                 <div wire:key="item-{{ $i }}" class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 space-y-3">
-                    <div class="flex items-start gap-2">
-                        <span class="w-6 h-6 rounded-md bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold mt-0.5 shrink-0">{{ $i + 1 }}</span>
-                        <div class="flex-1 grid grid-cols-1 sm:grid-cols-6 gap-2.5">
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">ຊື່ເຄື່ອງ <span class="text-rose-500">*</span></label>
-                                <input type="text" wire:model="items.{{ $i }}.item_name" class="w-full rounded-lg border-gray-300 text-sm" />
-                                @error("items.$i.item_name")<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
-                            </div>
-                            <div class="sm:col-span-2 relative">
-                                @php $src = $row['asset_source'] ?? 'inventory'; @endphp
-                                <div class="flex items-center justify-between mb-1 gap-2">
-                                    <label class="text-xs font-medium text-gray-500 whitespace-nowrap">ທະບຽນເຄື່ອງ</label>
-                                    <div class="flex rounded-lg border border-gray-200 overflow-hidden text-[10px] leading-none shrink-0">
-                                        @foreach (['inventory' => 'Inventory', 'equipment' => 'Equipment', 'new' => '+ ໃໝ່'] as $sv => $sl)
-                                            <button type="button" wire:click="$set('items.{{ $i }}.asset_source', '{{ $sv }}')" class="px-1.5 py-1 border-l first:border-l-0 border-gray-200 transition {{ $src === $sv ? 'bg-sky-600 text-white' : 'text-gray-500 hover:bg-gray-50' }}">{{ $sl }}</button>
-                                        @endforeach
-                                    </div>
-                                </div>
-                                <input type="text" wire:model.live.debounce.350ms="items.{{ $i }}.asset_code" placeholder="{{ $src === 'new' ? 'ພິມ ລະຫັດ ເອງ…' : 'ພິມ ລະຫັດ/ຊື່ ເພື່ອ ຄົ້ນ…' }}" autocomplete="off" class="w-full rounded-lg border-gray-300 text-sm font-mono" />
-                                @unless ($src === 'new')<div wire:loading.flex wire:target="items.{{ $i }}.asset_code" class="absolute right-2 bottom-2 text-gray-300"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg></div>@endunless
-                                @if (! empty($assetMatches[$i]))
-                                    <ul class="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-52 overflow-auto text-xs">
-                                        @foreach ($assetMatches[$i] as $m)
-                                            <li>
-                                                <button type="button" wire:click="pickAsset({{ $i }}, '{{ $m['source'] }}', {{ $m['id'] }})" class="w-full text-left px-2.5 py-2 hover:bg-sky-50 border-b border-gray-50 last:border-0">
-                                                    <span class="inline-block text-[9px] font-semibold rounded px-1 mr-0.5 {{ $m['source'] === 'equipment' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700' }}">{{ $m['source'] === 'equipment' ? 'EQ' : 'INV' }}</span>
-                                                    <span class="font-mono text-sky-700">{{ $m['code'] }}</span> · {{ $m['name'] }}
-                                                    @if ($m['fixed'])<span class="text-gray-400"> · {{ $m['fixed'] }}</span>@endif
-                                                </button>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @endif
-                                @error("items.$i.asset_code")<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">ທະບຽນຊັບສິນ</label>
-                                <input type="text" wire:model="items.{{ $i }}.fixed_asset_no" placeholder="Fixed asset no." class="w-full rounded-lg border-gray-300 text-sm font-mono" />
-                                @error("items.$i.fixed_asset_no")<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">ຈຳນວນ <span class="text-rose-500">*</span></label>
-                                <input type="number" min="1" wire:model="items.{{ $i }}.qty" class="w-full rounded-lg border-gray-300 text-sm" />
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">ໜ່ວຍ</label>
-                                <select wire:model="items.{{ $i }}.unit" class="w-full rounded-lg border-gray-300 text-sm">
-                                    <option value="">—</option>
-                                    @foreach ($uoms as $u)<option value="{{ $u->name }}">{{ $u->name }}</option>@endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">ມູນຄ່າ (ປະມານ)</label>
-                                <input type="number" step="0.01" min="0" wire:model="items.{{ $i }}.estimated_value" class="w-full rounded-lg border-gray-300 text-sm" />
-                            </div>
-                            <div class="sm:col-span-3">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">ລາຍລະອຽດ (Description)</label>
-                                <input type="text" wire:model="items.{{ $i }}.description" class="w-full rounded-lg border-gray-300 text-sm" />
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">ສະກຸນເງິນ</label>
-                                <select wire:model="items.{{ $i }}.currency" class="w-full rounded-lg border-gray-300 text-sm">
-                                    <option value="">—</option><option value="LAK">LAK</option><option value="THB">THB</option><option value="USD">USD</option>
-                                </select>
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">ສະພາບຕອນຝາກ</label>
-                                <input type="text" wire:model="items.{{ $i }}.condition_on_deposit" class="w-full rounded-lg border-gray-300 text-sm" />
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">ສະຖານະພາບ (Condition)</label>
-                                <select wire:model="items.{{ $i }}.condition_status" class="w-full rounded-lg border-gray-300 text-sm">@foreach (\App\Support\ConditionStatus::options() as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach</select>
-                            </div>
-                        </div>
-                        @if (count($items) > 1)<button wire:click="removeItem({{ $i }})" type="button" class="text-gray-400 hover:text-rose-600 p-1 mt-6 transition" title="ລຶບ">✕</button>@endif
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-md bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold shrink-0">{{ $i + 1 }}</span>
+                        <span class="text-xs font-semibold text-gray-500">ລາຍການ ທີ {{ $i + 1 }}</span>
+                        @if (count($items) > 1)<button wire:click="removeItem({{ $i }})" type="button" class="ml-auto text-gray-400 hover:text-rose-600 p-1 transition" title="ລຶບ">✕</button>@endif
                     </div>
-                    {{-- photos --}}
-                    <div class="pt-1">
-                        <label class="block text-xs font-medium text-gray-500 mb-1.5">ຮູບເຄື່ອງ (deposit) — <span class="text-rose-500">ບັງຄັບ ≥1 ກ່ອນສົ່ງ</span></label>
-                        <input type="file" wire:model="photos.{{ $i }}" multiple accept="image/*" capture="environment" class="{{ $fileCls }}" />
+
+                    {{-- ① ຊື່ · ລະຫັດ · ຊັບສິນ --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-2.5">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ຊື່ເຄື່ອງ <span class="text-rose-500">*</span></label>
+                            <input type="text" wire:model="items.{{ $i }}.item_name" class="w-full rounded-lg border-gray-300 text-sm" />
+                            @error("items.$i.item_name")<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="sm:col-span-2 relative">
+                            @php $src = $row['asset_source'] ?? 'inventory'; @endphp
+                            <div class="flex items-center justify-between mb-1 gap-2">
+                                <label class="text-xs font-medium text-gray-500 whitespace-nowrap">ລະຫັດ (ສາງ/ອຸປະກອນ)</label>
+                                <div class="flex rounded-lg border border-gray-200 overflow-hidden text-[10px] leading-none shrink-0">
+                                    @foreach (['inventory' => 'Inventory', 'equipment' => 'Equipment', 'new' => '+ ໃໝ່'] as $sv => $sl)
+                                        <button type="button" wire:click="$set('items.{{ $i }}.asset_source', '{{ $sv }}')" class="px-1.5 py-1 border-l first:border-l-0 border-gray-200 transition {{ $src === $sv ? 'bg-sky-600 text-white' : 'text-gray-500 hover:bg-gray-50' }}">{{ $sl }}</button>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <input type="text" wire:model.live.debounce.350ms="items.{{ $i }}.asset_code" placeholder="{{ $src === 'new' ? 'ພິມ ລະຫັດ ເອງ…' : 'ພິມ ລະຫັດ/ຊື່ ເພື່ອ ຄົ້ນ…' }}" autocomplete="off" class="w-full rounded-lg border-gray-300 text-sm font-mono" />
+                            @unless ($src === 'new')<div wire:loading.flex wire:target="items.{{ $i }}.asset_code" class="absolute right-2 bottom-2 text-gray-300"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg></div>@endunless
+                            @if (! empty($assetMatches[$i]))
+                                <ul class="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-52 overflow-auto text-xs">
+                                    @foreach ($assetMatches[$i] as $m)
+                                        <li><button type="button" wire:click="pickAsset({{ $i }}, '{{ $m['source'] }}', {{ $m['id'] }})" class="w-full text-left px-2.5 py-2 hover:bg-sky-50 border-b border-gray-50 last:border-0">
+                                            <span class="inline-block text-[9px] font-semibold rounded px-1 mr-0.5 {{ $m['source'] === 'equipment' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700' }}">{{ $m['source'] === 'equipment' ? 'EQ' : 'INV' }}</span>
+                                            <span class="font-mono text-sky-700">{{ $m['code'] }}</span> · {{ $m['name'] }}@if ($m['fixed'])<span class="text-gray-400"> · {{ $m['fixed'] }}</span>@endif
+                                        </button></li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                            @error("items.$i.asset_code")<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ທະບຽນຊັບສິນ</label>
+                            <input type="text" wire:model="items.{{ $i }}.fixed_asset_no" placeholder="Fixed asset no." class="w-full rounded-lg border-gray-300 text-sm font-mono" />
+                            @error("items.$i.fixed_asset_no")<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    {{-- ② ຖ່າຍ ຮູບ (ໜ້າງານ) — ກ້ອງ ຫຼື ແກເລີຣີ --}}
+                    <div class="rounded-lg bg-sky-50/40 border border-sky-100 p-3">
+                        <label class="block text-xs font-semibold text-sky-700 mb-1.5">📸 ຮູບ ເຄື່ອງ — <span class="text-rose-500">ຖ່າຍ ≥1 (ແນະນຳ 3 ຮູບ) ກ່ອນ ສົ່ງ</span> <span class="text-gray-400 font-normal">· ເປີດ ກ້ອງ ຫຼື ເລືອກ ຈາກ ແກເລີຣີ</span></label>
+                        <input type="file" wire:model="photos.{{ $i }}" multiple accept="image/*" class="{{ $fileCls }}" />
                         <div wire:loading wire:target="photos.{{ $i }}" class="text-xs text-sky-500 mt-1">⏳ ກຳລັງອັບ…</div>
-                        @if (! empty($photos[$i]))<div class="flex gap-1.5 flex-wrap mt-2">@foreach ($photos[$i] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" class="w-14 h-14 rounded-lg object-cover border-2 border-sky-200" />@endif @endforeach</div>@endif
+                        @if (! empty($photos[$i]))<div class="flex gap-1.5 flex-wrap mt-2">@foreach ($photos[$i] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" class="w-16 h-16 rounded-lg object-cover border-2 border-sky-200" />@endif @endforeach</div>@endif
+                    </div>
+
+                    {{-- ③ ຈຳນວນ · ສະຖານະ (+ ລາຍລະອຽດ ເພີ່ມ) --}}
+                    <div class="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ຈຳນວນ <span class="text-rose-500">*</span></label>
+                            <input type="number" min="1" wire:model="items.{{ $i }}.qty" class="w-full rounded-lg border-gray-300 text-sm" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ໜ່ວຍ</label>
+                            <select wire:model="items.{{ $i }}.unit" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($uoms as $u)<option value="{{ $u->name }}">{{ $u->name }}</option>@endforeach</select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ສະຖານະພາບ (Condition)</label>
+                            <select wire:model="items.{{ $i }}.condition_status" class="w-full rounded-lg border-gray-300 text-sm">@foreach (\App\Support\ConditionStatus::options() as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach</select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ສະພາບ ຕອນ ຝາກ</label>
+                            <input type="text" wire:model="items.{{ $i }}.condition_on_deposit" class="w-full rounded-lg border-gray-300 text-sm" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ມູນຄ່າ (ປະມານ)</label>
+                            <input type="number" step="0.01" min="0" wire:model="items.{{ $i }}.estimated_value" class="w-full rounded-lg border-gray-300 text-sm" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ສະກຸນເງິນ</label>
+                            <select wire:model="items.{{ $i }}.currency" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option><option value="LAK">LAK</option><option value="THB">THB</option><option value="USD">USD</option></select>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ລາຍລະອຽດ (Description)</label>
+                            <input type="text" wire:model="items.{{ $i }}.description" class="w-full rounded-lg border-gray-300 text-sm" />
+                        </div>
                     </div>
                 </div>
             @endforeach
         </div>
+        </div>{{-- /ຂັ້ນຕອນ 1 --}}
 
         {{-- sticky save bar --}}
-        <div class="bg-white/95 backdrop-blur border border-gray-200 rounded-xl px-5 py-3 flex items-center justify-end gap-2 sticky bottom-4 shadow-lg">
+        <div class="order-3 bg-white/95 backdrop-blur border border-gray-200 rounded-xl px-5 py-3 flex items-center justify-end gap-2 sticky bottom-4 shadow-lg">
             <button wire:click="save(false)" wire:loading.attr="disabled" wire:target="save,photos" class="text-sm font-medium text-gray-700 border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50 disabled:opacity-50 transition">ບັນທຶກເປັນຮ່າງ</button>
             <button wire:click="save(true)" wire:loading.attr="disabled" wire:target="save,photos" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-sky-600 rounded-lg px-4 py-2 hover:bg-sky-700 disabled:opacity-50 transition shadow-sm">📤 ສ້າງ + ສົ່ງ</button>
         </div>
