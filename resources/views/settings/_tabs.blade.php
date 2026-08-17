@@ -15,12 +15,14 @@
         ['label' => 'ແປ/ຄຳສັບ', 'perm' => 'settings.view', 'route' => 'settings.translations'],
         ['label' => 'Backup', 'perm' => 'settings.view', 'route' => 'settings.backup'],
         ['label' => 'System', 'perm' => 'settings.view', 'route' => 'settings.system'],
+        ['label' => '🗑 ລ້າງ ຂໍ້ມູນ ທົດສອບ', 'perm' => 'settings.view', 'route' => 'settings.clear-test-data', 'super' => true],
     ];
 @endphp
 
 <div class="sticky top-16 z-20 bg-gray-100 flex flex-wrap items-center gap-1 border-b border-gray-200 py-2 sm:py-0 sm:h-[52px]">
     <a href="{{ route('settings') }}" wire:navigate class="px-2.5 py-1.5 rounded-md text-sm text-gray-500 hover:bg-gray-100" title="ໜ້າລວມ Settings">⌂</a>
     @foreach ($sections as $s)
+        @if (($s['super'] ?? false) && ! auth()->user()->is_super_admin) @continue @endif
         @can($s['perm'])
             @if (isset($s['route']))
                 @php $active = collect($s['match'] ?? [$s['route']])->contains(fn ($r) => request()->routeIs($r)); @endphp
