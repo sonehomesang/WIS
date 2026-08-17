@@ -180,6 +180,11 @@ class Create extends Component
             $this->items[$i]['asset_code'] = $x->asset_code ?? '';
             $this->items[$i]['fixed_asset_no'] = $x->fixed_asset_no ?? '';
             $this->items[$i]['unit'] = $this->items[$i]['unit'] ?: ($x->unit ?? '');
+            // ດຶງ ຂໍ້ມູນ ຈາກ ໃບ ຝາກ ໃຫ້ ຄົບ (ບໍ່ ທັບ ຄ່າ ທີ່ ພິມ ໄວ້ ແລ້ວ): ຈຳນວນ · ມູນຄ່າ · ສະກຸນ · ສະພາບ
+            $this->items[$i]['qty'] = max(1, (int) ($x->qty ?: 1));
+            $this->items[$i]['estimated_value'] = ($this->items[$i]['estimated_value'] ?? '') !== '' ? $this->items[$i]['estimated_value'] : (string) ($x->estimated_value ?? '');
+            $this->items[$i]['currency'] = $this->items[$i]['currency'] ?: ($x->currency ?? '');
+            $this->items[$i]['condition'] = $this->items[$i]['condition'] ?: ($x->condition_on_deposit ?: ConditionStatus::label($x->condition_status));
             $this->items[$i]['photos'] = $this->grabSourcePhotos($x->orderedPhotoPaths());
             // functional ໄຫຼ ຈາກ ໃບ ຝາກ (ບໍ່ ທັບ ຄ່າ ທີ່ ພິມ ໄວ້ ແລ້ວ)
             $this->items[$i]['functional_status'] = $this->items[$i]['functional_status'] ?: ($x->record?->functional_status ?? '');

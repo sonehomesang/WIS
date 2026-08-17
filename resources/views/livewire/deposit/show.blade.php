@@ -311,40 +311,28 @@
                         <h3 class="text-lg font-semibold text-gray-800">✏️ ແກ້ໄຂ (Admin) — <span class="font-mono">{{ $record->request_number }}</span></h3>
                         <button wire:click="$set('showEdit', false)" class="text-gray-400 hover:text-gray-700 p-1">✕</button>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ເຈົ້າຂອງ / Owner <span class="text-gray-400 font-normal">(ດຶງ ຈາກ ຜູ້ ໃຊ້)</span></label><select wire:model="ef.owner_user_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($ownerUsers as $ou)<option value="{{ $ou->id }}">{{ $ou->display_name ?: $ou->email }}</option>@endforeach</select>@error('ef.owner_user_id')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ພະແນກ ເຈົ້າ ຂອງ / Department <span class="text-gray-400 font-normal">(ຄຸມ ສິດ ຈຳໜ່າຍ)</span></label><select wire:model="ef.owner_dept_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}@if ($d->unit) · {{ $d->unit->name }}@endif</option>@endforeach</select>@error('ef.owner_dept_id')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ປະເພດ</label><input type="text" wire:model="ef.item_category" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ແຫຼ່ງທີ່ມາ</label><input type="text" wire:model="ef.origin_source" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ສະຖານະ ການ ໃຊ້ງານ</label><select wire:model="ef.functional_status" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option><option value="usable">✅ ໃຊ້ ໄດ້ ປົກກະຕິ</option><option value="partial">⚠️ ໃຊ້ ໄດ້ ບາງ ສ່ວນ</option><option value="unusable">⛔ ໃຊ້ ບໍ່ ໄດ້</option></select></div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ວັນທີຝາກເດີມ <span class="text-gray-400 font-normal">(ເຄື່ອງຝາກເກົ່າ)</span></label><input type="date" wire:model="ef.original_deposit_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ຮັບຝາກເດີມ</label><input type="text" wire:model="ef.original_receiver" placeholder="ຊື່ ຜູ້ ຮັບ ຝາກ ຕອນ ນັ້ນ" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ໄລຍະເວລາ</label><input type="text" wire:model="ef.expected_duration" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ວັນທີຝາກ</label><input type="date" wire:model="ef.deposit_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ຄາດເອົາຄືນ</label><input type="date" wire:model="ef.expected_claim_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ບ່ອນເກັບ</label><input type="text" wire:model="ef.storage_location" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ປ້າຍຊັ້ນວາງ</label><input type="text" wire:model="ef.storage_shelf_label" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                        <div class="sm:col-span-2"><label class="block text-xs font-medium text-gray-500 mb-1">ເຫດຜົນ</label><textarea wire:model="ef.deposit_reason" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
-                        <div class="sm:col-span-2"><label class="block text-xs font-medium text-gray-500 mb-1">ຄຳແນະນຳ warehouse</label><textarea wire:model="ef.warehouse_instructions" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
-                        <div class="sm:col-span-2"><label class="block text-xs font-medium text-gray-500 mb-1">ໝາຍເຫດ</label><textarea wire:model="ef.remark" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
-                    </div>
-
+                    {{-- ══ ① ລາຍການ ເຄື່ອງ + ຮູບ (ນຳ ໜ້າ — ຄອນເຊັບ ໃໝ່ ຄື ໜ້າ ສ້າງ) ══ --}}
                     <div class="space-y-2">
-                        <div class="text-sm font-semibold text-gray-700">ລາຍການເຄື່ອງ</div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-sky-600 text-white flex items-center justify-center text-sm font-bold">1</span>
+                            <h4 class="text-sm font-semibold text-gray-700">ລາຍການ ເຄື່ອງ + ຮູບ <span class="text-gray-400 font-normal">({{ $record->items->count() }})</span></h4>
+                        </div>
                         @foreach ($record->items as $it)
-                            <div wire:key="ei-{{ $it->id }}" class="border border-gray-200 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-6 gap-2 text-sm">
-                                <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ຊື່</label><input type="text" wire:model="ei.{{ $it->id }}.item_name" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                                <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ທະບຽນເຄື່ອງ</label><input type="text" wire:model="ei.{{ $it->id }}.asset_code" placeholder="ເຊັ່ນ EL-T001-1" class="w-full rounded-lg border-gray-300 text-sm font-mono" /></div>
-                                <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ທະບຽນຊັບສິນ</label><input type="text" wire:model="ei.{{ $it->id }}.fixed_asset_no" placeholder="Fixed asset no." class="w-full rounded-lg border-gray-300 text-sm font-mono" /></div>
-                                <div><label class="block text-xs text-gray-500 mb-1">ຈຳນວນ</label><input type="number" min="1" wire:model="ei.{{ $it->id }}.qty" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                                <div><label class="block text-xs text-gray-500 mb-1">ໜ່ວຍ</label><input type="text" wire:model="ei.{{ $it->id }}.unit" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                                <div><label class="block text-xs text-gray-500 mb-1">ມູນຄ່າ</label><input type="number" step="0.01" wire:model="ei.{{ $it->id }}.estimated_value" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                                <div class="sm:col-span-3"><label class="block text-xs text-gray-500 mb-1">ລາຍລະອຽດ</label><input type="text" wire:model="ei.{{ $it->id }}.description" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                                <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">📍 ບ່ອນ ຈັດ ເກັບ ໄວ້</label><input type="text" wire:model="ei.{{ $it->id }}.storage_location" placeholder="ເຊັ່ນ: ສາງ A · ຊັ້ນ 2" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                                <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ສະພາບຝາກ</label><input type="text" wire:model="ei.{{ $it->id }}.condition_on_deposit" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                                <div class="sm:col-span-3"><label class="block text-xs text-gray-500 mb-1">ສະຖານະພາບ (Condition)</label><select wire:model="ei.{{ $it->id }}.condition_status" class="w-full rounded-lg border-gray-300 text-sm">@foreach (\App\Support\ConditionStatus::options() as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach</select></div>
-                                <div><label class="block text-xs text-gray-500 mb-1">ສະກຸນ</label><select wire:model="ei.{{ $it->id }}.currency" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option><option value="LAK">LAK</option><option value="THB">THB</option><option value="USD">USD</option></select></div>
-                                <div class="sm:col-span-6">
+                            <div wire:key="ei-{{ $it->id }}" class="border border-gray-200 rounded-xl p-3 space-y-3 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-md bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold shrink-0">{{ $loop->iteration }}</span>
+                                    <span class="text-xs font-semibold text-gray-500">ລາຍການ ທີ {{ $loop->iteration }}</span>
+                                </div>
+
+                                {{-- essentials: ຊື່ · ລະຫັດ · ຊັບສິນ --}}
+                                <div class="grid grid-cols-1 sm:grid-cols-6 gap-2.5">
+                                    <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ຊື່ເຄື່ອງ <span class="text-rose-500">*</span></label><input type="text" wire:model="ei.{{ $it->id }}.item_name" class="w-full rounded-lg border-gray-300 text-sm" />@error("ei.{$it->id}.item_name")<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror</div>
+                                    <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ລະຫັດ (ສາງ/ອຸປະກອນ)</label><input type="text" wire:model="ei.{{ $it->id }}.asset_code" placeholder="ເຊັ່ນ EL-T001-1" class="w-full rounded-lg border-gray-300 text-sm font-mono" /></div>
+                                    <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ທະບຽນຊັບສິນ</label><input type="text" wire:model="ei.{{ $it->id }}.fixed_asset_no" placeholder="Fixed asset no." class="w-full rounded-lg border-gray-300 text-sm font-mono" /></div>
+                                </div>
+
+                                {{-- photos: 3 ມູມ --}}
+                                <div>
                                     <div class="rounded-lg bg-sky-50/40 border border-sky-100 p-3">
                                         <label class="block text-xs font-semibold text-sky-700 mb-2">📸 ຮູບ ຫຼັກຖານ — <span class="text-gray-400 font-normal">ແຍກ 3 ມູມ · ຮູບ ເກົ່າ ລຶບ ໄດ້ (×) · ເພີ່ມ ໃໝ່ ຈາກ ກ້ອງ/ຄັງ (ຫຍໍ້ ອັດຕະໂນມັດ)</span></label>
                                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -389,8 +377,53 @@
                                         <p class="text-[10px] text-gray-400 mt-1.5">🟢 ຂອບ ຂຽວ = ບັນທຶກ ແລ້ວ · 🔵 ຂອບ ຟ້າ = ຮູບ ໃໝ່ ຈະ ບັນທຶກ ຕອນ ກົດ “ບັນທຶກ”</p>
                                     </div>
                                 </div>
+
+                                {{-- details: ຈຳນວນ · ໜ່ວຍ(dropdown) · ບ່ອນເກັບ · ສະຖານະພາບ (+ optional ທີ່ admin ເປີດ) --}}
+                                <div class="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+                                    <div><label class="block text-xs text-gray-500 mb-1">ຈຳນວນ <span class="text-rose-500">*</span></label><input type="number" min="1" wire:model="ei.{{ $it->id }}.qty" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                                    <div><label class="block text-xs text-gray-500 mb-1">ໜ່ວຍ</label><select wire:model="ei.{{ $it->id }}.unit" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($uoms as $u)<option value="{{ $u->name }}">{{ $u->name }}</option>@endforeach @if ($it->unit && ! $uoms->contains('name', $it->unit))<option value="{{ $it->unit }}">{{ $it->unit }} (ເກົ່າ)</option>@endif</select></div>
+                                    <div class="col-span-2"><label class="block text-xs text-gray-500 mb-1">📍 ບ່ອນ ຈັດ ເກັບ ໄວ້</label><input type="text" wire:model="ei.{{ $it->id }}.storage_location" placeholder="ເຊັ່ນ: ສາງ A · ຊັ້ນ 2" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                                    <div class="col-span-2 sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ສະຖານະພາບ (Condition)</label><select wire:model="ei.{{ $it->id }}.condition_status" class="w-full rounded-lg border-gray-300 text-sm">@foreach (\App\Support\ConditionStatus::options() as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach</select></div>
+                                    @if ($fieldVisible['condition_on_deposit'] ?? false)
+                                        <div class="col-span-2 sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ສະພາບ ຕອນ ຝາກ</label><input type="text" wire:model="ei.{{ $it->id }}.condition_on_deposit" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                                    @endif
+                                    @if ($fieldVisible['estimated_value'] ?? false)
+                                        <div class="col-span-2 sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ມູນຄ່າ (ປະມານ)</label><input type="number" step="0.01" min="0" wire:model="ei.{{ $it->id }}.estimated_value" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                                    @endif
+                                    @if ($fieldVisible['currency'] ?? false)
+                                        <div><label class="block text-xs text-gray-500 mb-1">ສະກຸນເງິນ</label><select wire:model="ei.{{ $it->id }}.currency" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option><option value="LAK">LAK</option><option value="THB">THB</option><option value="USD">USD</option></select></div>
+                                    @endif
+                                    @if ($fieldVisible['description'] ?? false)
+                                        <div class="col-span-2 sm:col-span-3"><label class="block text-xs text-gray-500 mb-1">ລາຍລະອຽດ (Description)</label><input type="text" wire:model="ei.{{ $it->id }}.description" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                                    @endif
+                                </div>
                             </div>
                         @endforeach
+                    </div>
+
+                    {{-- ══ ② ຂໍ້ມູນ ທົ່ວໄປ (ຕາມ ຫຼັງ) ══ --}}
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-slate-300 text-slate-700 flex items-center justify-center text-sm font-bold">2</span>
+                            <h4 class="text-sm font-semibold text-gray-700">ຂໍ້ມູນ ທົ່ວໄປ</h4>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ເຈົ້າຂອງ / Owner <span class="text-gray-400 font-normal">(ດຶງ ຈາກ ຜູ້ ໃຊ້)</span></label><select wire:model="ef.owner_user_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($ownerUsers as $ou)<option value="{{ $ou->id }}">{{ $ou->display_name ?: $ou->email }}</option>@endforeach</select>@error('ef.owner_user_id')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ພະແນກ ເຈົ້າ ຂອງ / Department <span class="text-gray-400 font-normal">(ຄຸມ ສິດ ຈຳໜ່າຍ)</span></label><select wire:model="ef.owner_dept_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}@if ($d->unit) · {{ $d->unit->name }}@endif</option>@endforeach</select>@error('ef.owner_dept_id')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ປະເພດ</label><input type="text" wire:model="ef.item_category" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ແຫຼ່ງທີ່ມາ</label><input type="text" wire:model="ef.origin_source" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ສະຖານະ ການ ໃຊ້ງານ</label><select wire:model="ef.functional_status" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option><option value="usable">✅ ໃຊ້ ໄດ້ ປົກກະຕິ</option><option value="partial">⚠️ ໃຊ້ ໄດ້ ບາງ ສ່ວນ</option><option value="unusable">⛔ ໃຊ້ ບໍ່ ໄດ້</option></select></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ວັນທີຝາກເດີມ <span class="text-gray-400 font-normal">(ເຄື່ອງຝາກເກົ່າ)</span></label><input type="date" wire:model="ef.original_deposit_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ຮັບຝາກເດີມ</label><input type="text" wire:model="ef.original_receiver" placeholder="ຊື່ ຜູ້ ຮັບ ຝາກ ຕອນ ນັ້ນ" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ໄລຍະເວລາ</label><input type="text" wire:model="ef.expected_duration" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ວັນທີຝາກ</label><input type="date" wire:model="ef.deposit_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ຄາດເອົາຄືນ</label><input type="date" wire:model="ef.expected_claim_date" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ບ່ອນເກັບ (ໃບ)</label><input type="text" wire:model="ef.storage_location" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ປ້າຍຊັ້ນວາງ</label><input type="text" wire:model="ef.storage_shelf_label" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                            <div class="sm:col-span-2"><label class="block text-xs font-medium text-gray-500 mb-1">ເຫດຜົນ</label><textarea wire:model="ef.deposit_reason" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
+                            <div class="sm:col-span-2"><label class="block text-xs font-medium text-gray-500 mb-1">ຄຳແນະນຳ warehouse</label><textarea wire:model="ef.warehouse_instructions" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
+                            <div class="sm:col-span-2"><label class="block text-xs font-medium text-gray-500 mb-1">ໝາຍເຫດ</label><textarea wire:model="ef.remark" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
+                        </div>
                     </div>
 
                     <div class="flex justify-end gap-2 pt-2">

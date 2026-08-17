@@ -514,6 +514,20 @@ class Show extends Component
             'isOwner' => auth()->id() === $this->record->owner_user_id,
             'departments' => Department::where('is_active', true)->with('unit:id,name')->orderBy('name')->get(['id', 'name', 'unit_id']),
             'ownerUsers' => User::where('status', 'active')->orderBy('display_name')->get(['id', 'display_name', 'email']),
+            'uoms' => \App\Models\Uom::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'fieldVisible' => $this->optionalFieldVisibility(),
         ]);
+    }
+
+    /** ຟິລ optional ທີ່ admin ເປີດ (ດຽວກັນ ກັບ ໜ້າ ສ້າງ) — ໃຫ້ ໜ້າ ແກ້ໄຂ ຕໍ່ ກັບ ຄອນເຊັບ ໃໝ່. */
+    protected function optionalFieldVisibility(): array
+    {
+        $saved = \App\Models\Setting::get('deposit', [])['fields'] ?? [];
+        $out = [];
+        foreach (\App\Livewire\Deposit\Create::OPTIONAL_ITEM_FIELDS as $k => $_) {
+            $out[$k] = (bool) ($saved[$k] ?? false);
+        }
+
+        return $out;
     }
 }

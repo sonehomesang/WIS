@@ -84,7 +84,7 @@
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ລະຫັດເຄື່ອງ</label><input type="text" wire:model="items.{{ $i }}.asset_code" class="w-full rounded-lg border-gray-300 text-sm font-mono" /></div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ຊັບສິນ</label><input type="text" wire:model="items.{{ $i }}.fixed_asset_no" class="w-full rounded-lg border-gray-300 text-sm font-mono" /></div>
                         <div><label class="block text-xs font-medium text-gray-500 mb-1">ຈຳນວນ <span class="text-rose-500">*</span></label><input type="number" min="1" wire:model="items.{{ $i }}.qty" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ໜ່ວຍ</label><input type="text" wire:model="items.{{ $i }}.unit" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ໜ່ວຍ</label><select wire:model="items.{{ $i }}.unit" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($uoms as $u)<option value="{{ $u->name }}">{{ $u->name }}</option>@endforeach @if (! empty($row['unit']) && ! $uoms->contains('name', $row['unit']))<option value="{{ $row['unit'] }}">{{ $row['unit'] }} (ເກົ່າ)</option>@endif</select></div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
