@@ -253,7 +253,7 @@ class Create extends Component
             'items.*.storage_location' => ['nullable', 'string', 'max:256'],
             'items.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
             'items.*.currency' => ['nullable', 'in:LAK,THB,USD'],
-            'photos.*.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'photos.*.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:12288'],
         ], [], ['item_category' => 'ປະເພດ', 'origin_source' => 'ແຫຼ່ງທີ່ມາ', 'deposit_reason' => 'ເຫດຜົນ', 'expected_duration' => 'ໄລຍະເວລາ']);
 
         // submit → ບັງຄັບ ≥1 ຮູບ ຕໍ່ລາຍການ (ຢ່າງໜ້ອຍ 1 ຊ່ອງ ໃນ 3 ມູມ) (evidence)
