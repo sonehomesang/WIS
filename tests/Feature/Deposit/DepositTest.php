@@ -39,6 +39,25 @@ test('createDraft generates DP{year} number and history', function () {
     expect($r->history()->where('action', 'create')->exists())->toBeTrue();
 });
 
+test('a draft without office info is flagged as needing step 2, and clears once filled', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+
+    // on-site draft (no item_category / office info)
+    $r = app(DepositService::class)->createDraft([
+        'request_type' => 'walk_in', 'deposit_date' => now()->toDateString(),
+        'items' => [['item_name' => 'Old pump', 'qty' => 1]],
+    ], $admin);
+    expect($r->needsOfficeInfo())->toBeTrue();
+
+    Livewire::test(Index::class)->set('statusFilter', 'needs_info')->assertSee($r->request_number);
+
+    // lead fills the office info → no longer flagged / not in the filter
+    $r->update(['item_category' => 'Tools']);
+    expect($r->fresh()->needsOfficeInfo())->toBeFalse();
+    Livewire::test(Index::class)->set('statusFilter', 'needs_info')->assertDontSee($r->request_number);
+});
+
 test('step-1 draft saves with just item name + qty + storage location (office fields optional)', function () {
     Storage::fake('public');
     $this->actingAs(User::factory()->create(['is_super_admin' => true]));

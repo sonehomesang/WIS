@@ -92,7 +92,8 @@ class Index extends Component
         $items = $this->scopedQuery()
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w->where('request_number', 'like', "%{$this->search}%")
                 ->orWhere('owner_name', 'like', "%{$this->search}%")))
-            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
+            ->when($this->statusFilter === 'needs_info', fn ($q) => $q->needsOfficeInfo())
+            ->when($this->statusFilter && $this->statusFilter !== 'needs_info', fn ($q) => $q->where('status', $this->statusFilter))
             ->when($this->typeFilter, fn ($q) => $q->where('request_type', $this->typeFilter))
             ->orderByDesc('id')
             ->paginate(9);
@@ -109,8 +110,11 @@ class Index extends Component
         $counts = $this->scopedQuery()->selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
         $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
 
+        $needsInfo = $this->scopedQuery()->needsOfficeInfo()->count();
+
         return [
             $chip('', 'ທັງໝົດ', $counts->sum()),
+            $chip('needs_info', 'ຮ່າງ ລໍ ຕື່ມ ຂໍ້ມູນ', $needsInfo, true),
             $chip('submitted', 'ລໍຮັບ', $counts['submitted'] ?? 0, true),
             $chip('accepted', 'ຮັບແລ້ວ', $counts['accepted'] ?? 0),
             $chip('stored', 'ເກັບໄວ້', $counts['stored'] ?? 0),

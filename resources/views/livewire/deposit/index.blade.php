@@ -84,6 +84,7 @@
                                         <div class="min-w-0">
                                             <div class="font-medium text-gray-800 truncate max-w-xs">{{ $first?->item_name ?? '—' }}@if ($r->items->count() > 1) <span class="text-gray-400 text-xs font-normal">+{{ $r->items->count() - 1 }}</span>@endif</div>
                                             @if ($r->item_category)<div class="text-xs text-gray-400">{{ Str::limit($r->item_category, 30) }}</div>@endif
+                                            @if ($r->needsOfficeInfo())<div class="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> ຂັ້ນ 2: ລໍ ຫົວໜ້າ ຕື່ມ ຂໍ້ມູນ</div>@endif
                                         </div>
                                     </div>
                                 </td>
@@ -116,7 +117,13 @@
                                         <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນລາຍການນີ້?" class="text-xs font-medium text-emerald-700 border border-emerald-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 transition inline-block">↩ ກູ້ຄືນ</button>
                                         @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate ml-auto" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif
                                     @else
-                                        @can('deposit.edit')@unless ($locked($r->status))<a href="{{ route('deposit.show', [$r, 'edit' => 1]) }}" wire:navigate class="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition inline-block mr-1">✏️ ແກ້ໄຂ</a>@endunless @endcan
+                                        @can('deposit.edit')@unless ($locked($r->status))
+                                            @if ($r->needsOfficeInfo())
+                                                <a href="{{ route('deposit.show', [$r, 'edit' => 1]) }}" wire:navigate class="text-xs font-semibold text-white bg-amber-600 border border-amber-600 rounded-lg px-3 py-1.5 hover:bg-amber-700 transition inline-block mr-1">✏️ ຕື່ມ ຂໍ້ມູນ →</a>
+                                            @else
+                                                <a href="{{ route('deposit.show', [$r, 'edit' => 1]) }}" wire:navigate class="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition inline-block mr-1">✏️ ແກ້ໄຂ</a>
+                                            @endif
+                                        @endunless @endcan
                                         <a href="{{ route('deposit.show', $r) }}" wire:navigate class="text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition inline-block">ເບິ່ງ</a>
                                     @endif
                                 </td>

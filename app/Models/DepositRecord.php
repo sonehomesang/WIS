@@ -36,6 +36,18 @@ class DepositRecord extends Model
         return $this->hasMany(DepositHistory::class, 'record_id')->orderBy('id');
     }
 
+    /** ຮ່າງ ທີ່ ໜ້າງານ ບັນທຶກ ແຕ່ ຫົວໜ້າ ຍັງ ບໍ່ ໄດ້ ຕື່ມ ຂໍ້ມູນ ທົ່ວໄປ (ຂັ້ນ 2). */
+    public function needsOfficeInfo(): bool
+    {
+        return $this->status === 'draft' && blank($this->item_category);
+    }
+
+    public function scopeNeedsOfficeInfo($query)
+    {
+        return $query->where('status', 'draft')
+            ->where(fn ($w) => $w->whereNull('item_category')->orWhere('item_category', ''));
+    }
+
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_user_id');
