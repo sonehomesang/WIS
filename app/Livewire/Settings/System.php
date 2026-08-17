@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Settings;
 
+use App\Livewire\Deposit\Create;
 use App\Models\Setting;
 use App\Services\RequestService;
+use App\Support\Modules;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -47,6 +49,9 @@ class System extends Component
     /** @var array<string,bool> Request form fields ເປີດ/ປິດ */
     public array $reqFields = [];
 
+    /** @var array<string,bool> Deposit form optional item-fields ເປີດ/ປິດ */
+    public array $depFields = [];
+
     // ── Letterhead (PDF) ──
     public string $lhCompanyLo = '';
 
@@ -84,6 +89,11 @@ class System extends Component
             $this->reqFields[$k] = (bool) ($saved[$k] ?? true);
         }
 
+        $depSaved = Setting::get('deposit', [])['fields'] ?? [];
+        foreach (array_keys(Create::OPTIONAL_ITEM_FIELDS) as $k) {
+            $this->depFields[$k] = (bool) ($depSaved[$k] ?? false);   // default ເຊື່ອງ
+        }
+
         $gen = Setting::get('general', []);
         $this->appName = $gen['app_name'] ?? 'WH — Warehouse';
         $this->defaultBorrowDays = (int) ($gen['default_borrow_days'] ?? 7);
@@ -94,7 +104,7 @@ class System extends Component
         $this->borrowApprove = $wfBorrow['approve'] ?? 'required';
 
         $mods = Setting::get('modules', []);
-        foreach (\App\Support\Modules::TOGGLEABLE as $mk) {
+        foreach (Modules::TOGGLEABLE as $mk) {
             $this->modules[$mk] = (bool) ($mods[$mk] ?? true);
         }
 
@@ -154,7 +164,7 @@ class System extends Component
     {
         abort_unless(auth()->user()->can('settings.edit'), 403);
         $out = [];
-        foreach (\App\Support\Modules::TOGGLEABLE as $mk) {
+        foreach (Modules::TOGGLEABLE as $mk) {
             $out[$mk] = (bool) ($this->modules[$mk] ?? true);
         }
         Setting::put('modules', $out, auth()->id());
@@ -240,6 +250,17 @@ class System extends Component
             $fields[$k] = (bool) ($this->reqFields[$k] ?? false);
         }
         Setting::put('request', ['fields' => $fields], auth()->id());
+        $this->dispatch('saved');
+    }
+
+    public function saveDepositFields(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $fields = [];
+        foreach (array_keys(Create::OPTIONAL_ITEM_FIELDS) as $k) {
+            $fields[$k] = (bool) ($this->depFields[$k] ?? false);
+        }
+        Setting::put('deposit', ['fields' => $fields], auth()->id());
         $this->dispatch('saved');
     }
 

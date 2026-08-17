@@ -343,6 +343,7 @@ class Show extends Component
             'description' => $it->description, 'qty' => $it->qty, 'unit' => $it->unit,
             'estimated_value' => $it->estimated_value, 'currency' => $it->currency,
             'condition_on_deposit' => $it->condition_on_deposit, 'condition_on_claim' => $it->condition_on_claim,
+            'storage_location' => $it->storage_location,
             'condition_status' => $it->condition_status ?? 'in_service',
         ]])->all();
         $this->ep = [];
@@ -376,6 +377,7 @@ class Show extends Component
             'ei.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
             'ei.*.currency' => ['nullable', 'in:LAK,THB,USD'],
             'ei.*.condition_status' => ['required', ConditionStatus::rule()],
+            'ei.*.storage_location' => ['nullable', 'string', 'max:256'],
             'ep.*.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
@@ -417,6 +419,7 @@ class Show extends Component
                     'estimated_value' => ($f['estimated_value'] !== null && $f['estimated_value'] !== '') ? $f['estimated_value'] : null,
                     'currency' => $f['currency'] ?: null,
                     'condition_on_deposit' => $f['condition_on_deposit'] ?: null,
+                    'storage_location' => ($f['storage_location'] ?? '') ?: null,
                     'condition_on_claim' => $f['condition_on_claim'] ?: null,
                     'condition_status' => $cs = ($f['condition_status'] ?? 'in_service'),
                     'condition_set_at' => $it->condition_status !== $cs ? now() : $it->condition_set_at,

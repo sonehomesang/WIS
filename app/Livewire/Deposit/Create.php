@@ -5,6 +5,7 @@ namespace App\Livewire\Deposit;
 use App\Models\Department;
 use App\Models\Equipment;
 use App\Models\InventoryItem;
+use App\Models\Setting;
 use App\Models\Uom;
 use App\Models\User;
 use App\Services\DepositService;
@@ -77,10 +78,18 @@ class Create extends Component
         $this->items = [$this->blankItem()];
     }
 
+    /** Optional per-item fields the admin can show/hide (Settings › System). Default hidden. */
+    public const OPTIONAL_ITEM_FIELDS = [
+        'condition_on_deposit' => 'ສະພາບ ຕອນ ຝາກ',
+        'estimated_value' => 'ມູນຄ່າ (ປະມານ)',
+        'currency' => 'ສະກຸນເງິນ',
+        'description' => 'ລາຍລະອຽດ (Description)',
+    ];
+
     protected function blankItem(): array
     {
         // asset_source = ແຫຼ່ງ ຂອງ ທະບຽນເຄື່ອງ: 'inventory' | 'equipment' | 'new' (UI ຢ່າງດຽວ — ບໍ່ ບັນທຶກ).
-        return ['item_name' => '', 'asset_source' => 'inventory', 'asset_code' => '', 'fixed_asset_no' => '', 'description' => '', 'qty' => 1, 'unit' => '', 'estimated_value' => '', 'currency' => '', 'condition_on_deposit' => '', 'condition_status' => 'in_service'];
+        return ['item_name' => '', 'asset_source' => 'inventory', 'asset_code' => '', 'fixed_asset_no' => '', 'description' => '', 'qty' => 1, 'unit' => '', 'estimated_value' => '', 'currency' => '', 'condition_on_deposit' => '', 'storage_location' => '', 'condition_status' => 'in_service'];
     }
 
     public function addItem(): void
@@ -226,6 +235,7 @@ class Create extends Component
             'items.*.fixed_asset_no' => ['nullable', 'string', 'max:64'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
             'items.*.unit' => ['nullable', 'string', 'max:32'],
+            'items.*.storage_location' => ['nullable', 'string', 'max:256'],
             'items.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
             'items.*.currency' => ['nullable', 'in:LAK,THB,USD'],
             'photos.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
@@ -268,12 +278,21 @@ class Create extends Component
             }
         }
 
-        if ($submit) {
-            app(DepositService::class)->transition($record, 'submit', auth()->user());
+        // ຂັ້ນ 1 (ໜ້າງານ) = ບັນທຶກ ຮ່າງ ແລ້ວ ໄປ ຟອມ ໃໝ່ ເລີຍ; ຫົວໜ້າ ຕື່ມ ຂໍ້ມູນ + ສົ່ງ ໃນ ໜ້າ ແກ້ໄຂ (ຂັ້ນ 2)
+        session()->flash('ok', "✓ ບັນທຶກ {$record->request_number} ແລ້ວ · ເພີ່ມ ລາຍການ ໃໝ່ ໄດ້ ເລີຍ");
+        $this->redirectRoute('deposit.create', navigate: true);
+    }
+
+    /** ຟິລ optional ທີ່ ຄວນ ສະແດງ (admin ຕັ້ງ ໃນ Settings › System) — default ເຊື່ອງ. */
+    protected function optionalFieldVisibility(): array
+    {
+        $saved = Setting::get('deposit', [])['fields'] ?? [];
+        $out = [];
+        foreach (self::OPTIONAL_ITEM_FIELDS as $k => $_) {
+            $out[$k] = (bool) ($saved[$k] ?? false);
         }
 
-        session()->flash('ok', $submit ? "ສົ່ງຄຳຂໍຝາກ {$record->request_number} ແລ້ວ" : "ບັນທຶກ draft {$record->request_number} ແລ້ວ");
-        $this->redirectRoute('deposit.show', $record, navigate: true);
+        return $out;
     }
 
     public function render(): View
@@ -282,6 +301,7 @@ class Create extends Component
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(),
             'departments' => Department::where('is_active', true)->with('unit:id,name')->orderBy('name')->get(['id', 'name', 'unit_id']),
             'ownerUsers' => User::where('status', 'active')->orderBy('display_name')->get(['id', 'display_name', 'email']),
+            'fieldVisible' => $this->optionalFieldVisibility(),
         ]);
     }
 }

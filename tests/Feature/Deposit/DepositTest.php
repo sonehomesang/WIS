@@ -39,6 +39,23 @@ test('createDraft generates DP{year} number and history', function () {
     expect($r->history()->where('action', 'create')->exists())->toBeTrue();
 });
 
+test('step-1 draft saves with just item name + qty + storage location (office fields optional)', function () {
+    Storage::fake('public');
+    $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+
+    Livewire::test(Create::class)
+        ->set('items.0.item_name', 'Old pump')
+        ->set('items.0.qty', 2)
+        ->set('items.0.storage_location', 'ສາງ A · ຊັ້ນ 2')
+        ->call('save', false)              // no category/origin/reason/duration → still saves a draft
+        ->assertHasNoErrors();
+
+    $item = DepositItem::first();
+    expect($item)->not->toBeNull();
+    expect($item->storage_location)->toBe('ສາງ A · ຊັ້ນ 2');
+    expect($item->record->status)->toBe('draft');
+});
+
 test('camera and gallery photos both accumulate onto the item (no overwrite)', function () {
     Storage::fake('public');
     $this->actingAs(User::factory()->create(['is_super_admin' => true]));

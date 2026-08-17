@@ -132,6 +132,24 @@
             @endcan
         </div>
 
+        {{-- Deposit form optional fields — admin ເປີດ/ປິດ (ໜ້າ ຝາກ ຂັ້ນ 1) --}}
+        <div class="bg-white border border-gray-100 rounded-lg p-5 md:max-w-md space-y-3">
+            <div>
+                <h3 class="font-medium text-gray-800">ຟອມ ຝາກ ເຄື່ອງ — ຫ້ອງ ເສີມ</h3>
+                <p class="text-xs text-gray-500">ຫ້ອງ ເສີມ ໃນ ຟອມ ຝາກ (ຂັ້ນ 1 · ໜ້າງານ). ປິດ = ເຊື່ອງ. ຊື່ · ລະຫັດ · ຮູບ · ຈຳນວນ · ບ່ອນຈັດເກັບ · ສະຖານະ = ສະແດງ ຕະຫຼອດ.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                @foreach (\App\Livewire\Deposit\Create::OPTIONAL_ITEM_FIELDS as $key => $label)
+                    <label class="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" wire:model="depFields.{{ $key }}" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" /> {{ $label }}
+                    </label>
+                @endforeach
+            </div>
+            @can('settings.edit')
+                <div class="pt-1"><button wire:click="saveDepositFields" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 min-h-[40px] hover:bg-sky-700">Save fields</button></div>
+            @endcan
+        </div>
+
         {{-- Letterhead (PDF exports) --}}
         <div class="bg-white border border-gray-100 rounded-lg p-5 md:max-w-lg space-y-3">
             <div>

@@ -112,6 +112,7 @@
                                 </div>
                             @endif
                             @if ($it->description)<div class="text-xs text-gray-500 mt-1.5">{{ $it->description }}</div>@endif
+                            @if ($it->storage_location)<div class="text-xs text-gray-500 mt-1">📍 ບ່ອນ ເກັບ: <span class="text-gray-700">{{ $it->storage_location }}</span></div>@endif
                             @if ($it->condition_on_deposit || $it->condition_on_claim)
                                 <div class="text-xs text-gray-500 mt-1">@if ($it->condition_on_deposit)ຝາກ: <span class="text-gray-700">{{ $it->condition_on_deposit }}</span>@endif @if ($it->condition_on_claim)· ເອົາຄືນ: <span class="text-gray-700">{{ $it->condition_on_claim }}</span>@endif</div>
                             @endif
@@ -328,6 +329,7 @@
                                 <div><label class="block text-xs text-gray-500 mb-1">ໜ່ວຍ</label><input type="text" wire:model="ei.{{ $it->id }}.unit" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                                 <div><label class="block text-xs text-gray-500 mb-1">ມູນຄ່າ</label><input type="number" step="0.01" wire:model="ei.{{ $it->id }}.estimated_value" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                                 <div class="sm:col-span-3"><label class="block text-xs text-gray-500 mb-1">ລາຍລະອຽດ</label><input type="text" wire:model="ei.{{ $it->id }}.description" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                                <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">📍 ບ່ອນ ຈັດ ເກັບ ໄວ້</label><input type="text" wire:model="ei.{{ $it->id }}.storage_location" placeholder="ເຊັ່ນ: ສາງ A · ຊັ້ນ 2" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                                 <div class="sm:col-span-2"><label class="block text-xs text-gray-500 mb-1">ສະພາບຝາກ</label><input type="text" wire:model="ei.{{ $it->id }}.condition_on_deposit" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                                 <div class="sm:col-span-3"><label class="block text-xs text-gray-500 mb-1">ສະຖານະພາບ (Condition)</label><select wire:model="ei.{{ $it->id }}.condition_status" class="w-full rounded-lg border-gray-300 text-sm">@foreach (\App\Support\ConditionStatus::options() as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach</select></div>
                                 <div><label class="block text-xs text-gray-500 mb-1">ສະກຸນ</label><select wire:model="ei.{{ $it->id }}.currency" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option><option value="LAK">LAK</option><option value="THB">THB</option><option value="USD">USD</option></select></div>
