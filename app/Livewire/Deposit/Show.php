@@ -78,8 +78,13 @@ class Show extends Component
 
     public array $ei = [];   // per-item
 
-    /** new photos: [kind => [itemId => files]] */
-    public array $ep = [];
+    /** ຮູບ ຝາກ ໃໝ່ ຕອນ ແກ້ໄຂ — 3 ມູມ: [itemId => [slot => files]] (ຄັງ ຖາວອນ) */
+    public array $edPhotos = [];
+
+    /** ຮູບ ຈາກ ກ້ອງ / ແກເລີຣີ (ຊົ່ວຄາວ → merge ເຂົ້າ edPhotos): [itemId => [slot => files]] */
+    public array $edCam = [];
+
+    public array $edGal = [];
 
     public function mount(DepositRecord $record): void
     {
@@ -346,7 +351,9 @@ class Show extends Component
             'storage_location' => $it->storage_location,
             'condition_status' => $it->condition_status ?? 'in_service',
         ]])->all();
-        $this->ep = [];
+        $this->edPhotos = [];
+        $this->edCam = [];
+        $this->edGal = [];
         $this->resetErrorBag();
         $this->showEdit = true;
     }
@@ -378,7 +385,7 @@ class Show extends Component
             'ei.*.currency' => ['nullable', 'in:LAK,THB,USD'],
             'ei.*.condition_status' => ['required', ConditionStatus::rule()],
             'ei.*.storage_location' => ['nullable', 'string', 'max:256'],
-            'ep.*.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'edPhotos.*.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:12288'],
         ]);
 
         $r = $this->record;
@@ -426,8 +433,14 @@ class Show extends Component
                     'condition_set_by' => $it->condition_status !== $cs ? auth()->id() : $it->condition_set_by,
                 ]);
             }
-            foreach (['deposit', 'stored', 'claim'] as $kind) {
-                $this->storeItemPhotos($it, $this->ep[$kind][$it->id] ?? [], $kind);
+            // ຮູບ ຝາກ ໃໝ່ 3 ມູມ (deposit) ພ້ອມ slot — append ຫຼັງ ຮູບ ເກົ່າ.
+            // ອ່ານ ສະເພາະ edPhotos ຂອງ item ທີ່ ຢູ່ ໃນ ໃບ ນີ້ (loop $r->items) → itemId ປອມ ຖືກ ຂ້າມ.
+            $sort = (int) ($it->photos()->where('kind', 'deposit')->max('sort_order') ?? -1);
+            foreach (array_keys(\App\Livewire\Deposit\Create::PHOTO_SLOTS) as $slot) {
+                foreach (array_values($this->edPhotos[$it->id][$slot] ?? []) as $file) {
+                    $path = $file->store("deposit/{$r->id}/{$it->id}", 'public');
+                    $it->photos()->create(['kind' => 'deposit', 'slot' => $slot, 'path' => $path, 'sort_order' => ++$sort]);
+                }
             }
         }
 
@@ -439,7 +452,7 @@ class Show extends Component
 
         $this->record->refresh();
         session()->flash('ok', '✓ ບັນທຶກການແກ້ໄຂ');
-        $this->reset(['showEdit', 'ef', 'ei', 'ep']);
+        $this->reset(['showEdit', 'ef', 'ei', 'edPhotos', 'edCam', 'edGal']);
     }
 
     public function removePhoto(int $photoId): void
@@ -451,6 +464,44 @@ class Show extends Component
             Storage::disk('public')->delete($p->path);
             $p->delete();
             $this->record->refresh();
+        }
+    }
+
+    // ── ຮູບ ໃໝ່ ຕອນ ແກ້ໄຂ: ກ້ອງ / ແກເລີຣີ → ສະສົມ ເຂົ້າ edPhotos ຕໍ່ ມູມ (ຄື ໜ້າ ສ້າງ) ──
+    public function updatedEdCam($value, $key): void
+    {
+        $this->absorbEditPhotos('edCam', $key);
+    }
+
+    public function updatedEdGal($value, $key): void
+    {
+        $this->absorbEditPhotos('edGal', $key);
+    }
+
+    protected function absorbEditPhotos(string $prop, $key): void
+    {
+        // $key = "{itemId}.{slot}" ເຊັ່ນ "42.overall"
+        [$itemId, $slot] = array_pad(explode('.', (string) $key, 2), 2, null);
+        $itemId = (int) $itemId;
+        if (! array_key_exists($slot, \App\Livewire\Deposit\Create::PHOTO_SLOTS)) {
+            return;
+        }
+        $files = $this->{$prop}[$itemId][$slot] ?? [];
+        $files = array_values(array_filter(is_array($files) ? $files : [$files]));
+        if ($files) {
+            $this->edPhotos[$itemId][$slot] = array_merge($this->edPhotos[$itemId][$slot] ?? [], $files);
+        }
+        unset($this->{$prop}[$itemId][$slot]);
+        if (empty($this->{$prop}[$itemId])) {
+            unset($this->{$prop}[$itemId]);
+        }
+    }
+
+    public function removeEditPhoto(int $itemId, string $slot, int $j): void
+    {
+        if (isset($this->edPhotos[$itemId][$slot][$j])) {
+            unset($this->edPhotos[$itemId][$slot][$j]);
+            $this->edPhotos[$itemId][$slot] = array_values($this->edPhotos[$itemId][$slot]);
         }
     }
 

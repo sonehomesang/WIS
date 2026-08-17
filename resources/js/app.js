@@ -124,7 +124,7 @@ async function compressImage(file, maxEdge = 1920, quality = 0.82) {
 // Files are compressed then handed to Livewire via uploadMultiple() targeting
 // the nested property (e.g. "camUpload.0.overall"), keeping the absorb flow.
 document.addEventListener('alpine:init', () => {
-    window.Alpine.data('photoSlot', (i, slot) => ({
+    window.Alpine.data('photoSlot', (camBase, galBase, slot) => ({
         busy: false,
         async upload(e, kind) {
             const files = Array.from(e.target.files || []);
@@ -137,7 +137,7 @@ document.addEventListener('alpine:init', () => {
                 for (const f of files) {
                     out.push(await compressImage(f));
                 }
-                const prop = (kind === 'cam' ? 'camUpload' : 'galUpload') + '.' + i + '.' + slot;
+                const prop = (kind === 'cam' ? camBase : galBase) + '.' + slot;
                 await new Promise((resolve) => {
                     this.$wire.uploadMultiple(prop, out, resolve, resolve);
                 });

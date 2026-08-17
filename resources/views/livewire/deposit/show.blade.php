@@ -345,8 +345,49 @@
                                 <div class="sm:col-span-3"><label class="block text-xs text-gray-500 mb-1">ສະຖານະພາບ (Condition)</label><select wire:model="ei.{{ $it->id }}.condition_status" class="w-full rounded-lg border-gray-300 text-sm">@foreach (\App\Support\ConditionStatus::options() as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach</select></div>
                                 <div><label class="block text-xs text-gray-500 mb-1">ສະກຸນ</label><select wire:model="ei.{{ $it->id }}.currency" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option><option value="LAK">LAK</option><option value="THB">THB</option><option value="USD">USD</option></select></div>
                                 <div class="sm:col-span-6">
-                                    <label class="block text-xs text-gray-500 mb-1">ເພີ່ມຮູບ (deposit)</label>
-                                    <input type="file" wire:model="ep.deposit.{{ $it->id }}" multiple accept="image/*" class="{{ $fileCls }}" />
+                                    <div class="rounded-lg bg-sky-50/40 border border-sky-100 p-3">
+                                        <label class="block text-xs font-semibold text-sky-700 mb-2">📸 ຮູບ ຫຼັກຖານ — <span class="text-gray-400 font-normal">ແຍກ 3 ມູມ · ຮູບ ເກົ່າ ລຶບ ໄດ້ (×) · ເພີ່ມ ໃໝ່ ຈາກ ກ້ອງ/ຄັງ (ຫຍໍ້ ອັດຕະໂນມັດ)</span></label>
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                            @foreach (\App\Livewire\Deposit\Create::PHOTO_SLOTS as $slot => $meta)
+                                                @php $existing = $it->photos->where('kind', 'deposit')->where('slot', $slot); $pending = $edPhotos[$it->id][$slot] ?? []; @endphp
+                                                <div wire:key="edph-{{ $it->id }}-{{ $slot }}" x-data="photoSlot('edCam.{{ $it->id }}', 'edGal.{{ $it->id }}', '{{ $slot }}')" class="rounded-lg border border-sky-100 bg-white p-2.5 flex flex-col gap-2">
+                                                    <div class="text-[11px] font-semibold text-gray-600 flex items-center gap-1 min-h-[2rem]"><span class="text-base leading-none">{{ $meta[1] }}</span><span>{{ $meta[0] }}</span></div>
+                                                    <div class="flex gap-1.5">
+                                                        <label class="flex-1 cursor-pointer inline-flex items-center justify-center gap-1 text-xs font-medium text-white bg-sky-600 rounded-lg px-2 py-1.5 hover:bg-sky-700 transition">
+                                                            📷 <span class="hidden lg:inline">ຖ່າຍ</span>
+                                                            <input type="file" x-on:change="upload($event, 'cam')" accept="image/*" capture="environment" multiple class="hidden" />
+                                                        </label>
+                                                        <label class="flex-1 cursor-pointer inline-flex items-center justify-center gap-1 text-xs font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded-lg px-2 py-1.5 hover:bg-sky-100 transition">
+                                                            🖼 <span class="hidden lg:inline">ຄັງ</span>
+                                                            <input type="file" x-on:change="upload($event, 'gal')" accept="image/*" multiple class="hidden" />
+                                                        </label>
+                                                    </div>
+                                                    <div x-show="busy" class="text-[10px] text-sky-500">⏳ ກຳລັງ ຫຍໍ້ + ອັບ…</div>
+                                                    @if ($existing->count() || ! empty($pending))
+                                                        <div class="flex gap-1.5 flex-wrap">
+                                                            @foreach ($existing as $p)
+                                                                <div class="relative" title="ຮູບ ທີ່ ບັນທຶກ ແລ້ວ">
+                                                                    <img src="{{ $p->url }}" alt="" class="w-14 h-14 rounded-lg object-cover border-2 border-emerald-300" />
+                                                                    <button type="button" wire:click="removePhoto({{ $p->id }})" wire:confirm="ລຶບ ຮູບ ນີ້ ຖາວອນ?" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs leading-none shadow" title="ລຶບ ຮູບ ເກົ່າ">×</button>
+                                                                </div>
+                                                            @endforeach
+                                                            @foreach ($pending as $j => $f)
+                                                                @if ($f->isPreviewable())
+                                                                    <div class="relative" title="ຮູບ ໃໝ່ (ຍັງ ບໍ່ ບັນທຶກ)">
+                                                                        <img src="{{ $f->temporaryUrl() }}" alt="" class="w-14 h-14 rounded-lg object-cover border-2 border-sky-300" />
+                                                                        <button type="button" wire:click="removeEditPhoto({{ $it->id }}, '{{ $slot }}', {{ $j }})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs leading-none shadow" title="ຍົກເລີກ ຮູບ ໃໝ່">×</button>
+                                                                    </div>
+                                                                @endif
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <div class="text-[10px] text-gray-300 italic">ຍັງ ບໍ່ ມີ ຮູບ</div>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <p class="text-[10px] text-gray-400 mt-1.5">🟢 ຂອບ ຂຽວ = ບັນທຶກ ແລ້ວ · 🔵 ຂອບ ຟ້າ = ຮູບ ໃໝ່ ຈະ ບັນທຶກ ຕອນ ກົດ “ບັນທຶກ”</p>
+                                    </div>
                                 </div>
                             </div>
                         @endforeach
@@ -354,7 +395,7 @@
 
                     <div class="flex justify-end gap-2 pt-2">
                         <button wire:click="$set('showEdit', false)" class="border border-gray-200 rounded-lg px-4 py-2 text-sm hover:bg-gray-50">ຍົກເລີກ</button>
-                        <button wire:click="saveEdit" wire:loading.attr="disabled" wire:target="saveEdit,ep" class="bg-amber-600 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50 hover:bg-amber-700">ບັນທຶກ</button>
+                        <button wire:click="saveEdit" wire:loading.attr="disabled" wire:target="saveEdit,edCam,edGal" class="bg-amber-600 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50 hover:bg-amber-700">ບັນທຶກ</button>
                     </div>
                 </div>
             </div>

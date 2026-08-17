@@ -180,7 +180,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                             @foreach (\App\Livewire\Deposit\Create::PHOTO_SLOTS as $slot => $meta)
                                 @php $slotFiles = $photos[$i][$slot] ?? []; @endphp
-                                <div wire:key="ph-{{ $i }}-{{ $slot }}" x-data="photoSlot('{{ $i }}', '{{ $slot }}')" class="rounded-lg border border-sky-100 bg-white p-2.5 flex flex-col gap-2">
+                                <div wire:key="ph-{{ $i }}-{{ $slot }}" x-data="photoSlot('camUpload.{{ $i }}', 'galUpload.{{ $i }}', '{{ $slot }}')" class="rounded-lg border border-sky-100 bg-white p-2.5 flex flex-col gap-2">
                                     <div class="text-[11px] font-semibold text-gray-600 flex items-center gap-1 min-h-[2rem]"><span class="text-base leading-none">{{ $meta[1] }}</span><span>{{ $meta[0] }}</span></div>
                                     <div class="flex gap-1.5">
                                         <label class="flex-1 cursor-pointer inline-flex items-center justify-center gap-1 text-xs font-medium text-white bg-sky-600 rounded-lg px-2 py-1.5 hover:bg-sky-700 transition">
