@@ -10,6 +10,8 @@ use App\Models\InventoryItem;
 use App\Models\User;
 use App\Services\DepositService;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
@@ -35,6 +37,19 @@ test('createDraft generates DP{year} number and history', function () {
     expect($r->status)->toBe('draft');
     expect($r->items)->toHaveCount(1);
     expect($r->history()->where('action', 'create')->exists())->toBeTrue();
+});
+
+test('camera and gallery photos both accumulate onto the item (no overwrite)', function () {
+    Storage::fake('public');
+    $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+
+    $c = Livewire::test(Create::class)
+        ->set('camUpload.0', [UploadedFile::fake()->image('cam1.jpg')])   // camera shot 1
+        ->set('camUpload.0', [UploadedFile::fake()->image('cam2.jpg')])   // camera shot 2
+        ->set('galUpload.0', [UploadedFile::fake()->image('gal1.jpg')]);  // from gallery
+
+    expect($c->get('photos.0'))->toHaveCount(3);   // accumulated, not replaced
+    expect($c->get('camUpload'))->toBe([]);        // temp cleared after absorb
 });
 
 test('only a super admin can reset a deposit status (correction)', function () {

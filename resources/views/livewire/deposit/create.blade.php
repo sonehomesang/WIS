@@ -174,10 +174,31 @@
 
                     {{-- ② ຖ່າຍ ຮູບ (ໜ້າງານ) — ກ້ອງ ຫຼື ແກເລີຣີ --}}
                     <div class="rounded-lg bg-sky-50/40 border border-sky-100 p-3">
-                        <label class="block text-xs font-semibold text-sky-700 mb-1.5">📸 ຮູບ ເຄື່ອງ — <span class="text-rose-500">ຖ່າຍ ≥1 (ແນະນຳ 3 ຮູບ) ກ່ອນ ສົ່ງ</span> <span class="text-gray-400 font-normal">· ເປີດ ກ້ອງ ຫຼື ເລືອກ ຈາກ ແກເລີຣີ</span></label>
-                        <input type="file" wire:model="photos.{{ $i }}" multiple accept="image/*" class="{{ $fileCls }}" />
-                        <div wire:loading wire:target="photos.{{ $i }}" class="text-xs text-sky-500 mt-1">⏳ ກຳລັງອັບ…</div>
-                        @if (! empty($photos[$i]))<div class="flex gap-1.5 flex-wrap mt-2">@foreach ($photos[$i] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" class="w-16 h-16 rounded-lg object-cover border-2 border-sky-200" />@endif @endforeach</div>@endif
+                        <label class="block text-xs font-semibold text-sky-700 mb-1.5">📸 ຮູບ ເຄື່ອງ — <span class="text-rose-500">ຖ່າຍ ≥1 (ແນະນຳ 3 ຮູບ) ກ່ອນ ສົ່ງ</span></label>
+                        <div class="flex gap-2 flex-wrap">
+                            <label class="cursor-pointer inline-flex items-center gap-1.5 text-sm font-medium text-white bg-sky-600 rounded-lg px-3.5 py-2 hover:bg-sky-700 transition">
+                                📷 ຖ່າຍ ຮູບ
+                                <input type="file" wire:model="camUpload.{{ $i }}" accept="image/*" capture="environment" multiple class="hidden" />
+                            </label>
+                            <label class="cursor-pointer inline-flex items-center gap-1.5 text-sm font-medium text-sky-700 bg-white border border-sky-200 rounded-lg px-3.5 py-2 hover:bg-sky-50 transition">
+                                🖼 ແກເລີຣີ
+                                <input type="file" wire:model="galUpload.{{ $i }}" accept="image/*" multiple class="hidden" />
+                            </label>
+                        </div>
+                        <div wire:loading wire:target="camUpload.{{ $i }},galUpload.{{ $i }}" class="text-xs text-sky-500 mt-1">⏳ ກຳລັງ ອັບ…</div>
+                        @if (! empty($photos[$i]))
+                            <div class="flex gap-1.5 flex-wrap mt-2">
+                                @foreach ($photos[$i] as $j => $f)
+                                    @if ($f->isPreviewable())
+                                        <div class="relative group">
+                                            <img src="{{ $f->temporaryUrl() }}" alt="" class="w-16 h-16 rounded-lg object-cover border-2 border-sky-200" />
+                                            <button type="button" wire:click="removePhoto({{ $i }}, {{ $j }})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs leading-none shadow" title="ລຶບ ຮູບ">×</button>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                            <p class="text-[11px] text-gray-400 mt-1">{{ count($photos[$i]) }} ຮູບ · ກົດ × ເພື່ອ ລຶບ</p>
+                        @endif
                     </div>
 
                     {{-- ③ ຈຳນວນ · ສະຖານະ (+ ລາຍລະອຽດ ເພີ່ມ) --}}

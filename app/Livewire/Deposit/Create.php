@@ -55,8 +55,14 @@ class Create extends Component
     /** @var array<int, array{item_name:string, asset_code:string, fixed_asset_no:string, description:string, qty:int, unit:string, estimated_value:string, currency:string, condition_on_deposit:string}> */
     public array $items = [];
 
-    /** @var array<int, TemporaryUploadedFile[]> ຮູບ deposit ຕໍ່ item (index) */
+    /** @var array<int, TemporaryUploadedFile[]> ຮູບ deposit ຕໍ່ item (index) — ຄັງ ຖາວອນ */
     public array $photos = [];
+
+    /** @var array<int, TemporaryUploadedFile[]> ຮູບ ຈາກ ກ້ອງ (ຊົ່ວຄາວ → merge ເຂົ້າ photos) */
+    public array $camUpload = [];
+
+    /** @var array<int, TemporaryUploadedFile[]> ຮູບ ຈາກ ແກເລີຣີ (ຊົ່ວຄາວ → merge ເຂົ້າ photos) */
+    public array $galUpload = [];
 
     /** @var array<int, array<int, array{source:string,id:int,code:string,fixed:?string,name:string}>>
      *  ຜົນ ຄົ້ນ ຕໍ່ ແຖວ item (index) — ຈາກ Inventory ຫຼື Equipment ຕາມ ແຫຼ່ງ ທີ່ ເລືອກ. */
@@ -80,6 +86,36 @@ class Create extends Component
     public function addItem(): void
     {
         $this->items[] = $this->blankItem();
+    }
+
+    // ── ຮູບ: ກ້ອງ / ແກເລີຣີ → ສະສົມ ເຂົ້າ photos (ບໍ່ ທັບ ກັນ) ──
+    public function updatedCamUpload($value, $key): void
+    {
+        $this->absorbPhotos('camUpload', $key);
+    }
+
+    public function updatedGalUpload($value, $key): void
+    {
+        $this->absorbPhotos('galUpload', $key);
+    }
+
+    protected function absorbPhotos(string $prop, $key): void
+    {
+        $i = (int) $key;
+        $files = $this->{$prop}[$i] ?? [];
+        $files = array_values(array_filter(is_array($files) ? $files : [$files]));
+        if ($files) {
+            $this->photos[$i] = array_merge($this->photos[$i] ?? [], $files);
+        }
+        unset($this->{$prop}[$i]);
+    }
+
+    public function removePhoto(int $i, int $j): void
+    {
+        if (isset($this->photos[$i][$j])) {
+            unset($this->photos[$i][$j]);
+            $this->photos[$i] = array_values($this->photos[$i]);
+        }
     }
 
     /** ພິມ ໃນ ຊ່ອງ ທະບຽນເຄື່ອງ → ຄົ້ນ ຈາກ ແຫຼ່ງ ທີ່ ເລືອກ (Inventory/Equipment); 'new' = ພິມ ເອງ. */
@@ -157,7 +193,7 @@ class Create extends Component
 
     public function removeItem(int $i): void
     {
-        unset($this->items[$i], $this->photos[$i]);
+        unset($this->items[$i], $this->photos[$i], $this->camUpload[$i], $this->galUpload[$i]);
         $this->items = array_values($this->items);
         $this->photos = array_values($this->photos);
         $this->assetMatches = [];   // index shift → ລ້າງ ຜົນ ຄົ້ນ ທັງໝົດ ກັນ ຫຼົງ ແຖວ
