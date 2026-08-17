@@ -74,6 +74,81 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 
+// ── Client-side photo optimize ────────────────────────────────────────────
+// Shrink a camera/gallery image to Full-HD (max 1920px edge) and re-encode as
+// JPEG before it ever leaves the phone. A 5 MB shot becomes ~300–500 KB, so
+// uploads are fast on field mobile data and never hit server size limits.
+async function compressImage(file, maxEdge = 1920, quality = 0.82) {
+    if (!file || !file.type || !file.type.startsWith('image/')) {
+        return file;
+    }
+    try {
+        const dataUrl = await new Promise((res, rej) => {
+            const r = new FileReader();
+            r.onload = () => res(r.result);
+            r.onerror = rej;
+            r.readAsDataURL(file);
+        });
+        const img = await new Promise((res, rej) => {
+            const i = new Image();
+            i.onload = () => res(i);
+            i.onerror = rej;
+            i.src = dataUrl;
+        });
+        const longest = Math.max(img.width, img.height);
+        const scale = Math.min(1, maxEdge / longest);
+        // Already small in both dimensions and file size → leave as-is.
+        if (scale >= 1 && file.size <= 1.5 * 1024 * 1024) {
+            return file;
+        }
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', quality));
+        if (!blob || blob.size >= file.size) {
+            return file; // compression didn't help (rare) → keep original
+        }
+        const name = (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+        return new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
+    } catch (e) {
+        console.error('image compress failed, uploading original', e);
+        return file;
+    }
+}
+
+// Alpine component for one photo slot (item index + slot name). Both the camera
+// and gallery inputs share it, so a single `busy` flag covers compress+upload.
+// Files are compressed then handed to Livewire via uploadMultiple() targeting
+// the nested property (e.g. "camUpload.0.overall"), keeping the absorb flow.
+document.addEventListener('alpine:init', () => {
+    window.Alpine.data('photoSlot', (i, slot) => ({
+        busy: false,
+        async upload(e, kind) {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) {
+                return;
+            }
+            this.busy = true;
+            try {
+                const out = [];
+                for (const f of files) {
+                    out.push(await compressImage(f));
+                }
+                const prop = (kind === 'cam' ? 'camUpload' : 'galUpload') + '.' + i + '.' + slot;
+                await new Promise((resolve) => {
+                    this.$wire.uploadMultiple(prop, out, resolve, resolve);
+                });
+            } finally {
+                this.busy = false;
+                e.target.value = ''; // allow re-picking the same file
+            }
+        },
+    }));
+});
+
 // Skip nodes flagged data-noexport (toolbars, ⚙ menus) when capturing.
 const exportFilter = (node) => !(node?.dataset && 'noexport' in node.dataset);
 

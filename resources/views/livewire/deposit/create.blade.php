@@ -180,19 +180,19 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                             @foreach (\App\Livewire\Deposit\Create::PHOTO_SLOTS as $slot => $meta)
                                 @php $slotFiles = $photos[$i][$slot] ?? []; @endphp
-                                <div wire:key="ph-{{ $i }}-{{ $slot }}" class="rounded-lg border border-sky-100 bg-white p-2.5 flex flex-col gap-2">
+                                <div wire:key="ph-{{ $i }}-{{ $slot }}" x-data="photoSlot('{{ $i }}', '{{ $slot }}')" class="rounded-lg border border-sky-100 bg-white p-2.5 flex flex-col gap-2">
                                     <div class="text-[11px] font-semibold text-gray-600 flex items-center gap-1 min-h-[2rem]"><span class="text-base leading-none">{{ $meta[1] }}</span><span>{{ $meta[0] }}</span></div>
                                     <div class="flex gap-1.5">
                                         <label class="flex-1 cursor-pointer inline-flex items-center justify-center gap-1 text-xs font-medium text-white bg-sky-600 rounded-lg px-2 py-1.5 hover:bg-sky-700 transition">
                                             📷 <span class="hidden lg:inline">ຖ່າຍ</span>
-                                            <input type="file" wire:model="camUpload.{{ $i }}.{{ $slot }}" accept="image/*" capture="environment" multiple class="hidden" />
+                                            <input type="file" x-on:change="upload($event, 'cam')" accept="image/*" capture="environment" multiple class="hidden" />
                                         </label>
                                         <label class="flex-1 cursor-pointer inline-flex items-center justify-center gap-1 text-xs font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded-lg px-2 py-1.5 hover:bg-sky-100 transition">
                                             🖼 <span class="hidden lg:inline">ຄັງ</span>
-                                            <input type="file" wire:model="galUpload.{{ $i }}.{{ $slot }}" accept="image/*" multiple class="hidden" />
+                                            <input type="file" x-on:change="upload($event, 'gal')" accept="image/*" multiple class="hidden" />
                                         </label>
                                     </div>
-                                    <div wire:loading wire:target="camUpload.{{ $i }}.{{ $slot }},galUpload.{{ $i }}.{{ $slot }}" class="text-[10px] text-sky-500">⏳ ກຳລັງ ອັບ…</div>
+                                    <div x-show="busy" class="text-[10px] text-sky-500">⏳ ກຳລັງ ຫຍໍ້ + ອັບ…</div>
                                     @if (! empty($slotFiles))
                                         <div class="flex gap-1.5 flex-wrap">
                                             @foreach ($slotFiles as $j => $f)
