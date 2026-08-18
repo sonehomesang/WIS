@@ -43,60 +43,66 @@
         @if (session('ok'))<div class="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 mb-3">{{ session('ok') }}</div>@endif
 
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="overflow-auto max-h-[calc(100vh-14rem)]">
-                <table class="w-full text-sm">
+            <div class="overflow-x-hidden overflow-y-auto max-h-[calc(100vh-14rem)]">
+                <table class="w-full text-sm table-fixed">
+                    <colgroup>
+                        <col style="width:7%"><col style="width:18%"><col style="width:12%"><col style="width:9%"><col style="width:9%">
+                        <col style="width:8%"><col style="width:9%"><col style="width:7%"><col style="width:8%"><col style="width:13%">
+                    </colgroup>
                     <thead class="sticky top-0 z-10 bg-slate-50 text-slate-500 border-b border-gray-200">
                         <tr class="text-[11px] uppercase tracking-wide">
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ໄອດີ (DS)</th>
-                            <th class="text-left font-semibold px-4 py-2.5 w-full">ເຄື່ອງ (Items)</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ເຈົ້າຂອງ (Org Unit / Dept)</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ທະບຽນຊັບສິນ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ລະຫັດຂອງສາງ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ຈຳນວນ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ຜູ້ ເຮັດລິສ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ວັນທີ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ສະຖານະ</th>
-                            <th class="text-right font-semibold px-4 py-2.5 whitespace-nowrap">ຈັດການ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ໄອດີ (DS)</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ເຄື່ອງ (Items)</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ເຈົ້າຂອງ (Org/Dept)</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ທະບຽນຊັບສິນ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ລະຫັດຂອງສາງ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ຈຳນວນ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ຜູ້ ເຮັດລິສ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ວັນທີ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ສະຖານະ</th>
+                            <th class="text-right font-semibold px-3 py-2.5">ຈັດການ</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($records as $r)
                             @php $dimmed = in_array($r->status, ['approved', 'disposed'], true); @endphp
                             <tr wire:key="ds-{{ $r->id }}" class="transition {{ $dimmed ? 'opacity-60 bg-gray-50/70' : 'hover:bg-sky-50/40' }}" @if ($dimmed) title="{{ $r->status === 'disposed' ? 'ຈຳໜ່າຍ ແລ້ວ' : 'ອະນຸມັດ ແລ້ວ' }}" @endif>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap"><a href="{{ route('disposal.show', $r) }}" wire:navigate class="font-mono font-medium text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
-                                <td class="px-4 py-2.5 align-top w-full">
+                                <td class="px-3 py-2.5 align-top whitespace-nowrap"><a href="{{ route('disposal.show', $r) }}" wire:navigate class="font-mono font-medium text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
+                                <td class="px-3 py-2.5 align-top">
                                     @php $fi = $r->items->first(); $ph = $fi->photos[0] ?? null; @endphp
                                     <div class="flex gap-2.5">
                                         @if ($ph)<img src="{{ \Illuminate\Support\Facades\Storage::url($ph) }}" alt="" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
                                         @else<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-lg">🗑️</div>@endif
                                         <div class="min-w-0">
-                                            <div class="font-medium text-gray-800 truncate max-w-sm">{{ $fi?->item_name ?: ($r->title ?: '—') }}@if ($r->items_count > 1) <span class="text-gray-400 text-xs font-normal">+{{ $r->items_count - 1 }}</span>@endif</div>
-                                            <div class="text-xs text-gray-400 truncate max-w-sm flex items-center gap-1.5">
+                                            <div class="font-medium text-gray-800 whitespace-normal break-words line-clamp-2">{{ $fi?->item_name ?: ($r->title ?: '—') }}@if ($r->items_count > 1) <span class="text-gray-400 text-xs font-normal">+{{ $r->items_count - 1 }}</span>@endif</div>
+                                            <div class="text-xs text-gray-400 flex items-center gap-1.5 flex-wrap">
                                                 @if ($fi?->asset_code)<span class="font-mono bg-gray-50 border border-gray-200 rounded px-1 py-0.5 text-gray-500">{{ $fi->asset_code }}</span>@endif
                                                 @if ($r->department)<span>{{ $r->department->name }}</span>@elseif ($r->title && $fi)<span>{{ Str::limit($r->title, 30) }}</span>@endif
                                             </div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-xs">
+                                <td class="px-3 py-2.5 align-top text-xs">
                                     @if ($r->department)<div class="text-gray-700 font-medium">{{ $r->department->unit?->name ?? '—' }}</div><div class="text-gray-400">{{ $r->department->name }}</div>
                                     @else<span class="text-gray-300">—</span>@endif
                                 </td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-xs font-mono {{ $fi?->fixed_asset_no ? 'text-gray-600' : 'text-gray-300' }}">{{ $fi?->fixed_asset_no ?: '—' }}@if ($fi?->fixed_asset_no && $r->items_count > 1)<span class="text-gray-300"> …</span>@endif</td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-xs">@if ($fi?->asset_code)<span class="font-mono bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5 text-gray-600">{{ $fi->asset_code }}</span>@if ($r->items_count > 1)<span class="text-gray-300"> …</span>@endif @else<span class="text-gray-300">—</span>@endif</td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-gray-700"><span class="font-semibold tabular-nums">{{ $r->items->sum('qty') }}</span> <span class="text-xs text-gray-400">({{ $r->items_count }} ລາຍການ)</span></td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-gray-600">{{ $r->prepared_by_name ?? '—' }}</td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-gray-500 text-xs tabular-nums">{{ $r->created_at?->format('d/m/Y') }}</td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap"><span class="inline-flex text-xs font-semibold rounded-full px-2.5 py-1 {{ $badge($r->status) }}">{{ $statusLabels[$r->status] ?? $r->status }}</span></td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-right">
+                                <td class="px-3 py-2.5 align-top text-xs font-mono break-words {{ $fi?->fixed_asset_no ? 'text-gray-600' : 'text-gray-300' }}">{{ $fi?->fixed_asset_no ?: '—' }}@if ($fi?->fixed_asset_no && $r->items_count > 1)<span class="text-gray-300"> …</span>@endif</td>
+                                <td class="px-3 py-2.5 align-top text-xs">@if ($fi?->asset_code)<span class="font-mono bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5 text-gray-600">{{ $fi->asset_code }}</span>@if ($r->items_count > 1)<span class="text-gray-300"> …</span>@endif @else<span class="text-gray-300">—</span>@endif</td>
+                                <td class="px-3 py-2.5 align-top whitespace-nowrap text-gray-700"><span class="font-semibold tabular-nums">{{ $r->items->sum('qty') }}</span> <span class="text-xs text-gray-400">({{ $r->items_count }} ລາຍການ)</span></td>
+                                <td class="px-3 py-2.5 align-top text-gray-600 text-xs break-words">{{ $r->prepared_by_name ?? '—' }}</td>
+                                <td class="px-3 py-2.5 align-top whitespace-nowrap text-gray-500 text-xs tabular-nums">{{ $r->created_at?->format('d/m/Y') }}</td>
+                                <td class="px-3 py-2.5 align-top whitespace-nowrap"><span class="inline-flex text-xs font-semibold rounded-full px-2.5 py-1 {{ $badge($r->status) }}">{{ $statusLabels[$r->status] ?? $r->status }}</span></td>
+                                <td class="px-3 py-2.5 align-top text-right">
+                                    <div class="flex flex-wrap gap-1 justify-end">
                                     @if ($showDeleted)
                                         <button wire:click="restore({{ $r->id }})" class="text-xs font-medium text-emerald-700 border border-emerald-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 transition">↩ ກູ້ຄືນ</button>
-                                        @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate ml-auto" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif
+                                        @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate ml-auto w-full text-right" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif
                                     @else
                                         @if ($canEdit($r))<a href="{{ route('disposal.show', [$r, 'edit' => 1]) }}" wire:navigate class="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition inline-block mr-1">✏️ ແກ້ໄຂ</a>@endif
                                         <a href="{{ route('disposal.show', $r) }}" wire:navigate class="text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition inline-block">ເບິ່ງ</a>
                                         @if ($canManageDeleted)<button wire:click="openDelete({{ $r->id }})" class="text-xs font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5 hover:bg-rose-100 transition inline-block ml-1">🗑 ລຶບ</button>@endif
                                     @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
