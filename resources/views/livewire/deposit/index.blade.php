@@ -125,6 +125,7 @@
                                             @endif
                                         @endunless @endcan
                                         <a href="{{ route('deposit.show', $r) }}" wire:navigate class="text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition inline-block">ເບິ່ງ</a>
+                                        @if ($canManageDeleted && in_array($r->status, \App\Livewire\Deposit\Index::DELETABLE, true))<button wire:click="openDelete({{ $r->id }})" class="text-xs font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5 hover:bg-rose-100 transition inline-block ml-1">🗑 ລຶບ</button>@endif
                                     @endif
                                 </td>
                             </tr>
@@ -150,6 +151,11 @@
                         <span class="text-xs font-semibold rounded-full px-2 py-0.5 {{ $cls }} shrink-0">{{ $lbl }}</span>
                     </div>
                     <div class="text-xs text-gray-400 mt-2">{{ $r->deposit_date?->format('M d, Y') }} · {{ collect([$r->storage_location, $r->storage_shelf_label])->filter()->implode(' / ') ?: 'ຍັງບໍ່ກຳນົດບ່ອນເກັບ' }}</div>
+                    @if (! $showDeleted && $canManageDeleted && in_array($r->status, \App\Livewire\Deposit\Index::DELETABLE, true))
+                        <div class="flex justify-end mt-2">
+                            <button type="button" wire:click="openDelete({{ $r->id }})" @click.stop.prevent class="text-xs font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5 hover:bg-rose-100 shrink-0">🗑 ລຶບ</button>
+                        </div>
+                    @endif
                     @if ($showDeleted)
                         <div class="flex items-center justify-between gap-2 mt-2">
                             @if ($r->deleted_reason)<span class="text-xs text-gray-400 truncate">{{ $r->deleted_reason }}</span>@else<span></span>@endif
@@ -164,4 +170,6 @@
 
         <div class="mt-4">{{ $records->links() }}</div>
     </div>
+
+    @include('partials._delete-modal', ['title' => 'ລຶບ ໃບ ຝາກ ນີ້?', 'subtitle' => $this->deletingRecord?->request_number])
 </div>

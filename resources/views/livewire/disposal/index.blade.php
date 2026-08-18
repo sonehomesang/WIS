@@ -94,6 +94,7 @@
                                     @else
                                         @if ($canEdit($r))<a href="{{ route('disposal.show', [$r, 'edit' => 1]) }}" wire:navigate class="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition inline-block mr-1">✏️ ແກ້ໄຂ</a>@endif
                                         <a href="{{ route('disposal.show', $r) }}" wire:navigate class="text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition inline-block">ເບິ່ງ</a>
+                                        @if ($canManageDeleted)<button wire:click="openDelete({{ $r->id }})" class="text-xs font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5 hover:bg-rose-100 transition inline-block ml-1">🗑 ລຶບ</button>@endif
                                     @endif
                                 </td>
                             </tr>

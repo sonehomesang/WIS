@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Deposit;
 
+use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\DepositRecord;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -11,15 +13,16 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
-    use WithPagination;
+    use SoftDeletesWithReason, WithPagination;
+
+    /** ໃບ ຝາກ ທີ່ ລຶບ ໄດ້ (ຄື ໜ້າ ລາຍລະອຽດ) — ຍັງ ບໍ່ ຮັບ ເຂົ້າ ສາງ / ຈົບ ວົງຈອນ ແລ້ວ. */
+    public const DELETABLE = ['draft', 'cancelled', 'claimed'];
 
     public string $search = '';
 
     public string $statusFilter = '';
 
     public string $typeFilter = '';
-
-    public bool $showDeleted = false;
 
     public function mount(): void
     {
@@ -36,20 +39,56 @@ class Index extends Component
         $this->resetPage();
     }
 
-    protected function canManageDeleted(): bool
+    // ── delete-with-reason (trait) — ໃຊ້ pattern ດຽວ ກັບ Disposal ແລະ ໂມດູລ ອື່ນ ──
+    protected function deleteModelClass(): string
     {
-        $u = auth()->user();
-
-        return $u->is_super_admin || $u->can('deposit.edit');
+        return DepositRecord::class;
     }
 
-    public function toggleDeleted(): void
+    protected function deletePermission(): string
+    {
+        return 'deposit.delete';
+    }
+
+    protected function deleteNoun(): string
+    {
+        return 'ໃບ ຝາກ';
+    }
+
+    protected function deleteLabel(Model $record): string
+    {
+        return $record->request_number;
+    }
+
+    /** ລຶບ ໄດ້ ສະເພາະ ໃບ ທີ່ ຍັງ ບໍ່ ຮັບ ເຂົ້າ ສາງ / ຈົບ ວົງຈອນ ແລ້ວ (ຄື ໜ້າ ລາຍລະອຽດ). */
+    protected function deleteGuard(Model $record): void
+    {
+        abort_unless(in_array($record->status, self::DELETABLE, true), 403);
+    }
+
+    /** override trait: ບັນທຶກ history timeline ນຳ (ຮັກສາ audit ຂອງ ໃບ ຝາກ). */
+    public function deleteRecord(): void
     {
         abort_unless($this->canManageDeleted(), 403);
-        $this->showDeleted = ! $this->showDeleted;
-        $this->resetPage();
+        $this->validate(
+            ['deleteReason' => ['required', 'string', 'max:500']],
+            ['deleteReason.required' => 'ກະລຸນາ ໃສ່ ເຫດຜົນ ການ ລຶບ.']
+        );
+        $r = DepositRecord::findOrFail($this->deletingId);
+        $this->deleteGuard($r);
+        $u = auth()->user();
+        $r->forceFill(['deleted_reason' => $this->deleteReason, 'deleted_by' => $u->id])->save();
+        $r->history()->create([
+            'action' => 'delete', 'status' => $r->status, 'user_id' => $u->id,
+            'user_name' => $u->display_name ?? $u->email, 'comment' => $this->deleteReason, 'created_at' => now(),
+        ]);
+        $r->delete();
+        $this->deletingId = null;
+        $this->deleteReason = '';
+        session()->flash('ok', '✓ ລຶບ ໃບ ຝາກ '.$r->request_number.' (ຍ້າຍ ໄປ Deleted Log · ກູ້ຄືນ ໄດ້)');
     }
 
+    /** override trait: ກູ້ຄືນ + ບັນທຶກ history. */
     public function restore(int $id): void
     {
         abort_unless($this->canManageDeleted(), 403);
