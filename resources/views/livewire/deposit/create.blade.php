@@ -198,7 +198,7 @@
                                             @foreach ($slotFiles as $j => $f)
                                                 @if ($f->isPreviewable())
                                                     <div class="relative group">
-                                                        <img src="{{ $f->temporaryUrl() }}" alt="" class="w-14 h-14 rounded-lg object-cover border-2 border-sky-200" />
+                                                        <img src="{{ $f->temporaryUrl() }}" alt="" @click="$dispatch('open-lightbox', { src: $el.src })" class="w-14 h-14 rounded-lg object-cover border-2 border-sky-200 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
                                                         <button type="button" wire:click="removePhoto({{ $i }}, '{{ $slot }}', {{ $j }})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs leading-none shadow" title="ລຶບ ຮູບ">×</button>
                                                     </div>
                                                 @endif

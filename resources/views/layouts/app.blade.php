@@ -143,5 +143,7 @@
                 </main>
             </div>
         </div>
+
+        @include('partials._lightbox')
     </body>
 </html>

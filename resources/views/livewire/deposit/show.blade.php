@@ -131,7 +131,7 @@
                                 <div class="flex gap-1.5 flex-wrap mt-2.5">
                                     @foreach ($it->photos as $p)
                                         <div class="relative">
-                                            <img src="{{ $p->url }}" alt="" class="w-16 h-16 rounded-lg object-cover border border-gray-200" />
+                                            <img src="{{ $p->url }}" alt="" @click="$dispatch('open-lightbox', { src: $el.src })" class="w-16 h-16 rounded-lg object-cover border border-gray-200 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
                                             <span class="absolute top-0 left-0 bg-black/60 text-white text-[9px] font-semibold px-1 rounded-br-md rounded-tl-lg">{{ ($slotTag[$p->slot] ?? null) ?: ($kindTag[$p->kind] ?? $p->kind) }}</span>
                                             @if ($editable)<button wire:click="removePhoto({{ $p->id }})" wire:confirm="ລຶບຮູບນີ້?" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 text-white rounded-full text-[10px] leading-none shadow hover:bg-rose-700">×</button>@endif
                                         </div>
@@ -355,14 +355,14 @@
                                                         <div class="flex gap-1.5 flex-wrap">
                                                             @foreach ($existing as $p)
                                                                 <div class="relative" title="ຮູບ ທີ່ ບັນທຶກ ແລ້ວ">
-                                                                    <img src="{{ $p->url }}" alt="" class="w-14 h-14 rounded-lg object-cover border-2 border-emerald-300" />
+                                                                    <img src="{{ $p->url }}" alt="" @click="$dispatch('open-lightbox', { src: $el.src })" class="w-14 h-14 rounded-lg object-cover border-2 border-emerald-300 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
                                                                     <button type="button" wire:click="removePhoto({{ $p->id }})" wire:confirm="ລຶບ ຮູບ ນີ້ ຖາວອນ?" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs leading-none shadow" title="ລຶບ ຮູບ ເກົ່າ">×</button>
                                                                 </div>
                                                             @endforeach
                                                             @foreach ($pending as $j => $f)
                                                                 @if ($f->isPreviewable())
                                                                     <div class="relative" title="ຮູບ ໃໝ່ (ຍັງ ບໍ່ ບັນທຶກ)">
-                                                                        <img src="{{ $f->temporaryUrl() }}" alt="" class="w-14 h-14 rounded-lg object-cover border-2 border-sky-300" />
+                                                                        <img src="{{ $f->temporaryUrl() }}" alt="" @click="$dispatch('open-lightbox', { src: $el.src })" class="w-14 h-14 rounded-lg object-cover border-2 border-sky-300 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
                                                                         <button type="button" wire:click="removeEditPhoto({{ $it->id }}, '{{ $slot }}', {{ $j }})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs leading-none shadow" title="ຍົກເລີກ ຮູບ ໃໝ່">×</button>
                                                                     </div>
                                                                 @endif
