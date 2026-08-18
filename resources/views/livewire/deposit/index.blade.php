@@ -42,7 +42,7 @@
                         <option value="">All Types</option>
                         <option value="walk_in">Walk-in</option><option value="pre_request">Pre-request</option>
                     </select>
-                    @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
+                    @if ($canManageDeleted)<button wire:click="toggleDeleted" title="ເບິ່ງ ລາຍການ ທີ່ ລຶບ ແລ້ວ ເພື່ອ ກູ້ຄືນ" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">{{ $showDeleted ? '← ກັບ ລິສ' : '🗑 ຖັງລຶບ' }}</button>@endif
                     @can('deposit.create')<a href="{{ route('deposit.create') }}" wire:navigate class="text-sm font-medium text-white bg-indigo-600 rounded-lg px-3.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 transition shadow-sm whitespace-nowrap">+ Deposit</a>@endcan
                 </div>
             </div>
@@ -54,21 +54,23 @@
 
         {{-- Desktop table --}}
         <div class="hidden md:block bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="overflow-auto max-h-[calc(100vh-16rem)]">
-                <table class="w-full text-sm">
+            <div class="overflow-x-hidden overflow-y-auto max-h-[calc(100vh-16rem)]">
+                <table class="w-full text-sm table-fixed">
+                    <colgroup>
+                        <col style="width:8%"><col style="width:13%"><col style="width:21%"><col style="width:6%">
+                        <col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:8%"><col style="width:14%">
+                    </colgroup>
                     <thead class="sticky top-0 z-10 bg-slate-50 text-slate-500 border-b border-gray-200">
                         <tr class="text-[11px] uppercase tracking-wide">
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ໄອດີ (DP)</th>
-                            <th class="text-left font-semibold px-4 py-2.5">ເຈົ້າຂອງ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 min-w-[13rem]">ເຄື່ອງຝາກ</th>
-                            <th class="text-center font-semibold px-4 py-2.5 whitespace-nowrap">ຈຳນວນ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ລະຫັດເຄື່ອງ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ຊັບສິນ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 w-56 min-w-[12rem] max-w-[16rem]">ບ່ອນເກັບ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ວັນທີຝາກ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ສະຖານະພາບ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ສະຖານະ</th>
-                            <th class="text-right font-semibold px-4 py-2.5 whitespace-nowrap">ຈັດການ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ໄອດີ (DP)</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ເຈົ້າຂອງ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ເຄື່ອງຝາກ</th>
+                            <th class="text-center font-semibold px-3 py-2.5">ຈຳນວນ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ລະຫັດເຄື່ອງ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ຊັບສິນ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ສະຖານະພາບ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ສະຖານະ</th>
+                            <th class="text-right font-semibold px-3 py-2.5">ຈັດການ</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -82,7 +84,7 @@
                                         @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
                                         @else<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-lg">📦</div>@endif
                                         <div class="min-w-0">
-                                            <div class="font-medium text-gray-800 truncate max-w-xs">{{ $first?->item_name ?? '—' }}@if ($r->items->count() > 1) <span class="text-gray-400 text-xs font-normal">+{{ $r->items->count() - 1 }}</span>@endif</div>
+                                            <div class="font-medium text-gray-800 whitespace-normal break-words line-clamp-2">{{ $first?->item_name ?? '—' }}@if ($r->items->count() > 1) <span class="text-gray-400 text-xs font-normal">+{{ $r->items->count() - 1 }}</span>@endif</div>
                                             @if ($r->item_category)<div class="text-xs text-gray-400">{{ Str::limit($r->item_category, 30) }}</div>@endif
                                             @if ($r->needsOfficeInfo())<div class="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> ຂັ້ນ 2: ລໍ ຫົວໜ້າ ຕື່ມ ຂໍ້ມູນ</div>@endif
                                         </div>
@@ -95,15 +97,7 @@
                                 </td>
                                 <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap">@if ($first?->asset_code)<span class="font-mono bg-gray-50 text-gray-600 border border-gray-200 rounded px-1.5 py-0.5">{{ $first->asset_code }}</span>@if ($r->items->count() > 1)<span class="text-gray-300"> …</span>@endif @else<span class="text-gray-300">—</span>@endif</td>
                                 <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap font-mono {{ $first?->fixed_asset_no ? 'text-gray-600' : 'text-gray-300' }}">{{ $first?->fixed_asset_no ?: '—' }}</td>
-                                <td class="px-4 py-2.5 align-top text-xs text-gray-600 w-56 min-w-[12rem] max-w-[16rem]">
-                                    @php $storage = collect([$r->storage_location, $r->storage_shelf_label])->filter()->implode(' / '); @endphp
-                                    <span class="block whitespace-normal break-words line-clamp-3" title="{{ $storage }}">{{ $storage ?: '—' }}</span>
-                                </td>
-                                <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap">
-                                    <div class="text-gray-700 font-medium">{{ $r->deposit_date?->format('M d, Y') }}</div>
-                                    <div class="text-[10px] uppercase tracking-wide text-gray-400 mt-0.5">{{ $r->request_type === 'pre_request' ? 'PRE-REQUEST' : 'WALK-IN' }}</div>
-                                </td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap">
+                                <td class="px-4 py-2.5 align-top">
                                     @php $conds = $r->items->pluck('condition_status')->filter(fn ($c) => $c && $c !== 'in_service')->unique(); @endphp
                                     @forelse ($conds as $cs)
                                         <span class="inline-block text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($cs) }}">{{ \App\Support\ConditionStatus::shortLabel($cs) }}</span>
@@ -112,7 +106,8 @@
                                     @endforelse
                                 </td>
                                 <td class="px-4 py-2.5 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-right">
+                                <td class="px-3 py-2.5 align-top text-right">
+                                    <div class="flex flex-wrap gap-1 justify-end">
                                     @if ($showDeleted)
                                         <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນລາຍການນີ້?" class="text-xs font-medium text-emerald-700 border border-emerald-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 transition inline-block">↩ ກູ້ຄືນ</button>
                                         @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate ml-auto" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif
@@ -127,10 +122,11 @@
                                         <a href="{{ route('deposit.show', $r) }}" wire:navigate class="text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition inline-block">ເບິ່ງ</a>
                                         @if ($canManageDeleted && in_array($r->status, \App\Livewire\Deposit\Index::DELETABLE, true))<button wire:click="openDelete({{ $r->id }})" class="text-xs font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5 hover:bg-rose-100 transition inline-block ml-1">🗑 ລຶບ</button>@endif
                                     @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="11" class="px-4 py-14 text-center text-gray-400"><div class="text-4xl mb-2">📦</div>ຍັງບໍ່ມີລາຍການຝາກ</td></tr>
+                            <tr><td colspan="9" class="px-4 py-14 text-center text-gray-400"><div class="text-4xl mb-2">📦</div>ຍັງບໍ່ມີລາຍການຝາກ</td></tr>
                         @endforelse
                     </tbody>
                 </table>

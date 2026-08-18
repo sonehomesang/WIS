@@ -34,7 +34,7 @@
                         @foreach ($statusLabels as $k => $lbl)<option value="{{ $k }}">{{ $lbl }}</option>@endforeach
                     </select>
                     <a href="{{ route('disposal.summary') }}" wire:navigate class="text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-2 min-h-[40px] inline-flex items-center hover:bg-gray-50 transition whitespace-nowrap">📊 ລິສ ລວມ</a>
-                    @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
+                    @if ($canManageDeleted)<button wire:click="toggleDeleted" title="ເບິ່ງ ໃບ ຈຳໜ່າຍ ທີ່ ລຶບ ແລ້ວ ເພື່ອ ກູ້ຄືນ" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">{{ $showDeleted ? '← ກັບ ລິສ' : '🗑 ຖັງລຶບ' }}</button>@endif
                     @can('disposal.create')<a href="{{ route('disposal.create') }}" wire:navigate class="text-sm font-medium text-white bg-indigo-600 rounded-lg px-3.5 py-2 min-h-[40px] inline-flex items-center gap-1 hover:bg-indigo-700 transition shadow-sm whitespace-nowrap">+ ຈຳໜ່າຍ</a>@endcan
                 </div>
             </div>
