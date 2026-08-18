@@ -34,7 +34,7 @@
                         @foreach ($statusLabels as $k => $lbl)<option value="{{ $k }}">{{ $lbl }}</option>@endforeach
                     </select>
                     <a href="{{ route('disposal.summary') }}" wire:navigate class="text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-2 min-h-[40px] inline-flex items-center hover:bg-gray-50 transition whitespace-nowrap">📊 ລິສ ລວມ</a>
-                    @if ($canManageDeleted)<button wire:click="toggleDeleted" title="ເບິ່ງ ໃບ ຈຳໜ່າຍ ທີ່ ລຶບ ແລ້ວ ເພື່ອ ກູ້ຄືນ" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">{{ $showDeleted ? '← ກັບ ລິສ' : '🗑 ຖັງລຶບ' }}</button>@endif
+                    @if ($canManageDeleted)<button wire:click="toggleDeleted" title="ເບິ່ງ ໃບ ຈຳໜ່າຍ ທີ່ ລຶບ ແລ້ວ ເພື່ອ ກູ້ຄືນ" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">{{ $showDeleted ? '← ກັບ ລິສ' : '↩ ລາຍການ ທີ່ ຖືກ ລຶບ' }}</button>@endif
                     @can('disposal.create')<a href="{{ route('disposal.create') }}" wire:navigate class="text-sm font-medium text-white bg-indigo-600 rounded-lg px-3.5 py-2 min-h-[40px] inline-flex items-center gap-1 hover:bg-indigo-700 transition shadow-sm whitespace-nowrap">+ ຈຳໜ່າຍ</a>@endcan
                 </div>
             </div>
@@ -61,7 +61,8 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($records as $r)
-                            <tr wire:key="ds-{{ $r->id }}" class="hover:bg-sky-50/40 transition">
+                            @php $dimmed = in_array($r->status, ['approved', 'disposed'], true); @endphp
+                            <tr wire:key="ds-{{ $r->id }}" class="transition {{ $dimmed ? 'opacity-60 bg-gray-50/70' : 'hover:bg-sky-50/40' }}" @if ($dimmed) title="{{ $r->status === 'disposed' ? 'ຈຳໜ່າຍ ແລ້ວ' : 'ອະນຸມັດ ແລ້ວ' }}" @endif>
                                 <td class="px-4 py-2.5 align-top whitespace-nowrap"><a href="{{ route('disposal.show', $r) }}" wire:navigate class="font-mono font-medium text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
                                 <td class="px-4 py-2.5 align-top w-full">
                                     @php $fi = $r->items->first(); $ph = $fi->photos[0] ?? null; @endphp

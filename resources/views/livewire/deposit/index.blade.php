@@ -37,12 +37,13 @@
                         <option value="draft">draft</option><option value="submitted">submitted</option>
                         <option value="accepted">accepted</option><option value="stored">stored</option>
                         <option value="needs_fix">needs_fix</option><option value="claimed">claimed</option><option value="cancelled">cancelled</option>
+                        <option value="disposal">disposal</option><option value="disposed">disposed</option>
                     </select>
                     <select wire:model.live="typeFilter" class="w-28 rounded-lg border-gray-300 text-sm">
                         <option value="">All Types</option>
                         <option value="walk_in">Walk-in</option><option value="pre_request">Pre-request</option>
                     </select>
-                    @if ($canManageDeleted)<button wire:click="toggleDeleted" title="ເບິ່ງ ລາຍການ ທີ່ ລຶບ ແລ້ວ ເພື່ອ ກູ້ຄືນ" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">{{ $showDeleted ? '← ກັບ ລິສ' : '🗑 ຖັງລຶບ' }}</button>@endif
+                    @if ($canManageDeleted)<button wire:click="toggleDeleted" title="ເບິ່ງ ລາຍການ ທີ່ ລຶບ ແລ້ວ ເພື່ອ ກູ້ຄືນ" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">{{ $showDeleted ? '← ກັບ ລິສ' : '↩ ລາຍການ ທີ່ ຖືກ ລຶບ' }}</button>@endif
                     @can('deposit.create')<a href="{{ route('deposit.create') }}" wire:navigate class="text-sm font-medium text-white bg-indigo-600 rounded-lg px-3.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 transition shadow-sm whitespace-nowrap">+ Deposit</a>@endcan
                 </div>
             </div>
@@ -76,7 +77,7 @@
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($records as $r)
                             @php [$lbl, $cls] = $statusMeta($r->status); $first = $r->items->first(); $ph = $first?->photos->first(); @endphp
-                            <tr wire:key="dp-{{ $r->id }}" class="hover:bg-sky-50/40 transition">
+                            <tr wire:key="dp-{{ $r->id }}" class="transition {{ $locked($r->status) ? 'opacity-60 bg-gray-50/70' : 'hover:bg-sky-50/40' }}" @if ($locked($r->status)) title="ດຶງ ໄປ ຈຳໜ່າຍ ແລ້ວ — ລັອກ ການ ແກ້ໄຂ" @endif>
                                 <td class="px-4 py-2.5 align-top whitespace-nowrap"><a href="{{ route('deposit.show', $r) }}" wire:navigate class="font-mono text-sm font-medium text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
                                 <td class="px-4 py-2.5 align-top"><div class="font-semibold text-gray-800">{{ $r->owner_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->owner_email }}</div></td>
                                 <td class="px-4 py-2.5 align-top min-w-[13rem]">
@@ -137,7 +138,7 @@
         <div class="md:hidden space-y-2.5">
             @forelse ($records as $r)
                 @php [$lbl, $cls] = $statusMeta($r->status); $first = $r->items->first(); $ph = $first?->photos->first(); $tag = $showDeleted ? 'div' : 'a'; @endphp
-                <{{ $tag }} @if (! $showDeleted) href="{{ route('deposit.show', $r) }}" wire:navigate @endif wire:key="mdp-{{ $r->id }}" class="block bg-white border border-gray-200 rounded-xl shadow-sm p-3.5">
+                <{{ $tag }} @if (! $showDeleted) href="{{ route('deposit.show', $r) }}" wire:navigate @endif wire:key="mdp-{{ $r->id }}" class="block bg-white border border-gray-200 rounded-xl shadow-sm p-3.5 {{ $locked($r->status) ? 'opacity-60 bg-gray-50/70' : '' }}">
                     <div class="flex items-start justify-between gap-2">
                         <div class="flex gap-2.5 min-w-0">
                             @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
