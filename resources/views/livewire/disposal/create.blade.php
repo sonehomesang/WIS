@@ -185,6 +185,7 @@
                             </div>
                         </div>
                         <div class="text-xs text-gray-600 bg-sky-50 border border-sky-100 rounded-lg px-3 py-2.5">🔎 ພົບ <b class="text-sky-700">{{ $pullCount }}</b> ລາຍການ ທີ່ ກົງ ເງື່ອນ ໄຂ — ພ້ອມ ດຶງ ເຂົ້າ ໃບ ຈຳໜ່າຍ.</div>
+                        <div class="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">ℹ️ ເຄື່ອງ ຝາກ: <b>ເຄື່ອງຝາກເກົ່າ (legacy)</b> ດຶງ ໄດ້ ເລີຍ ຖ້າ ສະຖານະພາບ ກົງ · <b>ຝາກ ທຳມະດາ</b> ຕ້ອງ “ຮັບ ເຂົ້າ ສາງ ແລ້ວ” (accepted/stored) ກ່ອນ.</div>
                         @error('pull')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div class="flex justify-end gap-2 px-5 py-3.5 border-t border-gray-100 bg-gray-50">

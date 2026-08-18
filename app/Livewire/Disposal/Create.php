@@ -130,7 +130,7 @@ class Create extends Component
                 ->orderBy('slug')->limit(6)->get(['id', 'slug', 'name'])
                 ->map(fn ($x) => ['source' => 'inventory', 'id' => $x->id, 'code' => $x->slug, 'fixed' => null, 'name' => $x->name])->all(),
             'deposit' => DepositItem::query()
-                ->whereHas('record', fn ($r) => $r->whereIn('status', self::DEPOSIT_PULLABLE))   // ເຄື່ອງ ຍັງ ຢູ່ ສາງ ເທົ່ານັ້ນ
+                ->pullableForDisposal()   // ຝາກ ທຳມະດາ = ຮັບ ເຂົ້າ ສາງ ແລ້ວ · legacy = ຢູ່ ສາງ ຢູ່ ແລ້ວ
                 ->where(fn ($q) => $q->where('item_name', 'like', "%{$term}%")->orWhere('asset_code', 'like', "%{$term}%"))
                 ->orderByDesc('id')->limit(6)->get(['id', 'item_name', 'asset_code', 'fixed_asset_no'])
                 ->map(fn ($x) => ['source' => 'deposit', 'id' => $x->id, 'code' => $x->asset_code ?: '—', 'fixed' => $x->fixed_asset_no, 'name' => $x->item_name])->all(),
@@ -291,9 +291,6 @@ class Create extends Component
         return null;
     }
 
-    /** ສະຖານະ deposit ທີ່ ເຄື່ອງ ຍັງ ຢູ່ ໃນ ສາງ ຈິງ → ດຶງ ໄປ ຈຳໜ່າຍ ໄດ້ (ບໍ່ ລວມ claimed/cancelled/ໃນ-disposal). */
-    public const DEPOSIT_PULLABLE = ['accepted', 'stored', 'needs_fix'];
-
     /** @return array<int, array{0:string,1:int}> */
     protected function pullQuery(array $statuses): array
     {
@@ -315,7 +312,7 @@ class Create extends Component
         }
         if (! empty($this->pullSources['deposit'])) {
             foreach (DepositItem::whereIn('condition_status', $statuses)
-                ->whereHas('record', fn ($r) => $r->whereIn('status', self::DEPOSIT_PULLABLE))
+                ->pullableForDisposal()
                 ->when($dept !== null, fn ($q) => $q->whereHas('record', fn ($r) => $r->where('owner_dept_id', $dept)))
                 ->orderByDesc('id')->limit(300)->pluck('id') as $id) {
                 $out[] = ['deposit', (int) $id];
@@ -343,7 +340,7 @@ class Create extends Component
         }
         if (! empty($this->pullSources['deposit'])) {
             $n += DepositItem::whereIn('condition_status', $statuses)
-                ->whereHas('record', fn ($r) => $r->whereIn('status', self::DEPOSIT_PULLABLE))
+                ->pullableForDisposal()
                 ->when($dept !== null, fn ($q) => $q->whereHas('record', fn ($r) => $r->where('owner_dept_id', $dept)))->count();
         }
 
@@ -413,7 +410,7 @@ class Create extends Component
         $exists = [
             'inventory' => fn ($id) => InventoryItem::whereKey($id)->exists(),
             'equipment' => fn ($id) => Equipment::whereKey($id)->exists(),
-            'deposit' => fn ($id) => DepositItem::whereKey($id)->whereHas('record', fn ($r) => $r->whereIn('status', self::DEPOSIT_PULLABLE))->exists(),
+            'deposit' => fn ($id) => DepositItem::whereKey($id)->pullableForDisposal()->exists(),
         ];
         foreach (array_values($this->items) as $i => $it) {
             $st = $it['source_type'] ?? 'new';
