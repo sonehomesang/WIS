@@ -82,7 +82,7 @@
                                 <td class="px-4 py-2.5 align-top"><div class="font-semibold text-gray-800">{{ $r->owner_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->owner_email }}</div></td>
                                 <td class="px-4 py-2.5 align-top min-w-[13rem]">
                                     <div class="flex gap-2.5">
-                                        @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
+                                        @if ($ph)<img src="{{ $ph->url }}" alt="" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
                                         @else<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-lg">📦</div>@endif
                                         <div class="min-w-0">
                                             <div class="font-medium text-gray-800 whitespace-normal break-words line-clamp-2">{{ $first?->item_name ?? '—' }}@if ($r->items->count() > 1) <span class="text-gray-400 text-xs font-normal">+{{ $r->items->count() - 1 }}</span>@endif</div>
@@ -141,7 +141,7 @@
                 <{{ $tag }} @if (! $showDeleted) href="{{ route('deposit.show', $r) }}" wire:navigate @endif wire:key="mdp-{{ $r->id }}" class="block bg-white border border-gray-200 rounded-xl shadow-sm p-3.5 {{ $locked($r->status) ? 'opacity-60 bg-gray-50/70' : '' }}">
                     <div class="flex items-start justify-between gap-2">
                         <div class="flex gap-2.5 min-w-0">
-                            @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
+                            @if ($ph)<img src="{{ $ph->url }}" alt="" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
                             @else<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-lg">📦</div>@endif
                             <div class="min-w-0"><div class="font-mono text-xs text-indigo-600">{{ $r->request_number }}</div><div class="font-semibold text-gray-800">{{ $r->owner_name }}</div><div class="text-xs text-gray-500 truncate">{{ $first?->item_name }} · Qty {{ $r->items->sum('qty') }}</div>@if ($first?->asset_code || $first?->fixed_asset_no)<div class="text-[11px] text-gray-400 truncate">@if ($first->asset_code)ທ.ເຄື່ອງ: {{ $first->asset_code }}@endif@if ($first->fixed_asset_no) · ຊັບສິນ: {{ $first->fixed_asset_no }}@endif</div>@endif</div>
                         </div>

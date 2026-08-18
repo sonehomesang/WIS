@@ -67,7 +67,7 @@
                                 <td class="px-4 py-2.5 align-top w-full">
                                     @php $fi = $r->items->first(); $ph = $fi->photos[0] ?? null; @endphp
                                     <div class="flex gap-2.5">
-                                        @if ($ph)<img src="{{ \Illuminate\Support\Facades\Storage::url($ph) }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
+                                        @if ($ph)<img src="{{ \Illuminate\Support\Facades\Storage::url($ph) }}" alt="" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
                                         @else<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-lg">🗑️</div>@endif
                                         <div class="min-w-0">
                                             <div class="font-medium text-gray-800 truncate max-w-sm">{{ $fi?->item_name ?: ($r->title ?: '—') }}@if ($r->items_count > 1) <span class="text-gray-400 text-xs font-normal">+{{ $r->items_count - 1 }}</span>@endif</div>
