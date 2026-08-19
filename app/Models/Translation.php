@@ -37,13 +37,25 @@ class Translation extends Model
     public static function replaceMap(): array
     {
         return Cache::rememberForever(self::CACHE_REPLACE, function () {
-            $rows = static::query()->where('type', 'replace')->where('is_active', true)
+            $pairs = static::query()->where('type', 'replace')->where('is_active', true)
                 ->whereNotNull('target')->where('source', '!=', '')
                 ->whereColumn('target', '!=', 'source')   // identity rows = no-op, skip
                 ->pluck('target', 'source')->all();
-            // Strip any HTML from the admin-entered target before it is injected
-            // into rendered pages — prevents stored XSS via the replace middleware.
-            $rows = array_map(fn ($t) => strip_tags((string) $t), $rows);
+
+            $rows = [];
+            foreach ($pairs as $src => $target) {
+                // Strip any HTML from the admin-entered target before it is injected
+                // into rendered pages — prevents stored XSS via the replace middleware.
+                $target = strip_tags((string) $target);
+                $rows[$src] = $target;
+                // Blade escapes display text (& → &amp;, < → &lt; …), so a source
+                // containing special characters (e.g. "Equipment & Tools") never
+                // matches the rendered HTML unless we also map its encoded form.
+                $encSrc = e((string) $src);
+                if ($encSrc !== (string) $src) {
+                    $rows[$encSrc] = e($target);
+                }
+            }
             // longest source first so phrases win over their sub-words
             uksort($rows, fn ($a, $b) => mb_strlen($b) <=> mb_strlen($a));
 
