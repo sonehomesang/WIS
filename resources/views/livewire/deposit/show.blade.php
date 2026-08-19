@@ -225,9 +225,9 @@
                     @foreach ($record->items as $it)
                         <div class="border border-gray-200 rounded-xl p-3 space-y-2">
                             <div class="text-sm font-medium text-gray-700">{{ $it->item_name }} <span class="text-gray-400">×{{ $it->qty }}</span></div>
-                            <input type="file" wire:model="storePhotos.{{ $it->id }}" multiple accept="image/*" capture="environment" class="{{ $fileCls }}" />
+                            <input type="file" x-data="photoInput('storePhotos.{{ $it->id }}')" x-on:change="pick($event)" multiple accept="image/*" capture="environment" class="{{ $fileCls }}" />
                             <div wire:loading wire:target="storePhotos.{{ $it->id }}" class="text-xs text-sky-500">⏳ ກຳລັງອັບ…</div>
-                            @if (! empty($storePhotos[$it->id]))<div class="flex gap-1.5 flex-wrap">@foreach ($storePhotos[$it->id] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" class="w-12 h-12 rounded-lg object-cover border-2 border-sky-200" />@endif @endforeach</div>@endif
+                            @if (! empty($storePhotos[$it->id]))<div class="flex gap-1.5 flex-wrap">@foreach ($storePhotos[$it->id] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-12 h-12 rounded-lg object-cover border-2 border-sky-200 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />@endif @endforeach</div>@endif
                         </div>
                     @endforeach
                     <div class="flex justify-end gap-2 pt-2">
@@ -258,9 +258,9 @@
                     @foreach ($record->items as $it)
                         <div class="border border-gray-200 rounded-xl p-3 space-y-2">
                             <div class="text-sm font-medium text-gray-700">{{ $it->item_name }} <span class="text-gray-400">×{{ $it->qty }}</span></div>
-                            <input type="file" wire:model="claimPhotos.{{ $it->id }}" multiple accept="image/*" capture="environment" class="{{ $fileCls }}" />
+                            <input type="file" x-data="photoInput('claimPhotos.{{ $it->id }}')" x-on:change="pick($event)" multiple accept="image/*" capture="environment" class="{{ $fileCls }}" />
                             <div wire:loading wire:target="claimPhotos.{{ $it->id }}" class="text-xs text-sky-500">⏳ ກຳລັງອັບ…</div>
-                            @if (! empty($claimPhotos[$it->id]))<div class="flex gap-1.5 flex-wrap">@foreach ($claimPhotos[$it->id] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" class="w-12 h-12 rounded-lg object-cover border-2 border-sky-200" />@endif @endforeach</div>@endif
+                            @if (! empty($claimPhotos[$it->id]))<div class="flex gap-1.5 flex-wrap">@foreach ($claimPhotos[$it->id] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-12 h-12 rounded-lg object-cover border-2 border-sky-200 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />@endif @endforeach</div>@endif
                             <textarea wire:model="claimCondition.{{ $it->id }}" rows="1" placeholder="ສະພາບຕອນເອົາຄືນ (optional)…" class="w-full rounded-lg border-gray-300 text-xs"></textarea>
                         </div>
                     @endforeach

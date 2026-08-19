@@ -136,9 +136,9 @@
 
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1.5">ຮູບ ຫຼັກຖານ</label>
-                        <input type="file" wire:model="photos.{{ $i }}" multiple accept="image/*" capture="environment" class="block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-sky-50 file:text-sky-700 file:font-medium file:cursor-pointer hover:file:bg-sky-100" />
+                        <input type="file" x-data="photoInput('photos.{{ $i }}')" x-on:change="pick($event)" multiple accept="image/*" capture="environment" class="block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-sky-50 file:text-sky-700 file:font-medium file:cursor-pointer hover:file:bg-sky-100" />
                         <div wire:loading wire:target="photos.{{ $i }}" class="text-xs text-sky-500 mt-1">⏳ ກຳລັງ ອັບ…</div>
-                        @if (! empty($photos[$i]))<div class="flex gap-1.5 flex-wrap mt-2">@foreach ($photos[$i] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" class="w-14 h-14 rounded-lg object-cover border-2 border-sky-200" />@endif @endforeach</div>@endif
+                        @if (! empty($photos[$i]))<div class="flex gap-1.5 flex-wrap mt-2">@foreach ($photos[$i] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-14 h-14 rounded-lg object-cover border-2 border-sky-200 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />@endif @endforeach</div>@endif
                     </div>
                 </div>
             @endforeach

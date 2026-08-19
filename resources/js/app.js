@@ -147,6 +147,32 @@ document.addEventListener('alpine:init', () => {
             }
         },
     }));
+
+    // Generic single-input photo uploader: compresses every picked file then
+    // hands them to Livewire via uploadMultiple() targeting a flat property
+    // (e.g. "photos.0" or "storePhotos.42"). For inputs that aren't the 3-slot kind.
+    window.Alpine.data('photoInput', (prop) => ({
+        busy: false,
+        async pick(e) {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) {
+                return;
+            }
+            this.busy = true;
+            try {
+                const out = [];
+                for (const f of files) {
+                    out.push(await compressImage(f));
+                }
+                await new Promise((resolve) => {
+                    this.$wire.uploadMultiple(prop, out, resolve, resolve);
+                });
+            } finally {
+                this.busy = false;
+                e.target.value = '';
+            }
+        },
+    }));
 });
 
 // Skip nodes flagged data-noexport (toolbars, ⚙ menus) when capturing.
