@@ -54,3 +54,5 @@ Thumbs.db
 /DEPLOY.md
 /DB_IMPORT_GUIDE.html
 /readme/
+/docs/*.tmp
+/docs/~$*
