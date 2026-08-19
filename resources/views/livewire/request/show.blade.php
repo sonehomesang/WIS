@@ -68,7 +68,7 @@
                 <div><div class="text-xs text-gray-400">ຜູ້ເບີກ / Requester</div><div class="text-gray-800 mt-0.5">{{ $record->requester_name }}</div></div>
                 <div><div class="text-xs text-gray-400">ໜ່ວຍ / Unit</div><div class="text-gray-800 mt-0.5">{{ $record->unit?->name ?? '—' }}</div></div>
                 <div class="sm:col-span-2"><div class="text-xs text-gray-400">ຈຸດປະສົງ / Purpose</div><div class="text-gray-800 mt-0.5">{{ $record->purpose ?? '—' }}</div></div>
-                <div><div class="text-xs text-gray-400">ປະເພດ / Type</div><div class="text-gray-800 mt-0.5">{{ $record->request_type ?? '—' }}@if ($record->wo_e_form) · {{ $record->wo_e_form }}@endif</div></div>
+                <div><div class="text-xs text-gray-400">ປະເພດ / Type</div><div class="text-gray-800 mt-0.5">{{ $record->request_type ? \App\Support\RequestType::label($record->request_type) : '—' }}@if ($record->wo_e_form) · {{ $record->wo_e_form }}@endif</div></div>
                 <div><div class="text-xs text-gray-400">Supplier</div><div class="text-gray-800 mt-0.5">{{ $record->supplier?->name ?? '—' }}</div></div>
                 <div><div class="text-xs text-gray-400">Approver</div><div class="text-gray-800 mt-0.5">{{ $record->approver_name ?? '—' }}@if ($record->approved_at)<span class="text-xs text-gray-400"> · {{ $record->approved_at->format('d/m/Y H:i') }}</span>@endif</div></div>
                 <div><div class="text-xs text-gray-400">Warehouse</div><div class="text-gray-800 mt-0.5">{{ $record->warehouse_staff_name ?? '—' }}@if ($record->validated_at)<span class="text-xs text-gray-400"> · {{ $record->validated_at->format('d/m/Y H:i') }}</span>@endif</div></div>

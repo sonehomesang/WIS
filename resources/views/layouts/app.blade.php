@@ -65,6 +65,7 @@
                         'settings.facilities' => 'Organization',
                         'settings.uom' => 'Units of measure',
                         'settings.condition-statuses' => 'ສະຖານະພາບ ເຄື່ອງ · Condition statuses',
+                        'settings.request-types' => 'ປະເພດ ການ ຂໍ ເຄື່ອງ · Request types',
                         'settings.clear-test-data' => 'ລ້າງ ຂໍ້ມູນ ທົດສອບ · Clear test data',
                         'settings.suppliers' => 'Suppliers',
                         'settings.suppliers.show' => 'Supplier detail',

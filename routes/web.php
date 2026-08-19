@@ -414,6 +414,10 @@ Route::get('settings/condition-statuses', ConditionStatuses::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.condition-statuses');
 
+Route::get('settings/request-types', \App\Livewire\Settings\RequestTypes::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.request-types');
+
 Route::get('settings/clear-test-data', ClearTestData::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.clear-test-data');

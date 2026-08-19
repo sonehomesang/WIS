@@ -30,7 +30,8 @@
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">ປະເພດ (Type)</label>
                     <select wire:model="request_type" class="w-full rounded-lg border-gray-300 text-sm">
-                        <option value="">—</option><option value="CM">CM</option><option value="eForm">eForm</option><option value="project">Project</option>
+                        <option value="">—</option>
+                        @foreach (\App\Support\RequestType::options() as $rtKey => $rtLabel)<option value="{{ $rtKey }}">{{ $rtLabel }}</option>@endforeach
                     </select>
                 </div>
                 @endif
