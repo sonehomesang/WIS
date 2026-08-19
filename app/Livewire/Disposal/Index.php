@@ -98,7 +98,7 @@ class Index extends Component
                 ->orWhere('prepared_by_name', 'like', "%{$this->search}%")))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->when($showingDeleted, fn ($q) => $q->orderByDesc('deleted_at'), fn ($q) => $q->orderByDesc('created_at'))
-            ->paginate(12);
+            ->paginate(5);
 
         return view('livewire.disposal.index', [
             'records' => $records,

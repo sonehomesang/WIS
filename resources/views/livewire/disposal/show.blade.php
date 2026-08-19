@@ -89,7 +89,7 @@
                     <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition">
                         <div class="flex items-start gap-3">
                             @php $ph = $it->photos[0] ?? null; @endphp
-                            @if ($ph)<img src="{{ \Illuminate\Support\Facades\Storage::url($ph) }}" class="w-16 h-16 rounded-lg object-cover border border-gray-200 shrink-0" />
+                            @if ($ph)<img src="{{ \Illuminate\Support\Facades\Storage::url($ph) }}" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-16 h-16 rounded-lg object-cover border border-gray-200 shrink-0 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
                             @else<div class="w-16 h-16 rounded-lg bg-gray-50 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-2xl">🗑️</div>@endif
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-start justify-between gap-2 flex-wrap">
@@ -117,7 +117,7 @@
                             </div>
                         @endif
                         @if (! empty($it->photos) && count($it->photos) > 1)
-                            <div class="mt-3 flex gap-1.5 flex-wrap">@foreach (array_slice($it->photos, 1) as $p)<img src="{{ \Illuminate\Support\Facades\Storage::url($p) }}" class="w-14 h-14 rounded-lg object-cover border border-gray-200" />@endforeach</div>
+                            <div class="mt-3 flex gap-1.5 flex-wrap">@foreach (array_slice($it->photos, 1) as $p)<img src="{{ \Illuminate\Support\Facades\Storage::url($p) }}" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-14 h-14 rounded-lg object-cover border border-gray-200 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />@endforeach</div>
                         @endif
 
                         {{-- ຕໍ່ ລາຍການ: ສະແດງ ສະເພາະ ເມື່ອ ມີ ຫຼາຍ ລາຍການ (ໃບ ລາຍການ ດຽວ ໃຊ້ ປຸ່ມ ເທິງ ຫົວ) --}}
@@ -393,12 +393,12 @@
                     <div class="flex flex-wrap gap-2 items-center">
                         @foreach (($row['photos'] ?? []) as $p => $path)
                             <div class="relative group" wire:key="ef-{{ $i }}-ph-{{ $p }}">
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($path) }}" class="w-16 h-16 rounded-lg object-cover border border-gray-200" />
+                                <img src="{{ \Illuminate\Support\Facades\Storage::url($path) }}" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-16 h-16 rounded-lg object-cover border border-gray-200 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
                                 <button wire:click="removeExistingPhoto({{ $i }}, {{ $p }})" type="button" class="absolute -top-1.5 -right-1.5 bg-rose-600 text-white rounded-full w-5 h-5 text-xs leading-none shadow hover:bg-rose-700">✕</button>
                             </div>
                         @endforeach
                         @if (isset($newPhotos[$i]))
-                            @foreach ($newPhotos[$i] as $f)<img src="{{ $f->temporaryUrl() }}" class="w-16 h-16 rounded-lg object-cover border-2 border-emerald-300" wire:key="ef-{{ $i }}-np-{{ $loop->index }}" />@endforeach
+                            @foreach ($newPhotos[$i] as $f)<img src="{{ $f->temporaryUrl() }}" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-16 h-16 rounded-lg object-cover border-2 border-emerald-300 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" wire:key="ef-{{ $i }}-np-{{ $loop->index }}" />@endforeach
                         @endif
                         <label class="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xl cursor-pointer hover:border-sky-400 hover:text-sky-500 hover:bg-sky-50/50 transition">
                             +<input type="file" wire:model="newPhotos.{{ $i }}" multiple accept="image/*" class="hidden" />

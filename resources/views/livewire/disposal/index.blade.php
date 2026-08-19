@@ -42,7 +42,7 @@
 
         @if (session('ok'))<div class="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 mb-3">{{ session('ok') }}</div>@endif
 
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="hidden md:block bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <div class="overflow-x-hidden overflow-y-auto max-h-[calc(100vh-14rem)]">
                 <table class="w-full text-sm table-fixed">
                     <colgroup>
@@ -114,6 +114,38 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        {{-- Mobile cards --}}
+        <div class="md:hidden space-y-2.5">
+            @forelse ($records as $r)
+                @php $dimmed = in_array($r->status, ['approved', 'disposed'], true); $fi = $r->items->first(); $ph = $fi->photos[0] ?? null; @endphp
+                <div wire:key="dsm-{{ $r->id }}" class="bg-white border border-gray-200 rounded-xl shadow-sm p-3.5 {{ $dimmed ? 'opacity-60' : '' }}">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex gap-2.5 min-w-0">
+                            @if ($ph)<img src="{{ \Illuminate\Support\Facades\Storage::url($ph) }}" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0 cursor-zoom-in" />
+                            @else<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-lg">🗑️</div>@endif
+                            <div class="min-w-0">
+                                <a href="{{ route('disposal.show', $r) }}" wire:navigate class="font-mono text-xs text-indigo-600">{{ $r->request_number }}</a>
+                                <div class="font-semibold text-gray-800 break-words">{{ $fi?->item_name ?: ($r->title ?: '—') }}@if ($r->items_count > 1) <span class="text-gray-400 text-xs">+{{ $r->items_count - 1 }}</span>@endif</div>
+                                <div class="text-xs text-gray-400">{{ $r->department?->name }} · Qty {{ $r->items->sum('qty') }}</div>
+                            </div>
+                        </div>
+                        <span class="text-xs font-semibold rounded-full px-2 py-0.5 shrink-0 {{ $badge($r->status) }}">{{ $statusLabels[$r->status] ?? $r->status }}</span>
+                    </div>
+                    <div class="flex flex-wrap justify-end gap-1.5 mt-2.5">
+                        @if ($showDeleted)
+                            <button wire:click="restore({{ $r->id }})" class="text-xs font-medium text-emerald-700 border border-emerald-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
+                        @else
+                            @if ($canEdit($r))<a href="{{ route('disposal.show', [$r, 'edit' => 1]) }}" wire:navigate class="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">✏️ ແກ້ໄຂ</a>@endif
+                            <a href="{{ route('disposal.show', $r) }}" wire:navigate class="text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5">ເບິ່ງ</a>
+                            @if ($canManageDeleted)<button wire:click="openDelete({{ $r->id }})" class="text-xs font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5">🗑 ລຶບ</button>@endif
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="text-center text-gray-400 py-10"><div class="text-4xl mb-2">🗑️</div>{{ $showDeleted ? 'ບໍ່ ມີ ໃບ ຈຳໜ່າຍ ທີ່ ຖືກ ລຶບ' : 'ຍັງ ບໍ່ ມີ ໃບ ຈຳໜ່າຍ' }}</div>
+            @endforelse
         </div>
 
         @include('partials._delete-modal', ['title' => 'ລຶບ ໃບ ຈຳໜ່າຍ ນີ້?', 'subtitle' => $this->deletingRecord?->request_number])
