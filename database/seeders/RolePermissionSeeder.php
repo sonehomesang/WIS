@@ -16,7 +16,7 @@ class RolePermissionSeeder extends Seeder
 {
     /** @var list<string> */
     private array $menus = [
-        'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo', 'disposal',
+        'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo', 'disposal', 'ansi',
         'catalog', 'equipment', 'area_inspection', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
         'users', 'roles', 'settings', 'reports', 'audit', 'notifications',
     ];
@@ -86,7 +86,7 @@ class RolePermissionSeeder extends Seeder
         $admin['roles'] = 'viewOnly';
 
         $warehouse = $this->allMenus('viewOnly');
-        foreach (['inventory', 'borrow', 'deposit', 'da', 'oga', 'expo', 'equipment', 'disposal', 'area_inspection'] as $m) {
+        foreach (['inventory', 'borrow', 'deposit', 'da', 'oga', 'expo', 'equipment', 'disposal', 'area_inspection', 'ansi'] as $m) {
             $warehouse[$m] = 'adminPerm';
         }
         foreach (['roles', 'settings', 'audit'] as $m) {
@@ -105,7 +105,7 @@ class RolePermissionSeeder extends Seeder
 
         $requester = $this->allMenus('allFalse');
         $requester['dashboard'] = 'viewOnly';
-        foreach (['borrow', 'deposit', 'request'] as $m) {
+        foreach (['borrow', 'deposit', 'request', 'ansi'] as $m) {
             $requester[$m] = 'viewCreateEditDeactivate';
         }
         // ຜູ້ໃຊ້ທົ່ວໄປ ເຫັນ ສະເພาະ: inventory + catalog (Shops). DA/OGA/Expo ເຊື່ອງ

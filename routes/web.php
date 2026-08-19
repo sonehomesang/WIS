@@ -143,6 +143,11 @@ Route::get('disposal/create', App\Livewire\Disposal\Create::class)
     ->middleware(['auth', 'verified'])
     ->name('disposal.create');
 
+// ── ANSI · Application for New Stock Item ──
+Route::get('ansi', App\Livewire\Ansi\Index::class)->middleware(['auth', 'verified'])->name('ansi');
+Route::get('ansi/create', App\Livewire\Ansi\Create::class)->middleware(['auth', 'verified'])->name('ansi.create');
+Route::get('ansi/{record}', App\Livewire\Ansi\Show::class)->middleware(['auth', 'verified'])->name('ansi.show');
+
 Route::get('disposal/summary', Summary::class)
     ->middleware(['auth', 'verified'])
     ->name('disposal.summary');

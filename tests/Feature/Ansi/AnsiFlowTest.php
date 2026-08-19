@@ -1,0 +1,99 @@
+<?php
+
+use App\Livewire\Ansi\Create;
+use App\Models\AnsiApplication;
+use App\Models\User;
+use App\Services\AnsiService;
+use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
+
+beforeEach(function () {
+    $this->seed(RolePermissionSeeder::class);
+    $this->originator = User::factory()->create(['status' => 'active']);
+    $this->hos = User::factory()->create(['status' => 'active']);
+    $this->manager = User::factory()->create(['status' => 'active']);
+    $this->warehouse = User::factory()->create(['status' => 'active', 'is_super_admin' => true]);
+    $this->originator->givePermissionTo('ansi.create', 'ansi.view');
+});
+
+function draftFor($originator, $hos, $manager): AnsiApplication
+{
+    return app(AnsiService::class)->createDraft([
+        'hos_user_id' => $hos->id, 'manager_user_id' => $manager->id,
+        'app_date' => now()->toDateString(), 'purpose' => 'test',
+        'items' => [['description' => 'CONTACT SOCKET 10A', 'qty_order' => 600, 'unit' => 'ea', 'stock' => true, 'special_storage' => 'Air Cond room']],
+    ], $originator);
+}
+
+test('createDraft builds an application with items and an auto summary', function () {
+    $app = draftFor($this->originator, $this->hos, $this->manager);
+    expect($app->status)->toBe('draft');
+    expect($app->items)->toHaveCount(1);
+    expect($app->summary_items)->toContain('CONTACT SOCKET 10A');
+    expect($app->request_number)->toStartWith('ANSI-');
+    expect($app->originator_user_id)->toBe($this->originator->id);
+});
+
+test('the full approval chain runs Originator -> HoS -> Manager -> Warehouse -> completed', function () {
+    $svc = app(AnsiService::class);
+    $app = draftFor($this->originator, $this->hos, $this->manager);
+
+    $svc->submit($app, $this->originator);
+    expect($app->refresh()->status)->toBe('pending_hos');
+
+    $svc->endorse($app, $this->hos);
+    expect($app->refresh()->status)->toBe('pending_manager');
+
+    $svc->approve($app, $this->manager);
+    expect($app->refresh()->status)->toBe('pending_warehouse');
+
+    $svc->warehouseDone($app, $this->warehouse, [
+        'item_numbers' => [$app->items->first()->id => 'INV-0001'], 'pr_number' => 'PR-77',
+    ]);
+    $app->refresh();
+    expect($app->status)->toBe('completed');
+    expect($app->pr_number)->toBe('PR-77');
+    expect($app->items->first()->item_number)->toBe('INV-0001');
+});
+
+test('only the assigned HoS can endorse', function () {
+    $svc = app(AnsiService::class);
+    $app = draftFor($this->originator, $this->hos, $this->manager);
+    $svc->submit($app, $this->originator);
+
+    expect(fn () => $svc->endorse($app->refresh(), $this->manager))->toThrow(ValidationException::class);
+    expect($app->refresh()->status)->toBe('pending_hos'); // unchanged
+});
+
+test('reject returns to the originator with a reason', function () {
+    $svc = app(AnsiService::class);
+    $app = draftFor($this->originator, $this->hos, $this->manager);
+    $svc->submit($app, $this->originator);
+
+    $svc->reject($app->refresh(), $this->hos, 'hos', 'Duplicate of an existing item');
+    $app->refresh();
+    expect($app->status)->toBe('rejected');
+    expect($app->reject_stage)->toBe('hos');
+    expect($app->reject_reason)->toContain('Duplicate');
+});
+
+test('submit is blocked without HoS/Manager or items', function () {
+    $svc = app(AnsiService::class);
+    $app = app(AnsiService::class)->createDraft(['app_date' => now()->toDateString(), 'items' => []], $this->originator);
+    expect(fn () => $svc->submit($app, $this->originator))->toThrow(ValidationException::class);
+});
+
+test('the Create component saves a draft and submits it', function () {
+    $this->actingAs($this->originator);
+    Livewire::test(Create::class)
+        ->set('hos_user_id', $this->hos->id)
+        ->set('manager_user_id', $this->manager->id)
+        ->set('items.0.description', 'BEARING 6203')
+        ->set('items.0.qty_order', 10)
+        ->call('save', true);
+
+    $app = AnsiApplication::where('originator_user_id', $this->originator->id)->first();
+    expect($app)->not->toBeNull();
+    expect($app->status)->toBe('pending_hos');
+});
