@@ -33,7 +33,7 @@
     $settingsPerms = ['settings.view', 'users.view', 'roles.view', 'units.view', 'departments.view', 'locations.view', 'buildings.view', 'rooms.view', 'supplier.view', 'audit.view', 'reports.view'];
     $canSettings = $u->canAny($settingsPerms);
 
-    $linkBase = 'flex items-center gap-3 min-h-[38px] px-3 py-1.5 rounded-md text-sm transition-colors';
+    $linkBase = 'flex items-center gap-3 min-h-[40px] px-3 py-1.5 rounded-md text-sm transition-colors';
     $linkIdle = 'text-gray-300 hover:bg-gray-800 hover:text-white';
     $linkActive = 'bg-sky-600 text-white font-medium';
 @endphp
