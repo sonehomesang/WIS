@@ -76,13 +76,13 @@
                             <input type="number" min="1" wire:model="items.{{ $i }}.qty" class="w-16 rounded-lg border-gray-300 text-sm" />
                             <label class="shrink-0 cursor-pointer" title="ຖ່າຍ/ໃສ່ ຮູບ (ບໍ່ ບັງຄັບ)">
                                 @if (! empty($itemPhotos[$i]))
-                                    <img src="{{ $itemPhotos[$i]->temporaryUrl() }}" class="w-9 h-9 rounded-lg object-cover border-2 border-indigo-200" alt="ຮູບ" />
+                                    <img src="{{ $itemPhotos[$i]->temporaryUrl() }}" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-9 h-9 rounded-lg object-cover border-2 border-indigo-200 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" alt="ຮູບ" />
                                 @else
                                     <span class="inline-flex w-9 h-9 items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-indigo-600 hover:border-indigo-300 transition">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" /></svg>
                                     </span>
                                 @endif
-                                <input type="file" wire:model="itemPhotos.{{ $i }}" accept="image/*" class="hidden" />
+                                <input type="file" x-data="photoInputOne('itemPhotos.{{ $i }}')" x-on:change="pick($event)" accept="image/*" class="hidden" />
                             </label>
                             <button type="button" wire:click="removeItem({{ $i }})" class="text-gray-400 hover:text-rose-600 px-1 transition">×</button>
                         </div>

@@ -338,7 +338,7 @@
                                 @endforeach
                             </div>
                         @endif
-                        <input type="file" wire:model="mPhotos" multiple accept="image/*" class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-sky-50 file:text-sky-700 file:min-h-[40px]" />
+                        <input type="file" x-data="photoInput('mPhotos')" x-on:change="pick($event)" multiple accept="image/*" class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-sky-50 file:text-sky-700 file:min-h-[40px]" />
                         <div wire:loading wire:target="mPhotos" class="text-xs text-gray-400 mt-1">ກຳລັງ ອັບໂຫຼດ…</div>
                         @error('mPhotos.*')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
@@ -467,7 +467,7 @@
                                                                 <label class="flex flex-col items-center justify-center h-16 rounded border border-dashed {{ $st === 'ng' ? 'border-red-300 text-red-400 hover:border-red-500' : 'border-gray-300 text-gray-400 hover:border-sky-400 hover:text-sky-500' }} cursor-pointer">
                                                                     <span class="text-base leading-none">📷</span>
                                                                     <span class="text-[10px] mt-0.5">ຖ່າຍ/ອັບ</span>
-                                                                    <input type="file" wire:model="{{ $meta['model'] }}.{{ $i }}" accept="image/*,video/*" capture="environment" class="hidden" />
+                                                                    <input type="file" x-data="photoInputOne('{{ $meta['model'] }}.{{ $i }}')" x-on:change="pick($event)" accept="image/*,video/*" capture="environment" class="hidden" />
                                                                 </label>
                                                             @endif
                                                             <div wire:loading wire:target="{{ $meta['model'] }}.{{ $i }}" class="text-[10px] text-gray-400 mt-0.5">ອັບ…</div>

@@ -173,6 +173,28 @@ document.addEventListener('alpine:init', () => {
             }
         },
     }));
+
+    // Single-file variant: compresses one image then $wire.upload() to a scalar
+    // property (e.g. "itemPhotos.0"), for inputs that hold ONE file, not an array.
+    window.Alpine.data('photoInputOne', (prop) => ({
+        busy: false,
+        async pick(e) {
+            const file = (e.target.files || [])[0];
+            if (!file) {
+                return;
+            }
+            this.busy = true;
+            try {
+                const one = await compressImage(file);
+                await new Promise((resolve) => {
+                    this.$wire.upload(prop, one, resolve, resolve);
+                });
+            } finally {
+                this.busy = false;
+                e.target.value = '';
+            }
+        },
+    }));
 });
 
 // Skip nodes flagged data-noexport (toolbars, ⚙ menus) when capturing.
