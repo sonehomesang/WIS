@@ -146,9 +146,8 @@
     {{-- Create / Edit modal --}}
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="mat-modal">
-            <div class="bg-white w-full md:max-w-2xl rounded-t-2xl md:rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
-                <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
-                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-100 shrink-0">
+            <div class="bg-white w-full md:max-w-2xl rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
                     <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🏷️</span>
                     <h3 class="text-base font-semibold text-gray-800">{{ $editingId ? 'ແກ້ໄຂສິນຄ້າ' : 'ເພີ່ມສິນຄ້າ' }}</h3>
                     <button wire:click="$set('showModal', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
@@ -260,9 +259,8 @@
     {{-- price history modal --}}
     @if ($showHistory && $historyMaterial)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-md max-h-[80vh] flex flex-col">
-                <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
-                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-100 shrink-0">
+            <div class="bg-white rounded-2xl border border-gray-300 shadow-lg overflow-hidden w-full max-w-md max-h-[80vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
                     <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🕑</span>
                     <h3 class="text-base font-semibold text-gray-800 truncate">ປະຫວັດລາຄາ — {{ Str::limit($historyMaterial->description, 40) }}</h3>
                     <button wire:click="$set('showHistory', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>

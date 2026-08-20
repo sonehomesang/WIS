@@ -1,9 +1,9 @@
 @php
     $badge = fn ($s) => match ($s) {
-        'active' => 'bg-green-50 text-green-700',
-        'repair' => 'bg-amber-50 text-amber-700',
-        'retired' => 'bg-gray-100 text-gray-500',
-        default => 'bg-gray-100 text-gray-600',
+        'active' => 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+        'repair' => 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+        'retired' => 'bg-gray-100 text-gray-500 ring-1 ring-gray-200',
+        default => 'bg-gray-100 text-gray-600 ring-1 ring-gray-200',
     };
     $statusLabel = ['active' => 'ໃຊ້ງານ', 'repair' => 'ຊ່ອມແປງ', 'retired' => 'ຢຸດໃຊ້'];
 @endphp
@@ -101,7 +101,7 @@
                                     @php $bd = $e->statusBreakdown(); @endphp
                                     <div class="flex flex-wrap gap-0.5">
                                         @foreach (['active', 'repair', 'retired'] as $s)
-                                            @if ($bd[$s] > 0)<span class="text-xs rounded px-1.5 py-0.5 {{ $badge($s) }}">{{ $bd[$s] }} {{ $statusLabel[$s] }}</span>@endif
+                                            @if ($bd[$s] > 0)<span class="text-xs rounded-full font-medium px-1.5 py-0.5 {{ $badge($s) }}">{{ $bd[$s] }} {{ $statusLabel[$s] }}</span>@endif
                                         @endforeach
                                     </div>
                                     @if ($e->condition_status && $e->condition_status !== 'in_service')<span class="inline-block mt-1 text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($e->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($e->condition_status) }}</span>@endif
@@ -155,7 +155,7 @@
                             <div class="text-right shrink-0">
                                 @php $bd = $e->statusBreakdown(); @endphp
                                 @foreach (['active', 'repair', 'retired'] as $s)
-                                    @if ($bd[$s] > 0)<span class="text-[11px] rounded px-1.5 py-0.5 {{ $badge($s) }} ml-0.5 whitespace-nowrap">{{ $bd[$s] }} {{ $statusLabel[$s] }}</span>@endif
+                                    @if ($bd[$s] > 0)<span class="text-[11px] rounded-full font-medium px-1.5 py-0.5 {{ $badge($s) }} ml-0.5 whitespace-nowrap">{{ $bd[$s] }} {{ $statusLabel[$s] }}</span>@endif
                                 @endforeach
                             </div>
                         </div>
@@ -235,7 +235,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
-                        @php $rb = ['pass' => 'bg-green-50 text-green-700', 'fail' => 'bg-red-50 text-red-700', 'follow_up' => 'bg-amber-50 text-amber-700']; $rl = ['pass' => 'ຜ່ານ', 'fail' => 'ບໍ່ຜ່ານ', 'follow_up' => 'ຕ້ອງຕິດຕາມ']; @endphp
+                        @php $rb = ['pass' => 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', 'fail' => 'bg-rose-50 text-rose-700 ring-1 ring-rose-200', 'follow_up' => 'bg-amber-50 text-amber-700 ring-1 ring-amber-200']; $rl = ['pass' => 'ຜ່ານ', 'fail' => 'ບໍ່ຜ່ານ', 'follow_up' => 'ຕ້ອງຕິດຕາມ']; @endphp
                         @forelse ($inspections as $ins)
                             <tr wire:key="ins-{{ $ins->id }}">
                                 <td class="px-3 py-2 w-full sticky left-0 z-10 bg-white min-w-[170px]">
@@ -247,7 +247,7 @@
                                 <td class="px-2 py-2 text-xs text-gray-600 w-14">{{ $ins->inspected_at?->format('d/m/y') }}<div class="text-gray-400">{{ $ins->inspected_at?->format('H:i') }}</div></td>
                                 <td class="px-3 py-2">{{ $ins->inspector_name ?? '—' }}</td>
                                 <td class="px-2 py-2 whitespace-nowrap">
-                                    <span class="text-xs rounded px-1.5 py-0.5 {{ $rb[$ins->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $rl[$ins->result] ?? $ins->result }}</span>
+                                    <span class="text-xs rounded-full font-medium px-1.5 py-0.5 {{ $rb[$ins->result] ?? 'bg-gray-100 text-gray-600 ring-1 ring-gray-200' }}">{{ $rl[$ins->result] ?? $ins->result }}</span>
                                     @if (! is_null($ins->score))
                                         <div class="text-[10px] text-gray-400 mt-0.5">{{ $ins->score }}%</div>
                                     @endif
@@ -301,13 +301,15 @@
     {{-- Create / Edit modal --}}
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="eq-modal">
-            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ ເຄື່ອງ' : 'ເພີ່ມ ເຄື່ອງ ໃໝ່' }}</h3>
-                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
+            <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-emerald-200 to-emerald-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🛠️</span>
+                    <h3 class="text-base font-semibold text-gray-800">{{ $editingId ? 'ແກ້ໄຂ ເຄື່ອງ' : 'ເພີ່ມ ເຄື່ອງ ໃໝ່' }}</h3>
+                    <button wire:click="$set('showModal', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
+                <div class="p-5 space-y-4 overflow-y-auto">
                 @include('partials._form-errors')
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
@@ -438,9 +440,10 @@
                         @error('newPhotos')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                     </div>
                 </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] shadow-sm hover:bg-sky-700">ບັນທຶກ</button>
                 </div>
             </div>
         </div>
@@ -449,13 +452,15 @@
     {{-- Inspection modal (ແທັບ 2) --}}
     @if ($showInspectionModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="ins-modal">
-            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $editingInspectionId ? 'ແກ້ໄຂ ການ ກວດກາ' : 'ບັນທຶກ ການ ກວດກາ' }}</h3>
-                    <button wire:click="$set('showInspectionModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
+            <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-emerald-200 to-emerald-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🛠️</span>
+                    <h3 class="text-base font-semibold text-gray-800">{{ $editingInspectionId ? 'ແກ້ໄຂ ການ ກວດກາ' : 'ບັນທຶກ ການ ກວດກາ' }}</h3>
+                    <button wire:click="$set('showInspectionModal', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
+                <div class="p-5 space-y-4 overflow-y-auto">
                 @include('partials._form-errors')
 
                 {{-- ເລືອກ ເຄື່ອງ --}}
@@ -647,9 +652,10 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showInspectionModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="saveInspection" wire:loading.attr="disabled" wire:target="saveInspection,insPhotos" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">ບັນທຶກ</button>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showInspectionModal', false)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="saveInspection" wire:loading.attr="disabled" wire:target="saveInspection,insPhotos" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] shadow-sm hover:bg-sky-700 disabled:opacity-50">ບັນທຶກ</button>
                 </div>
             </div>
         </div>
@@ -663,7 +669,8 @@
             $vcl = ['pass' => ['OK · ຜ່ານ', 'text-green-700'], 'fail' => ['NG · ບໍ່ຜ່ານ', 'text-red-700'], 'na' => ['N/A', 'text-gray-400']];
         @endphp
         <div class="fixed inset-0 z-[55] flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="ins-view-modal">
-            <div class="bg-white w-full md:max-w-sm rounded-t-lg md:rounded-lg p-3 space-y-2 max-h-[90vh] overflow-y-auto">
+            <div class="bg-white w-full md:max-w-sm rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="p-3 space-y-2 overflow-y-auto">
                 {{-- ໃບ ກວດ ຮູບແບບ ໃບບິນ ~3.5" (336px) --}}
                 <div id="ins-detail-card" class="w-[360px] max-w-full mx-auto bg-white text-gray-800 text-[10px] leading-tight space-y-1.5">
                     <div class="flex items-start justify-between">
@@ -768,12 +775,13 @@
                     @endif
                 </div>
 
-                <div class="flex flex-wrap justify-end gap-2 pt-2 border-t">
-                    <a href="{{ route('equipment.inspection.pdf', $viewingInspection->id) }}" target="_blank" class="inline-flex items-center text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">⬇ PDF</a>
+                </div>
+                <div class="flex flex-wrap justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <a href="{{ route('equipment.inspection.pdf', $viewingInspection->id) }}" target="_blank" class="inline-flex items-center text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] shadow-sm hover:bg-sky-700">⬇ PDF</a>
                     @can('equipment.edit')
-                        <button wire:click="editInspection({{ $viewingInspection->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-50">ແກ້ໄຂ</button>
+                        <button wire:click="editInspection({{ $viewingInspection->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-lg px-4 py-2 min-h-[40px] hover:bg-sky-50">ແກ້ໄຂ</button>
                     @endcan
-                    <button wire:click="$set('viewingInspectionId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                    <button wire:click="$set('viewingInspectionId', null)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
                 </div>
             </div>
         </div>
@@ -782,28 +790,30 @@
     {{-- ປະຫວັດ/ສະຖານະ ການ ກວດເຊັກ ຂອງ ເຄື່ອງ (ຈາກ ໄອຄ່ອນ ດວງຕາ ໃນ ທະບຽນ) --}}
     @if ($historyEquipment)
         @php
-            $hrb = ['pass' => 'bg-green-50 text-green-700', 'fail' => 'bg-red-50 text-red-700', 'follow_up' => 'bg-amber-50 text-amber-700'];
+            $hrb = ['pass' => 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', 'fail' => 'bg-rose-50 text-rose-700 ring-1 ring-rose-200', 'follow_up' => 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'];
             $hrl = ['pass' => 'ຜ່ານ', 'fail' => 'ບໍ່ຜ່ານ', 'follow_up' => 'ຕ້ອງຕິດຕາມ'];
             $latest = $historyInspections->first();
         @endphp
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="ins-history-modal">
-            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-start justify-between gap-2">
+            <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-start gap-3 border-b border-gray-200 bg-gradient-to-b from-emerald-200 to-emerald-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🛠️</span>
                     <div>
-                        <h3 class="text-lg font-medium text-gray-800">ການ ກວດເຊັກ</h3>
+                        <h3 class="text-base font-semibold text-gray-800">ການ ກວດເຊັກ</h3>
                         <div class="text-sm text-gray-500">{{ $historyEquipment->asset_code }} · {{ $historyEquipment->name }}</div>
                     </div>
-                    <button wire:click="$set('historyEquipmentId', null)" class="text-gray-400 hover:text-gray-700 p-1 shrink-0" aria-label="Close">
+                    <button wire:click="$set('historyEquipmentId', null)" class="ml-auto text-gray-400 hover:text-gray-700 p-1 shrink-0" aria-label="Close">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
 
                 {{-- ສະຖານະ ຫຼ້າສຸດ --}}
                 @if ($latest)
                     <div class="rounded-md border border-gray-200 p-3 text-sm">
                         <div class="flex items-center gap-2 flex-wrap">
                             <span class="text-gray-500">ຫຼ້າສຸດ:</span>
-                            <span class="text-xs rounded px-2 py-0.5 {{ $hrb[$latest->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $hrl[$latest->result] ?? $latest->result }}</span>
+                            <span class="text-xs rounded-full font-medium px-2 py-0.5 {{ $hrb[$latest->result] ?? 'bg-gray-100 text-gray-600 ring-1 ring-gray-200' }}">{{ $hrl[$latest->result] ?? $latest->result }}</span>
                             @if (! is_null($latest->score))<span class="text-gray-600">ສະພາບ ໂດຍ ລວມ <b>{{ $latest->score }}%</b></span>@endif
                             <span class="text-gray-400">· {{ $latest->inspected_at?->format('d/m/Y H:i') }}</span>
                         </div>
@@ -825,7 +835,7 @@
                         @foreach ($historyInspections as $h)
                             <div wire:key="hist-{{ $h->id }}" class="px-3 py-2 flex items-center justify-between gap-2 text-sm">
                                 <div class="min-w-0">
-                                    <div class="text-gray-700">{{ $h->inspected_at?->format('d/m/Y H:i') }} <span class="text-xs rounded px-1.5 py-0.5 {{ $hrb[$h->result] ?? 'bg-gray-100 text-gray-600' }}">{{ $hrl[$h->result] ?? $h->result }}</span>@if (! is_null($h->score))<span class="text-xs text-gray-400 ml-1">{{ $h->score }}%</span>@endif</div>
+                                    <div class="text-gray-700">{{ $h->inspected_at?->format('d/m/Y H:i') }} <span class="text-xs rounded-full font-medium px-1.5 py-0.5 {{ $hrb[$h->result] ?? 'bg-gray-100 text-gray-600 ring-1 ring-gray-200' }}">{{ $hrl[$h->result] ?? $h->result }}</span>@if (! is_null($h->score))<span class="text-xs text-gray-400 ml-1">{{ $h->score }}%</span>@endif</div>
                                     <div class="text-xs text-gray-400 truncate">{{ $h->inspector_name ?? '—' }}@if ($h->frequency) · ຮອບ: {{ \App\Models\InspectionTemplate::FREQ_LABELS[$h->frequency] ?? $h->frequency }}@endif</div>
                                 </div>
                                 <button wire:click="viewInspection({{ $h->id }})" class="text-gray-400 hover:text-sky-700 p-1 shrink-0" title="ເບິ່ງ ໃບ ກວດ">
@@ -836,8 +846,9 @@
                     </div>
                 @endif
 
-                <div class="flex justify-end pt-1">
-                    <button wire:click="$set('historyEquipmentId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                </div>
+                <div class="flex justify-end px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('historyEquipmentId', null)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
                 </div>
             </div>
         </div>
@@ -846,16 +857,18 @@
     {{-- ລາຍລະອຽດ ເຄື່ອງ (ຈາກ ໄອຄ່ອນ ດວງຕາ ໃນ ຄໍລັມ "ຈັດການ") --}}
     @if ($viewingItem)
         <div class="fixed inset-0 z-[55] flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="item-view-modal">
-            <div class="bg-white w-full md:max-w-md rounded-t-lg md:rounded-lg p-4 space-y-3 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-start justify-between gap-2">
+            <div class="bg-white w-full md:max-w-md rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-start gap-3 border-b border-gray-200 bg-gradient-to-b from-emerald-200 to-emerald-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🛠️</span>
                     <div class="min-w-0">
                         <h3 class="text-base font-semibold text-gray-900 truncate">{{ $viewingItem->name }}</h3>
                         <div class="text-xs text-gray-500 font-mono">{{ $viewingItem->asset_code }}@if ($viewingItem->fixed_asset_no) · FA: {{ $viewingItem->fixed_asset_no }}@endif</div>
                     </div>
-                    <button wire:click="$set('viewingItemId', null)" class="text-gray-400 hover:text-gray-700 p-1 shrink-0" aria-label="ປິດ">
+                    <button wire:click="$set('viewingItemId', null)" class="ml-auto text-gray-400 hover:text-gray-700 p-1 shrink-0" aria-label="ປິດ">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
+                <div class="p-4 space-y-3 overflow-y-auto">
 
                 @if ($viewingItem->photos->count())
                     <div class="flex gap-1.5 flex-wrap">
@@ -885,7 +898,7 @@
                     <div class="text-xs text-gray-500 mb-1">ສະຖານະ</div>
                     <div class="flex flex-wrap gap-1">
                         @foreach (['active', 'repair', 'retired'] as $s)
-                            @if ($vbd[$s] > 0)<span class="text-xs rounded px-1.5 py-0.5 {{ $badge($s) }}">{{ $vbd[$s] }} {{ $statusLabel[$s] }}</span>@endif
+                            @if ($vbd[$s] > 0)<span class="text-xs rounded-full font-medium px-1.5 py-0.5 {{ $badge($s) }}">{{ $vbd[$s] }} {{ $statusLabel[$s] }}</span>@endif
                         @endforeach
                     </div>
                 </div>
@@ -898,14 +911,15 @@
                     <div class="text-sm"><span class="text-xs text-gray-500 block mb-0.5">ໝາຍເຫດ</span>{{ $viewingItem->notes }}</div>
                 @endif
 
-                <div class="flex flex-wrap justify-end gap-2 pt-2 border-t">
+                </div>
+                <div class="flex flex-wrap justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
                     @can('disposal.create')
-                        <a href="{{ route('disposal.create', ['add' => 'equipment:' . $viewingItem->id]) }}" wire:navigate class="text-sm text-red-700 border border-red-200 rounded-md px-4 py-2 min-h-[40px] inline-flex items-center hover:bg-red-50" title="ຂໍ ຈຳໜ່າຍ ເຄື່ອງ ນີ້">🗑 → Disposal</a>
+                        <a href="{{ route('disposal.create', ['add' => 'equipment:' . $viewingItem->id]) }}" wire:navigate class="text-sm text-red-700 border border-red-200 rounded-lg px-4 py-2 min-h-[40px] inline-flex items-center hover:bg-red-50" title="ຂໍ ຈຳໜ່າຍ ເຄື່ອງ ນີ້">🗑 → Disposal</a>
                     @endcan
                     @can('equipment.edit')
-                        <button wire:click="editItem({{ $viewingItem->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-50">ແກ້ໄຂ</button>
+                        <button wire:click="editItem({{ $viewingItem->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-lg px-4 py-2 min-h-[40px] hover:bg-sky-50">ແກ້ໄຂ</button>
                     @endcan
-                    <button wire:click="$set('viewingItemId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                    <button wire:click="$set('viewingItemId', null)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
                 </div>
             </div>
         </div>
@@ -914,7 +928,8 @@
     {{-- ຢືນຢັນ ລຶບ + ເຫດຜົນ (ບັງຄັບ) → soft-delete ໄປ Deleted Log --}}
     @if ($deletingId)
         <div class="fixed inset-0 z-[56] flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="del-modal">
-            <div class="bg-white w-full md:max-w-sm rounded-t-lg md:rounded-lg p-4 space-y-3">
+            <div class="bg-white w-full md:max-w-sm rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="p-4 space-y-3 overflow-y-auto">
                 <div class="flex items-start gap-3">
                     <div class="shrink-0 w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -930,9 +945,10 @@
                     @error('deleteReason')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                 </div>
                 <div class="text-xs text-gray-400">ຈະ ຍ້າຍ ໄປ ບັນທຶກ ການ ລຶບ (ກູ້ຄືນ ໄດ້) ພ້ອມ ຈົດ ຜູ້ລຶບ + ວັນ​ເວລາ.</div>
-                <div class="flex justify-end gap-2 pt-2 border-t">
-                    <button wire:click="$set('deletingId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="text-sm text-white bg-red-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-red-700 disabled:opacity-50">🗑 ຢືນຢັນ ລຶບ</button>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('deletingId', null)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="text-sm text-white bg-red-600 rounded-lg px-4 py-2 min-h-[40px] shadow-sm hover:bg-red-700 disabled:opacity-50">🗑 ຢືນຢັນ ລຶບ</button>
                 </div>
             </div>
         </div>
@@ -941,7 +957,8 @@
     {{-- ຢືນຢັນ ລຶບ ໃບ ກວດ + ເຫດຜົນ (ບັງຄັບ) → soft-delete ໄປ Deleted Log --}}
     @if ($deletingInsId)
         <div class="fixed inset-0 z-[56] flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="del-ins-modal">
-            <div class="bg-white w-full md:max-w-sm rounded-t-lg md:rounded-lg p-4 space-y-3">
+            <div class="bg-white w-full md:max-w-sm rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="p-4 space-y-3 overflow-y-auto">
                 <div class="flex items-start gap-3">
                     <div class="shrink-0 w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -957,9 +974,10 @@
                     @error('insDeleteReason')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                 </div>
                 <div class="text-xs text-gray-400">ຈະ ຍ້າຍ ໄປ ບັນທຶກ ການ ລຶບ (ກູ້ຄືນ ໄດ້) ພ້ອມ ຈົດ ຜູ້ລຶບ + ວັນ​ເວລາ.</div>
-                <div class="flex justify-end gap-2 pt-2 border-t">
-                    <button wire:click="$set('deletingInsId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="deleteInspectionRecord" wire:loading.attr="disabled" wire:target="deleteInspectionRecord" class="text-sm text-white bg-red-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-red-700 disabled:opacity-50">🗑 ຢືນຢັນ ລຶບ</button>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('deletingInsId', null)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="deleteInspectionRecord" wire:loading.attr="disabled" wire:target="deleteInspectionRecord" class="text-sm text-white bg-red-600 rounded-lg px-4 py-2 min-h-[40px] shadow-sm hover:bg-red-700 disabled:opacity-50">🗑 ຢືນຢັນ ລຶບ</button>
                 </div>
             </div>
         </div>

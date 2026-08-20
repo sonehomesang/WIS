@@ -166,9 +166,8 @@
 
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="inv-modal">
-            <div class="bg-white w-full md:max-w-2xl rounded-t-2xl md:rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
-                <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
-                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-100 shrink-0">
+            <div class="bg-white w-full md:max-w-2xl rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
                     <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">📦</span>
                     <h3 class="text-base font-semibold text-gray-800">{{ $editingId ? 'ແກ້ໄຂ item' : 'ເພີ່ມ item ໃໝ່' }}</h3>
                     <button wire:click="$set('showModal', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
@@ -243,9 +242,8 @@
 
     @if ($showImport)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="inv-import-modal">
-            <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
-                <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
-                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-100 shrink-0">
+            <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
                     <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">↥</span>
                     <h3 class="text-base font-semibold text-gray-800">Import inventory ຈາກ CSV</h3>
                     <button wire:click="$set('showImport', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>

@@ -3,8 +3,8 @@
         $tLabels = \App\Models\EquipmentMaintenance::TYPES;
         $sLabels = \App\Models\EquipmentMaintenance::STATUSES;
         $fLabels = \App\Models\EquipmentMaintenance::FREQ_LABELS;
-        $tBadge = ['preventive' => 'bg-sky-50 text-sky-700', 'repair' => 'bg-amber-50 text-amber-700', 'service' => 'bg-violet-50 text-violet-700', 'other' => 'bg-gray-100 text-gray-600'];
-        $sBadge = ['planned' => 'bg-gray-100 text-gray-600', 'in_progress' => 'bg-amber-50 text-amber-700', 'done' => 'bg-green-50 text-green-700'];
+        $tBadge = ['preventive' => 'bg-sky-50 text-sky-700 ring-1 ring-sky-200', 'repair' => 'bg-amber-50 text-amber-700 ring-1 ring-amber-200', 'service' => 'bg-violet-50 text-violet-700 ring-1 ring-violet-200', 'other' => 'bg-gray-100 text-gray-600 ring-1 ring-gray-200'];
+        $sBadge = ['planned' => 'bg-gray-100 text-gray-600 ring-1 ring-gray-200', 'in_progress' => 'bg-amber-50 text-amber-700 ring-1 ring-amber-200', 'done' => 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'];
     @endphp
 
     <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
@@ -75,9 +75,9 @@
                                 <div class="text-[11px] text-red-600 mt-0.5">🗑 ລຶບ: {{ $m->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $m->deletedBy?->display_name ?? '—' }}@if ($m->deleted_reason) · ເຫດຜົນ: {{ $m->deleted_reason }}@endif</div>
                             @endif
                         </td>
-                        <td class="px-3 py-2"><span class="text-xs rounded px-1.5 py-0.5 {{ $tBadge[$m->type] ?? 'bg-gray-100 text-gray-600' }}">{{ $tLabels[$m->type] ?? $m->type }}</span></td>
+                        <td class="px-3 py-2"><span class="text-xs rounded-full font-medium px-1.5 py-0.5 {{ $tBadge[$m->type] ?? 'bg-gray-100 text-gray-600 ring-1 ring-gray-200' }}">{{ $tLabels[$m->type] ?? $m->type }}</span></td>
                         <td class="px-3 py-2 text-right whitespace-nowrap text-gray-700">{{ $m->cost !== null ? number_format($m->cost) : '—' }}</td>
-                        <td class="px-3 py-2"><span class="text-xs rounded px-1.5 py-0.5 {{ $sBadge[$m->status] ?? 'bg-gray-100 text-gray-600' }}">{{ $sLabels[$m->status] ?? $m->status }}</span></td>
+                        <td class="px-3 py-2"><span class="text-xs rounded-full font-medium px-1.5 py-0.5 {{ $sBadge[$m->status] ?? 'bg-gray-100 text-gray-600 ring-1 ring-gray-200' }}">{{ $sLabels[$m->status] ?? $m->status }}</span></td>
                         <td class="px-3 py-2 whitespace-nowrap">
                             @if ($m->next_service_date)
                                 <span class="{{ $m->next_service_date->isPast() ? 'text-red-600 font-medium' : ($m->next_service_date->lte(now()->addDays(14)) ? 'text-amber-600' : 'text-gray-600') }}">{{ $m->next_service_date->format('d/m/Y') }}</span>
@@ -129,7 +129,7 @@
             <div wire:key="mm-{{ $m->id }}" class="bg-white border border-gray-100 rounded-lg p-3">
                 <div class="flex items-start justify-between gap-2">
                     <div class="font-medium text-gray-800">{{ $m->title }}</div>
-                    <span class="text-xs rounded px-1.5 py-0.5 shrink-0 {{ $sBadge[$m->status] ?? 'bg-gray-100 text-gray-600' }}">{{ $sLabels[$m->status] ?? $m->status }}</span>
+                    <span class="text-xs rounded-full font-medium px-1.5 py-0.5 shrink-0 {{ $sBadge[$m->status] ?? 'bg-gray-100 text-gray-600 ring-1 ring-gray-200' }}">{{ $sLabels[$m->status] ?? $m->status }}</span>
                 </div>
                 <div class="text-xs text-gray-400">{{ $m->equipment?->asset_code }} · {{ $m->maintenance_date?->format('d/m/Y') }} · {{ $tLabels[$m->type] ?? $m->type }}</div>
                 <div class="text-xs text-gray-600 mt-1">ຄ່າ: {{ $m->cost !== null ? number_format($m->cost).' ກີບ' : '—' }}@if ($m->next_service_date) · service: {{ $m->next_service_date->format('d/m/Y') }}@endif</div>
@@ -164,13 +164,15 @@
     {{-- ຖາມ ຕອນ "ລົງມື ບຳລຸງ": ຕາມ ແຜນ ທີ່ ວາງໄວ້ ຫຼື ໃໝ່ ຕາມ ໜ້າງານ --}}
     @if ($showRecordChoice)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="m-choice">
-            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">ລົງມື ບຳລຸງ — ເລືອກ ວິທີ</h3>
-                    <button wire:click="$set('showRecordChoice', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
+            <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-emerald-200 to-emerald-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🛠️</span>
+                    <h3 class="text-base font-semibold text-gray-800">ລົງມື ບຳລຸງ — ເລືອກ ວິທີ</h3>
+                    <button wire:click="$set('showRecordChoice', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
 
                 {{-- ໃໝ່ ຕາມ ໜ້າງານ --}}
                 <button wire:click="newMaintenance" class="w-full flex items-start gap-3 text-left border border-gray-200 rounded-md p-3 hover:border-sky-400 hover:bg-sky-50">
@@ -201,6 +203,7 @@
                         @endforelse
                     </div>
                 </div>
+                </div>
             </div>
         </div>
     @endif
@@ -208,13 +211,15 @@
     {{-- Record modal --}}
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="m-modal">
-            <div class="bg-white w-full md:max-w-xl rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ ບຳລຸງ' : ($planning ? 'ວາງແຜນ ບຳລຸງ ລ່ວງໜ້າ' : 'ລົງມື ບຳລຸງ') }}</h3>
-                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
+            <div class="bg-white w-full md:max-w-xl rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-emerald-200 to-emerald-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🛠️</span>
+                    <h3 class="text-base font-semibold text-gray-800">{{ $editingId ? 'ແກ້ໄຂ ບຳລຸງ' : ($planning ? 'ວາງແຜນ ບຳລຸງ ລ່ວງໜ້າ' : 'ລົງມື ບຳລຸງ') }}</h3>
+                    <button wire:click="$set('showModal', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
 
                 @include('partials._form-errors')
 
@@ -414,7 +419,7 @@
                                         <div wire:key="mck-{{ $i }}" class="px-2 py-1.5">
                                             <div class="flex items-start gap-2">
                                                 <span class="text-gray-400 w-5 text-right text-xs pt-0.5 shrink-0">{{ $i + 1 }}</span>
-                                                <span class="shrink-0 text-[10px] font-bold rounded px-1 py-0.5 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $c['action'] ?? '' }}</span>
+                                                <span class="shrink-0 text-[10px] font-bold rounded-full px-1 py-0.5 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' : 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' }}">{{ $c['action'] ?? '' }}</span>
                                                 <div class="flex-1 min-w-0">
                                                     <div class="text-gray-700 leading-tight text-xs">{{ $c['label'] }}</div>
                                                     @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
@@ -488,9 +493,10 @@
                     </div>
                 @endif
 
-                <div class="flex justify-end gap-2 pt-2 border-t">
-                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="save" wire:loading.attr="disabled" wire:target="save,mPhotos" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">ບັນທຶກ</button>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="save" wire:loading.attr="disabled" wire:target="save,mPhotos" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] shadow-sm hover:bg-sky-700 disabled:opacity-50">ບັນທຶກ</button>
                 </div>
             </div>
         </div>
@@ -499,16 +505,18 @@
     {{-- History modal (per equipment) --}}
     @if ($historyEquipment)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="m-history">
-            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-start justify-between gap-2">
+            <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-start gap-3 border-b border-gray-200 bg-gradient-to-b from-emerald-200 to-emerald-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🛠️</span>
                     <div>
-                        <h3 class="text-lg font-medium text-gray-800">ປະຫວັດ ບຳລຸງຮັກສາ</h3>
+                        <h3 class="text-base font-semibold text-gray-800">ປະຫວັດ ບຳລຸງຮັກສາ</h3>
                         <div class="text-sm text-gray-500">{{ $historyEquipment->asset_code }} · {{ $historyEquipment->name }}</div>
                     </div>
-                    <button wire:click="$set('historyEquipmentId', null)" class="text-gray-400 hover:text-gray-700 p-1 shrink-0" aria-label="Close">
+                    <button wire:click="$set('historyEquipmentId', null)" class="ml-auto text-gray-400 hover:text-gray-700 p-1 shrink-0" aria-label="Close">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
                 <div class="rounded-md bg-gray-50 border border-gray-100 p-2 text-sm text-gray-600">ຄ່າ ໃຊ້ຈ່າຍ ລວມ: <b>{{ number_format((float) $history->sum('cost')) }}</b> ກີບ · {{ $history->count() }} ຄັ້ງ</div>
                 @if ($history->count())
                     <div class="border border-gray-200 rounded-md divide-y divide-gray-100">
@@ -516,7 +524,7 @@
                             <div wire:key="mh-{{ $h->id }}" class="px-3 py-2 text-sm">
                                 <div class="flex items-center justify-between gap-2">
                                     <div class="font-medium text-gray-800">{{ $h->title }}</div>
-                                    <span class="text-xs rounded px-1.5 py-0.5 shrink-0 {{ $tBadge[$h->type] ?? 'bg-gray-100 text-gray-600' }}">{{ $tLabels[$h->type] ?? $h->type }}</span>
+                                    <span class="text-xs rounded-full font-medium px-1.5 py-0.5 shrink-0 {{ $tBadge[$h->type] ?? 'bg-gray-100 text-gray-600 ring-1 ring-gray-200' }}">{{ $tLabels[$h->type] ?? $h->type }}</span>
                                 </div>
                                 <div class="text-xs text-gray-400">{{ $h->maintenance_date?->format('d/m/Y') }}@if ($h->performed_by) · {{ $h->performed_by }}@endif@if ($h->cost !== null) · {{ number_format($h->cost) }} ກີບ@endif</div>
                             </div>
@@ -525,8 +533,9 @@
                 @else
                     <div class="text-sm text-gray-500">ຍັງ ບໍ່ ເຄີຍ ບຳລຸງ ເຄື່ອງ ນີ້.</div>
                 @endif
-                <div class="flex justify-end pt-1 border-t">
-                    <button wire:click="$set('historyEquipmentId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                </div>
+                <div class="flex justify-end px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('historyEquipmentId', null)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
                 </div>
             </div>
         </div>
@@ -535,17 +544,18 @@
     {{-- View record (read-only) --}}
     @if ($viewing)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="m-view">
-            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-start justify-between gap-2">
+            <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-start gap-3 border-b border-gray-200 bg-gradient-to-b from-emerald-200 to-emerald-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🛠️</span>
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h3 class="text-lg font-medium text-gray-800">{{ $viewing->title }}</h3>
-                            <span class="text-xs rounded px-1.5 py-0.5 {{ $tBadge[$viewing->type] ?? 'bg-gray-100 text-gray-600' }}">{{ $tLabels[$viewing->type] ?? $viewing->type }}</span>
-                            <span class="text-xs rounded px-1.5 py-0.5 {{ $sBadge[$viewing->status] ?? 'bg-gray-100 text-gray-600' }}">{{ $sLabels[$viewing->status] ?? $viewing->status }}</span>
+                            <h3 class="text-base font-semibold text-gray-800">{{ $viewing->title }}</h3>
+                            <span class="text-xs rounded-full font-medium px-1.5 py-0.5 {{ $tBadge[$viewing->type] ?? 'bg-gray-100 text-gray-600 ring-1 ring-gray-200' }}">{{ $tLabels[$viewing->type] ?? $viewing->type }}</span>
+                            <span class="text-xs rounded-full font-medium px-1.5 py-0.5 {{ $sBadge[$viewing->status] ?? 'bg-gray-100 text-gray-600 ring-1 ring-gray-200' }}">{{ $sLabels[$viewing->status] ?? $viewing->status }}</span>
                         </div>
                         <div class="text-sm text-gray-500 mt-0.5">{{ $viewing->equipment?->asset_code }} · {{ $viewing->equipment?->name }}</div>
                     </div>
-                    <div class="flex items-center gap-1 shrink-0">
+                    <div class="ml-auto flex items-center gap-1 shrink-0">
                         <a href="{{ route('equipment.maintenance.pdf', $viewing->id) }}" target="_blank" class="inline-flex items-center gap-1 text-sm text-gray-700 border border-gray-200 rounded-md px-2.5 py-1.5 hover:bg-gray-50" title="ພິມ / PDF">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Z" /></svg>
                             PDF
@@ -556,6 +566,7 @@
                         </button>
                     </div>
                 </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
 
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <div><span class="text-gray-400 text-xs block">ວັນທີ</span>{{ $viewing->maintenance_date?->format('d/m/Y') ?? '—' }}</div>
@@ -579,7 +590,7 @@
                             <div class="px-3 py-1.5 flex items-start gap-2 {{ $st === 'ng' ? 'bg-red-50' : '' }}">
                                 <span class="shrink-0 w-5 text-center font-bold {{ $st === 'ok' ? 'text-green-600' : ($st === 'ng' ? 'text-red-600' : 'text-gray-300') }}">{{ $st === 'ok' ? '✓' : ($st === 'ng' ? '✗' : '—') }}</span>
                                 <div class="min-w-0">
-                                    <div class="text-gray-700 leading-tight">{{ $c['label'] ?? '' }}@if (! empty($c['action'])) <span class="text-[10px] rounded px-1 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $c['action'] }}</span>@endif</div>
+                                    <div class="text-gray-700 leading-tight">{{ $c['label'] ?? '' }}@if (! empty($c['action'])) <span class="text-[10px] rounded-full px-1 {{ ($c['action'] ?? '') === 'X' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' : 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' }}">{{ $c['action'] }}</span>@endif</div>
                                     @if (! empty($c['remark']))<div class="text-[11px] text-gray-400 font-mono">{{ $c['remark'] }}</div>@endif
                                     @if (! empty($c['note']))<div class="text-[11px] text-sky-700 mt-0.5">📝 {{ $c['note'] }}</div>@endif
                                     @if (! empty($c['photo_problem']) || ! empty($c['photo_before']) || ! empty($c['photo_after']))
@@ -624,8 +635,9 @@
                     @endif
                 </div>
 
-                <div class="flex justify-end pt-1 border-t">
-                    <button wire:click="$set('viewingId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                </div>
+                <div class="flex justify-end px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('viewingId', null)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
                 </div>
             </div>
         </div>

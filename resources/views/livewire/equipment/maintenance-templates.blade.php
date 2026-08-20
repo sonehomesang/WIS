@@ -59,7 +59,7 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2 text-gray-600">{{ count($t->items ?? []) }}</td>
-                            <td class="px-3 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $t->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $t->is_active ? 'ເປີດ' : 'ປິດ' }}</span></td>
+                            <td class="px-3 py-2"><span class="text-xs rounded-full font-medium px-2 py-0.5 {{ $t->is_active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-gray-100 text-gray-500 ring-1 ring-gray-200' }}">{{ $t->is_active ? 'ເປີດ' : 'ປິດ' }}</span></td>
                             <td class="px-3 py-2 pr-5 text-right whitespace-nowrap text-gray-500">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $t->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
@@ -94,14 +94,15 @@
     {{-- Modal --}}
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="mtpl-modal">
-            <div class="bg-white w-full md:max-w-2xl rounded-t-lg md:rounded-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ ແມ່ແບບ ບຳລຸງ' : 'ແມ່ແບບ ບຳລຸງ ໃໝ່' }}</h3>
-                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
+            <div class="bg-white w-full md:max-w-2xl rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-emerald-200 to-emerald-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🛠️</span>
+                    <h3 class="text-base font-semibold text-gray-800">{{ $editingId ? 'ແກ້ໄຂ ແມ່ແບບ ບຳລຸງ' : 'ແມ່ແບບ ບຳລຸງ ໃໝ່' }}</h3>
+                    <button wire:click="$set('showModal', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
-
+                <div class="p-5 space-y-4 overflow-y-auto">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     @include('partials._form-errors', ['wrapClass' => 'md:col-span-2'])
                     <div class="md:col-span-2">
@@ -228,10 +229,10 @@
                     <p class="text-xs text-gray-400 mt-1">ໃສ່ <b>ໝົດທຸກ ລາຍການ</b> ແລ້ວ ໝາຍ ແຕ່ລະ ຮອບ ວ່າ <b class="text-sky-700">C</b>=ກວດ ຫຼື <b class="text-amber-700">X</b>=ປ່ຽນ (ວ່າງ = ບໍ່ ເຮັດ ຮອບ ນັ້ນ). ຕອນ ບຳລຸງ ຈິງ ຈະ ຄັດ ລິສ ຕາມ ຮອບ ທີ່ ເລືອກ ພ້ອມ ສະແດງ C/X.</p>
                     <button type="button" wire:click="addChecklistItem" class="mt-2 text-sm text-sky-600">+ ເພີ່ມ ຂໍ້</button>
                 </div>
-
-                <div class="flex justify-end gap-2 pt-2 border-t">
-                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] shadow-sm hover:bg-sky-700">ບັນທຶກ</button>
                 </div>
             </div>
         </div>
@@ -245,17 +246,18 @@
             $vHours = \App\Models\MaintenanceTemplate::FREQ_HOURS;
         @endphp
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="mtpl-view">
-            <div class="bg-white w-full md:max-w-2xl rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-start justify-between gap-2">
+            <div class="bg-white w-full md:max-w-2xl rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-start gap-3 border-b border-gray-200 bg-gradient-to-b from-emerald-200 to-emerald-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🛠️</span>
                     <div>
-                        <h3 class="text-lg font-medium text-gray-800">{{ $viewing->name }}</h3>
+                        <h3 class="text-base font-semibold text-gray-800">{{ $viewing->name }}</h3>
                         <div class="text-sm text-gray-500">
                             {{ $viewing->equipment ? $viewing->equipment->asset_code.' · '.$viewing->equipment->name : '— ຍັງ ບໍ່ ຜູກ ເຄື່ອງ —' }}
                             @if ($viewing->category) · {{ $viewing->category }}@endif
-                            · <span class="text-xs rounded px-1.5 py-0.5 {{ $viewing->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $viewing->is_active ? 'ເປີດ' : 'ປິດ' }}</span>
+                            · <span class="text-xs rounded-full font-medium px-1.5 py-0.5 {{ $viewing->is_active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-gray-100 text-gray-500 ring-1 ring-gray-200' }}">{{ $viewing->is_active ? 'ເປີດ' : 'ປິດ' }}</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-1 shrink-0">
+                    <div class="ml-auto flex items-center gap-1 shrink-0">
                         @can('equipment.edit')
                             <button wire:click="editTemplate({{ $viewing->id }})" class="text-sm text-sky-700 border border-sky-200 rounded-md px-2.5 py-1.5 hover:bg-sky-50">ແກ້ໄຂ</button>
                         @endcan
@@ -264,6 +266,7 @@
                         </button>
                     </div>
                 </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
 
                 @if ($viewing->method)
                     <div class="text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-md px-3 py-2">{{ $viewing->method }}</div>
@@ -297,7 +300,7 @@
                                         @php $act = $c['cycles'][$fk] ?? ''; @endphp
                                         <td class="px-1 py-1 text-center align-top">
                                             @if ($act)
-                                                <span class="text-[10px] font-bold rounded px-1 py-0.5 {{ $act === 'X' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700' }}">{{ $act }}</span>
+                                                <span class="text-[10px] font-bold rounded-full px-1 py-0.5 {{ $act === 'X' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' : 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' }}">{{ $act }}</span>
                                             @else
                                                 <span class="text-gray-300">—</span>
                                             @endif
@@ -311,8 +314,9 @@
                     </table>
                 </div>
 
-                <div class="flex justify-end pt-1 border-t">
-                    <button wire:click="$set('viewingId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                </div>
+                <div class="flex justify-end px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('viewingId', null)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
                 </div>
             </div>
         </div>
