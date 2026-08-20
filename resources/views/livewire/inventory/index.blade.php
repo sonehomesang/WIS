@@ -3,11 +3,11 @@
     $svgPower = 'M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9';
     $svgTrash = 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16';
     $statusBadge = fn ($s) => match ($s) {
-        'available' => 'bg-green-50 text-green-700',
-        'borrowed' => 'bg-blue-50 text-blue-700',
-        'maintenance' => 'bg-gray-100 text-gray-600',
-        'low-stock' => 'bg-red-50 text-red-700',
-        default => 'bg-gray-100 text-gray-600',
+        'available' => 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+        'borrowed' => 'bg-sky-50 text-sky-700 ring-1 ring-sky-200',
+        'maintenance' => 'bg-gray-50 text-gray-600 ring-1 ring-gray-200',
+        'low-stock' => 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
+        default => 'bg-gray-50 text-gray-600 ring-1 ring-gray-200',
     };
 @endphp
 
@@ -108,7 +108,7 @@
                             <td x-show="cols.category" x-cloak class="px-4 py-2 text-xs text-gray-600 whitespace-nowrap">{{ $it->category ?: '—' }}</td>
                             <td x-show="cols.qty" x-cloak class="px-4 py-2 text-gray-600 whitespace-nowrap">{{ $it->quantity }}@if ($it->unit) {{ $it->unit }}@endif</td>
                             <td x-show="cols.location" x-cloak class="px-4 py-2 text-gray-600 text-xs whitespace-nowrap">{{ collect([$it->location?->name, $it->building?->name, $it->room?->name, $it->shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
-                            <td x-show="cols.status" x-cloak class="px-4 py-2 whitespace-nowrap"><span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>@if ($it->condition_status && $it->condition_status !== 'in_service')<span class="block mt-1 text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($it->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($it->condition_status) }}</span>@endif</td>
+                            <td x-show="cols.status" x-cloak class="px-4 py-2 whitespace-nowrap"><span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>@if ($it->condition_status && $it->condition_status !== 'in_service')<span class="block mt-1 text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($it->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($it->condition_status) }}</span>@endif</td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $it->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
@@ -137,7 +137,7 @@
                             @endif
                             <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
                         </div>
-                        <span class="text-xs rounded px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>@if ($it->condition_status && $it->condition_status !== 'in_service')<span class="text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($it->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($it->condition_status) }}</span>@endif
+                        <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>@if ($it->condition_status && $it->condition_status !== 'in_service')<span class="text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($it->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($it->condition_status) }}</span>@endif
                     </div>
                     <div class="text-xs text-gray-500 mt-1"><span class="font-mono text-gray-400">{{ $it->slug }}</span> · Qty {{ $it->quantity }} {{ $it->unit }} · {{ collect([$it->location?->name, $it->building?->name])->filter()->implode(' / ') ?: '—' }}</div>
                     @if ($showDeleted)
@@ -166,11 +166,14 @@
 
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="inv-modal">
-            <div class="bg-white w-full md:max-w-2xl rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ item' : 'ເພີ່ມ item ໃໝ່' }}</h3>
-                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+            <div class="bg-white w-full md:max-w-2xl rounded-t-2xl md:rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">📦</span>
+                    <h3 class="text-base font-semibold text-gray-800">{{ $editingId ? 'ແກ້ໄຂ item' : 'ເພີ່ມ item ໃໝ່' }}</h3>
+                    <button wire:click="$set('showModal', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
                 </div>
+                <div class="p-5 overflow-y-auto">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     @include('partials._form-errors', ['wrapClass' => 'md:col-span-2'])
                     <div class="md:col-span-2">
@@ -229,9 +232,10 @@
 
                     <label class="flex items-center gap-2 text-sm text-gray-700 md:col-span-2"><input type="checkbox" wire:model="is_active" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" /> Active</label>
                 </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 bg-white rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] hover:bg-sky-700 shadow-sm">ບັນທຶກ</button>
                 </div>
             </div>
         </div>
@@ -239,11 +243,14 @@
 
     @if ($showImport)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="inv-import-modal">
-            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">Import inventory ຈາກ CSV</h3>
-                    <button wire:click="$set('showImport', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+            <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">↥</span>
+                    <h3 class="text-base font-semibold text-gray-800">Import inventory ຈາກ CSV</h3>
+                    <button wire:click="$set('showImport', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
                 </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
 
                 <div class="text-xs text-gray-500 leading-relaxed bg-gray-50 rounded-md p-3">
                     Header ທີ່ຮອງຮັບ: <code class="text-gray-700">name*, description, category, brand, model, serial_number, quantity, min_quantity, unit, shelf_label, status, slug</code><br>
@@ -270,9 +277,10 @@
                     </div>
                 @endif
 
-                <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showImport', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
-                    <button wire:click="importCsv" wire:loading.attr="disabled" wire:target="importCsv" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showImport', false)" class="text-sm text-gray-700 border border-gray-300 bg-white rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                    <button wire:click="importCsv" wire:loading.attr="disabled" wire:target="importCsv" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] hover:bg-sky-700 shadow-sm disabled:opacity-50">
                         <span wire:loading.remove wire:target="importCsv">ນຳເຂົ້າ</span>
                         <span wire:loading wire:target="importCsv">ກຳລັງນຳເຂົ້າ…</span>
                     </button>

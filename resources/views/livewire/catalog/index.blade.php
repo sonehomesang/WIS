@@ -83,7 +83,7 @@
                                 <div>{{ $m->contract_number ?? '—' }}</div>
                                 <div class="text-gray-400">{{ $m->last_price_update?->format('d/m/Y') ?? '' }}</div>
                             </td>
-                            <td class="px-4 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $m->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $m->is_active ? 'active' : 'inactive' }}</span></td>
+                            <td class="px-4 py-2"><span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $m->is_active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-gray-50 text-gray-500 ring-1 ring-gray-200' }}">{{ $m->is_active ? 'active' : 'inactive' }}</span></td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $m->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
@@ -116,7 +116,7 @@
                                 <div class="text-xs text-gray-500">{{ $m->supplier?->name }} · {{ $m->unit_price !== null ? number_format($m->unit_price, 2).' '.$m->currency : '—' }}</div>
                             </div>
                         </div>
-                        <span class="text-xs rounded px-2 py-0.5 shrink-0 {{ $m->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $m->is_active ? 'active' : 'inactive' }}</span>
+                        <span class="text-xs font-medium rounded-full px-2 py-0.5 shrink-0 {{ $m->is_active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-gray-50 text-gray-500 ring-1 ring-gray-200' }}">{{ $m->is_active ? 'active' : 'inactive' }}</span>
                     </div>
                     @if ($showDeleted)
                         <div class="text-[11px] text-red-600 mt-1">🗑 ລຶບ: {{ $m->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $m->deletedBy?->display_name ?? '—' }}@if ($m->deleted_reason) · {{ $m->deleted_reason }}@endif</div>
@@ -146,11 +146,14 @@
     {{-- Create / Edit modal --}}
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="mat-modal">
-            <div class="bg-white w-full md:max-w-2xl rounded-t-lg md:rounded-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂສິນຄ້າ' : 'ເພີ່ມສິນຄ້າ' }}</h3>
-                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1">✕</button>
+            <div class="bg-white w-full md:max-w-2xl rounded-t-2xl md:rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🏷️</span>
+                    <h3 class="text-base font-semibold text-gray-800">{{ $editingId ? 'ແກ້ໄຂສິນຄ້າ' : 'ເພີ່ມສິນຄ້າ' }}</h3>
+                    <button wire:click="$set('showModal', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
                 </div>
+                <div class="p-5 space-y-4 overflow-y-auto">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     @include('partials._form-errors', ['wrapClass' => 'md:col-span-2'])
                     <div>
@@ -245,9 +248,10 @@
                     @if (! empty($newPhotos))<div class="flex gap-1 flex-wrap mt-1">@foreach ($newPhotos as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" class="w-12 h-12 rounded object-cover border border-sky-200" />@endif @endforeach</div>@endif
                 </div>
 
-                <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="save" wire:loading.attr="disabled" wire:target="save,newPhotos" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">ບັນທຶກ</button>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 bg-white rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="save" wire:loading.attr="disabled" wire:target="save,newPhotos" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] hover:bg-sky-700 shadow-sm disabled:opacity-50">ບັນທຶກ</button>
                 </div>
             </div>
         </div>
@@ -256,11 +260,14 @@
     {{-- price history modal --}}
     @if ($showHistory && $historyMaterial)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div class="bg-white rounded-lg p-5 w-full max-w-md space-y-3 max-h-[80vh] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-medium text-gray-800">ປະຫວັດລາຄາ — {{ Str::limit($historyMaterial->description, 40) }}</h3>
-                    <button wire:click="$set('showHistory', false)" class="text-gray-400 hover:text-gray-700 p-1">✕</button>
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-md max-h-[80vh] flex flex-col">
+                <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🕑</span>
+                    <h3 class="text-base font-semibold text-gray-800 truncate">ປະຫວັດລາຄາ — {{ Str::limit($historyMaterial->description, 40) }}</h3>
+                    <button wire:click="$set('showHistory', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
                 </div>
+                <div class="p-5 space-y-1 overflow-y-auto">
                 @forelse ($historyMaterial->priceHistory as $h)
                     <div class="flex items-center justify-between border-b border-gray-100 py-1.5 text-sm">
                         <div>
@@ -272,6 +279,7 @@
                 @empty
                     <p class="text-sm text-gray-400">ຍັງບໍ່ມີປະຫວັດ</p>
                 @endforelse
+                </div>
             </div>
         </div>
     @endif
