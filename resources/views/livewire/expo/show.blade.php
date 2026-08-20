@@ -10,37 +10,38 @@
 
 <div class="pb-6" x-data="{ tab: 'companies' }">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-        <x-page-subheader :back="route('expo')" back-label="ລາຍການ Expo">
-            <x-slot:actions>
-                @if ($editable)
-                    <button wire:click="openEvent" class="text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-1.5 hover:bg-sky-50">✏️ ແກ້ໄຂ ຂໍ້ມູນງານ</button>
-                    @if ($record->status === 'draft')<button wire:click="finalize" title="ລັອກ — ບໍ່ໃຫ້ແກ້ໄຂຕໍ່" class="text-sm text-white bg-emerald-600 rounded-md px-3 py-1.5 hover:bg-emerald-700">✓ ສະຫຼຸບ/ປິດງານ</button>
-                    @else<button wire:click="reopen" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">↩ ເປີດແກ້ໄຂຄືນ</button>@endif
-                @endif
-                <a href="{{ route('expo.pdf', $record) }}" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF report</a>
-                @if ($deletable)<button wire:click="openDelete" class="text-sm text-red-600 border border-red-200 rounded-md px-3 py-1.5 hover:bg-red-50">🗑</button>@endif
-            </x-slot>
-        </x-page-subheader>
-
-        @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
-
-        {{-- design-set hero --}}
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="h-1.5 bg-gradient-to-r from-sky-500 to-sky-400"></div>
-            <div class="p-5 flex items-center gap-4 flex-wrap">
-                <span class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-2xl shadow-sm shrink-0">🎪</span>
-                <div class="min-w-0">
-                    <h2 class="text-lg font-bold text-gray-900">{{ $record->title }}</h2>
-                    <div class="flex flex-wrap gap-1.5 mt-1.5 text-xs">
-                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600 font-mono">{{ $record->expo_number }}</span>
-                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">📍 {{ collect([$record->venue, $record->city, $record->country])->filter()->implode(', ') ?: '—' }}</span>
-                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">🗓 {{ $record->start_date?->format('d/m/Y') }}@if ($record->end_date)–{{ $record->end_date->format('d/m/Y') }}@endif</span>
-                        @if ($record->topic)<span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">{{ $record->topic }}</span>@endif
-                    </div>
+        {{-- ══ ONE frozen identity row (back · icon · record# · status · facts · actions) ══ --}}
+        <div class="sticky top-16 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2.5 bg-gradient-to-b from-sky-100 to-white border-b border-sky-200/70 backdrop-blur flex items-center gap-3 flex-wrap">
+            <a href="{{ route('expo') }}" wire:navigate class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+                <span class="hidden sm:inline">ລາຍການ Expo</span>
+            </a>
+            <span class="w-px h-5 bg-sky-200 shrink-0"></span>
+            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🎪</span>
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-base font-bold text-gray-900">{{ $record->title }}</span>
+                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full {{ $scls }}">{{ $slbl }}</span>
                 </div>
-                <span class="ml-auto inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $scls }}">{{ $slbl }}</span>
+                <div class="hidden md:flex items-center gap-x-3 gap-y-0.5 flex-wrap text-[11px] text-gray-500 mt-0.5">
+                    <span class="inline-flex items-center gap-1 font-mono">{{ $record->expo_number }}</span>
+                    <span class="inline-flex items-center gap-1">📍 {{ collect([$record->venue, $record->city, $record->country])->filter()->implode(', ') ?: '—' }}</span>
+                    <span class="inline-flex items-center gap-1">🗓 {{ $record->start_date?->format('d/m/Y') }}@if ($record->end_date)–{{ $record->end_date->format('d/m/Y') }}@endif</span>
+                    @if ($record->topic)<span class="inline-flex items-center gap-1">{{ $record->topic }}</span>@endif
+                </div>
+            </div>
+            <div class="ml-auto flex items-center gap-2 shrink-0">
+                @if ($editable)
+                    <button wire:click="openEvent" class="inline-flex items-center gap-1.5 text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-1.5 min-h-[36px] hover:bg-sky-50">✏️ ແກ້ໄຂ ຂໍ້ມູນງານ</button>
+                    @if ($record->status === 'draft')<button wire:click="finalize" title="ລັອກ — ບໍ່ໃຫ້ແກ້ໄຂຕໍ່" class="inline-flex items-center gap-1.5 text-sm text-white bg-emerald-600 rounded-md px-3 py-1.5 min-h-[36px] hover:bg-emerald-700">✓ ສະຫຼຸບ/ປິດງານ</button>
+                    @else<button wire:click="reopen" class="inline-flex items-center gap-1.5 text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 min-h-[36px] hover:bg-gray-50">↩ ເປີດແກ້ໄຂຄືນ</button>@endif
+                @endif
+                <a href="{{ route('expo.pdf', $record) }}" class="inline-flex items-center gap-1.5 text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 min-h-[36px] hover:bg-gray-50">📄 PDF report</a>
+                @if ($deletable)<button wire:click="openDelete" class="inline-flex items-center gap-1.5 text-sm text-red-600 border border-red-200 rounded-md px-3 py-1.5 min-h-[36px] hover:bg-red-50">🗑</button>@endif
             </div>
         </div>
+
+        @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
 
         {{-- KPI tiles --}}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">

@@ -14,22 +14,32 @@
 
 <div class="pb-10">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-4">
-        <x-page-subheader :back="route('ansi')" back-label="ANSI list" />
+        {{-- ══ ONE frozen identity row (back · icon · record# · status · facts) ══ --}}
+        <div class="sticky top-16 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2.5 bg-gradient-to-b from-sky-100 to-white border-b border-sky-200/70 backdrop-blur flex items-center gap-3 flex-wrap">
+            <a href="{{ route('ansi') }}" wire:navigate class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+                <span class="hidden sm:inline">ANSI list</span>
+            </a>
+            <span class="w-px h-5 bg-sky-200 shrink-0"></span>
+            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🆕</span>
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-mono text-base font-bold text-gray-900">{{ $record->request_number }}</span>
+                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full {{ $badge }}">{{ $labels[$record->status] ?? $record->status }}</span>
+                </div>
+                <div class="hidden md:flex items-center gap-x-3 gap-y-0.5 flex-wrap text-[11px] text-gray-500 mt-0.5">
+                    <span class="inline-flex items-center gap-1">👤 {{ $record->originator_name }}</span>
+                    <span class="inline-flex items-center gap-1">🏢 {{ $record->department?->name }}</span>
+                </div>
+            </div>
+        </div>
 
         @if (session('ok'))<div class="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5">{{ session('ok') }}</div>@endif
         @error('act')<div class="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5">{{ $message }}</div>@enderror
 
-        {{-- HERO + stepper --}}
+        {{-- workflow stepper --}}
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
             <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
-            <div class="p-5 flex items-center gap-4 flex-wrap">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white flex items-center justify-center text-2xl shadow-sm shrink-0">📝</div>
-                <div class="min-w-0">
-                    <h2 class="text-lg font-bold text-gray-900 font-mono">{{ $record->request_number }}</h2>
-                    <div class="text-sm text-gray-500">{{ $record->originator_name }} · {{ $record->department?->name }}</div>
-                </div>
-                <div class="ml-auto text-right"><span class="inline-flex text-xs font-semibold rounded-full px-3 py-1 {{ $badge }}">{{ $labels[$record->status] ?? $record->status }}</span></div>
-            </div>
             @if ($record->status === 'rejected')
                 <div class="mx-5 mb-4 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-4 py-2.5">✕ Rejected at <b>{{ $record->reject_stage }}</b>: {{ $record->reject_reason }}</div>
             @elseif ($record->status === 'cancelled')

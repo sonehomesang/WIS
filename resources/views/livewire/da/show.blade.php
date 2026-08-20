@@ -17,35 +17,36 @@
 
 <div class="pb-6">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-        <x-page-subheader :back="route('da')" back-label="ລາຍການ DA">
-            <x-slot:actions>
-                <a href="{{ route('da.pdf', $record) }}" class="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">📄 PDF</a>
-            </x-slot>
-        </x-page-subheader>
+        {{-- ══ ONE frozen identity row (back · icon · record# · status · facts · actions) ══ --}}
+        <div class="sticky top-16 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2.5 bg-gradient-to-b from-indigo-100 to-white border-b border-indigo-200/70 backdrop-blur flex items-center gap-3 flex-wrap">
+            <a href="{{ route('da') }}" wire:navigate class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+                <span class="hidden sm:inline">ລາຍການ DA</span>
+            </a>
+            <span class="w-px h-5 bg-indigo-200 shrink-0"></span>
+            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🧾</span>
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-mono text-base font-bold text-gray-900">{{ $record->da_number }}</span>
+                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full {{ $scls }}">{{ $slbl }}</span>
+                </div>
+                <div class="hidden md:flex items-center gap-x-3 gap-y-0.5 flex-wrap text-[11px] text-gray-500 mt-0.5">
+                    <span class="inline-flex items-center gap-1">🏢 {{ $record->supplier_name ?? '—' }}</span>
+                    <span class="inline-flex items-center gap-1">PO {{ $record->po_number ?? '—' }}</span>
+                    <span class="inline-flex items-center gap-1">🗓 {{ $record->date?->format('d/m/Y') ?? '—' }}</span>
+                    <span class="inline-flex items-center gap-1">📦 {{ $record->items->count() }} ລາຍການ</span>
+                    @if ($record->next_step === 'oga')<span class="inline-flex items-center gap-1 text-sky-700">→ OGA</span>@endif
+                </div>
+            </div>
+            <div class="ml-auto flex items-center gap-2 shrink-0">
+                <a href="{{ route('da.pdf', $record) }}" class="inline-flex items-center gap-1.5 text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 min-h-[36px] hover:bg-gray-50">📄 PDF</a>
+            </div>
+        </div>
 
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror
         @if ($record->reject_reason && $record->status === 'purchasing_review')<div class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">⚠ Leader ສົ່ງກັບ: {{ $record->reject_reason }}</div>@endif
         @if ($record->status === 'cancelled' && $record->cancel_reason)<div class="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">ຍົກເລີກ: {{ $record->cancel_reason }}</div>@endif
-
-        {{-- design-set hero --}}
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="h-1.5 bg-gradient-to-r from-indigo-500 to-indigo-400"></div>
-            <div class="p-5 flex items-center gap-4 flex-wrap">
-                <span class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-400 text-white grid place-items-center text-2xl shadow-sm shrink-0">🧾</span>
-                <div class="min-w-0">
-                    <h2 class="text-lg font-bold text-gray-900 font-mono">{{ $record->da_number }}</h2>
-                    <div class="flex flex-wrap gap-1.5 mt-1.5 text-xs">
-                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">🏢 {{ $record->supplier_name ?? '—' }}</span>
-                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">PO {{ $record->po_number ?? '—' }}</span>
-                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">🗓 {{ $record->date?->format('d/m/Y') ?? '—' }}</span>
-                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">{{ $record->items->count() }} ລາຍການ</span>
-                        @if ($record->next_step === 'oga')<span class="inline-flex items-center gap-1 bg-sky-50 border border-sky-200 rounded-full px-2 py-0.5 text-sky-700">→ OGA</span>@endif
-                    </div>
-                </div>
-                <span class="ml-auto inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $scls }}">{{ $slbl }}</span>
-            </div>
-        </div>
 
         <div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4 text-sm">
             <div class="flex items-start justify-between border-b border-gray-200 pb-3">
