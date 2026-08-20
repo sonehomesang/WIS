@@ -25,7 +25,7 @@
 @endphp
 
 <div class="pb-10">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <x-page-subheader :back="route('deposit')" back-label="ລາຍການ ຝາກ">
             <x-slot:actions>
                 @if ($editable)<button wire:click="openEdit" class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition">✏️ ແກ້ໄຂ</button>@endif

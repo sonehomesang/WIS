@@ -9,7 +9,7 @@
 @endphp
 
 <div class="pb-6" x-data="{ tab: 'companies' }">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <x-page-subheader :back="route('expo')" back-label="ລາຍການ Expo">
             <x-slot:actions>
                 @if ($editable)

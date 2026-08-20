@@ -4,7 +4,7 @@
 @endphp
 
 <div class="pb-6">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <x-page-subheader :back="route('da')" back-label="ລາຍການ DA" />
         @error('action')<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{{ $message }}</div>@enderror
 
