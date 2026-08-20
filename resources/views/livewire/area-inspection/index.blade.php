@@ -17,19 +17,19 @@
                 <div class="text-sm text-gray-500">@if ($showDeleted) 🗑️ Deleted Log @else ລາຍການ ໃບ ກວດ ທີ່ ບັນທຶກ ແລ້ວ @endif</div>
                 <div class="flex items-center gap-2">
                     @if ($this->canManageDeleted())
-                        <button wire:click="toggleDeleted" class="text-xs text-gray-600 border border-gray-300 rounded-md px-2 py-1 min-h-[32px] hover:bg-gray-50">{{ $showDeleted ? '← ກັບ ລາຍການ' : 'ບັນທຶກ ການ ລຶບ' }}</button>
+                        <button wire:click="toggleDeleted" class="text-xs text-gray-600 border border-gray-300 rounded-md px-2 py-1 min-h-[40px] hover:bg-gray-50">{{ $showDeleted ? '← ກັບ ລາຍການ' : 'ບັນທຶກ ການ ລຶບ' }}</button>
                     @endif
                     @can('area_inspection.create')
                         @unless ($showDeleted)
-                            <button wire:click="newInspection" class="inline-flex items-center gap-1 text-sm text-white bg-sky-600 rounded-md px-3 py-1.5 min-h-[36px] hover:bg-sky-700">+ ບັນທຶກ ການ ກວດ</button>
+                            <button wire:click="newInspection" class="inline-flex items-center gap-1 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700">+ ບັນທຶກ ການ ກວດ</button>
                         @endunless
                     @endcan
                 </div>
             </div>
 
-            <div class="bg-white border border-gray-100 rounded-lg overflow-x-auto">
+            <div class="bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-16rem)]">
                 <table class="w-full text-sm">
-                    <thead class="bg-gray-50 text-gray-500">
+                    <thead class="sticky top-0 z-10 bg-gray-50 text-gray-500 shadow-sm">
                         <tr>
                             <th class="text-left font-medium px-3 py-2">ເລກ</th>
                             <th class="text-left font-medium px-3 py-2">ສະຖານທີ່</th>
@@ -89,13 +89,13 @@
             <div class="flex flex-wrap items-center gap-2 justify-between">
                 <div class="text-sm text-gray-500">ແມ່ແບບ ເຊັກລິສ ກວດ ສະຖານທີ່ — ໃຊ້ ຕອນ ບັນທຶກ ການ ກວດ</div>
                 @can('area_inspection.create')
-                    <button wire:click="newTemplate" class="inline-flex items-center gap-1 text-sm text-white bg-sky-600 rounded-md px-3 py-1.5 min-h-[36px] hover:bg-sky-700">+ ສ້າງ ແມ່ແບບ</button>
+                    <button wire:click="newTemplate" class="inline-flex items-center gap-1 text-sm text-white bg-sky-600 rounded-md px-3 py-2 min-h-[40px] hover:bg-sky-700">+ ສ້າງ ແມ່ແບບ</button>
                 @endcan
             </div>
 
-            <div class="bg-white border border-gray-100 rounded-lg overflow-x-auto">
+            <div class="bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-16rem)]">
                 <table class="w-full text-sm">
-                    <thead class="bg-gray-50 text-gray-500">
+                    <thead class="sticky top-0 z-10 bg-gray-50 text-gray-500 shadow-sm">
                         <tr>
                             <th class="text-left font-medium px-3 py-2">ຊື່ ແມ່ແບບ</th>
                             <th class="text-left font-medium px-3 py-2">ຮອບ</th>

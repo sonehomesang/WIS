@@ -62,7 +62,7 @@
                 </div>
             @endif
 
-            @can('settings.edit')<div class="pt-1"><button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 hover:bg-sky-700">Save</button></div>@endcan
+            @can('settings.edit')<div class="pt-1"><button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 min-h-[40px] hover:bg-sky-700">Save</button></div>@endcan
         </div>
 
         {{-- Test email --}}

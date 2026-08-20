@@ -1,9 +1,17 @@
-@php $fileCls = 'block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-2 file:rounded file:border-0 file:bg-sky-50 file:text-sky-700'; @endphp
+@php
+    $fileCls = 'block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-2 file:rounded file:border-0 file:bg-sky-50 file:text-sky-700';
+    $svgEdit = 'm16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z';
+    $svgPower = 'M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9';
+    $svgTrash = 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16';
+    $svgClock = 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z';
+@endphp
 
 <div class="pb-6">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
+        {{-- frozen header group: toolbar + chips freeze together --}}
+        <div class="sticky top-16 z-30 bg-gray-100">
         {{-- toolbar --}}
-        <div class="sticky top-16 z-20 bg-gray-100 flex flex-col gap-2 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3 lg:flex-nowrap">
+        <div class="flex flex-col gap-2 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3 lg:flex-nowrap">
             <div class="flex flex-wrap items-center gap-2 min-w-0">
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ ລະຫັດ/ລາຍລະອຽດ/ປະເພດ…" class="w-52 rounded-md border-gray-300 shadow-sm text-sm" />
                 <select wire:model.live="supplierFilter" class="w-40 rounded-md border-gray-300 text-sm">
@@ -19,7 +27,6 @@
                     <option value="active">active</option>
                     <option value="inactive">inactive</option>
                 </select>
-                <span class="text-xs text-gray-400 whitespace-nowrap">{{ number_format($materials->total()) }} ລາຍການ</span>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 @if ($canManageDeleted)
@@ -31,35 +38,36 @@
             </div>
         </div>
 
+        @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter, 'trailing' => number_format($materials->total()).' ລາຍການ'])
+        </div>{{-- /frozen header group --}}
+
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-2">{{ session('ok') }}</div>@endif
 
-        @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter])
-
         {{-- Desktop table --}}
-        <div class="hidden md:block bg-white border border-gray-100 rounded-lg">
+        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-15rem)]">
             <table class="w-full text-sm">
-                <thead class="sticky top-[116px] z-10 bg-gray-100 text-gray-700 border-b border-gray-200 shadow-sm">
+                <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>
-                        <th class="text-left font-semibold px-4 py-2.5">ລະຫັດ <span class="text-gray-400">(Material No.)</span></th>
-                        <th class="text-left font-semibold px-4 py-2.5">ສິນຄ້າ <span class="text-gray-400">(Item)</span></th>
-                        <th class="text-left font-semibold px-4 py-2.5">Supplier</th>
-                        <th class="text-left font-semibold px-4 py-2.5">ລາຄາ <span class="text-gray-400">(Price)</span></th>
-                        <th class="text-left font-semibold px-4 py-2.5">ສັນຍາ / ອັບເດດ</th>
-                        <th class="text-left font-semibold px-4 py-2.5">Status</th>
-                        <th class="px-4 py-2.5"></th>
+                        <th class="text-left font-semibold px-4 py-2">ລະຫັດ <span class="text-gray-400">(Material No.)</span></th>
+                        <th class="text-left font-semibold px-4 py-2 w-full">ສິນຄ້າ <span class="text-gray-400">(Item)</span></th>
+                        <th class="text-left font-semibold px-4 py-2">Supplier</th>
+                        <th class="text-left font-semibold px-4 py-2">ລາຄາ <span class="text-gray-400">(Price)</span></th>
+                        <th class="text-left font-semibold px-4 py-2">ສັນຍາ / ອັບເດດ</th>
+                        <th class="text-left font-semibold px-4 py-2">Status</th>
+                        <th class="px-4 py-2"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($materials as $m)
                         @php $img = $m->images->first(); @endphp
                         <tr wire:key="mat-{{ $m->id }}" class="hover:bg-gray-50">
-                            <td class="px-4 py-2.5 font-mono text-xs text-gray-500">{{ $m->material_nbr ?? '—' }}</td>
-                            <td class="px-4 py-2.5">
+                            <td class="px-4 py-2 font-mono text-xs text-gray-500">{{ $m->material_nbr ?? '—' }}</td>
+                            <td class="px-4 py-2 w-full">
                                 <div class="flex items-center gap-2">
                                     @if ($img)<img src="{{ $img->url }}" alt="" class="w-9 h-9 rounded object-cover border border-gray-200 shrink-0" />
                                     @else<div class="w-9 h-9 rounded bg-gray-100 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-xs">🏷</div>@endif
                                     <div class="min-w-0">
-                                        <div class="font-medium text-gray-800 truncate max-w-xs {{ $m->is_active ? '' : 'opacity-50' }}">{{ Str::limit($m->description, 60) }}</div>
+                                        <div class="font-medium text-gray-800 {{ $m->is_active ? '' : 'opacity-50' }}">{{ Str::limit($m->description, 60) }}</div>
                                         <div class="text-xs text-gray-400">{{ $m->category }}@if ($m->unit) · {{ $m->unit }}@endif</div>
                                         @if ($showDeleted)
                                             <div class="text-[11px] text-red-600 mt-0.5">🗑 ລຶບ: {{ $m->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $m->deletedBy?->display_name ?? '—' }}@if ($m->deleted_reason) · ເຫດຜົນ: {{ $m->deleted_reason }}@endif</div>
@@ -67,23 +75,23 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-4 py-2.5 text-xs text-gray-600">{{ $m->supplier?->name ?? '—' }}</td>
-                            <td class="px-4 py-2.5 text-gray-700">
+                            <td class="px-4 py-2 text-xs text-gray-600">{{ $m->supplier?->name ?? '—' }}</td>
+                            <td class="px-4 py-2 text-gray-700">
                                 @if ($m->unit_price !== null)<span class="font-medium">{{ number_format($m->unit_price, 2) }}</span> <span class="text-xs text-gray-400">{{ $m->currency }}</span>@else—@endif
                             </td>
-                            <td class="px-4 py-2.5 text-xs text-gray-500">
+                            <td class="px-4 py-2 text-xs text-gray-500">
                                 <div>{{ $m->contract_number ?? '—' }}</div>
                                 <div class="text-gray-400">{{ $m->last_price_update?->format('d/m/Y') ?? '' }}</div>
                             </td>
-                            <td class="px-4 py-2.5"><span class="text-xs rounded px-2 py-0.5 {{ $m->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $m->is_active ? 'active' : 'inactive' }}</span></td>
-                            <td class="px-4 py-2.5 text-right whitespace-nowrap text-gray-500">
+                            <td class="px-4 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $m->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $m->is_active ? 'active' : 'inactive' }}</span></td>
+                            <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $m->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
                                 @else
-                                    <button wire:click="openHistory({{ $m->id }})" class="p-1 hover:text-sky-600" title="ປະຫວັດລາຄາ">🕑</button>
-                                    @canany(['catalog.activate', 'catalog.deactivate'])<button wire:click="toggle({{ $m->id }})" class="p-1 {{ $m->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $m->is_active ? 'Disable' : 'Enable' }}">⏻</button>@endcanany
-                                    @can('catalog.edit')<button wire:click="editItem({{ $m->id }})" class="p-1 hover:text-gray-800" title="Edit">✏️</button>@endcan
-                                    @can('catalog.delete')<button wire:click="openDelete({{ $m->id }})" class="p-1 hover:text-red-600" title="Delete">🗑</button>@endcan
+                                    <button wire:click="openHistory({{ $m->id }})" class="p-1 hover:text-sky-600" title="ປະຫວັດລາຄາ" aria-label="Price history"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgClock }}" /></svg></button>
+                                    @canany(['catalog.activate', 'catalog.deactivate'])<button wire:click="toggle({{ $m->id }})" class="p-1 {{ $m->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $m->is_active ? 'Disable' : 'Enable' }}" aria-label="{{ $m->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>@endcanany
+                                    @can('catalog.edit')<button wire:click="editItem({{ $m->id }})" class="p-1 hover:text-gray-800" title="Edit" aria-label="Edit"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgEdit }}" /></svg></button>@endcan
+                                    @can('catalog.delete')<button wire:click="openDelete({{ $m->id }})" class="p-1 hover:text-red-600" title="Delete" aria-label="Delete"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgTrash }}" /></svg></button>@endcan
                                 @endif
                             </td>
                         </tr>

@@ -19,6 +19,9 @@ export default {
         'bg-rose-50', 'text-rose-700', 'bg-purple-50', 'text-purple-700',
         'bg-indigo-50', 'text-indigo-700', 'bg-pink-50', 'text-pink-700',
         'bg-slate-100', 'text-slate-600', 'bg-gray-100', 'text-gray-600',
+        // Area-inspection C/NC/NA radio pills build `peer-checked:{color}` from a
+        // PHP loop, so JIT can't see them — safelist the checked fills.
+        'peer-checked:bg-green-600', 'peer-checked:bg-red-600', 'peer-checked:bg-gray-400',
     ],
 
     theme: {

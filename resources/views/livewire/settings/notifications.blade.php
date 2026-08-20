@@ -46,7 +46,7 @@
                 </select>
             </div>
             @if ($editable)
-                <div class="pt-1"><button wire:click="saveFlags" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 hover:bg-sky-700">ບັນທຶກ</button></div>
+                <div class="pt-1"><button wire:click="saveFlags" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button></div>
             @endif
         </div>
 
@@ -82,7 +82,7 @@
                 @endforeach
             </div>
             @if ($editable)
-                <div><button wire:click="saveEmail" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 hover:bg-sky-700">ບັນທຶກ email</button></div>
+                <div><button wire:click="saveEmail" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ email</button></div>
             @endif
         </div>
 
@@ -113,7 +113,7 @@
                 @endforeach
             </div>
             @if ($editable)
-                <div><button wire:click="saveTemplates" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 hover:bg-sky-700">ບັນທຶກ ແຈ້ງເຕືອນ ໃນ ແອັບ</button></div>
+                <div><button wire:click="saveTemplates" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ ແຈ້ງເຕືອນ ໃນ ແອັບ</button></div>
             @endif
         </div>
     </div>

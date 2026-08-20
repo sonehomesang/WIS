@@ -20,7 +20,7 @@
                 <input type="number" min="1" max="365" wire:model="defaultBorrowDays" class="w-32 rounded-md border-gray-300 text-sm" />
                 @error('defaultBorrowDays')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
-            @can('settings.edit')<div class="pt-1"><button wire:click="saveGeneral" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 hover:bg-sky-700">Save</button></div>@endcan
+            @can('settings.edit')<div class="pt-1"><button wire:click="saveGeneral" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 min-h-[40px] hover:bg-sky-700">Save</button></div>@endcan
         </div>
 
         {{-- Borrow workflow — ທະຍອຍ ຮັບຄືນ --}}
@@ -52,7 +52,7 @@
                     <span class="block text-xs text-gray-500 mt-0.5">ອະນຸຍາດ ຮັບຄືນ ເປັນ ລາຍການ/ຄັ້ງ ໄດ້ (ໃບ ຢືມ 1 ໃບ ຮັບ ຫຼາຍ ຄັ້ງ, ຄ້າງ ໄວ້ ຈົນ ຄືນ ຄົບ). ຖ້າ ປິດ = ຮັບຄືນ ຄັ້ງ ດຽວ ປິດ ໃບ (ຄ່າ ເລີ່ມຕົ້ນ).</span>
                 </span>
             </label>
-            @can('settings.edit')<div class="pt-1"><button wire:click="saveBorrowWorkflow" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 hover:bg-sky-700">Save</button></div>@endcan
+            @can('settings.edit')<div class="pt-1"><button wire:click="saveBorrowWorkflow" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 min-h-[40px] hover:bg-sky-700">Save</button></div>@endcan
         </div>
 
         {{-- Modules on/off (feature flags) --}}
@@ -68,7 +68,7 @@
                     </label>
                 @endforeach
             </div>
-            @can('settings.edit')<div class="pt-1"><button wire:click="saveModules" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 hover:bg-sky-700">Save modules</button></div>@endcan
+            @can('settings.edit')<div class="pt-1"><button wire:click="saveModules" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 min-h-[40px] hover:bg-sky-700">Save modules</button></div>@endcan
         </div>
 
         {{-- Currency --}}
@@ -89,7 +89,7 @@
                 <input type="number" step="0.01" min="0" wire:model="exchangeRate" class="w-40 rounded-md border-gray-300 text-sm" />
                 @error('exchangeRate')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
-            @can('settings.edit')<div class="pt-1"><button wire:click="saveCurrency" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 hover:bg-sky-700">Save</button></div>@endcan
+            @can('settings.edit')<div class="pt-1"><button wire:click="saveCurrency" class="text-sm text-white bg-sky-600 rounded-md px-5 py-2 min-h-[40px] hover:bg-sky-700">Save</button></div>@endcan
         </div>
 
         <div class="bg-white border border-gray-100 rounded-lg p-5 md:max-w-md space-y-4">

@@ -11,7 +11,7 @@
 @endphp
 
 <div class="pb-6">
-    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
         <div class="sticky top-16 z-30 bg-gray-100/95 backdrop-blur">
             <div class="flex flex-col gap-3 py-3 lg:flex-row lg:items-center lg:justify-between">
                 <div class="flex items-center gap-3">
