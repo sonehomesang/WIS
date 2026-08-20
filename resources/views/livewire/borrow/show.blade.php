@@ -1,9 +1,9 @@
 @php
     $badge = fn ($s) => match ($s) {
-        'draft' => 'bg-gray-100 text-gray-600', 'acknowledged' => 'bg-blue-100 text-blue-700',
-        'approved' => 'bg-sky-100 text-sky-700', 'active' => 'bg-indigo-100 text-indigo-700',
-        'overdue' => 'bg-red-100 text-rose-700', 'returned' => 'bg-emerald-100 text-emerald-700',
-        'cancelled' => 'bg-gray-100 text-gray-400', default => 'bg-gray-100 text-gray-600',
+        'draft' => 'bg-gray-50 text-gray-600 ring-1 ring-gray-200', 'acknowledged' => 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
+        'approved' => 'bg-sky-50 text-sky-700 ring-1 ring-sky-200', 'active' => 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200',
+        'overdue' => 'bg-rose-50 text-rose-700 ring-1 ring-rose-200', 'returned' => 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+        'cancelled' => 'bg-gray-50 text-gray-400 ring-1 ring-gray-200', default => 'bg-gray-50 text-gray-600 ring-1 ring-gray-200',
     };
     $typeLabel = match ($record->borrow_type) {
         'new_inventory' => 'ຢືມເຄື່ອງໃໝ່ ຢູ່ໃນ Inventory Item', 'tools_equipment' => 'ເຄື່ອງມື/ອຸປະກອນ (ບໍ່ມີໃນລະບົບ)',
