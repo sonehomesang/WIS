@@ -195,32 +195,49 @@
         {{-- ── modals ── --}}
         @if ($showCancel)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
-                    <h3 class="font-semibold text-gray-800">ຍົກເລີກການຝາກ</h3>
-                    <textarea wire:model="cancelReason" rows="2" placeholder="ເຫດຜົນ…" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
-                    <div class="flex justify-end gap-2"><button wire:click="$set('showCancel', false)" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50">ປິດ</button><button wire:click="cancel" class="bg-rose-600 text-white rounded-lg px-3 py-1.5 text-sm hover:bg-rose-700">ຢືນຢັນຍົກເລີກ</button></div>
+                <div class="bg-white w-full max-w-sm rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">📦</span>
+                        <h3 class="text-base font-semibold text-gray-800">ຍົກເລີກການຝາກ</h3>
+                        <button wire:click="$set('showCancel', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                    </div>
+                    <div class="p-5 space-y-3 overflow-y-auto">
+                        <textarea wire:model="cancelReason" rows="2" placeholder="ເຫດຜົນ…" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showCancel', false)" class="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm min-h-[40px] hover:bg-gray-50">ປິດ</button><button wire:click="cancel" class="bg-rose-600 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px] shadow-sm hover:bg-rose-700">ຢືນຢັນຍົກເລີກ</button></div>
                 </div>
             </div>
         @endif
 
         @if ($showAccept)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                <div class="bg-white rounded-2xl p-5 w-full max-w-md space-y-3 shadow-xl">
-                    <h3 class="font-semibold text-gray-800">ຮັບຝາກ — ກຳນົດບ່ອນເກັບ</h3>
-                    @error('action')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
-                    <div><label class="block text-xs font-medium text-gray-500 mb-1">ບ່ອນເກັບ (Location)</label><input type="text" wire:model="afLocation" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                    <div><label class="block text-xs font-medium text-gray-500 mb-1">ປ້າຍຊັ້ນວາງ (Shelf label)</label><input type="text" wire:model="afShelf" class="w-full rounded-lg border-gray-300 text-sm" /></div>
-                    <p class="text-xs text-gray-400">* ຕ້ອງມີ ບ່ອນເກັບ ຫຼື ປ້າຍຊັ້ນວາງ ຢ່າງໜ້ອຍ 1 ຢ່າງ</p>
-                    <div><label class="block text-xs font-medium text-gray-500 mb-1">ຄຳແນະນຳ (Instructions)</label><textarea wire:model="afInstructions" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
-                    <div class="flex justify-end gap-2"><button wire:click="$set('showAccept', false)" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50">ປິດ</button><button wire:click="accept" class="bg-emerald-600 text-white rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-700">ຢືນຢັນຮັບຝາກ</button></div>
+                <div class="bg-white w-full max-w-md rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">📦</span>
+                        <h3 class="text-base font-semibold text-gray-800">ຮັບຝາກ — ກຳນົດບ່ອນເກັບ</h3>
+                        <button wire:click="$set('showAccept', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                    </div>
+                    <div class="p-5 space-y-3 overflow-y-auto">
+                        @error('action')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
+                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ບ່ອນເກັບ (Location)</label><input type="text" wire:model="afLocation" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ປ້າຍຊັ້ນວາງ (Shelf label)</label><input type="text" wire:model="afShelf" class="w-full rounded-lg border-gray-300 text-sm" /></div>
+                        <p class="text-xs text-gray-400">* ຕ້ອງມີ ບ່ອນເກັບ ຫຼື ປ້າຍຊັ້ນວາງ ຢ່າງໜ້ອຍ 1 ຢ່າງ</p>
+                        <div><label class="block text-xs font-medium text-gray-500 mb-1">ຄຳແນະນຳ (Instructions)</label><textarea wire:model="afInstructions" rows="2" class="w-full rounded-lg border-gray-300 text-sm"></textarea></div>
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showAccept', false)" class="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm min-h-[40px] hover:bg-gray-50">ປິດ</button><button wire:click="accept" class="bg-sky-600 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px] shadow-sm hover:bg-sky-700">ຢືນຢັນຮັບຝາກ</button></div>
                 </div>
             </div>
         @endif
 
         @if ($showStore)
             <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
-                <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-xl">
-                    <h3 class="text-lg font-semibold text-gray-800">{{ $storeMode === 'confirmFixed' ? 'ຢືນຢັນແກ້ແລ້ວ — ຖ່າຍຮູບ' : 'ຢືນຢັນເກັບເຂົ້າ — ຖ່າຍຮູບ (ບັງຄັບ)' }}</h3>
+                <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">📦</span>
+                        <h3 class="text-base font-semibold text-gray-800">{{ $storeMode === 'confirmFixed' ? 'ຢືນຢັນແກ້ແລ້ວ — ຖ່າຍຮູບ' : 'ຢືນຢັນເກັບເຂົ້າ — ຖ່າຍຮູບ (ບັງຄັບ)' }}</h3>
+                        <button wire:click="$set('showStore', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                    </div>
+                    <div class="p-5 space-y-3 overflow-y-auto">
                     @error('storePhotos')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
                     @foreach ($record->items as $it)
                         <div class="border border-gray-200 rounded-xl p-3 space-y-2">
@@ -230,9 +247,10 @@
                             @if (! empty($storePhotos[$it->id]))<div class="flex gap-1.5 flex-wrap">@foreach ($storePhotos[$it->id] as $f)@if ($f->isPreviewable())<img src="{{ $f->temporaryUrl() }}" alt="" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-12 h-12 rounded-lg object-cover border-2 border-sky-200 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />@endif @endforeach</div>@endif
                         </div>
                     @endforeach
-                    <div class="flex justify-end gap-2 pt-2">
-                        <button wire:click="$set('showStore', false)" class="border border-gray-200 rounded-lg px-4 py-2 text-sm hover:bg-gray-50">ປິດ</button>
-                        <button wire:click="confirmStore" wire:loading.attr="disabled" wire:target="confirmStore,storePhotos" class="bg-emerald-700 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50 hover:bg-emerald-800">ຢືນຢັນ</button>
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                        <button wire:click="$set('showStore', false)" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                        <button wire:click="confirmStore" wire:loading.attr="disabled" wire:target="confirmStore,storePhotos" class="bg-sky-600 text-white rounded-lg px-4 py-2 text-sm min-h-[40px] shadow-sm disabled:opacity-50 hover:bg-sky-700">ຢືນຢັນ</button>
                     </div>
                 </div>
             </div>
@@ -240,19 +258,30 @@
 
         @if ($showFlag)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
-                    <h3 class="font-semibold text-gray-800">ແຈ້ງບັນຫາ (needs fix)</h3>
-                    @error('action')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
-                    <textarea wire:model="flagReason" rows="3" placeholder="ເຫດຜົນ / ບັນຫາ…" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
-                    <div class="flex justify-end gap-2"><button wire:click="$set('showFlag', false)" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50">ປິດ</button><button wire:click="flagIssue" class="bg-amber-600 text-white rounded-lg px-3 py-1.5 text-sm hover:bg-amber-700">ຢືນຢັນ</button></div>
+                <div class="bg-white w-full max-w-sm rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">⚠️</span>
+                        <h3 class="text-base font-semibold text-gray-800">ແຈ້ງບັນຫາ (needs fix)</h3>
+                        <button wire:click="$set('showFlag', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                    </div>
+                    <div class="p-5 space-y-3 overflow-y-auto">
+                        @error('action')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
+                        <textarea wire:model="flagReason" rows="3" placeholder="ເຫດຜົນ / ບັນຫາ…" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showFlag', false)" class="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm min-h-[40px] hover:bg-gray-50">ປິດ</button><button wire:click="flagIssue" class="bg-sky-600 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px] shadow-sm hover:bg-sky-700">ຢືນຢັນ</button></div>
                 </div>
             </div>
         @endif
 
         @if ($showClaim)
             <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
-                <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-xl">
-                    <h3 class="text-lg font-semibold text-gray-800">ບັນທຶກການເອົາຄືນ — ຖ່າຍຮູບ (ບັງຄັບ)</h3>
+                <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">📦</span>
+                        <h3 class="text-base font-semibold text-gray-800">ບັນທຶກການເອົາຄືນ — ຖ່າຍຮູບ (ບັງຄັບ)</h3>
+                        <button wire:click="$set('showClaim', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                    </div>
+                    <div class="p-5 space-y-3 overflow-y-auto">
                     @error('claimPhotos')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
                     <div><label class="block text-xs font-medium text-gray-500 mb-1">ວັນທີເອົາຄືນ</label><input type="date" wire:model="claimDate" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                     @foreach ($record->items as $it)
@@ -264,9 +293,10 @@
                             <textarea wire:model="claimCondition.{{ $it->id }}" rows="1" placeholder="ສະພາບຕອນເອົາຄືນ (optional)…" class="w-full rounded-lg border-gray-300 text-xs"></textarea>
                         </div>
                     @endforeach
-                    <div class="flex justify-end gap-2 pt-2">
-                        <button wire:click="$set('showClaim', false)" class="border border-gray-200 rounded-lg px-4 py-2 text-sm hover:bg-gray-50">ປິດ</button>
-                        <button wire:click="confirmClaim" wire:loading.attr="disabled" wire:target="confirmClaim,claimPhotos" class="bg-indigo-700 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50 hover:bg-indigo-800">ຢືນຢັນເອົາຄືນ</button>
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                        <button wire:click="$set('showClaim', false)" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                        <button wire:click="confirmClaim" wire:loading.attr="disabled" wire:target="confirmClaim,claimPhotos" class="bg-sky-600 text-white rounded-lg px-4 py-2 text-sm min-h-[40px] shadow-sm disabled:opacity-50 hover:bg-sky-700">ຢືນຢັນເອົາຄືນ</button>
                     </div>
                 </div>
             </div>
@@ -274,12 +304,18 @@
 
         @if ($showDelete)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
-                    <h3 class="font-semibold text-rose-700">🗑 ລຶບລາຍການຝາກ</h3>
-                    <p class="text-xs text-gray-500">ຍ້າຍໄປ Deleted Log (ກູ້ຄືນໄດ້). ໃສ່ເຫດຜົນ.</p>
-                    <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນການລຶບ…" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
-                    @error('deleteReason')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
-                    <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50">ປິດ</button><button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="bg-rose-600 text-white rounded-lg px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-rose-700">ຢືນຢັນລຶບ</button></div>
+                <div class="bg-white w-full max-w-sm rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🗑</span>
+                        <h3 class="text-base font-semibold text-rose-700">🗑 ລຶບລາຍການຝາກ</h3>
+                        <button wire:click="$set('showDelete', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                    </div>
+                    <div class="p-5 space-y-3 overflow-y-auto">
+                        <p class="text-xs text-gray-500">ຍ້າຍໄປ Deleted Log (ກູ້ຄືນໄດ້). ໃສ່ເຫດຜົນ.</p>
+                        <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນການລຶບ…" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
+                        @error('deleteReason')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showDelete', false)" class="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm min-h-[40px] hover:bg-gray-50">ປິດ</button><button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="bg-rose-600 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px] shadow-sm disabled:opacity-50 hover:bg-rose-700">ຢືນຢັນລຶບ</button></div>
                 </div>
             </div>
         @endif
@@ -287,30 +323,38 @@
         {{-- admin: ຄືນ ສະຖານະ ໃບ (super_admin) --}}
         @if ($showStatusReset)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
-                    <h3 class="font-semibold text-slate-700">🔧 ຄືນ ສະຖານະ ໃບ (admin)</h3>
-                    <p class="text-xs text-gray-500">ສຳລັບ ແກ້ ຄວາມ ຜິດ / ທົດສອບ ເທົ່ານັ້ນ. ຕັ້ງ ສະຖານະ ໃບ ໃໝ່ ໂດຍ ກົງ (ບໍ່ ຜ່ານ ໂຟລ).</p>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">ສະຖານະ ໃໝ່</label>
-                        <select wire:model="resetStatus" class="w-full rounded-lg border-gray-300 text-sm">
-                            @foreach (['draft' => 'draft', 'submitted' => 'submitted (ລໍ ຮັບ)', 'accepted' => 'accepted (ຮັບ ແລ້ວ)', 'stored' => 'stored (ເກັບ ໄວ້)', 'needs_fix' => 'needs_fix (ຕ້ອງ ແກ້)', 'claimed' => 'claimed (ເອົາ ຄືນ ແລ້ວ)', 'cancelled' => 'cancelled (ຍົກເລີກ)', 'disposal' => 'disposal (ກຳລັງ ຈຳໜ່າຍ)', 'disposed' => 'disposed (ຈຳໜ່າຍ ແລ້ວ)'] as $sv => $sl)
-                                <option value="{{ $sv }}">{{ $sl }}</option>
-                            @endforeach
-                        </select>
-                        @error('resetStatus')<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
+                <div class="bg-white w-full max-w-sm rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🔧</span>
+                        <h3 class="text-base font-semibold text-slate-700">🔧 ຄືນ ສະຖານະ ໃບ (admin)</h3>
+                        <button wire:click="$set('showStatusReset', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
                     </div>
-                    <div class="flex justify-end gap-2"><button wire:click="$set('showStatusReset', false)" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50">ປິດ</button><button wire:click="applyStatusReset" class="bg-slate-700 text-white rounded-lg px-3 py-1.5 text-sm hover:bg-slate-800">ຕັ້ງ ສະຖານະ</button></div>
+                    <div class="p-5 space-y-3 overflow-y-auto">
+                        <p class="text-xs text-gray-500">ສຳລັບ ແກ້ ຄວາມ ຜິດ / ທົດສອບ ເທົ່ານັ້ນ. ຕັ້ງ ສະຖານະ ໃບ ໃໝ່ ໂດຍ ກົງ (ບໍ່ ຜ່ານ ໂຟລ).</p>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ສະຖານະ ໃໝ່</label>
+                            <select wire:model="resetStatus" class="w-full rounded-lg border-gray-300 text-sm">
+                                @foreach (['draft' => 'draft', 'submitted' => 'submitted (ລໍ ຮັບ)', 'accepted' => 'accepted (ຮັບ ແລ້ວ)', 'stored' => 'stored (ເກັບ ໄວ້)', 'needs_fix' => 'needs_fix (ຕ້ອງ ແກ້)', 'claimed' => 'claimed (ເອົາ ຄືນ ແລ້ວ)', 'cancelled' => 'cancelled (ຍົກເລີກ)', 'disposal' => 'disposal (ກຳລັງ ຈຳໜ່າຍ)', 'disposed' => 'disposed (ຈຳໜ່າຍ ແລ້ວ)'] as $sv => $sl)
+                                    <option value="{{ $sv }}">{{ $sl }}</option>
+                                @endforeach
+                            </select>
+                            @error('resetStatus')<p class="text-xs text-rose-600 mt-1">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showStatusReset', false)" class="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm min-h-[40px] hover:bg-gray-50">ປິດ</button><button wire:click="applyStatusReset" class="bg-sky-600 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px] shadow-sm hover:bg-sky-700">ຕັ້ງ ສະຖານະ</button></div>
                 </div>
             </div>
         @endif
 
         @if ($showEdit)
             <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
-                <div class="bg-white w-full md:max-w-2xl rounded-t-2xl md:rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto shadow-xl">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-800">✏️ ແກ້ໄຂ (Admin) — <span class="font-mono">{{ $record->request_number }}</span></h3>
-                        <button wire:click="$set('showEdit', false)" class="text-gray-400 hover:text-gray-700 p-1">✕</button>
+                <div class="bg-white w-full md:max-w-2xl rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">✏️</span>
+                        <h3 class="text-base font-semibold text-gray-800">✏️ ແກ້ໄຂ (Admin) — <span class="font-mono">{{ $record->request_number }}</span></h3>
+                        <button wire:click="$set('showEdit', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
                     </div>
+                    <div class="p-5 space-y-4 overflow-y-auto">
                     {{-- ══ ① ລາຍການ ເຄື່ອງ + ຮູບ (ນຳ ໜ້າ — ຄອນເຊັບ ໃໝ່ ຄື ໜ້າ ສ້າງ) ══ --}}
                     <div class="space-y-2">
                         <div class="flex items-center gap-2.5">
@@ -426,9 +470,10 @@
                         </div>
                     </div>
 
-                    <div class="flex justify-end gap-2 pt-2">
-                        <button wire:click="$set('showEdit', false)" class="border border-gray-200 rounded-lg px-4 py-2 text-sm hover:bg-gray-50">ຍົກເລີກ</button>
-                        <button wire:click="saveEdit" wire:loading.attr="disabled" wire:target="saveEdit,edCam,edGal" class="bg-amber-600 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-50 hover:bg-amber-700">ບັນທຶກ</button>
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                        <button wire:click="$set('showEdit', false)" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                        <button wire:click="saveEdit" wire:loading.attr="disabled" wire:target="saveEdit,edCam,edGal" class="bg-sky-600 text-white rounded-lg px-4 py-2 text-sm min-h-[40px] shadow-sm disabled:opacity-50 hover:bg-sky-700">ບັນທຶກ</button>
                     </div>
                 </div>
             </div>

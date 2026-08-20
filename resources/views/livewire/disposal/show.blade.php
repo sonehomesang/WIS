@@ -424,10 +424,16 @@
     {{-- cancel modal --}}
     @if ($showCancel)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
-                <h3 class="font-semibold text-gray-800">ຍົກເລີກ ໃບ ຈຳໜ່າຍ</h3>
-                <textarea wire:model="cancelReason" rows="2" placeholder="ເຫດຜົນ (optional)" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showCancel', false)" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50">ປິດ</button><button wire:click="confirmCancel" class="bg-rose-600 text-white rounded-lg px-3 py-1.5 text-sm hover:bg-rose-700">ຢືນຢັນ</button></div>
+            <div class="bg-white w-full max-w-sm rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-rose-200 to-rose-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-rose-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🗑️</span>
+                    <h3 class="text-base font-semibold text-gray-800">ຍົກເລີກ ໃບ ຈຳໜ່າຍ</h3>
+                    <button wire:click="$set('showCancel', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
+                    <textarea wire:model="cancelReason" rows="2" placeholder="ເຫດຜົນ (optional)" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showCancel', false)" class="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm min-h-[40px] hover:bg-gray-50">ປິດ</button><button wire:click="confirmCancel" class="bg-rose-600 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px] shadow-sm hover:bg-rose-700">ຢືນຢັນ</button></div>
             </div>
         </div>
     @endif
@@ -435,13 +441,19 @@
     {{-- dispose (confirm registers) modal --}}
     @if ($showDispose)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
-                <h3 class="font-semibold text-gray-800">ຢືນຢັນ ຈຳໜ່າຍ</h3>
-                <label class="flex items-start gap-2 text-sm text-gray-700">
-                    <input type="checkbox" wire:model="updateRegisters" class="mt-0.5 rounded border-gray-300 text-emerald-600" />
-                    <span>ອັບເດດ ທະບຽນ ຕົ້ນທາງ ນຳ <span class="block text-xs text-gray-400">Equipment → retired · Inventory → ปิด ໃຊ້ · Deposit → disposed</span></span>
-                </label>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showDispose', false)" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50">ປິດ</button><button wire:click="confirmDispose" class="bg-emerald-700 text-white rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-800">ຢືນຢັນ ຈຳໜ່າຍ</button></div>
+            <div class="bg-white w-full max-w-sm rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-rose-200 to-rose-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-rose-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🗑️</span>
+                    <h3 class="text-base font-semibold text-gray-800">ຢືນຢັນ ຈຳໜ່າຍ</h3>
+                    <button wire:click="$set('showDispose', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
+                    <label class="flex items-start gap-2 text-sm text-gray-700">
+                        <input type="checkbox" wire:model="updateRegisters" class="mt-0.5 rounded border-gray-300 text-emerald-600" />
+                        <span>ອັບເດດ ທະບຽນ ຕົ້ນທາງ ນຳ <span class="block text-xs text-gray-400">Equipment → retired · Inventory → ปิด ໃຊ້ · Deposit → disposed</span></span>
+                    </label>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showDispose', false)" class="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm min-h-[40px] hover:bg-gray-50">ປິດ</button><button wire:click="confirmDispose" class="bg-sky-600 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px] shadow-sm hover:bg-sky-700">ຢືນຢັນ ຈຳໜ່າຍ</button></div>
             </div>
         </div>
     @endif
@@ -449,12 +461,18 @@
     {{-- delete modal --}}
     @if ($showDelete)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div class="bg-white rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl">
-                <h3 class="font-semibold text-rose-700">🗑 ລຶບ ໃບ ຈຳໜ່າຍ</h3>
-                <p class="text-xs text-gray-500">ຍ້າຍ ໄປ Deleted Log (ກູ້ຄືນ ໄດ້).</p>
-                <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນ ການ ລຶບ…" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
-                @error('deleteReason')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
-                <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50">ປິດ</button><button wire:click="deleteRecord" class="bg-rose-600 text-white rounded-lg px-3 py-1.5 text-sm hover:bg-rose-700">ຢືນຢັນ ລຶບ</button></div>
+            <div class="bg-white w-full max-w-sm rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-rose-200 to-rose-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-rose-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🗑️</span>
+                    <h3 class="text-base font-semibold text-rose-700">🗑 ລຶບ ໃບ ຈຳໜ່າຍ</h3>
+                    <button wire:click="$set('showDelete', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
+                    <p class="text-xs text-gray-500">ຍ້າຍ ໄປ Deleted Log (ກູ້ຄືນ ໄດ້).</p>
+                    <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນ ການ ລຶບ…" class="w-full rounded-lg border-gray-300 text-sm"></textarea>
+                    @error('deleteReason')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showDelete', false)" class="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm min-h-[40px] hover:bg-gray-50">ປິດ</button><button wire:click="deleteRecord" class="bg-rose-600 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px] shadow-sm hover:bg-rose-700">ຢືນຢັນ ລຶບ</button></div>
             </div>
         </div>
     @endif

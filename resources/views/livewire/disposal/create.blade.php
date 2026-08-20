@@ -158,12 +158,13 @@
         {{-- auto-pull dialog --}}
         @if ($showPull)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-                    <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gradient-to-r from-rose-50 to-red-50">
-                        <div class="font-semibold text-gray-800 inline-flex items-center gap-2">🗑 ດຶງ ໄປ ຈຳໜ່າຍ ອັດຕະໂນມັດ</div>
-                        <button wire:click="$set('showPull', false)" class="text-gray-400 hover:text-gray-700">✕</button>
+                <div class="bg-white w-full max-w-lg rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-rose-200 to-rose-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-rose-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🗑️</span>
+                        <h3 class="text-base font-semibold text-gray-800">🗑 ດຶງ ໄປ ຈຳໜ່າຍ ອັດຕະໂນມັດ</h3>
+                        <button wire:click="$set('showPull', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
                     </div>
-                    <div class="px-5 py-4 space-y-4 text-sm">
+                    <div class="px-5 py-4 space-y-4 overflow-y-auto text-sm">
                         <div>
                             <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">① ດຶງ ຈາກ ແຫຼ່ງ</div>
                             <div class="flex flex-wrap gap-2">
@@ -188,9 +189,9 @@
                         <div class="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">ℹ️ ເຄື່ອງ ຝາກ: <b>ເຄື່ອງຝາກເກົ່າ (legacy)</b> ດຶງ ໄດ້ ເລີຍ ຖ້າ ສະຖານະພາບ ກົງ · <b>ຝາກ ທຳມະດາ</b> ຕ້ອງ “ຮັບ ເຂົ້າ ສາງ ແລ້ວ” (accepted/stored) ກ່ອນ.</div>
                         @error('pull')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
                     </div>
-                    <div class="flex justify-end gap-2 px-5 py-3.5 border-t border-gray-100 bg-gray-50">
-                        <button wire:click="$set('showPull', false)" class="text-sm border border-gray-200 rounded-lg px-4 py-2 hover:bg-white transition">ຍົກເລີກ</button>
-                        <button wire:click="autoPull" wire:loading.attr="disabled" wire:target="autoPull" class="text-sm font-medium text-white bg-indigo-600 rounded-lg px-4 py-2 hover:bg-indigo-700 disabled:opacity-50 transition shadow-sm">ດຶງ ອອກ {{ $pullCount }} ລາຍການ →</button>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                        <button wire:click="$set('showPull', false)" class="text-sm bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50 transition">ຍົກເລີກ</button>
+                        <button wire:click="autoPull" wire:loading.attr="disabled" wire:target="autoPull" class="text-sm font-medium text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50 transition shadow-sm">ດຶງ ອອກ {{ $pullCount }} ລາຍການ →</button>
                     </div>
                 </div>
             </div>
