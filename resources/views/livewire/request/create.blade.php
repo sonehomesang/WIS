@@ -2,18 +2,6 @@
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <x-page-subheader :back="route('request')" back-label="ລາຍການ" />
 
-        {{-- ══ HERO ══ --}}
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="h-1.5 bg-gradient-to-r from-amber-500 to-orange-500"></div>
-            <div class="p-5 flex items-center gap-4 flex-wrap">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white flex items-center justify-center text-2xl shadow-sm shrink-0">📝</div>
-                <div class="min-w-0">
-                    <h2 class="text-lg font-bold text-gray-900">ສ້າງ ໃບ ເບີກ ເຄື່ອງ</h2>
-                    <div class="text-sm text-gray-500">ໃສ່ ຈຸດ ປະສົງ + ຂໍ້ມູນ → ຄົ້ນ catalog / free-text → ສົ່ງ ຂໍ ອະນຸມັດ</div>
-                </div>
-            </div>
-        </div>
-
         @error('action')<div class="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5">{{ $message }}</div>@enderror
         @include('partials._form-errors')
 

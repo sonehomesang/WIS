@@ -2,18 +2,6 @@
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         <x-page-subheader :back="route('borrow')" back-label="ລາຍການ ຢືມ" />
 
-        {{-- ══ HERO ══ --}}
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="h-1.5 bg-gradient-to-r from-indigo-500 to-violet-500"></div>
-            <div class="p-5 flex items-center gap-4 flex-wrap">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center text-2xl shadow-sm shrink-0">🔄</div>
-                <div class="min-w-0">
-                    <h2 class="text-lg font-bold text-gray-900">ຢືມ ເຄື່ອງ ໃໝ່</h2>
-                    <div class="text-sm text-gray-500">ເລືອກ ປະເພດ → ລາຍການ ເຄື່ອງ → ຈຸດ ປະສົງ + ໄລຍະ → ສາຍ ອະນຸມັດ</div>
-                </div>
-            </div>
-        </div>
-
         @include('partials._form-errors')
 
         {{-- ① type --}}

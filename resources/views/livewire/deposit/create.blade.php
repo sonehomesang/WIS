@@ -4,18 +4,6 @@
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-4">
         <x-page-subheader :back="route('deposit')" back-label="ລາຍການ ຝາກ" />
 
-        {{-- ══ HERO ══ --}}
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
-            <div class="p-5 flex items-center gap-4 flex-wrap">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white flex items-center justify-center text-2xl shadow-sm shrink-0">📦</div>
-                <div class="min-w-0">
-                    <h2 class="text-lg font-bold text-gray-900">ຮັບ ຝາກ ເຄື່ອງ ໃໝ່</h2>
-                    <div class="text-sm text-gray-500">ບັນທຶກ ຂໍ້ມູນ ເຈົ້າ ຂອງ, ລາຍການ ເຄື່ອງ ແລະ ຮູບ ຫຼັກຖານ → ຮັບ ເຂົ້າ ເກັບ</div>
-                </div>
-            </div>
-        </div>
-
         @include('partials._form-errors')
         @error('action')<div class="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5">{{ $message }}</div>@enderror
         @error('photos')<div class="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5">{{ $message }}</div>@enderror

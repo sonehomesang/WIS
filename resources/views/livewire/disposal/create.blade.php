@@ -4,18 +4,6 @@
             <x-slot:hint>ບັນທຶກ ຮ່າງ → ມອບໝາຍ ຜູ້ ຮັບຮອງ → ສົ່ງ ຂໍ ຮັບຮອງ</x-slot>
         </x-page-subheader>
 
-        {{-- ══ HERO ══ --}}
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="h-1.5 bg-gradient-to-r from-rose-400 to-red-500"></div>
-            <div class="p-5 flex items-center gap-4 flex-wrap">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-400 to-red-500 text-white flex items-center justify-center text-2xl shadow-sm shrink-0">🗑️</div>
-                <div class="min-w-0">
-                    <h2 class="text-lg font-bold text-gray-900">ສ້າງ ໃບ ຈຳໜ່າຍ ເຄື່ອງ</h2>
-                    <div class="text-sm text-gray-500">ດຶງ ເຄື່ອງ ຊຳລຸດ ຈາກ ທະບຽນ ຕົ້ນທາງ ຫຼື ພິມ ໃໝ່ → ຮັບຮອງ → ຈຳໜ່າຍ</div>
-                </div>
-            </div>
-        </div>
-
         @include('partials._form-errors')
 
         {{-- ຂໍ້ມູນ ໃບ --}}

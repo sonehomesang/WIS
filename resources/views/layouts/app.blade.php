@@ -89,6 +89,11 @@
                     $subtitleMap = [
                         'inventory' => 'ສາງເຄື່ອງ & ວັດສະດຸ · ຄົ້ນຫາ / ນຳເຂົ້າ',
                         'borrow' => 'Monitor active loans and return schedules',
+                        'borrow.create' => 'ເລືອກ ປະເພດ → ລາຍການ ເຄື່ອງ → ຈຸດ ປະສົງ → ສາຍ ອະນຸມັດ',
+                        'deposit.create' => 'ບັນທຶກ ຂໍ້ມູນ ເຈົ້າ ຂອງ, ລາຍການ ເຄື່ອງ ແລະ ຮູບ ຫຼັກຖານ → ຮັບ ເຂົ້າ ເກັບ',
+                        'request.create' => 'ໃສ່ ຈຸດ ປະສົງ + ຂໍ້ມູນ → ຄົ້ນ catalog / free-text → ສົ່ງ ຂໍ ອະນຸມັດ',
+                        'disposal.create' => 'ດຶງ ເຄື່ອງ ຊຳລຸດ ຈາກ ທະບຽນ ຕົ້ນທາງ ຫຼື ພິມ ໃໝ່ → ຮັບຮອງ → ຈຳໜ່າຍ',
+                        'ansi.create' => 'Apply to add a new material to WH Inventories · HoS/TL → Manager → Warehouse',
                         'deposit' => 'ຮັບຝາກ-ເກັບຮັກສາ-ສົ່ງຄືນ ເຄື່ອງຂອງ',
                         'catalog' => 'ບັນຊີສິນຄ້າ supplier · ລາຄາ net (ບໍ່ລວມ VAT)',
                         'equipment' => 'ທະບຽນ ເຄື່ອງມື/ເຄື່ອງຈັກ · ກວດກາ · ບຳລຸງຮັກສາ',
@@ -111,6 +116,16 @@
                         'settings.system' => 'General · currency · VAT · letterhead',
                     ];
                     $pageSubtitle = $subtitleMap[$routeName] ?? null;
+
+                    // Module icon for the merged header (keyed by route base). Emoji is self-coloured
+                    // so no dynamic colour classes are needed.
+                    $hdrBase = \Illuminate\Support\Str::of($routeName ?? '')->before('.')->value();
+                    $moduleIcon = [
+                        'dashboard' => '🏠', 'inventory' => '📦', 'borrow' => '🔄', 'deposit' => '📥',
+                        'request' => '📝', 'ansi' => '🆕', 'catalog' => '🏷️', 'equipment' => '🛠️',
+                        'area-inspection' => '📋', 'disposal' => '🗑️', 'da' => '🧾', 'oga' => '📤',
+                        'expo' => '🎪', 'settings' => '⚙️', 'profile' => '👤',
+                    ][$hdrBase] ?? null;
                 @endphp
 
                 <!-- Global app header: title (left) + user menu (right) — ທຸກໜ້າ -->
@@ -121,6 +136,9 @@
                                 <button x-data @click="$dispatch('open-sidebar')" class="md:hidden p-2 -ml-2 min-h-[44px] min-w-[44px] text-gray-600 hover:text-gray-900" aria-label="Open menu">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                                 </button>
+                                @if ($moduleIcon)
+                                    <span class="w-9 h-9 rounded-xl bg-white border border-gray-200 shadow-sm grid place-items-center text-lg shrink-0">{{ $moduleIcon }}</span>
+                                @endif
                                 <h1 class="text-lg font-semibold text-gray-800 truncate shrink-0">{{ $pageTitle }}</h1>
                                 @if ($pageSubtitle)
                                     <span class="text-gray-300 hidden lg:inline">·</span>
