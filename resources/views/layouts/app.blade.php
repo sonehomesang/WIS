@@ -99,7 +99,7 @@
                         'oga' => 'ໃບສົ່ງເຄື່ອງອອກ · dispatch → delivered',
                         'expo' => 'ບັນທຶກການໄປ expo · ບໍລິສັດ/ຜູ້ຕິດຕໍ່ · report',
                         'settings.users' => 'ຈັດການຜູ້ໃຊ້ · role + ໜ່ວຍງານ · approve / lock',
-                        'settings.roles' => '24 menus × 6 actions + scope · ແກ້ໄດ້ໂດຍ super_admin',
+                        'settings.roles' => '25 menus × 6 actions + scope · ແກ້ໄດ້ໂດຍ super_admin',
                         'settings.uom' => 'ໜ່ວຍວັດ (pcs · kg · m …) · ໃຊ້ໃນ Inventory / Materials',
                         'settings.suppliers' => 'ຮ້ານຄ້າ supplier · ໃຊ້ໃນ Materials / supplier users',
                         'settings.notifications' => 'feature flags + ແມ່ແບບ ຂໍ້ຄວາມ',

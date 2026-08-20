@@ -12,7 +12,7 @@ use Spatie\Permission\PermissionRegistrar;
 class RolesPermissions extends Component
 {
     /**
-     * MUST match RolePermissionSeeder::$menus exactly (23 menus). If a menu is
+     * MUST match RolePermissionSeeder::$menus exactly (25 menus). If a menu is
      * missing here, save()'s syncPermissions() would STRIP that menu's perms from
      * the role on every save (e.g. the disposal + equipment perms were silently wiped).
      *
@@ -20,7 +20,7 @@ class RolesPermissions extends Component
      */
     public array $menus = [
         'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo', 'disposal',
-        'catalog', 'equipment', 'area_inspection', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
+        'catalog', 'equipment', 'area_inspection', 'ansi', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
         'users', 'roles', 'settings', 'reports', 'audit', 'notifications',
     ];
 
