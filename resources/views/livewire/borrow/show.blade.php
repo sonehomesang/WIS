@@ -26,32 +26,31 @@
 
 <div class="pb-6">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-        <x-page-subheader :back="route('borrow')" back-label="ລາຍການ ຢືມ" :record="$record->request_number" :status="strtoupper($st)" :status-class="$badge($st)">
-            <x-slot:actions>
-                @if ($editable)<button type="button" wire:click="openEdit" class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition">✏️ ແກ້ໄຂ</button>@endif
-                <button type="button" onclick="exportJpg('borrow-detail', 'borrow-{{ $record->request_number }}.jpg')" class="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">🖼 JPG</button>
-                <a href="{{ route('borrow.pdf', $record) }}" target="_blank" class="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">📄 PDF</a>
-            </x-slot>
-        </x-page-subheader>
-
-        {{-- ══ HERO ══ --}}
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="h-1.5 bg-gradient-to-r {{ $strip }}"></div>
-            <div class="p-5 flex items-start gap-4 flex-wrap">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br {{ $strip }} text-white flex items-center justify-center text-2xl shadow-sm shrink-0">🔄</div>
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <span class="font-mono text-xl font-bold text-gray-900 tracking-tight">{{ $record->request_number }}</span>
-                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $badge($st) }}">{{ strtoupper($st) }}</span>
-                        @if ($record->days_left !== null)<span class="text-xs font-medium {{ $record->days_left < 0 ? 'text-rose-600' : 'text-gray-400' }}">{{ $record->days_left < 0 ? 'ເກີນ '.abs($record->days_left).' ມື້' : 'ອີກ '.$record->days_left.' ມື້' }}</span>@endif
-                    </div>
-                    <div class="text-gray-500 text-sm mt-1">{{ $record->borrower_name }}@if ($record->unit) · {{ $record->unit->name }}@endif</div>
-                    <div class="flex items-center gap-x-4 gap-y-1 flex-wrap mt-2.5 text-xs text-gray-500">
-                        <span class="inline-flex items-center gap-1">🔄 {{ $record->items->count() }} ລາຍການ · {{ $record->items->sum('qty') }} ໜ່ວຍ</span>
-                        <span class="inline-flex items-center gap-1">📅 ຢືມ {{ $record->borrow_date?->format('d/m/Y') }}</span>
-                        <span class="inline-flex items-center gap-1">↩ ກຳນົດ {{ $record->planned_return_date?->format('d/m/Y') }}</span>
-                    </div>
+        {{-- ══ ONE frozen identity row (back · icon · record# · status · facts · actions) ══ --}}
+        <div class="sticky top-16 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2.5 bg-gradient-to-b from-indigo-100 to-white border-b border-indigo-200/70 backdrop-blur flex items-center gap-3 flex-wrap">
+            <a href="{{ route('borrow') }}" wire:navigate class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+                <span class="hidden sm:inline">ລາຍການ ຢືມ</span>
+            </a>
+            <span class="w-px h-5 bg-indigo-200 shrink-0"></span>
+            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🔄</span>
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-mono text-base font-bold text-gray-900">{{ $record->request_number }}</span>
+                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full {{ $badge($st) }}">{{ strtoupper($st) }}</span>
+                    @if ($record->days_left !== null)<span class="text-xs font-medium {{ $record->days_left < 0 ? 'text-rose-600' : 'text-gray-400' }}">{{ $record->days_left < 0 ? 'ເກີນ '.abs($record->days_left).' ມື້' : 'ອີກ '.$record->days_left.' ມື້' }}</span>@endif
                 </div>
+                <div class="hidden md:flex items-center gap-x-3 gap-y-0.5 flex-wrap text-[11px] text-gray-500 mt-0.5">
+                    <span class="inline-flex items-center gap-1">👤 {{ $record->borrower_name }}@if ($record->unit) · {{ $record->unit->name }}@endif</span>
+                    <span class="inline-flex items-center gap-1">🔄 {{ $record->items->count() }} ລາຍການ · {{ $record->items->sum('qty') }} ໜ່ວຍ</span>
+                    <span class="inline-flex items-center gap-1">📅 ຢືມ {{ $record->borrow_date?->format('d/m/Y') }}</span>
+                    <span class="inline-flex items-center gap-1">↩ ກຳນົດ {{ $record->planned_return_date?->format('d/m/Y') }}</span>
+                </div>
+            </div>
+            <div class="ml-auto flex items-center gap-2 shrink-0">
+                @if ($editable)<button type="button" wire:click="openEdit" class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 min-h-[36px] hover:bg-amber-100 transition">✏️ ແກ້ໄຂ</button>@endif
+                <button type="button" onclick="exportJpg('borrow-detail', 'borrow-{{ $record->request_number }}.jpg')" class="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 min-h-[36px] hover:bg-gray-50 transition">🖼 JPG</button>
+                <a href="{{ route('borrow.pdf', $record) }}" target="_blank" class="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 min-h-[36px] hover:bg-gray-50 transition">📄 PDF</a>
             </div>
         </div>
 
