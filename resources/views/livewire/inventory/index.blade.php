@@ -230,8 +230,8 @@
                     <label class="flex items-center gap-2 text-sm text-gray-700 md:col-span-2"><input type="checkbox" wire:model="is_active" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" /> Active</label>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2.5min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2.5min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
+                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
                 </div>
             </div>
         </div>
@@ -271,8 +271,8 @@
                 @endif
 
                 <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showImport', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2.5min-h-[40px] hover:bg-gray-50">ປິດ</button>
-                    <button wire:click="importCsv" wire:loading.attr="disabled" wire:target="importCsv" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2.5min-h-[40px] hover:bg-sky-700 disabled:opacity-50">
+                    <button wire:click="$set('showImport', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ປິດ</button>
+                    <button wire:click="importCsv" wire:loading.attr="disabled" wire:target="importCsv" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">
                         <span wire:loading.remove wire:target="importCsv">ນຳເຂົ້າ</span>
                         <span wire:loading wire:target="importCsv">ກຳລັງນຳເຂົ້າ…</span>
                     </button>

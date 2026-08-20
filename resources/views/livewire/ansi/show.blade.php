@@ -9,7 +9,7 @@
     };
     $idx = ['draft' => 1, 'pending_hos' => 2, 'pending_manager' => 3, 'pending_warehouse' => 4, 'completed' => 5][$record->status] ?? 0;
     $steps = [[1, 'Originator', 'Complete & submit'], [2, 'HoS / TL', 'Review & endorse'], [3, 'Manager', 'Review & approve'], [4, 'Warehouse', 'Item no. · PR'], [5, 'Closeout', 'Notify originator']];
-    $kv = fn ($l, $v) => '<div><div class="text-xs text-gray-400">'.$l.'</div><div class="text-gray-800 mt-0.5">'.($v ?: '—').'</div></div>';
+    $kv = fn ($l, $v) => '<div><div class="text-xs text-gray-400">'.e($l).'</div><div class="text-gray-800 mt-0.5">'.e($v ?: '—').'</div></div>';
 @endphp
 
 <div class="pb-10">
