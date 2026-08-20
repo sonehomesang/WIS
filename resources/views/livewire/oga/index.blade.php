@@ -1,11 +1,11 @@
 @php
     $statusMeta = fn ($s) => match ($s) {
-        'draft' => ['DRAFT', 'bg-gray-100 text-gray-600'],
-        'dispatched' => ['DISPATCHED', 'bg-amber-50 text-amber-700'],
-        'delivered' => ['DELIVERED', 'bg-emerald-100 text-emerald-800'],
-        'returned' => ['RETURNED', 'bg-red-50 text-red-700'],
-        'cancelled' => ['CANCELLED', 'bg-gray-100 text-gray-400'],
-        default => [strtoupper($s), 'bg-gray-100 text-gray-600'],
+        'draft' => ['DRAFT', 'bg-gray-50 text-gray-700 ring-1 ring-gray-200'],
+        'dispatched' => ['DISPATCHED', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'],
+        'delivered' => ['DELIVERED', 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'],
+        'returned' => ['RETURNED', 'bg-rose-50 text-rose-700 ring-1 ring-rose-200'],
+        'cancelled' => ['CANCELLED', 'bg-gray-50 text-gray-500 ring-1 ring-gray-200'],
+        default => [strtoupper($s), 'bg-gray-50 text-gray-700 ring-1 ring-gray-200'],
     };
     $srcMeta = fn ($t) => match ($t) {
         'da' => ['OGA-DA', 'bg-sky-50 text-sky-700'],
@@ -29,7 +29,7 @@
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
-                @can('oga.create')<a href="{{ route('oga.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ OGA</a>@endcan
+                @can('oga.create')<a href="{{ route('oga.create') }}" wire:navigate class="text-sm text-white bg-sky-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-sky-700 whitespace-nowrap">+ OGA</a>@endcan
             </div>
         </div>
 

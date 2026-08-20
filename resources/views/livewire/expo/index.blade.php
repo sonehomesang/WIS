@@ -1,7 +1,7 @@
 @php
     $statusMeta = fn ($s) => match ($s) {
-        'finalized' => ['ສຳເລັດແລ້ວ', 'bg-emerald-100 text-emerald-800'],
-        default => ['ຮ່າງ', 'bg-amber-100 text-amber-700'],
+        'finalized' => ['ສຳເລັດແລ້ວ', 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'],
+        default => ['ຮ່າງ', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'],
     };
 @endphp
 
@@ -19,7 +19,7 @@
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
-                @can('expo.create')<a href="{{ route('expo.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ ສ້າງ Expo</a>@endcan
+                @can('expo.create')<a href="{{ route('expo.create') }}" wire:navigate class="text-sm text-white bg-sky-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-sky-700 whitespace-nowrap">+ ສ້າງ Expo</a>@endcan
             </div>
         </div>
 

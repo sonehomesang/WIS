@@ -5,7 +5,7 @@
      ]) --}}
 @if ($deletingId)
     <div class="fixed inset-0 z-[56] flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="del-modal">
-        <div class="bg-white w-full md:max-w-sm rounded-t-lg md:rounded-lg p-4 space-y-3">
+        <div class="bg-white w-full md:max-w-sm rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden p-4 space-y-3">
             <div class="flex items-start gap-3">
                 <div class="shrink-0 w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -22,8 +22,8 @@
             </div>
             <div class="text-xs text-gray-400">ຈະ ຍ້າຍ ໄປ ບັນທຶກ ການ ລຶບ (ກູ້ຄືນ ໄດ້) ພ້ອມ ຈົດ ຜູ້ລຶບ + ວັນ​ເວລາ.</div>
             <div class="flex justify-end gap-2 pt-2 border-t">
-                <button wire:click="$set('deletingId', null)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                <button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="text-sm text-white bg-red-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-red-700 disabled:opacity-50">🗑 ຢືນຢັນ ລຶບ</button>
+                <button wire:click="$set('deletingId', null)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                <button wire:click="deleteRecord" wire:loading.attr="disabled" wire:target="deleteRecord" class="text-sm text-white bg-red-600 rounded-lg px-4 py-2 min-h-[40px] hover:bg-red-700 disabled:opacity-50 shadow-sm">🗑 ຢືນຢັນ ລຶບ</button>
             </div>
         </div>
     </div>

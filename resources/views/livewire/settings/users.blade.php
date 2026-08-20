@@ -1,9 +1,9 @@
 @php
     $badge = fn ($s) => match ($s) {
-        'active' => 'bg-green-50 text-green-700',
-        'pending' => 'bg-amber-50 text-amber-700',
-        'locked' => 'bg-red-50 text-red-700',
-        default => 'bg-gray-100 text-gray-600',
+        'active' => 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+        'pending' => 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+        'locked' => 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
+        default => 'bg-gray-100 text-gray-600 ring-1 ring-gray-200',
     };
 @endphp
 
@@ -69,13 +69,13 @@
                         <tr wire:key="u-{{ $user->id }}" class="border-t border-gray-100">
                             <td class="px-4 py-2">
                                 <div class="font-medium text-gray-800 truncate">{{ $user->display_name }}
-                                    @if ($user->is_super_admin)<span class="text-[10px] text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 ml-1">super</span>@endif
+                                    @if ($user->is_super_admin)<span class="text-[10px] font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 rounded-full px-1.5 py-0.5 ml-1">super</span>@endif
                                 </div>
                                 <div class="text-xs text-gray-400 truncate">{{ $user->email }}</div>
                             </td>
-                            <td class="px-4 py-2 whitespace-nowrap"><span class="text-xs bg-gray-100 text-gray-600 rounded px-2 py-0.5">{{ $user->roles->first()?->name ?? '—' }}</span></td>
+                            <td class="px-4 py-2 whitespace-nowrap"><span class="text-xs font-medium bg-gray-100 text-gray-600 ring-1 ring-gray-200 rounded-full px-2 py-0.5">{{ $user->roles->first()?->name ?? '—' }}</span></td>
                             <td class="px-4 py-2 text-gray-600 truncate" title="{{ $user->unit?->name }}@if ($user->department) / {{ $user->department->name }}@endif">{{ $user->unit?->name ?? '—' }}@if ($user->department) / {{ $user->department->name }}@endif</td>
-                            <td class="px-4 py-2 whitespace-nowrap"><span class="text-xs rounded px-2 py-0.5 {{ $badge($user->status) }}">{{ $user->status }}</span></td>
+                            <td class="px-4 py-2 whitespace-nowrap"><span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $badge($user->status) }}">{{ $user->status }}</span></td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
                                 @if ($user->status === 'pending') @can('users.activate')
                                     <button wire:click="approve({{ $user->id }})" class="hover:text-green-600 p-1" aria-label="Approve" title="Approve">
@@ -112,7 +112,7 @@
                 <div wire:key="m-{{ $user->id }}" class="bg-white border border-gray-100 rounded-lg p-3">
                     <div class="flex items-center justify-between">
                         <div class="font-medium text-gray-800">{{ $user->display_name }}</div>
-                        <span class="text-xs rounded px-2 py-0.5 {{ $badge($user->status) }}">{{ $user->status }}</span>
+                        <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $badge($user->status) }}">{{ $user->status }}</span>
                     </div>
                     <div class="text-xs text-gray-400">{{ $user->email }}</div>
                     <div class="text-xs text-gray-600 mt-1">{{ $user->roles->first()?->name ?? '—' }} · {{ $user->unit?->name ?? '—' }}@if ($user->department) / {{ $user->department->name }}@endif</div>
@@ -134,13 +134,15 @@
     {{-- Create / Edit modal --}}
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="user-modal">
-            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂຜູ້ໃຊ້' : 'ສ້າງຜູ້ໃຊ້ໃໝ່' }}</h3>
-                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
+            <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">👤</span>
+                    <h3 class="text-base font-semibold text-gray-800">{{ $editingId ? 'ແກ້ໄຂຜູ້ໃຊ້' : 'ສ້າງຜູ້ໃຊ້ໃໝ່' }}</h3>
+                    <button wire:click="$set('showModal', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
+                <div class="p-5 space-y-4 overflow-y-auto">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     @include('partials._form-errors', ['wrapClass' => 'md:col-span-2'])
                     <div class="md:col-span-2">
@@ -224,9 +226,10 @@
                         </div>
                     @endif
                 </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] hover:bg-sky-700 shadow-sm">ບັນທຶກ</button>
                 </div>
             </div>
         </div>

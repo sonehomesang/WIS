@@ -2,10 +2,10 @@
     $svgEdit = 'm16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z';
     $svgTrash = 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16';
     $cBadge = fn ($s) => match ($s) {
-        'active' => 'bg-green-50 text-green-700',
-        'draft' => 'bg-amber-50 text-amber-700',
-        'cancelled' => 'bg-red-50 text-red-700',
-        default => 'bg-gray-100 text-gray-500',
+        'active' => 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+        'draft' => 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+        'cancelled' => 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
+        default => 'bg-gray-100 text-gray-500 ring-1 ring-gray-200',
     };
     $fmt = fn ($r) => $r === null ? 'global' : rtrim(rtrim(number_format($r, 2), '0'), '.').'%';
 @endphp
@@ -85,7 +85,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-2 text-gray-600 text-xs">{{ $c->effective_date?->toDateString() ?? '—' }} → {{ $c->expiry_date?->toDateString() ?? '—' }}</td>
-                            <td class="px-4 py-2"><span class="text-xs rounded px-2 py-0.5 {{ $cBadge($c->status) }}">{{ $c->status }}</span></td>
+                            <td class="px-4 py-2"><span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $cBadge($c->status) }}">{{ $c->status }}</span></td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
                                 @if ($showDeleted)
                                     <button wire:click="restore({{ $c->id }})" class="text-xs text-emerald-700 border border-emerald-200 rounded px-2 py-1 hover:bg-emerald-50">↩ ກູ້ຄືນ</button>
@@ -108,11 +108,13 @@
 
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="ct-modal">
-            <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ contract' : 'ເພີ່ມ contract' }}</h3>
-                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+            <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">📄</span>
+                    <h3 class="text-base font-semibold text-gray-800">{{ $editingId ? 'ແກ້ໄຂ contract' : 'ເພີ່ມ contract' }}</h3>
+                    <button wire:click="$set('showModal', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
                 </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     @include('partials._form-errors', ['wrapClass' => 'md:col-span-2'])
                     <div class="md:col-span-2">
@@ -128,9 +130,10 @@
                     <div class="md:col-span-2"><label class="block text-sm text-gray-600 mb-1">ໝາຍເຫດ</label><textarea wire:model="notes" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
                 </div>
                 <p class="text-xs text-gray-400">VAT ບໍ່ໄດ້ກຳນົດທີ່ contract — ໃຊ້ VAT ຂອງ supplier (ຫຼື global). ສັນຍາໃຊ້ເປັນ "ເຫດຜົນ" ຕອນປ່ຽນ VAT.</p>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="saveContract" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="saveContract" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] hover:bg-sky-700 shadow-sm">ບັນທຶກ</button>
                 </div>
             </div>
         </div>

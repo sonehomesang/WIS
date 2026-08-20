@@ -68,7 +68,7 @@
 
         <div class="flex justify-end gap-2">
             <button wire:click="save(false)" wire:loading.attr="disabled" wire:target="save,photoLoaded,photoSealed,photoPaperPli" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50 disabled:opacity-50">ບັນທຶກ draft</button>
-            <button wire:click="save(true)" wire:loading.attr="disabled" wire:target="save,photoLoaded,photoSealed,photoPaperPli" class="text-sm text-white bg-amber-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-amber-700 disabled:opacity-50">ສ້າງ + Dispatch</button>
+            <button wire:click="save(true)" wire:loading.attr="disabled" wire:target="save,photoLoaded,photoSealed,photoPaperPli" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700 disabled:opacity-50">ສ້າງ + Dispatch</button>
         </div>
     </div>
 </div>

@@ -86,7 +86,7 @@
                             @else
                                 <span class="text-sm text-gray-700 {{ $d->is_active ? '' : 'opacity-50' }}">{{ $d->name }}@if ($d->description)<span class="text-xs text-gray-400"> · {{ $d->description }}</span>@endif</span>
                                 <span class="flex items-center gap-1">
-                                    <span class="text-xs px-2 py-0.5 rounded {{ $d->is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500' }}">{{ $d->is_active ? 'active' : 'inactive' }}</span>
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded-full {{ $d->is_active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-gray-100 text-gray-500 ring-1 ring-gray-200' }}">{{ $d->is_active ? 'active' : 'inactive' }}</span>
                                     @canany(['departments.activate', 'departments.deactivate'])
                                         <button wire:click="toggleDepartment({{ $d->id }})" class="p-1 {{ $d->is_active ? 'text-green-600 hover:text-gray-400' : 'text-gray-300 hover:text-green-600' }}" title="{{ $d->is_active ? 'Disable' : 'Enable' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $svgPower }}" /></svg></button>
                                     @endcanany
@@ -109,14 +109,15 @@
     {{-- Create / Edit modal --}}
     @if ($showModal)
         <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4" wire:key="org-modal">
-            <div class="bg-white w-full md:max-w-md rounded-t-lg md:rounded-lg p-5 space-y-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $editingId ? 'ແກ້ໄຂ' : 'ເພີ່ມ' }} {{ $type === 'unit' ? 'Unit' : 'Department' }}</h3>
-                    <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
+            <div class="bg-white w-full md:max-w-md rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">🏢</span>
+                    <h3 class="text-base font-semibold text-gray-800">{{ $editingId ? 'ແກ້ໄຂ' : 'ເພີ່ມ' }} {{ $type === 'unit' ? 'Unit' : 'Department' }}</h3>
+                    <button wire:click="$set('showModal', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
-                <div class="space-y-3">
+                <div class="p-5 space-y-3 overflow-y-auto">
                     @include('partials._form-errors')
                     @if ($type === 'department')
                         <div>
@@ -146,9 +147,9 @@
                     </label>
                     @unless ($editingId)<p class="text-xs text-gray-400">slug ຈະສ້າງອັດຕະໂນມັດຈາກຊື່</p>@endunless
                 </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 border border-gray-300 rounded-md px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
-                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-2 min-h-[40px] hover:bg-sky-700">ບັນທຶກ</button>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showModal', false)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] hover:bg-sky-700 shadow-sm">ບັນທຶກ</button>
                 </div>
             </div>
         </div>

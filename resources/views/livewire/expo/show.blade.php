@@ -1,7 +1,7 @@
 @php
-    $statusMeta = fn ($s) => $s === 'finalized' ? ['ສຳເລັດແລ້ວ', 'bg-emerald-100 text-emerald-800'] : ['ຮ່າງ (ກຳລັງເຮັດ)', 'bg-amber-100 text-amber-700'];
+    $statusMeta = fn ($s) => $s === 'finalized' ? ['ສຳເລັດແລ້ວ', 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'] : ['ຮ່າງ (ກຳລັງເຮັດ)', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'];
     [$slbl, $scls] = $statusMeta($record->status);
-    $lvl = ['hot' => ['hot', 'bg-red-100 text-red-700'], 'warm' => ['warm', 'bg-amber-100 text-amber-700'], 'cold' => ['cold', 'bg-sky-100 text-sky-700']];
+    $lvl = ['hot' => ['hot', 'bg-rose-50 text-rose-700 ring-1 ring-rose-200'], 'warm' => ['warm', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'], 'cold' => ['cold', 'bg-sky-50 text-sky-700 ring-1 ring-sky-200']];
     $roleLbl = ['agent' => 'ຕົວແທນ', 'representative' => 'representative', 'direct_employee' => 'direct employee', 'other' => 'other'];
     $kindLbl = ['product' => 'product', 'booth' => 'booth', 'brochure' => 'brochure'];
     $fileCls = 'block w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-2 file:rounded file:border-0 file:bg-sky-50 file:text-sky-700';
@@ -24,25 +24,30 @@
 
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{{ session('ok') }}</div>@endif
 
-        {{-- header + KPI --}}
-        <div class="bg-white border border-gray-200 rounded-lg p-5">
-            <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
-                <div>
-                    <div class="text-lg font-bold text-gray-800">{{ $record->title }}</div>
-                    <div class="text-sm text-gray-500">📍 {{ collect([$record->venue, $record->city, $record->country])->filter()->implode(', ') ?: '—' }}</div>
-                    <div class="text-sm text-gray-500">🗓 {{ $record->start_date?->format('d/m/Y') }}@if ($record->end_date)–{{ $record->end_date->format('d/m/Y') }}@endif @if ($record->topic) · {{ $record->topic }}@endif</div>
+        {{-- design-set hero --}}
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="h-1.5 bg-gradient-to-r from-sky-500 to-sky-400"></div>
+            <div class="p-5 flex items-center gap-4 flex-wrap">
+                <span class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-2xl shadow-sm shrink-0">🎪</span>
+                <div class="min-w-0">
+                    <h2 class="text-lg font-bold text-gray-900">{{ $record->title }}</h2>
+                    <div class="flex flex-wrap gap-1.5 mt-1.5 text-xs">
+                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600 font-mono">{{ $record->expo_number }}</span>
+                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">📍 {{ collect([$record->venue, $record->city, $record->country])->filter()->implode(', ') ?: '—' }}</span>
+                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">🗓 {{ $record->start_date?->format('d/m/Y') }}@if ($record->end_date)–{{ $record->end_date->format('d/m/Y') }}@endif</span>
+                        @if ($record->topic)<span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">{{ $record->topic }}</span>@endif
+                    </div>
                 </div>
-                <div class="text-right">
-                    <div class="font-mono font-bold text-gray-800">{{ $record->expo_number }}</div>
-                    <span class="inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 mt-1 {{ $scls }}">{{ $slbl }}</span>
-                </div>
+                <span class="ml-auto inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $scls }}">{{ $slbl }}</span>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-center">
-                <div class="bg-gray-50 rounded-md py-2"><div class="text-2xl font-bold">{{ $record->total_companies_at_expo ?? '—' }}</div><div class="text-xs text-gray-500">ບໍລິສັດໃນງານ</div></div>
-                <div class="bg-amber-50 rounded-md py-2"><div class="text-2xl font-bold text-amber-700">{{ $record->companies->count() }}</div><div class="text-xs text-gray-500">ໜ້າສົນໃຈ</div></div>
-                <div class="bg-red-50 rounded-md py-2"><div class="text-2xl font-bold text-red-600">{{ $hot }}</div><div class="text-xs text-gray-500">hot</div></div>
-                <div class="bg-sky-50 rounded-md py-2"><div class="text-2xl font-bold text-sky-700">{{ $record->attendees->count() }}</div><div class="text-xs text-gray-500">ຜູ້ໄປ</div></div>
-            </div>
+        </div>
+
+        {{-- KPI tiles --}}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex items-center gap-3"><span class="w-9 h-9 rounded-xl bg-gray-50 text-gray-600 grid place-items-center shrink-0">🏢</span><div class="min-w-0"><div class="text-2xl font-bold tabular-nums text-gray-800">{{ $record->total_companies_at_expo ?? '—' }}</div><div class="text-[11px] text-gray-500">ບໍລິສັດໃນງານ</div></div></div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex items-center gap-3"><span class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 grid place-items-center shrink-0">⭐</span><div class="min-w-0"><div class="text-2xl font-bold tabular-nums text-amber-700">{{ $record->companies->count() }}</div><div class="text-[11px] text-gray-500">ໜ້າສົນໃຈ</div></div></div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex items-center gap-3"><span class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 grid place-items-center shrink-0">🔥</span><div class="min-w-0"><div class="text-2xl font-bold tabular-nums text-rose-600">{{ $hot }}</div><div class="text-[11px] text-gray-500">hot</div></div></div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex items-center gap-3"><span class="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 grid place-items-center shrink-0">👤</span><div class="min-w-0"><div class="text-2xl font-bold tabular-nums text-sky-700">{{ $record->attendees->count() }}</div><div class="text-[11px] text-gray-500">ຜູ້ໄປ</div></div></div>
         </div>
 
         {{-- tabs --}}
@@ -145,8 +150,13 @@
         {{-- ── edit event meta modal ── --}}
         @if ($showEvent)
             <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
-                <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                    <h3 class="text-lg font-medium text-gray-800">✏️ ແກ້ໄຂ ຂໍ້ມູນງານ</h3>
+                <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🎪</span>
+                        <h3 class="text-base font-semibold text-gray-800">✏️ ແກ້ໄຂ ຂໍ້ມູນງານ</h3>
+                        <button wire:click="$set('showEvent', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                    </div>
+                    <div class="p-5 space-y-3 overflow-y-auto">
                     <div><label class="block text-xs text-gray-500 mb-1">ຊື່ງານ *</label><input type="text" wire:model="ef.title" class="w-full rounded-md border-gray-300 text-sm" />@error('ef.title')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div><label class="block text-xs text-gray-500 mb-1">ປະເພດ / ຫົວຂໍ້</label><input type="text" wire:model="ef.topic" class="w-full rounded-md border-gray-300 text-sm" /></div>
@@ -163,15 +173,21 @@
                         <div><label class="block text-xs text-gray-500 mb-1">ວັນທີສິ້ນສຸດ</label><input type="date" wire:model="ef.end_date" class="w-full rounded-md border-gray-300 text-sm" />@error('ef.end_date')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
                     </div>
                     <div><label class="block text-xs text-gray-500 mb-1">ມີຈັກບໍລິສັດ ເຂົ້າຮ່ວມ (ທັງໝົດ)</label><input type="number" min="0" wire:model="ef.total_companies_at_expo" class="w-full rounded-md border-gray-300 text-sm" /></div>
-                    <div class="flex justify-end gap-2 pt-2"><button wire:click="$set('showEvent', false)" class="border rounded px-4 py-2 text-sm">ປິດ</button><button wire:click="saveEvent" wire:loading.attr="disabled" wire:target="saveEvent" class="bg-sky-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ບັນທຶກ</button></div>
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showEvent', false)" class="bg-white border rounded-lg px-4 py-2 text-sm min-h-[40px]">ປິດ</button><button wire:click="saveEvent" wire:loading.attr="disabled" wire:target="saveEvent" class="bg-sky-600 hover:bg-sky-700 text-white rounded-lg px-4 py-2 text-sm min-h-[40px] shadow-sm disabled:opacity-50">ບັນທຶກ</button></div>
                 </div>
             </div>
         @endif
 
         @if ($showCompany)
             <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
-                <div class="bg-white w-full md:max-w-lg rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $companyId ? 'ແກ້ໄຂ' : 'ເພີ່ມ' }} ບໍລິສັດ</h3>
+                <div class="bg-white w-full md:max-w-lg rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🎪</span>
+                        <h3 class="text-base font-semibold text-gray-800">{{ $companyId ? 'ແກ້ໄຂ' : 'ເພີ່ມ' }} ບໍລິສັດ</h3>
+                        <button wire:click="$set('showCompany', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                    </div>
+                    <div class="p-5 space-y-3 overflow-y-auto">
                     <div><label class="block text-xs text-gray-500 mb-1">ຊື່ບໍລິສັດ *</label><input type="text" wire:model="cf.name" class="w-full rounded-md border-gray-300 text-sm" />@error('cf.name')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div><label class="block text-xs text-gray-500 mb-1">ປະເທດ</label><input type="text" wire:model="cf.country" class="w-full rounded-md border-gray-300 text-sm" /></div>
@@ -193,7 +209,8 @@
                         </div>
                         <div wire:loading wire:target="companyFiles" class="text-xs text-gray-400">ກຳລັງອັບ…</div>
                     </div>
-                    <div class="flex justify-end gap-2 pt-2"><button wire:click="$set('showCompany', false)" class="border rounded px-4 py-2 text-sm">ປິດ</button><button wire:click="saveCompany" wire:loading.attr="disabled" wire:target="saveCompany,companyFiles" class="bg-sky-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ບັນທຶກ</button></div>
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showCompany', false)" class="bg-white border rounded-lg px-4 py-2 text-sm min-h-[40px]">ປິດ</button><button wire:click="saveCompany" wire:loading.attr="disabled" wire:target="saveCompany,companyFiles" class="bg-sky-600 hover:bg-sky-700 text-white rounded-lg px-4 py-2 text-sm min-h-[40px] shadow-sm disabled:opacity-50">ບັນທຶກ</button></div>
                 </div>
             </div>
         @endif
@@ -201,8 +218,13 @@
         {{-- ── contact modal ── --}}
         @if ($showContact)
             <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4">
-                <div class="bg-white w-full md:max-w-md rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                    <h3 class="text-lg font-medium text-gray-800">{{ $contactId ? 'ແກ້ໄຂ' : 'ເພີ່ມ' }} ຜູ້ຕິດຕໍ່</h3>
+                <div class="bg-white w-full md:max-w-md rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🎪</span>
+                        <h3 class="text-base font-semibold text-gray-800">{{ $contactId ? 'ແກ້ໄຂ' : 'ເພີ່ມ' }} ຜູ້ຕິດຕໍ່</h3>
+                        <button wire:click="$set('showContact', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                    </div>
+                    <div class="p-5 space-y-3 overflow-y-auto">
                     <div><label class="block text-xs text-gray-500 mb-1">ຊື່ *</label><input type="text" wire:model="kf.name" class="w-full rounded-md border-gray-300 text-sm" />@error('kf.name')<p class="text-xs text-red-600">{{ $message }}</p>@enderror</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div><label class="block text-xs text-gray-500 mb-1">ປະເພດ</label><select wire:model="kf.role" class="w-full rounded-md border-gray-300 text-sm"><option value="direct_employee">direct employee</option><option value="agent">ຕົວແທນ (agent)</option><option value="representative">representative</option><option value="other">other</option></select></div>
@@ -213,17 +235,24 @@
                     <div><label class="block text-xs text-gray-500 mb-1">ເບີ app (WhatsApp/WeChat)</label><input type="text" wire:model="kf.app_contact" class="w-full rounded-md border-gray-300 text-sm" /></div>
                     <div><label class="block text-xs text-gray-500 mb-1">ໝາຍເຫດ</label><textarea wire:model="kf.notes" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></div>
                     <div><label class="block text-xs text-gray-500 mb-1">ນາມບັດ (business card)</label><input type="file" wire:model="businessCard" accept="image/*" class="{{ $fileCls }}" /><div wire:loading wire:target="businessCard" class="text-xs text-gray-400">ກຳລັງອັບ…</div></div>
-                    <div class="flex justify-end gap-2 pt-2"><button wire:click="$set('showContact', false)" class="border rounded px-4 py-2 text-sm">ປິດ</button><button wire:click="saveContact" wire:loading.attr="disabled" wire:target="saveContact,businessCard" class="bg-sky-600 text-white rounded px-4 py-2 text-sm disabled:opacity-50">ບັນທຶກ</button></div>
+                    </div>
+                    <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showContact', false)" class="bg-white border rounded-lg px-4 py-2 text-sm min-h-[40px]">ປິດ</button><button wire:click="saveContact" wire:loading.attr="disabled" wire:target="saveContact,businessCard" class="bg-sky-600 hover:bg-sky-700 text-white rounded-lg px-4 py-2 text-sm min-h-[40px] shadow-sm disabled:opacity-50">ບັນທຶກ</button></div>
                 </div>
             </div>
         @endif
 
         @if ($showDelete)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
-                <h3 class="font-medium text-red-700">🗑 ລຶບ Expo</h3>
-                <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                @error('deleteReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນລຶບ</button></div>
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white w-full md:max-w-sm rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🗑</span>
+                    <h3 class="text-base font-semibold text-red-700">🗑 ລຶບ Expo</h3>
+                    <button wire:click="$set('showDelete', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
+                    <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                    @error('deleteReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showDelete', false)" class="bg-white border rounded-lg px-3 py-1.5 text-sm min-h-[40px]">ປິດ</button><button wire:click="deleteRecord" class="bg-red-600 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px]">ຢືນຢັນລຶບ</button></div>
             </div></div>
         @endif
     </div>

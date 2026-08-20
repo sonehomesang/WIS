@@ -1,12 +1,12 @@
 @php
     $statusMeta = fn ($s) => match ($s) {
-        'draft' => ['DRAFT', 'bg-gray-100 text-gray-600'],
-        'submitted' => ['SUBMITTED', 'bg-blue-50 text-blue-700'],
-        'purchasing_review' => ['PURCHASING', 'bg-violet-50 text-violet-700'],
-        'pending_approval' => ['PENDING APPROVAL', 'bg-amber-50 text-amber-700'],
-        'resolved' => ['RESOLVED', 'bg-emerald-100 text-emerald-800'],
-        'cancelled' => ['CANCELLED', 'bg-gray-100 text-gray-400'],
-        default => [strtoupper($s), 'bg-gray-100 text-gray-600'],
+        'draft' => ['DRAFT', 'bg-gray-50 text-gray-700 ring-1 ring-gray-200'],
+        'submitted' => ['SUBMITTED', 'bg-sky-50 text-sky-700 ring-1 ring-sky-200'],
+        'purchasing_review' => ['PURCHASING', 'bg-violet-50 text-violet-700 ring-1 ring-violet-200'],
+        'pending_approval' => ['PENDING APPROVAL', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'],
+        'resolved' => ['RESOLVED', 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'],
+        'cancelled' => ['CANCELLED', 'bg-gray-50 text-gray-500 ring-1 ring-gray-200'],
+        default => [strtoupper($s), 'bg-gray-50 text-gray-700 ring-1 ring-gray-200'],
     };
     $typeLabel = ['incorrect_supplied' => 'ສົ່ງຜິດ', 'oversupplied' => 'ເກີນ', 'undersupplied' => 'ຂາດ', 'damaged' => 'ເສຍ', 'no_paperwork' => 'ບໍ່ມີເອກະສານ', 'other' => 'ອື່ນ'];
 @endphp
@@ -26,7 +26,7 @@
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-md px-2.5 py-2 min-h-[40px] border whitespace-nowrap {{ $showDeleted ? 'bg-red-600 text-white border-red-600' : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
-                @can('da.create')<a href="{{ route('da.create') }}" wire:navigate class="text-sm text-white bg-indigo-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 whitespace-nowrap">+ DA</a>@endcan
+                @can('da.create')<a href="{{ route('da.create') }}" wire:navigate class="text-sm text-white bg-sky-600 rounded-md px-2.5 py-2 min-h-[40px] inline-flex items-center hover:bg-sky-700 whitespace-nowrap">+ DA</a>@endcan
             </div>
         </div>
 

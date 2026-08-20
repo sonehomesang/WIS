@@ -49,9 +49,9 @@
                                 <td class="px-3 py-2 text-gray-600">{{ $freqLabels[$r->frequency] ?? $r->frequency }}</td>
                                 <td class="px-3 py-2">
                                     @if ($r->result === 'has_nc')
-                                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-700">NC · {{ $r->ncCount() }} ຂໍ້</span>
+                                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 ring-1 ring-rose-200">NC · {{ $r->ncCount() }} ຂໍ້</span>
                                     @else
-                                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-700">ຜ່ານ (C)</span>
+                                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">ຜ່ານ (C)</span>
                                     @endif
                                 </td>
                                 <td class="px-3 py-2">
@@ -112,9 +112,9 @@
                                 <td class="px-3 py-2 text-gray-600">{{ count($t->normalizedItems()) }} ຂໍ້</td>
                                 <td class="px-3 py-2">
                                     @if ($t->is_active)
-                                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-700">ໃຊ້ງານ</span>
+                                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">ໃຊ້ງານ</span>
                                     @else
-                                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">ປິດ</span>
+                                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 ring-1 ring-gray-200">ປິດ</span>
                                     @endif
                                 </td>
                                 <td class="px-3 py-2 text-right whitespace-nowrap">
@@ -134,12 +134,13 @@
     {{-- ══════════ Record modal ══════════ --}}
     @if ($showForm)
         <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 overflow-y-auto">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl my-6">
-                <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-                    <div class="font-medium text-gray-800">ບັນທຶກ ການ ກວດ ສະຖານທີ່</div>
-                    <button wire:click="$set('showForm', false)" class="text-gray-400 hover:text-gray-600">✕</button>
+            <div class="bg-white w-full max-w-3xl my-6 rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">📋</span>
+                    <h3 class="text-base font-semibold text-gray-800">ບັນທຶກ ການ ກວດ ສະຖານທີ່</h3>
+                    <button wire:click="$set('showForm', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
                 </div>
-                <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+                <div class="p-5 space-y-4 overflow-y-auto">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">ແມ່ແບບ ເຊັກລິສ</label>
@@ -230,9 +231,9 @@
                         <textarea wire:model="fNotes" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                     </div>
                 </div>
-                <div class="px-5 py-3 border-t border-gray-100 flex justify-end gap-2">
-                    <button wire:click="$set('showForm', false)" class="text-sm text-gray-600 px-3 py-1.5">ຍົກເລີກ</button>
-                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-md px-4 py-1.5 hover:bg-sky-700">ບັນທຶກ</button>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showForm', false)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="save" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] hover:bg-sky-700 shadow-sm">ບັນທຶກ</button>
                 </div>
             </div>
         </div>
@@ -241,12 +242,13 @@
     {{-- ══════════ Template builder modal ══════════ --}}
     @if ($showTemplateForm)
         <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 overflow-y-auto">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl my-6">
-                <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-                    <div class="font-medium text-gray-800">{{ $tEditingId ? 'ແກ້ໄຂ ແມ່ແບບ' : 'ສ້າງ ແມ່ແບບ ໃໝ່' }}</div>
-                    <button wire:click="$set('showTemplateForm', false)" class="text-gray-400 hover:text-gray-600">✕</button>
+            <div class="bg-white w-full max-w-2xl my-6 rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-sky-200 to-sky-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-lg shadow-sm shrink-0">📝</span>
+                    <h3 class="text-base font-semibold text-gray-800">{{ $tEditingId ? 'ແກ້ໄຂ ແມ່ແບບ' : 'ສ້າງ ແມ່ແບບ ໃໝ່' }}</h3>
+                    <button wire:click="$set('showTemplateForm', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
                 </div>
-                <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+                <div class="p-5 space-y-4 overflow-y-auto">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div class="sm:col-span-2">
                             <label class="block text-xs text-gray-500 mb-1">ຊື່ ແມ່ແບບ</label>
@@ -283,9 +285,9 @@
                         <input type="checkbox" wire:model="tActive" class="rounded border-gray-300"> ໃຊ້ງານ (ໂຜ່ ໃນ dropdown ຕອນ ບັນທຶກ)
                     </label>
                 </div>
-                <div class="px-5 py-3 border-t border-gray-100 flex justify-end gap-2">
-                    <button wire:click="$set('showTemplateForm', false)" class="text-sm text-gray-600 px-3 py-1.5">ຍົກເລີກ</button>
-                    <button wire:click="saveTemplate" class="text-sm text-white bg-sky-600 rounded-md px-4 py-1.5 hover:bg-sky-700">ບັນທຶກ ແມ່ແບບ</button>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0">
+                    <button wire:click="$set('showTemplateForm', false)" class="text-sm text-gray-700 bg-white border border-gray-300 rounded-lg px-4 py-2 min-h-[40px] hover:bg-gray-50">ຍົກເລີກ</button>
+                    <button wire:click="saveTemplate" class="text-sm text-white bg-sky-600 rounded-lg px-4 py-2 min-h-[40px] hover:bg-sky-700 shadow-sm">ບັນທຶກ ແມ່ແບບ</button>
                 </div>
             </div>
         </div>

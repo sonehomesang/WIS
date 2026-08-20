@@ -28,6 +28,25 @@
         @if ($record->reject_reason && $record->status === 'purchasing_review')<div class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">⚠ Leader ສົ່ງກັບ: {{ $record->reject_reason }}</div>@endif
         @if ($record->status === 'cancelled' && $record->cancel_reason)<div class="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">ຍົກເລີກ: {{ $record->cancel_reason }}</div>@endif
 
+        {{-- design-set hero --}}
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="h-1.5 bg-gradient-to-r from-indigo-500 to-indigo-400"></div>
+            <div class="p-5 flex items-center gap-4 flex-wrap">
+                <span class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-400 text-white grid place-items-center text-2xl shadow-sm shrink-0">🧾</span>
+                <div class="min-w-0">
+                    <h2 class="text-lg font-bold text-gray-900 font-mono">{{ $record->da_number }}</h2>
+                    <div class="flex flex-wrap gap-1.5 mt-1.5 text-xs">
+                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">🏢 {{ $record->supplier_name ?? '—' }}</span>
+                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">PO {{ $record->po_number ?? '—' }}</span>
+                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">🗓 {{ $record->date?->format('d/m/Y') ?? '—' }}</span>
+                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 text-gray-600">{{ $record->items->count() }} ລາຍການ</span>
+                        @if ($record->next_step === 'oga')<span class="inline-flex items-center gap-1 bg-sky-50 border border-sky-200 rounded-full px-2 py-0.5 text-sky-700">→ OGA</span>@endif
+                    </div>
+                </div>
+                <span class="ml-auto inline-flex items-center gap-1 text-xs font-medium rounded-full px-2.5 py-1 {{ $scls }}">{{ $slbl }}</span>
+            </div>
+        </div>
+
         <div class="bg-white border border-gray-200 rounded-lg p-5 space-y-4 text-sm">
             <div class="flex items-start justify-between border-b border-gray-200 pb-3">
                 <div>
@@ -138,55 +157,90 @@
 
         {{-- modals --}}
         @if ($showCancel)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
-                <h3 class="font-medium text-gray-800">ຍົກເລີກ DA</h3>
-                <textarea wire:model="cancelReason" rows="2" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showCancel', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="cancel" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນ</button></div>
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white w-full md:max-w-sm rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-indigo-200 to-indigo-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🧾</span>
+                    <h3 class="text-base font-semibold text-gray-800">ຍົກເລີກ DA</h3>
+                    <button wire:click="$set('showCancel', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
+                    <textarea wire:model="cancelReason" rows="2" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showCancel', false)" class="bg-white border rounded-lg px-3 py-1.5 text-sm min-h-[40px]">ປິດ</button><button wire:click="cancel" class="bg-red-600 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px]">ຢືນຢັນ</button></div>
             </div></div>
         @endif
         @if ($showDecide)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-md space-y-3 max-h-[90vh] overflow-y-auto">
-                <h3 class="font-medium text-gray-800">B · ການຕັດສິນໃຈ Purchasing</h3>
-                @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                <div class="space-y-1">@foreach ($decisionOptions as $d)<label class="flex items-center gap-2 text-sm"><input type="checkbox" value="{{ $d }}" wire:model="decisions" class="rounded border-gray-300 text-sky-600" /> {{ $d }}</label>@endforeach</div>
-                <textarea wire:model="purchasingNote" rows="2" placeholder="ໝາຍເຫດ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                <div class="grid grid-cols-2 gap-2">
-                    <select wire:model="transportAccount" class="rounded-md border-gray-300 text-sm"><option value="">ບັນຊີຂົນສົ່ງ</option><option value="vendor">vendor</option><option value="ntpc">ntpc</option></select>
-                    <select wire:model="transportMode" class="rounded-md border-gray-300 text-sm"><option value="">ວິທີ</option><option value="road">road</option><option value="air">air</option></select>
-                    <input type="text" wire:model="carrierName" placeholder="Carrier" class="rounded-md border-gray-300 text-sm" />
-                    <input type="text" wire:model="carrierPhone" placeholder="Phone" class="rounded-md border-gray-300 text-sm" />
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white w-full md:max-w-md rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-indigo-200 to-indigo-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🧾</span>
+                    <h3 class="text-base font-semibold text-gray-800">B · ການຕັດສິນໃຈ Purchasing</h3>
+                    <button wire:click="$set('showDecide', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
                 </div>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showDecide', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="purchasingDecide" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນ</button></div>
+                <div class="p-5 space-y-3 overflow-y-auto">
+                    @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    <div class="space-y-1">@foreach ($decisionOptions as $d)<label class="flex items-center gap-2 text-sm"><input type="checkbox" value="{{ $d }}" wire:model="decisions" class="rounded border-gray-300 text-sky-600" /> {{ $d }}</label>@endforeach</div>
+                    <textarea wire:model="purchasingNote" rows="2" placeholder="ໝາຍເຫດ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                    <div class="grid grid-cols-2 gap-2">
+                        <select wire:model="transportAccount" class="rounded-md border-gray-300 text-sm"><option value="">ບັນຊີຂົນສົ່ງ</option><option value="vendor">vendor</option><option value="ntpc">ntpc</option></select>
+                        <select wire:model="transportMode" class="rounded-md border-gray-300 text-sm"><option value="">ວິທີ</option><option value="road">road</option><option value="air">air</option></select>
+                        <input type="text" wire:model="carrierName" placeholder="Carrier" class="rounded-md border-gray-300 text-sm" />
+                        <input type="text" wire:model="carrierPhone" placeholder="Phone" class="rounded-md border-gray-300 text-sm" />
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showDecide', false)" class="bg-white border rounded-lg px-3 py-1.5 text-sm min-h-[40px]">ປິດ</button><button wire:click="purchasingDecide" class="bg-sky-600 hover:bg-sky-700 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px] shadow-sm">ຢືນຢັນ</button></div>
             </div></div>
         @endif
         @if ($showApprove)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-md space-y-3">
-                <h3 class="font-medium text-gray-800">C · ອະນຸມັດ (Leader)</h3>
-                <textarea wire:model="resolution" rows="2" placeholder="Resolution action…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                <input type="text" wire:model="approvedTitle" placeholder="ຕຳແໜ່ງ (e.g. Leader Warehousing)" class="w-full rounded-md border-gray-300 text-sm" />
-                <div><label class="block text-sm text-gray-600 mb-1">Next step</label><select wire:model="nextStep" class="w-full rounded-md border-gray-300 text-sm"><option value="finished">ປິດ (finished)</option><option value="oga">ສ້າງ OGA ຕໍ່</option></select></div>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showApprove', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="approve" class="bg-emerald-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນອະນຸມັດ</button></div>
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white w-full md:max-w-md rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-indigo-200 to-indigo-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🧾</span>
+                    <h3 class="text-base font-semibold text-gray-800">C · ອະນຸມັດ (Leader)</h3>
+                    <button wire:click="$set('showApprove', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
+                    <textarea wire:model="resolution" rows="2" placeholder="Resolution action…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                    <input type="text" wire:model="approvedTitle" placeholder="ຕຳແໜ່ງ (e.g. Leader Warehousing)" class="w-full rounded-md border-gray-300 text-sm" />
+                    <div><label class="block text-sm text-gray-600 mb-1">Next step</label><select wire:model="nextStep" class="w-full rounded-md border-gray-300 text-sm"><option value="finished">ປິດ (finished)</option><option value="oga">ສ້າງ OGA ຕໍ່</option></select></div>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showApprove', false)" class="bg-white border rounded-lg px-3 py-1.5 text-sm min-h-[40px]">ປິດ</button><button wire:click="approve" class="bg-sky-600 hover:bg-sky-700 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px] shadow-sm">ຢືນຢັນອະນຸມັດ</button></div>
             </div></div>
         @endif
         @if ($showReject)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
-                <h3 class="font-medium text-gray-800">ສົ່ງກັບ Purchasing</h3>
-                @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                <textarea wire:model="rejectReason" rows="3" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                <div class="flex justify-end gap-2"><button wire:click="$set('showReject', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="reject" class="bg-amber-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນ</button></div>
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white w-full md:max-w-sm rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-indigo-200 to-indigo-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🧾</span>
+                    <h3 class="text-base font-semibold text-gray-800">ສົ່ງກັບ Purchasing</h3>
+                    <button wire:click="$set('showReject', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
+                    @error('action')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    <textarea wire:model="rejectReason" rows="3" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showReject', false)" class="bg-white border rounded-lg px-3 py-1.5 text-sm min-h-[40px]">ປິດ</button><button wire:click="reject" class="bg-amber-600 hover:bg-amber-700 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px]">ຢືນຢັນ</button></div>
             </div></div>
         @endif
         @if ($showDelete)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white rounded-lg p-5 w-full max-w-sm space-y-3">
-                <h3 class="font-medium text-red-700">🗑 ລຶບ DA</h3>
-                <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                @error('deleteReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
-                <div class="flex justify-end gap-2"><button wire:click="$set('showDelete', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="deleteRecord" class="bg-red-600 text-white rounded px-3 py-1.5 text-sm">ຢືນຢັນລຶບ</button></div>
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div class="bg-white w-full md:max-w-sm rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-indigo-200 to-indigo-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🗑</span>
+                    <h3 class="text-base font-semibold text-red-700">🗑 ລຶບ DA</h3>
+                    <button wire:click="$set('showDelete', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
+                    <textarea wire:model="deleteReason" rows="3" placeholder="ເຫດຜົນ…" class="w-full rounded-md border-gray-300 text-sm"></textarea>
+                    @error('deleteReason')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showDelete', false)" class="bg-white border rounded-lg px-3 py-1.5 text-sm min-h-[40px]">ປິດ</button><button wire:click="deleteRecord" class="bg-red-600 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px]">ຢືນຢັນລຶບ</button></div>
             </div></div>
         @endif
         @if ($showItems)
-            <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4"><div class="bg-white w-full md:max-w-2xl rounded-t-lg md:rounded-lg p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-                <h3 class="font-medium text-gray-800">✏️ ແກ້ ລາຍການ (ຮ່າງ)</h3>
+            <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:p-4"><div class="bg-white w-full md:max-w-2xl rounded-t-2xl md:rounded-2xl border border-gray-300 shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-b from-indigo-200 to-indigo-100 shrink-0">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-400 text-white grid place-items-center text-lg shadow-sm shrink-0">🧾</span>
+                    <h3 class="text-base font-semibold text-gray-800">✏️ ແກ້ ລາຍການ (ຮ່າງ)</h3>
+                    <button wire:click="$set('showItems', false)" class="ml-auto text-gray-400 hover:text-gray-700 p-1" aria-label="Close">✕</button>
+                </div>
+                <div class="p-5 space-y-3 overflow-y-auto">
                 <div class="space-y-2">
                     @foreach ($di as $i => $row)
                         <div wire:key="di-{{ $i }}" class="border border-gray-100 rounded-lg p-2 grid grid-cols-12 gap-2 items-start">
@@ -200,7 +254,8 @@
                     @endforeach
                 </div>
                 <button wire:click="addDiItem" class="text-sm text-sky-700 border border-sky-200 rounded-md px-3 py-1.5 hover:bg-sky-50">+ ເພີ່ມ ລາຍການ</button>
-                <div class="flex justify-end gap-2 pt-1"><button wire:click="$set('showItems', false)" class="border rounded px-3 py-1.5 text-sm">ປິດ</button><button wire:click="saveItems" class="bg-sky-600 text-white rounded px-3 py-1.5 text-sm">ບັນທຶກ</button></div>
+                </div>
+                <div class="flex justify-end gap-2 px-5 py-3 bg-gray-50/70 border-t border-gray-100 shrink-0"><button wire:click="$set('showItems', false)" class="bg-white border rounded-lg px-3 py-1.5 text-sm min-h-[40px]">ປິດ</button><button wire:click="saveItems" class="bg-sky-600 hover:bg-sky-700 text-white rounded-lg px-3 py-1.5 text-sm min-h-[40px] shadow-sm">ບັນທຶກ</button></div>
             </div></div>
         @endif
     </div>
