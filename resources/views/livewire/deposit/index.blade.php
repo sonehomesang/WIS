@@ -39,9 +39,11 @@
                         <option value="needs_fix">needs_fix</option><option value="claimed">claimed</option><option value="cancelled">cancelled</option>
                         <option value="disposal">disposal</option><option value="disposed">disposed</option>
                     </select>
-                    <select wire:model.live="typeFilter" class="w-28 rounded-lg border-gray-300 text-sm">
-                        <option value="">All Types</option>
-                        <option value="walk_in">Walk-in</option><option value="pre_request">Pre-request</option>
+                    <select wire:model.live="typeFilter" class="w-36 rounded-lg border-gray-300 text-sm" title="ປະເພດ ການ ຝາກ">
+                        <option value="">ທຸກ ປະເພດ</option>
+                        <option value="walk_in">Walk-in · ນຳມາແລ້ວ</option>
+                        <option value="pre_request">Pre-request · ສົ່ງລ່ວງໜ້າ</option>
+                        <option value="legacy">ເຄື່ອງຝາກເກົ່າ · ຄ້າງ ດົນ</option>
                     </select>
                     <select wire:model.live="unitFilter" class="w-36 rounded-lg border-gray-300 text-sm" title="ໜ່ວຍງານ ເຈົ້າຂອງ">
                         <option value="">ທຸກ ໜ່ວຍງານ</option>
