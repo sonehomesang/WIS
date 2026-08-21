@@ -32,8 +32,8 @@
                         <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔎</span>
                         <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ DP/ຊື່ເຈົ້າຂອງ…" class="w-48 pl-8 rounded-lg border-gray-300 text-sm" />
                     </div>
-                    <select wire:model.live="statusFilter" class="w-32 rounded-lg border-gray-300 text-sm">
-                        <option value="">All Statuses</option>
+                    <select wire:model.live="statusFilter" class="w-40 rounded-lg border-gray-300 text-sm" title="ສະຖານະ ການ ຝາກ">
+                        <option value="">ທຸກ ສະຖານະການ ຝາກ</option>
                         <option value="draft">draft</option><option value="submitted">submitted</option>
                         <option value="accepted">accepted</option><option value="stored">stored</option>
                         <option value="needs_fix">needs_fix</option><option value="claimed">claimed</option><option value="cancelled">cancelled</option>
@@ -43,12 +43,16 @@
                         <option value="">All Types</option>
                         <option value="walk_in">Walk-in</option><option value="pre_request">Pre-request</option>
                     </select>
-                    <select wire:model.live="unitFilter" class="w-40 rounded-lg border-gray-300 text-sm" title="ໜ່ວຍງານ ເຈົ້າຂອງ">
+                    <select wire:model.live="unitFilter" class="w-36 rounded-lg border-gray-300 text-sm" title="ໜ່ວຍງານ ເຈົ້າຂອງ">
                         <option value="">ທຸກ ໜ່ວຍງານ</option>
                         @foreach ($units as $u)<option value="{{ $u->id }}">{{ $u->name }}</option>@endforeach
                     </select>
+                    <select wire:model.live="conditionFilter" class="w-44 rounded-lg border-gray-300 text-sm" title="ສະພາບ ເຄື່ອງ">
+                        <option value="">ທຸກ ສະພາບເຄື່ອງ</option>
+                        @foreach ($conditionOptions as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach
+                    </select>
                     @if ($canManageDeleted)<button wire:click="toggleDeleted" title="ເບິ່ງ ລາຍການ ທີ່ ລຶບ ແລ້ວ ເພື່ອ ກູ້ຄືນ" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">{{ $showDeleted ? '← ກັບ ລິສ' : '↩ ລາຍການ ທີ່ ຖືກ ລຶບ' }}</button>@endif
-                    <a href="{{ route('deposit.report', ['search' => $search, 'status' => $statusFilter, 'type' => $typeFilter, 'unit' => $unitFilter]) }}" target="_blank" rel="noopener" title="ພິມ ບັນຊີ ລາຍການ (ຕາມ filter ນີ້) ພ້ອມ letterhead" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 inline-flex items-center transition whitespace-nowrap">🖨 ພິມ ບັນຊີ</a>
+                    <a href="{{ route('deposit.report', ['search' => $search, 'status' => $statusFilter, 'type' => $typeFilter, 'unit' => $unitFilter, 'condition' => $conditionFilter]) }}" target="_blank" rel="noopener" title="ພິມ ບັນຊີ ລາຍການ (ຕາມ filter ນີ້) ພ້ອມ letterhead" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 inline-flex items-center transition whitespace-nowrap">🖨 ພິມ ບັນຊີ</a>
                     @can('deposit.create')<a href="{{ route('deposit.create') }}" wire:navigate class="text-sm font-medium text-white bg-indigo-600 rounded-lg px-3.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 transition shadow-sm whitespace-nowrap">+ Deposit</a>@endcan
                 </div>
             </div>
@@ -74,8 +78,8 @@
                             <th class="text-center font-semibold px-3 py-2.5">ຈຳນວນ</th>
                             <th class="text-left font-semibold px-3 py-2.5">ລະຫັດເຄື່ອງ</th>
                             <th class="text-left font-semibold px-3 py-2.5">ຊັບສິນ</th>
-                            <th class="text-left font-semibold px-3 py-2.5">ສະຖານະພາບ</th>
-                            <th class="text-left font-semibold px-3 py-2.5">ສະຖານະ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ສະພາບເຄື່ອງ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ສະຖານະການຝາກ</th>
                             <th class="text-right font-semibold px-3 py-2.5">ຈັດການ</th>
                         </tr>
                     </thead>

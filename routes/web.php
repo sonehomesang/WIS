@@ -149,18 +149,21 @@ Route::get('deposit/report', function (\Illuminate\Http\Request $request) {
     $status = (string) $request->query('status', '');
     $type = (string) $request->query('type', '');
     $unitId = (int) $request->query('unit', 0);
+    $condition = (string) $request->query('condition', '');
 
     $q->when($search !== '', fn ($w) => $w->where(fn ($x) => $x->where('request_number', 'like', "%{$search}%")->orWhere('owner_name', 'like', "%{$search}%")))
         ->when($status === 'needs_info', fn ($w) => $w->needsOfficeInfo())
         ->when($status !== '' && $status !== 'needs_info', fn ($w) => $w->where('status', $status))
         ->when($type !== '', fn ($w) => $w->where('request_type', $type))
         ->when($unitId > 0, fn ($w) => $w->where('owner_unit_id', $unitId))
+        ->when($condition !== '', fn ($w) => $w->whereHas('items', fn ($x) => $x->where('condition_status', $condition)))
         ->orderByDesc('id');
 
     return view('deposit.index-report', [
         'records' => $q->get(),
         'filterUnit' => $unitId > 0 ? \App\Models\Unit::find($unitId) : null,
         'filterStatus' => $status,
+        'filterCondition' => $condition !== '' ? \App\Support\ConditionStatus::shortLabel($condition) : '',
         'generatedBy' => $u->display_name ?? $u->email,
     ]);
 })->middleware(['auth', 'verified'])->name('deposit.report');

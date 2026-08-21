@@ -66,7 +66,8 @@
 
     <div class="ctx">
         <span><b>ໜ່ວຍງານ / Unit:</b> {{ $filterUnit?->name ?? 'ທັງໝົດ (All)' }}</span>
-        <span><b>ສະຖານະ / Status:</b> {{ $filterStatus ? ($statusLabels[$filterStatus] ?? $filterStatus) : 'ທັງໝົດ (All)' }}</span>
+        <span><b>ສະຖານະການຝາກ / Status:</b> {{ $filterStatus ? ($statusLabels[$filterStatus] ?? $filterStatus) : 'ທັງໝົດ (All)' }}</span>
+        <span><b>ສະພາບເຄື່ອງ / Condition:</b> {{ ($filterCondition ?? '') ?: 'ທັງໝົດ (All)' }}</span>
         <span><b>ລວມ / Total:</b> {{ $records->count() }} ໃບ · {{ $rows->count() }} ລາຍການ · {{ number_format($totQty) }} ໜ່ວຍ</span>
     </div>
 
@@ -76,7 +77,7 @@
             <th style="width:58px">ຮູບ</th>
             <th>ລາຍລະອຽດ (Detail)</th>
             <th style="width:64px" class="qty">ຈຳນວນ</th>
-            <th style="width:96px">ສະຖານະພາບ</th>
+            <th style="width:96px">ສະພາບເຄື່ອງ</th>
             <th style="width:230px">ຄຳ ແນະນຳ (Recommendation)</th>
         </tr></thead>
         <tbody>
