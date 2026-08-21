@@ -20,8 +20,16 @@
 
         {{-- ຜູ້ ເອົາ ມາ ຝາກ — ເຫັນ ຕອນ ຝາກ (ຄົນ ເອົາ ເຄື່ອງ ມາ ຢູ່ ໜ້າງານ); record-level, ບໍ່ ບັງຄັບ --}}
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex items-center gap-3 flex-wrap">
-            <label for="depositor_name" class="text-sm font-semibold text-gray-700 shrink-0">👤 ຜູ້ ເອົາ ມາ ຝາກ <span class="text-gray-400 font-normal text-xs">/ Depositor · ບໍ່ ບັງຄັບ</span></label>
-            <input id="depositor_name" type="text" wire:model="depositor_name" placeholder="ຊື່ ຜູ້ ເອົາ ເຄື່ອງ ມາ ຝາກ (ອາດ ເປັນ ຄົນ ນອກ ລະບົບ)…" class="flex-1 min-w-[240px] rounded-lg border-gray-300 text-sm" />
+            <label class="text-sm font-semibold text-gray-700 shrink-0">👤 ຜູ້ ເອົາ ມາ ຝາກ <span class="text-gray-400 font-normal text-xs">/ Depositor · ບໍ່ ບັງຄັບ</span></label>
+            <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm shrink-0">
+                <button type="button" wire:click="$set('depositor_mode', 'internal')" class="px-3 py-1.5 transition {{ $depositor_mode === 'internal' ? 'bg-sky-600 text-white' : 'text-gray-600 hover:bg-gray-50' }}">ຄົນ ພາຍ ໃນ</button>
+                <button type="button" wire:click="$set('depositor_mode', 'external')" class="px-3 py-1.5 border-l border-gray-200 transition {{ $depositor_mode === 'external' ? 'bg-sky-600 text-white' : 'text-gray-600 hover:bg-gray-50' }}">ຄົນ ນອກ</button>
+            </div>
+            @if ($depositor_mode === 'internal')
+                <select wire:model="depositor_user_id" class="flex-1 min-w-[240px] rounded-lg border-gray-300 text-sm"><option value="">— ເລືອກ ຈາກ ຜູ້ ໃຊ້ —</option>@foreach ($ownerUsers as $ou)<option value="{{ $ou->id }}">{{ $ou->display_name ?: $ou->email }}</option>@endforeach</select>
+            @else
+                <input type="text" wire:model="depositor_name" placeholder="ຊື່ ຜູ້ ເອົາ ເຄື່ອງ ມາ ຝາກ (ຄົນ ນອກ ລະບົບ)…" class="flex-1 min-w-[240px] rounded-lg border-gray-300 text-sm" />
+            @endif
         </div>
 
         {{-- ຂັ້ນ 2 (ຂໍ້ມູນ ທົ່ວໄປ) ຍ້າຍ ໄປ ໜ້າ ແກ້ໄຂ — ຫົວໜ້າ ຕື່ມ ຕໍ່. ຄົງ markup ໄວ້ (ບໍ່ render). --}}

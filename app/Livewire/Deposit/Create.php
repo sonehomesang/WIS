@@ -50,7 +50,11 @@ class Create extends Component
     /** ຜູ້ ຮັບ / ຜູ້ ບັນທຶກ ຂໍ້ມູນ (ດຶງ ຈາກ ຜູ້ ໃຊ້). Default = ຜູ້ ສ້າງ. */
     public ?int $owner_user_id = null;
 
-    /** ຜູ້ ເອົາ ມາ ຝາກ (depositor) — ອາດ ເປັນ ຄົນ ນອກ; free-text, optional. */
+    /** ຜູ້ ເອົາ ມາ ຝາກ (depositor). mode 'internal' = ດຶງ ຈາກ users · 'external' = ພິມ ຊື່ ເອງ. optional. */
+    public string $depositor_mode = 'internal';
+
+    public ?int $depositor_user_id = null;
+
     public ?string $depositor_name = null;
 
     /** ພະແນກ ເຈົ້າ ຂອງ ເຄື່ອງ (Org Unit derived). Default = ຜູ້ ສ້າງ. */
@@ -241,6 +245,8 @@ class Create extends Component
             'functional_status' => ['nullable', 'in:usable,partial,unusable'],
             'original_deposit_date' => ['nullable', 'date'],
             'original_receiver' => ['nullable', 'string', 'max:256'],
+            'depositor_mode' => ['in:internal,external'],
+            'depositor_user_id' => ['nullable', 'exists:users,id'],
             'depositor_name' => ['nullable', 'string', 'max:256'],
             'deposit_reason' => ['nullable', 'string', 'max:1000'],
             'expected_duration' => ['nullable', 'string', 'max:128'],
@@ -270,6 +276,8 @@ class Create extends Component
             }
         }
 
+        $depUser = $this->depositor_mode === 'internal' && $this->depositor_user_id ? User::find($this->depositor_user_id) : null;
+
         $record = app(DepositService::class)->createDraft([
             'request_type' => $this->request_type,
             'item_category' => $this->item_category,
@@ -284,7 +292,8 @@ class Create extends Component
             'expected_claim_date' => $this->expected_claim_date ?: null,
             'remark' => $this->remark ?: null,
             'owner_user_id' => $this->owner_user_id,
-            'depositor_name' => $this->depositor_name ?: null,
+            'depositor_user_id' => $depUser?->id,
+            'depositor_name' => $depUser ? ($depUser->display_name ?? $depUser->email) : ($this->depositor_name ?: null),
             'owner_dept_id' => $this->owner_dept_id,
             'owner_unit_id' => $this->owner_dept_id ? Department::find($this->owner_dept_id)?->unit_id : null,
             'items' => $this->items,

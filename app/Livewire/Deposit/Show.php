@@ -335,6 +335,8 @@ class Show extends Component
         $r = $this->record;
         $this->ef = [
             'owner_user_id' => $r->owner_user_id, 'owner_dept_id' => $r->owner_dept_id,
+            'depositor_mode' => $r->depositor_user_id ? 'internal' : 'external',
+            'depositor_user_id' => $r->depositor_user_id,
             'depositor_name' => $r->depositor_name,
             'item_category' => $r->item_category, 'origin_source' => $r->origin_source,
             'functional_status' => $r->functional_status,
@@ -365,6 +367,8 @@ class Show extends Component
         abort_unless($this->canEdit(), 403);
         $this->validate([
             'ef.owner_user_id' => ['required', 'exists:users,id'],
+            'ef.depositor_mode' => ['in:internal,external'],
+            'ef.depositor_user_id' => ['nullable', 'exists:users,id'],
             'ef.depositor_name' => ['nullable', 'string', 'max:256'],
             'ef.owner_dept_id' => ['nullable', 'exists:departments,id'],
             'ef.item_category' => ['nullable', 'string', 'max:256'],
@@ -395,11 +399,13 @@ class Show extends Component
         $r = $this->record;
         $deptId = $this->ef['owner_dept_id'] ?: null;
         $owner = User::find($this->ef['owner_user_id'] ?? null);
+        $depUser = ($this->ef['depositor_mode'] ?? 'external') === 'internal' && ! empty($this->ef['depositor_user_id']) ? User::find($this->ef['depositor_user_id']) : null;
         $r->fill([
             'owner_user_id' => $owner?->id ?? $r->owner_user_id,
             'owner_name' => $owner ? ($owner->display_name ?? $owner->email) : $r->owner_name,
             'owner_email' => $owner ? mb_strtolower($owner->email) : $r->owner_email,
-            'depositor_name' => ($this->ef['depositor_name'] ?? '') ?: null,
+            'depositor_user_id' => $depUser?->id,
+            'depositor_name' => $depUser ? ($depUser->display_name ?? $depUser->email) : (($this->ef['depositor_name'] ?? '') ?: null),
             'owner_dept_id' => $deptId,
             'owner_unit_id' => $deptId ? Department::find($deptId)?->unit_id : null,
             'item_category' => $this->ef['item_category'] ?: null,

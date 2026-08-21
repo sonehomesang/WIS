@@ -455,7 +455,21 @@
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                             <div><label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ຮັບ / ຜູ້ບັນທຶກ ຂໍ້ມູນ / Receiver <span class="text-gray-400 font-normal">(ດຶງ ຈາກ ຜູ້ ໃຊ້)</span></label><select wire:model="ef.owner_user_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($ownerUsers as $ou)<option value="{{ $ou->id }}">{{ $ou->display_name ?: $ou->email }}</option>@endforeach</select>@error('ef.owner_user_id')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
-                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ ເອົາ ມາ ຝາກ / Depositor <span class="text-gray-400 font-normal">(ບໍ່ ບັງຄັບ)</span></label><input type="text" wire:model="ef.depositor_name" placeholder="ຊື່ ຜູ້ ເອົາ ເຄື່ອງ ມາ ຝາກ…" class="w-full rounded-lg border-gray-300 text-sm" />@error('ef.depositor_name')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ ເອົາ ມາ ຝາກ / Depositor <span class="text-gray-400 font-normal">(ບໍ່ ບັງຄັບ)</span></label>
+                                <div class="flex gap-2">
+                                    <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs shrink-0">
+                                        <button type="button" wire:click="$set('ef.depositor_mode', 'internal')" class="px-2.5 py-2 transition {{ ($ef['depositor_mode'] ?? 'external') === 'internal' ? 'bg-sky-600 text-white' : 'text-gray-600 hover:bg-gray-50' }}">ຄົນ ໃນ</button>
+                                        <button type="button" wire:click="$set('ef.depositor_mode', 'external')" class="px-2.5 py-2 border-l border-gray-200 transition {{ ($ef['depositor_mode'] ?? 'external') === 'external' ? 'bg-sky-600 text-white' : 'text-gray-600 hover:bg-gray-50' }}">ຄົນ ນອກ</button>
+                                    </div>
+                                    @if (($ef['depositor_mode'] ?? 'external') === 'internal')
+                                        <select wire:model="ef.depositor_user_id" class="flex-1 rounded-lg border-gray-300 text-sm"><option value="">— ເລືອກ —</option>@foreach ($ownerUsers as $ou)<option value="{{ $ou->id }}">{{ $ou->display_name ?: $ou->email }}</option>@endforeach</select>
+                                    @else
+                                        <input type="text" wire:model="ef.depositor_name" placeholder="ຊື່ ຄົນ ນອກ…" class="flex-1 rounded-lg border-gray-300 text-sm" />
+                                    @endif
+                                </div>
+                                @error('ef.depositor_name')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
+                            </div>
                             <div><label class="block text-xs font-medium text-gray-500 mb-1">ພະແນກ ເຈົ້າ ຂອງ / Department <span class="text-gray-400 font-normal">(ຄຸມ ສິດ ຈຳໜ່າຍ)</span></label><select wire:model="ef.owner_dept_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}@if ($d->unit) · {{ $d->unit->name }}@endif</option>@endforeach</select>@error('ef.owner_dept_id')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
                             <div><label class="block text-xs font-medium text-gray-500 mb-1">ປະເພດ</label><input type="text" wire:model="ef.item_category" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                             <div><label class="block text-xs font-medium text-gray-500 mb-1">ແຫຼ່ງທີ່ມາ</label><input type="text" wire:model="ef.origin_source" class="w-full rounded-lg border-gray-300 text-sm" /></div>

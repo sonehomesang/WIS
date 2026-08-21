@@ -55,6 +55,8 @@ class DepositService
                 'owner_name' => $owner->display_name ?? $owner->email,
                 'owner_unit_id' => $data['owner_unit_id'] ?? $owner->unit_id ?? null,
                 'owner_dept_id' => $data['owner_dept_id'] ?? $owner->department_id ?? null,
+                'depositor_user_id' => $data['depositor_user_id'] ?? null,
+                'depositor_name' => $data['depositor_name'] ?? null,
                 'request_type' => $data['request_type'] ?? 'walk_in',
                 'item_category' => $data['item_category'] ?? null,
                 'origin_source' => $data['origin_source'] ?? null,
