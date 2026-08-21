@@ -18,6 +18,12 @@
             </div>
         </div>
 
+        {{-- ຜູ້ ເອົາ ມາ ຝາກ — ເຫັນ ຕອນ ຝາກ (ຄົນ ເອົາ ເຄື່ອງ ມາ ຢູ່ ໜ້າງານ); record-level, ບໍ່ ບັງຄັບ --}}
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex items-center gap-3 flex-wrap">
+            <label for="depositor_name" class="text-sm font-semibold text-gray-700 shrink-0">👤 ຜູ້ ເອົາ ມາ ຝາກ <span class="text-gray-400 font-normal text-xs">/ Depositor · ບໍ່ ບັງຄັບ</span></label>
+            <input id="depositor_name" type="text" wire:model="depositor_name" placeholder="ຊື່ ຜູ້ ເອົາ ເຄື່ອງ ມາ ຝາກ (ອາດ ເປັນ ຄົນ ນອກ ລະບົບ)…" class="flex-1 min-w-[240px] rounded-lg border-gray-300 text-sm" />
+        </div>
+
         {{-- ຂັ້ນ 2 (ຂໍ້ມູນ ທົ່ວໄປ) ຍ້າຍ ໄປ ໜ້າ ແກ້ໄຂ — ຫົວໜ້າ ຕື່ມ ຕໍ່. ຄົງ markup ໄວ້ (ບໍ່ render). --}}
         @if (false)
         <div class="order-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
