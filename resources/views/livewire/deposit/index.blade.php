@@ -43,7 +43,12 @@
                         <option value="">All Types</option>
                         <option value="walk_in">Walk-in</option><option value="pre_request">Pre-request</option>
                     </select>
+                    <select wire:model.live="unitFilter" class="w-40 rounded-lg border-gray-300 text-sm" title="ໜ່ວຍງານ ເຈົ້າຂອງ">
+                        <option value="">ທຸກ ໜ່ວຍງານ</option>
+                        @foreach ($units as $u)<option value="{{ $u->id }}">{{ $u->name }}</option>@endforeach
+                    </select>
                     @if ($canManageDeleted)<button wire:click="toggleDeleted" title="ເບິ່ງ ລາຍການ ທີ່ ລຶບ ແລ້ວ ເພື່ອ ກູ້ຄືນ" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">{{ $showDeleted ? '← ກັບ ລິສ' : '↩ ລາຍການ ທີ່ ຖືກ ລຶບ' }}</button>@endif
+                    <a href="{{ route('deposit.report', ['search' => $search, 'status' => $statusFilter, 'type' => $typeFilter, 'unit' => $unitFilter]) }}" target="_blank" rel="noopener" title="ພິມ ບັນຊີ ລາຍການ (ຕາມ filter ນີ້) ພ້ອມ letterhead" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 inline-flex items-center transition whitespace-nowrap">🖨 ພິມ ບັນຊີ</a>
                     @can('deposit.create')<a href="{{ route('deposit.create') }}" wire:navigate class="text-sm font-medium text-white bg-indigo-600 rounded-lg px-3.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 transition shadow-sm whitespace-nowrap">+ Deposit</a>@endcan
                 </div>
             </div>
@@ -64,7 +69,7 @@
                     <thead class="sticky top-0 z-10 bg-slate-50 text-slate-500 border-b border-gray-200">
                         <tr class="text-[11px] uppercase tracking-wide">
                             <th class="text-left font-semibold px-3 py-2.5">ໄອດີ (DP)</th>
-                            <th class="text-left font-semibold px-3 py-2.5">ເຈົ້າຂອງ</th>
+                            <th class="text-left font-semibold px-3 py-2.5">ໜ່ວຍງານ</th>
                             <th class="text-left font-semibold px-3 py-2.5">ເຄື່ອງຝາກ</th>
                             <th class="text-center font-semibold px-3 py-2.5">ຈຳນວນ</th>
                             <th class="text-left font-semibold px-3 py-2.5">ລະຫັດເຄື່ອງ</th>
@@ -79,7 +84,7 @@
                             @php [$lbl, $cls] = $statusMeta($r->status); $first = $r->items->first(); $ph = $first?->photos->first(); @endphp
                             <tr wire:key="dp-{{ $r->id }}" class="transition {{ $locked($r->status) ? 'opacity-60 bg-gray-50/70' : 'hover:bg-sky-50/40' }}" @if ($locked($r->status)) title="ດຶງ ໄປ ຈຳໜ່າຍ ແລ້ວ — ລັອກ ການ ແກ້ໄຂ" @endif>
                                 <td class="px-4 py-2.5 align-top whitespace-nowrap"><a href="{{ route('deposit.show', $r) }}" wire:navigate class="font-mono text-sm font-medium text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
-                                <td class="px-4 py-2.5 align-top"><div class="font-semibold text-gray-800">{{ $r->owner_name }}</div><div class="text-xs text-gray-400">{{ $r->unit?->name ?? $r->owner_email }}</div></td>
+                                <td class="px-4 py-2.5 align-top"><div class="font-semibold text-gray-800">{{ $r->unit?->name ?? '—' }}</div></td>
                                 <td class="px-4 py-2.5 align-top min-w-[13rem]">
                                     <div class="flex gap-2.5">
                                         @if ($ph)<img src="{{ $ph->url }}" alt="" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
@@ -99,12 +104,10 @@
                                 <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap">@if ($first?->asset_code)<span class="font-mono bg-gray-50 text-gray-600 border border-gray-200 rounded px-1.5 py-0.5">{{ $first->asset_code }}</span>@if ($r->items->count() > 1)<span class="text-gray-300"> …</span>@endif @else<span class="text-gray-300">—</span>@endif</td>
                                 <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap font-mono {{ $first?->fixed_asset_no ? 'text-gray-600' : 'text-gray-300' }}">{{ $first?->fixed_asset_no ?: '—' }}</td>
                                 <td class="px-4 py-2.5 align-top">
-                                    @php $conds = $r->items->pluck('condition_status')->filter(fn ($c) => $c && $c !== 'in_service')->unique(); @endphp
-                                    @forelse ($conds as $cs)
+                                    @php $conds = $r->items->pluck('condition_status')->map(fn ($c) => $c ?: 'in_service')->unique(); @endphp
+                                    @foreach ($conds as $cs)
                                         <span class="inline-block text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($cs) }}">{{ \App\Support\ConditionStatus::shortLabel($cs) }}</span>
-                                    @empty
-                                        <span class="text-xs text-emerald-600">ໃຊ້ ດີ</span>
-                                    @endforelse
+                                    @endforeach
                                 </td>
                                 <td class="px-4 py-2.5 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
                                 <td class="px-3 py-2.5 align-top text-right">

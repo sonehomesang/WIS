@@ -24,6 +24,8 @@ class Index extends Component
 
     public string $typeFilter = '';
 
+    public string $unitFilter = '';
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('deposit.view'), 403);
@@ -35,6 +37,11 @@ class Index extends Component
     }
 
     public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingUnitFilter(): void
     {
         $this->resetPage();
     }
@@ -134,6 +141,7 @@ class Index extends Component
             ->when($this->statusFilter === 'needs_info', fn ($q) => $q->needsOfficeInfo())
             ->when($this->statusFilter && $this->statusFilter !== 'needs_info', fn ($q) => $q->where('status', $this->statusFilter))
             ->when($this->typeFilter, fn ($q) => $q->where('request_type', $this->typeFilter))
+            ->when($this->unitFilter, fn ($q) => $q->where('owner_unit_id', $this->unitFilter))
             ->orderByDesc('id')
             ->paginate(5);
 
@@ -141,6 +149,7 @@ class Index extends Component
             'records' => $items,
             'canManageDeleted' => $this->canManageDeleted(),
             'chips' => $this->statusChips(),
+            'units' => \App\Models\Unit::whereIn('id', $this->scopedQuery()->distinct()->pluck('owner_unit_id')->filter())->orderBy('name')->get(['id', 'name']),
         ]);
     }
 

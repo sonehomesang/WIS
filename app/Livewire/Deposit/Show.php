@@ -350,6 +350,7 @@ class Show extends Component
             'condition_on_deposit' => $it->condition_on_deposit, 'condition_on_claim' => $it->condition_on_claim,
             'storage_location' => $it->storage_location,
             'condition_status' => $it->condition_status ?? 'in_service',
+            'recommendation' => $it->recommendation,
         ]])->all();
         $this->edPhotos = [];
         $this->edCam = [];
@@ -384,6 +385,7 @@ class Show extends Component
             'ei.*.estimated_value' => ['nullable', 'numeric', 'min:0'],
             'ei.*.currency' => ['nullable', 'in:LAK,THB,USD'],
             'ei.*.condition_status' => ['required', ConditionStatus::rule()],
+            'ei.*.recommendation' => ['nullable', 'string', 'max:2000'],
             'ei.*.storage_location' => ['nullable', 'string', 'max:256'],
             'edPhotos.*.*.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:12288'],
         ]);
@@ -431,6 +433,7 @@ class Show extends Component
                     'condition_status' => $cs = ($f['condition_status'] ?? 'in_service'),
                     'condition_set_at' => $it->condition_status !== $cs ? now() : $it->condition_set_at,
                     'condition_set_by' => $it->condition_status !== $cs ? auth()->id() : $it->condition_set_by,
+                    'recommendation' => ($f['recommendation'] ?? '') ?: null,
                 ]);
             }
             // ຮູບ ຝາກ ໃໝ່ 3 ມູມ (deposit) ພ້ອມ slot — append ຫຼັງ ຮູບ ເກົ່າ.

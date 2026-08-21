@@ -130,6 +130,41 @@ Route::get('deposit/{record}/pdf', function (DepositRecord $record) {
     return PdfExport::download('deposit.pdf', ['record' => $record], "deposit-{$record->request_number}.pdf");
 })->middleware(['auth', 'verified'])->name('deposit.pdf');
 
+// Letterhead index/report of the (filtered) deposit list — printable document.
+Route::get('deposit/report', function (\Illuminate\Http\Request $request) {
+    $u = auth()->user();
+    abort_unless($u->can('deposit.view'), 403);
+
+    $q = DepositRecord::query()->with(['items.photos', 'unit']);
+    // ownership scope — mirrors Deposit\Index::scopedQuery()
+    if (! ($u->is_super_admin || $u->hasAnyRole(['admin', 'warehouse_staff']))) {
+        if ($u->transactionScope() === 'department' && $u->department_id) {
+            $q->where('owner_dept_id', $u->department_id);
+        } else {
+            $q->where('owner_user_id', $u->id);
+        }
+    }
+
+    $search = trim((string) $request->query('search', ''));
+    $status = (string) $request->query('status', '');
+    $type = (string) $request->query('type', '');
+    $unitId = (int) $request->query('unit', 0);
+
+    $q->when($search !== '', fn ($w) => $w->where(fn ($x) => $x->where('request_number', 'like', "%{$search}%")->orWhere('owner_name', 'like', "%{$search}%")))
+        ->when($status === 'needs_info', fn ($w) => $w->needsOfficeInfo())
+        ->when($status !== '' && $status !== 'needs_info', fn ($w) => $w->where('status', $status))
+        ->when($type !== '', fn ($w) => $w->where('request_type', $type))
+        ->when($unitId > 0, fn ($w) => $w->where('owner_unit_id', $unitId))
+        ->orderByDesc('id');
+
+    return view('deposit.index-report', [
+        'records' => $q->get(),
+        'filterUnit' => $unitId > 0 ? \App\Models\Unit::find($unitId) : null,
+        'filterStatus' => $status,
+        'generatedBy' => $u->display_name ?? $u->email,
+    ]);
+})->middleware(['auth', 'verified'])->name('deposit.report');
+
 Route::get('deposit/{record}', App\Livewire\Deposit\Show::class)
     ->middleware(['auth', 'verified'])
     ->name('deposit.show');
