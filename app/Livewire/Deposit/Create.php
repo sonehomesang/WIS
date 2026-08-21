@@ -47,8 +47,11 @@ class Create extends Component
 
     public string $remark = '';
 
-    /** ເຈົ້າ ຂອງ ເຄື່ອງ ຝາກ (ດຶງ ຈາກ ຜູ້ ໃຊ້). Default = ຜູ້ ສ້າງ. */
+    /** ຜູ້ ຮັບ / ຜູ້ ບັນທຶກ ຂໍ້ມູນ (ດຶງ ຈາກ ຜູ້ ໃຊ້). Default = ຜູ້ ສ້າງ. */
     public ?int $owner_user_id = null;
+
+    /** ຜູ້ ເອົາ ມາ ຝາກ (depositor) — ອາດ ເປັນ ຄົນ ນອກ; free-text, optional. */
+    public ?string $depositor_name = null;
 
     /** ພະແນກ ເຈົ້າ ຂອງ ເຄື່ອງ (Org Unit derived). Default = ຜູ້ ສ້າງ. */
     public ?int $owner_dept_id = null;
@@ -238,6 +241,7 @@ class Create extends Component
             'functional_status' => ['nullable', 'in:usable,partial,unusable'],
             'original_deposit_date' => ['nullable', 'date'],
             'original_receiver' => ['nullable', 'string', 'max:256'],
+            'depositor_name' => ['nullable', 'string', 'max:256'],
             'deposit_reason' => ['nullable', 'string', 'max:1000'],
             'expected_duration' => ['nullable', 'string', 'max:128'],
             'deposit_date' => ['required', 'date'],
@@ -280,6 +284,7 @@ class Create extends Component
             'expected_claim_date' => $this->expected_claim_date ?: null,
             'remark' => $this->remark ?: null,
             'owner_user_id' => $this->owner_user_id,
+            'depositor_name' => $this->depositor_name ?: null,
             'owner_dept_id' => $this->owner_dept_id,
             'owner_unit_id' => $this->owner_dept_id ? Department::find($this->owner_dept_id)?->unit_id : null,
             'items' => $this->items,

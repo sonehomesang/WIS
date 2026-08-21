@@ -61,8 +61,12 @@
                     </div>
                 @endif
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">ເຈົ້າ ຂອງ ເຄື່ອງ / Owner <span class="text-gray-400 font-normal">(ດຶງ ຈາກ ຜູ້ ໃຊ້)</span></label>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ຮັບ / ຜູ້ບັນທຶກ ຂໍ້ມູນ / Receiver <span class="text-gray-400 font-normal">(ດຶງ ຈາກ ຜູ້ ໃຊ້)</span></label>
                     <select wire:model="owner_user_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($ownerUsers as $ou)<option value="{{ $ou->id }}">{{ $ou->display_name ?: $ou->email }}</option>@endforeach</select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ ເອົາ ມາ ຝາກ / Depositor <span class="text-gray-400 font-normal">(ບໍ່ ບັງຄັບ)</span></label>
+                    <input type="text" wire:model="depositor_name" placeholder="ຊື່ ຜູ້ ເອົາ ເຄື່ອງ ມາ ຝາກ…" class="w-full rounded-lg border-gray-300 text-sm" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">ພະແນກ ເຈົ້າ ຂອງ / Department <span class="text-gray-400 font-normal">(ຄຸມ ສິດ ຈຳໜ່າຍ)</span></label>

@@ -75,9 +75,10 @@
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
                 <div class="px-4 py-2.5 bg-gray-50/70 border-b border-gray-100 flex items-center gap-2.5"><span class="w-6 h-6 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center text-xs">📋</span><h3 class="text-sm font-semibold text-gray-700">ຂໍ້ມູນ ທົ່ວໄປ / Deposit record</h3></div>
                 <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                    {!! $kv('ເຈົ້າຂອງ / Owner', e($record->owner_name)) !!}
+                    {!! $kv('ຜູ້ຮັບ / ຜູ້ບັນທຶກ ຂໍ້ມູນ / Receiver', e($record->owner_name)) !!}
                     {!! $kv('Email', e($record->owner_email)) !!}
-                    {!! $kv('ໜ່ວຍງານ / Unit', e($record->unit?->name)) !!}
+                    {!! $kv('ຜູ້ ເອົາ ມາ ຝາກ / Depositor', e($record->depositor_name)) !!}
+                    {!! $kv('ໜ່ວຍງານ ເຈົ້າຂອງ / Unit\'s Owner', e($record->unit?->name)) !!}
                     {!! $kv('ພະແນກ / Dept', e($record->department?->name)) !!}
                     {!! $kv('ປະເພດ / Category', e($record->item_category)) !!}
                     {!! $kv('ແຫຼ່ງທີ່ມາ / Origin', e($record->origin_source)) !!}
@@ -453,7 +454,8 @@
                             <h4 class="text-sm font-semibold text-gray-700">ຂໍ້ມູນ ທົ່ວໄປ</h4>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ເຈົ້າຂອງ / Owner <span class="text-gray-400 font-normal">(ດຶງ ຈາກ ຜູ້ ໃຊ້)</span></label><select wire:model="ef.owner_user_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($ownerUsers as $ou)<option value="{{ $ou->id }}">{{ $ou->display_name ?: $ou->email }}</option>@endforeach</select>@error('ef.owner_user_id')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ຮັບ / ຜູ້ບັນທຶກ ຂໍ້ມູນ / Receiver <span class="text-gray-400 font-normal">(ດຶງ ຈາກ ຜູ້ ໃຊ້)</span></label><select wire:model="ef.owner_user_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($ownerUsers as $ou)<option value="{{ $ou->id }}">{{ $ou->display_name ?: $ou->email }}</option>@endforeach</select>@error('ef.owner_user_id')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">ຜູ້ ເອົາ ມາ ຝາກ / Depositor <span class="text-gray-400 font-normal">(ບໍ່ ບັງຄັບ)</span></label><input type="text" wire:model="ef.depositor_name" placeholder="ຊື່ ຜູ້ ເອົາ ເຄື່ອງ ມາ ຝາກ…" class="w-full rounded-lg border-gray-300 text-sm" />@error('ef.depositor_name')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
                             <div><label class="block text-xs font-medium text-gray-500 mb-1">ພະແນກ ເຈົ້າ ຂອງ / Department <span class="text-gray-400 font-normal">(ຄຸມ ສິດ ຈຳໜ່າຍ)</span></label><select wire:model="ef.owner_dept_id" class="w-full rounded-lg border-gray-300 text-sm"><option value="">—</option>@foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}@if ($d->unit) · {{ $d->unit->name }}@endif</option>@endforeach</select>@error('ef.owner_dept_id')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
                             <div><label class="block text-xs font-medium text-gray-500 mb-1">ປະເພດ</label><input type="text" wire:model="ef.item_category" class="w-full rounded-lg border-gray-300 text-sm" /></div>
                             <div><label class="block text-xs font-medium text-gray-500 mb-1">ແຫຼ່ງທີ່ມາ</label><input type="text" wire:model="ef.origin_source" class="w-full rounded-lg border-gray-300 text-sm" /></div>
