@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -136,11 +137,14 @@ class LdapDirectory
      *
      * @param  array<int,array>  $rows
      * @param  array<int,string>|null  $onlyGuids  restrict to these AD guids (selection); null = all
-     * @return array{created:int,updated:int,unchanged:int,skipped:int}
+     * @param  bool  $linkExisting  false (default, "keep separate") = never touch an existing
+     *                              account; a match is reported as 'matched' and skipped. true =
+     *                              backfill link fields onto the existing account.
+     * @return array{created:int,updated:int,unchanged:int,matched:int,skipped:int}
      */
-    public function syncRows(array $rows, ?array $onlyGuids = null): array
+    public function syncRows(array $rows, ?array $onlyGuids = null, bool $linkExisting = false): array
     {
-        $sum = ['created' => 0, 'updated' => 0, 'unchanged' => 0, 'skipped' => 0];
+        $sum = ['created' => 0, 'updated' => 0, 'unchanged' => 0, 'matched' => 0, 'skipped' => 0];
 
         foreach ($rows as $row) {
             $guid = $row['guid'] ?? null;
@@ -184,6 +188,17 @@ class LdapDirectory
                 continue;
             }
 
+            // "Keep separate" (default): an AD row matching a pre-existing REAL account is
+            // left completely untouched and reported for manual review. Accounts WE created
+            // by a prior import (domain + pre_created) are always refreshed so re-sync stays
+            // idempotent. The admin flips linkExisting on to also backfill real accounts.
+            $isOwnImport = $user->auth_provider === 'domain' && $user->is_pre_created;
+            if (! $linkExisting && ! $isOwnImport) {
+                $sum['matched']++;
+
+                continue;
+            }
+
             // Existing account — backfill link fields without downgrading the person.
             $dirty = [];
             if ($guid && $user->ad_guid !== $guid) {
@@ -216,6 +231,41 @@ class LdapDirectory
         Log::info('LDAP sync', $sum);
 
         return $sum;
+    }
+
+    /**
+     * Kill-switch scope: accounts CREATED by this import (pre-created domain accounts).
+     * Existing/linked real users are is_pre_created=false, so they are never in scope.
+     */
+    public function importedQuery(): Builder
+    {
+        return User::query()->where('auth_provider', 'domain')->where('is_pre_created', true);
+    }
+
+    public function importedCount(): int
+    {
+        return $this->importedQuery()->count();
+    }
+
+    /**
+     * Undo an import. $delete=false → lock (disable) every imported account; true → soft-delete.
+     * Only ever affects pre-created domain accounts — never real/linked users.
+     *
+     * @return int number affected
+     */
+    public function rollbackImported(bool $delete = false): int
+    {
+        $ids = $this->importedQuery()->pluck('id');
+        if ($ids->isEmpty()) {
+            return 0;
+        }
+        $delete
+            ? User::whereIn('id', $ids)->delete()                       // soft-delete
+            : User::whereIn('id', $ids)->update(['status' => 'locked']);
+
+        Log::info('LDAP rollback', ['action' => $delete ? 'remove' : 'disable', 'count' => $ids->count()]);
+
+        return $ids->count();
     }
 
     // ── helpers ──────────────────────────────────────────────────────────

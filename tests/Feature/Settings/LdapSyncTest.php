@@ -55,23 +55,48 @@ test('syncRows updates when AD display name changes', function () {
         ->and(User::where('ad_guid', 'g-3')->first()->display_name)->toBe('New Name');
 });
 
-test('syncRows links an existing local user by email without duplicating', function () {
+test('keep-separate (default) leaves a matching REAL account completely untouched', function () {
     $local = User::factory()->create([
         'email' => 'khamsone@namtheun2.com',
+        'username' => 'khamsone',
         'auth_provider' => 'password',
+        'is_pre_created' => false,
         'ad_guid' => null,
     ]);
 
+    // default linkExisting = false
     $sum = app(LdapDirectory::class)->syncRows([
         adRow(['guid' => 'g-4', 'username' => 'khamsone', 'email' => 'khamsone@namtheun2.com', 'display_name' => 'Khamsone P.']),
     ]);
 
     $local->refresh();
     expect($sum['created'])->toBe(0)
-        ->and($sum['updated'])->toBe(1)
+        ->and($sum['matched'])->toBe(1)                                   // reported for review
+        ->and($sum['updated'])->toBe(0)
         ->and(User::where('email', 'khamsone@namtheun2.com')->count())->toBe(1)   // no duplicate
+        ->and($local->ad_guid)->toBeNull()                               // untouched
+        ->and($local->auth_provider)->toBe('password')
+        ->and($local->is_pre_created)->toBeFalse();
+});
+
+test('linkExisting=true backfills a matching real account without downgrading it', function () {
+    $local = User::factory()->create([
+        'email' => 'khamsone@namtheun2.com',
+        'username' => 'khamsone-old',
+        'auth_provider' => 'password',
+        'is_pre_created' => false,
+        'ad_guid' => null,
+    ]);
+
+    $sum = app(LdapDirectory::class)->syncRows([
+        adRow(['guid' => 'g-4', 'username' => 'khamsone', 'email' => 'khamsone@namtheun2.com', 'display_name' => 'Khamsone P.']),
+    ], null, linkExisting: true);
+
+    $local->refresh();
+    expect($sum['created'])->toBe(0)
+        ->and($sum['updated'])->toBe(1)
+        ->and(User::where('email', 'khamsone@namtheun2.com')->count())->toBe(1)
         ->and($local->ad_guid)->toBe('g-4')
-        ->and($local->username)->toBe('khamsone')
         ->and($local->auth_provider)->toBe('password');   // NOT downgraded
 });
 
@@ -98,6 +123,36 @@ test('syncRows onlyGuids restricts import to the selected rows', function () {
     expect($sum['created'])->toBe(1)
         ->and(User::where('username', 'aaa')->exists())->toBeTrue()
         ->and(User::where('username', 'bbb')->exists())->toBeFalse();
+});
+
+test('rollback disables only imported accounts, never real users', function () {
+    $real = User::factory()->create(['auth_provider' => 'password', 'is_pre_created' => false, 'status' => 'active']);
+    app(LdapDirectory::class)->syncRows([
+        adRow(['guid' => 'imp-1', 'username' => 'imp1', 'email' => 'imp1@namtheun2.com']),
+        adRow(['guid' => 'imp-2', 'username' => 'imp2', 'email' => 'imp2@namtheun2.com']),
+    ]);
+
+    $svc = app(LdapDirectory::class);
+    expect($svc->importedCount())->toBe(2);
+
+    $n = $svc->rollbackImported(delete: false);   // disable
+
+    $real->refresh();
+    expect($n)->toBe(2)
+        ->and(User::where('username', 'imp1')->first()->status)->toBe('locked')
+        ->and($real->status)->toBe('active');     // real user untouched
+});
+
+test('rollback remove soft-deletes only imported accounts', function () {
+    $real = User::factory()->create(['auth_provider' => 'password', 'is_pre_created' => false]);
+    app(LdapDirectory::class)->syncRows([adRow(['guid' => 'imp-9', 'username' => 'imp9', 'email' => 'imp9@namtheun2.com'])]);
+
+    $n = app(LdapDirectory::class)->rollbackImported(delete: true);
+
+    expect($n)->toBe(1)
+        ->and(User::where('username', 'imp9')->exists())->toBeFalse()          // gone from default scope
+        ->and(User::withTrashed()->where('username', 'imp9')->exists())->toBeTrue()   // soft-deleted
+        ->and(User::whereKey($real->id)->exists())->toBeTrue();               // real user kept
 });
 
 test('ldap settings page renders for admin', function () {

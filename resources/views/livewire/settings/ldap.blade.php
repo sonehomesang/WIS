@@ -108,6 +108,9 @@
                     <label class="inline-flex items-center gap-1.5 text-xs text-gray-600">
                         <input type="checkbox" wire:model="enabledOnly" class="rounded border-gray-300 text-sky-600" /> ສະເພາະ enabled
                     </label>
+                    <label class="inline-flex items-center gap-1.5 text-xs {{ $linkExisting ? 'text-amber-700 font-semibold' : 'text-gray-600' }}" title="ປິດໄວ້ = ບໍ່ແຕະ user ເກົ່າ (matched → skip). ເປີດ = ຕື່ມ ad_guid/ຊື່ ໃສ່ user ເກົ່າທີ່ຊ້ຳ.">
+                        <input type="checkbox" wire:model.live="linkExisting" class="rounded border-gray-300 text-amber-600" /> Link existing ⚠️
+                    </label>
                     <button type="button" wire:click="preview" wire:loading.attr="disabled"
                             class="h-9 px-3 rounded-lg bg-white border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60">
                         <span wire:loading.remove wire:target="preview">↻ Preview from AD</span>
@@ -143,7 +146,7 @@
                                         @if (! $r['enabled'])
                                             <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 ring-1 ring-rose-200">disabled</span>
                                         @elseif ($r['exists'])
-                                            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 ring-1 ring-gray-200">ມີແລ້ວ · link</span>
+                                            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full {{ $linkExisting ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-amber-50 text-amber-700 ring-amber-200' }} ring-1">ມີແລ້ວ · {{ $linkExisting ? 'link' : 'ແຍກໄວ້' }}</span>
                                         @else
                                             <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 ring-1 ring-sky-200">ໃໝ່ · New</span>
                                         @endif
@@ -158,6 +161,7 @@
                     <div class="flex flex-wrap gap-2 text-xs">
                         @if ($summary)
                             <span class="px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 ring-1 ring-sky-200">Created {{ $summary['created'] }}</span>
+                            <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200">Matched · ແຍກໄວ້ {{ $summary['matched'] }}</span>
                             <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">Updated {{ $summary['updated'] }}</span>
                             <span class="px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 ring-1 ring-gray-200">Unchanged {{ $summary['unchanged'] }}</span>
                             <span class="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-600 ring-1 ring-rose-200">Skipped {{ $summary['skipped'] }}</span>
@@ -176,6 +180,22 @@
             @endif
         </div>
 
+        {{-- ── Kill switch / rollback ────────────────────────────── --}}
+        <div class="bg-white border border-rose-100 rounded-lg p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h3 class="font-medium text-gray-800">🧯 Kill switch — imported accounts</h3>
+                    <p class="text-xs text-gray-500">ບັນຊີ import ມາ (domain · pre-created): <b class="text-gray-700">{{ $importedCount }}</b> ໂຕ. ໃຊ້ຕອນຢາກຍົກເລີກ — <b>ບໍ່ແຕະ user ຈິງ</b>.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" wire:click="disableImported" wire:confirm="ປິດ (lock) ບັນຊີ imported ທັງໝົດ?" @disabled($importedCount === 0)
+                            class="h-9 px-3 rounded-lg bg-white border border-amber-300 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-40">⏸ Disable all imported</button>
+                    <button type="button" wire:click="removeImported" wire:confirm="ລຶບ ບັນຊີ imported ທັງໝົດ? (soft-delete, ກູ້ຄືນໄດ້)" @disabled($importedCount === 0)
+                            class="h-9 px-3 rounded-lg bg-white border border-rose-300 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-40">🗑 Remove all imported</button>
+                </div>
+            </div>
+        </div>
+
         {{-- ── Last sync + security ──────────────────────────────── --}}
         <div class="grid md:grid-cols-2 gap-4">
             @if ($lastSync)
@@ -184,7 +204,7 @@
                     <p class="text-gray-600">🕓 {{ $lastSync['at'] ?? '—' }}
                         @if (! empty($lastSync['by']['display_name'])) · ໂດຍ {{ $lastSync['by']['display_name'] }} @endif</p>
                     @if (! empty($lastSync['summary']))
-                        <p class="text-xs text-gray-500 mt-1">Created {{ $lastSync['summary']['created'] ?? 0 }} · Updated {{ $lastSync['summary']['updated'] ?? 0 }} · Unchanged {{ $lastSync['summary']['unchanged'] ?? 0 }} · Skipped {{ $lastSync['summary']['skipped'] ?? 0 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Created {{ $lastSync['summary']['created'] ?? 0 }} · Matched {{ $lastSync['summary']['matched'] ?? 0 }} · Updated {{ $lastSync['summary']['updated'] ?? 0 }} · Unchanged {{ $lastSync['summary']['unchanged'] ?? 0 }} · Skipped {{ $lastSync['summary']['skipped'] ?? 0 }}</p>
                     @endif
                 </div>
             @endif
@@ -194,6 +214,8 @@
                     <li>Bind password <b>encrypt ໃນ DB</b> — ບໍ່ສະແດງຄືນ.</li>
                     <li>ໃຊ້ service account <b>read-only</b> · LDAPS (636).</li>
                     <li>ບັນຊີ sync = <code>domain</code> / <code>pending</code> — ບໍ່ເກັບ password ຂອງ user.</li>
+                    <li><b>Keep separate</b> (default): user ຊ້ຳ = <b>ບໍ່ແຕະ</b> (matched → review). ເປີດ "Link existing" ເອງ ຕອນໝັ້ນໃຈ.</li>
+                    <li>Kill switch: ຍົກເລີກ imported ໄດ້ 1 ຄລິກ (ບໍ່ແຕະ user ຈິງ).</li>
                     <li>Test / Import ຈຳກັດ <code>settings.edit</code>.</li>
                 </ul>
             </div>

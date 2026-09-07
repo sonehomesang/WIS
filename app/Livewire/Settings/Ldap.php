@@ -40,6 +40,10 @@ class Ldap extends Component
 
     public bool $enabledOnly = true;       // pull only enabled AD accounts
 
+    public bool $linkExisting = false;     // "keep separate": false = never touch existing accounts
+
+    public int $importedCount = 0;         // # of accounts created by import (kill-switch scope)
+
     /** @var array<int,array> fetched preview rows */
     public array $rows = [];
 
@@ -65,7 +69,9 @@ class Ldap extends Component
         $this->user_ou = $s['user_ou'] ?? '';
         $this->bind_username = $s['bind_username'] ?? '';
         $this->hasPassword = ! empty($s['password']);
+        $this->linkExisting = (bool) ($s['link_existing'] ?? false);
         $this->lastSync = Setting::get('ldap_last_sync', []) ?: null;
+        $this->importedCount = app(LdapDirectory::class)->importedCount();
     }
 
     /** Validate + store settings (bind password encrypted, blank keeps existing). */
@@ -98,6 +104,7 @@ class Ldap extends Component
             'user_ou' => $this->user_ou,
             'bind_username' => $this->bind_username,
             'password' => $password,
+            'link_existing' => $this->linkExisting,
         ], auth()->id());
 
         Cache::forget('settings.ldap');
@@ -153,9 +160,32 @@ class Ldap extends Component
             return;
         }
         $only = ! empty($this->selected) ? $this->selected : null;
-        $this->summary = app(LdapDirectory::class)->syncRows($this->rows, $only);
+        $this->summary = app(LdapDirectory::class)->syncRows($this->rows, $only, $this->linkExisting);
         $this->lastSync = Setting::get('ldap_last_sync', []) ?: null;
+        $this->importedCount = app(LdapDirectory::class)->importedCount();
         $this->result = 'Import ສຳເລັດ';
+        $this->resultType = 'ok';
+        $this->dispatch('saved');
+    }
+
+    /** Kill switch — disable (lock) every imported account. */
+    public function disableImported(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $n = app(LdapDirectory::class)->rollbackImported(delete: false);
+        $this->importedCount = app(LdapDirectory::class)->importedCount();
+        $this->result = "ປິດ (lock) {$n} ບັນຊີ imported ແລ້ວ";
+        $this->resultType = 'ok';
+        $this->dispatch('saved');
+    }
+
+    /** Kill switch — remove (soft-delete) every imported account. */
+    public function removeImported(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $n = app(LdapDirectory::class)->rollbackImported(delete: true);
+        $this->importedCount = app(LdapDirectory::class)->importedCount();
+        $this->result = "ລຶບ {$n} ບັນຊີ imported ແລ້ວ";
         $this->resultType = 'ok';
         $this->dispatch('saved');
     }
