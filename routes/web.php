@@ -13,6 +13,7 @@ use App\Livewire\Settings\Backup;
 use App\Livewire\Settings\ClearTestData;
 use App\Livewire\Settings\ConditionStatuses;
 use App\Livewire\Settings\Email;
+use App\Livewire\Settings\Ldap;
 use App\Livewire\Settings\Facilities;
 use App\Livewire\Settings\NotificationLog;
 use App\Livewire\Settings\Notifications;
@@ -484,6 +485,10 @@ Route::get('settings/notifications', Notifications::class)
 Route::get('settings/email', Email::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.email');
+
+Route::get('settings/ldap', Ldap::class)
+    ->middleware(['auth', 'verified'])
+    ->name('settings.ldap');
 
 Route::get('settings/notification-log', NotificationLog::class)
     ->middleware(['auth', 'verified'])
