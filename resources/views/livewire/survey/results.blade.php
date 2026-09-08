@@ -61,7 +61,7 @@
                 <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-4"><p class="text-xs text-gray-500">ຄະແນນສະເລ່ຍລວມ</p><p class="text-2xl font-bold text-amber-600">{{ $grandMean ?? '—' }} <span class="text-sm text-gray-400">/5</span></p></div>
             </div>
 
-            {{-- Insights & Recommendations (auto, PDCA) --}}
+            {{-- style maps for the Insights panel (rendered after the trend) --}}
             @php
                 $bandBadge = [
                     'emerald' => 'bg-emerald-50 text-emerald-700 ring-emerald-200',
@@ -80,25 +80,57 @@
                     'info'     => ['ℹ️', 'bg-gray-50 border-gray-200 text-gray-700'],
                 ];
             @endphp
+            {{-- Participation / response rate --}}
             <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-5">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <h3 class="font-bold text-gray-800 text-sm">🎯 ບົດວິເຄາະ &amp; ຄຳແນะນຳ · Insights &amp; Recommendations</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ring-1 {{ $bandBadge[$insights['verdict'][1]] }}">ໂດຍລວມ {{ $grandMean ?? '—' }}/5 · {{ $insights['verdict'][0] }}</span>
-                        <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ring-1 {{ $bandBadge[$insights['t2bBand'][1]] }}">ພໍໃຈ 4–5: {{ $t2b ?? '—' }}% · {{ $insights['t2bBand'][0] }}</span>
-                        <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ring-1 {{ $b2b !== null && $b2b > 10 ? 'bg-red-50 text-red-700 ring-red-200' : 'bg-gray-100 text-gray-600 ring-gray-200' }}">ບໍ່ພໍໃຈ 1–2: {{ $b2b ?? '—' }}%</span>
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <h3 class="font-bold text-gray-800 text-sm">👥 ອັດຕາການຕອບ · Participation</h3>
+                    <div class="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
+                        ຄຳຕອບ <b class="text-gray-800">{{ $total }}</b> / ພະນັກງານ
+                        @if (! $unit_id)
+                            <input type="number" min="0" wire:model.blur="targetStaff" placeholder="{{ $totalStaff }}"
+                                   class="w-16 h-7 rounded-md border-gray-300 text-xs text-center" title="ຕັ້ງຈຳນວນພະນັກງານເປົ້າໝາຍ ({{ $totalStaff }} = auto ຈາກລະບົບ)">
+                            <span class="text-[10px] px-1.5 py-0.5 rounded-full {{ $manualTarget ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-500' }}">{{ $manualTarget ? 'ເປົ້າ ຕັ້ງເອງ' : 'auto '.$totalStaff }}</span>
+                        @else
+                            <b class="text-gray-800">{{ $totalStaff }}</b>
+                        @endif
+                        = <b class="text-sky-600 text-sm">{{ $responseRate ?? '—' }}%</b>
                     </div>
                 </div>
-                <div class="space-y-2">
-                    @forelse ($insights['recos'] as $r)
-                        <div class="flex items-start gap-2 border rounded-lg px-3 py-2 text-sm {{ $recoStyle[$r['level']][1] }}">
-                            <span class="shrink-0">{{ $recoStyle[$r['level']][0] }}</span><span>{{ $r['text'] }}</span>
-                        </div>
-                    @empty
-                        <p class="text-sm text-gray-400">ຍັງບໍ່ມີຄຳແນະນຳ (ຂໍ້ມູນບໍ່ພຽງພໍ).</p>
-                    @endforelse
+                <div class="h-2.5 rounded-full bg-gray-200 overflow-hidden mb-4">
+                    <span class="block h-full rounded-full bg-sky-500" style="width:{{ min($responseRate ?? 0, 100) }}%"></span>
                 </div>
-                <p class="text-[11px] text-gray-400 mt-3">ເກນອ້າງອີງ: ສະເລ່ຍ ≥4.0 = ດີ · ພໍໃຈ(T2B) ≥80% = ດີ · ບໍ່ພໍໃຈ(B2B) ≤10% · ວົງຈອນ PDCA (ວາງແຜນ → ເຮັດ → ກວດ → ປັບປຸງ)</p>
+                <div class="grid md:grid-cols-2 gap-5">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 mb-2">ແບ່ງຕາມ ໜ່ວຍງານ (ຕອບ/ພະນັກງານ)</p>
+                        <div class="space-y-1.5 max-h-56 overflow-y-auto">
+                            @php $unitIds = collect($staffByUnit->keys())->merge($respByUnit->keys())->filter()->unique(); @endphp
+                            @forelse ($unitIds as $uid)
+                                @php $rc = (int) ($respByUnit[$uid] ?? 0); $sc = (int) ($staffByUnit[$uid] ?? 0); $rate = $sc ? round($rc / $sc * 100) : null; @endphp
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="w-28 truncate text-gray-600">{{ $unitNames[$uid] ?? 'ບໍ່ລະບຸ' }}</span>
+                                    <div class="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden"><span class="block h-full rounded-full bg-sky-400" style="width:{{ min($rate ?? 0, 100) }}%"></span></div>
+                                    <span class="w-24 text-right text-gray-500">{{ $rc }}/{{ $sc ?: '—' }} · {{ $rate !== null ? $rate.'%' : '—' }}</span>
+                                </div>
+                            @empty
+                                <p class="text-xs text-gray-400">—</p>
+                            @endforelse
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 mb-2">ແບ່ງຕາມ ຄວາມຖີ່ຕິດຕໍ່ (ສັດສ່ວນຜູ້ຕອບ)</p>
+                        <div class="space-y-1.5">
+                            @foreach (['daily' => 'ປະຈຳວັນ', 'weekly' => 'ປະຈຳອາທິດ', 'monthly' => 'ປະຈຳເດືອນ', 'occasionally' => 'ບາງຄັ້ງຄາວ'] as $fk => $flabel)
+                                @php $fc = (int) ($respByFreq[$fk] ?? 0); $fpct = $total ? round($fc / $total * 100) : 0; @endphp
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="w-24 text-gray-600">{{ $flabel }}</span>
+                                    <div class="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden"><span class="block h-full rounded-full bg-indigo-400" style="width:{{ $fpct }}%"></span></div>
+                                    <span class="w-16 text-right text-gray-500">{{ $fc }} · {{ $fpct }}%</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                <p class="text-[11px] text-gray-400 mt-3">ອັດຕາ = ຄຳຕອບ ÷ ພະນັກງານ active. *ຕອບບໍ່ລະບຸຕົວ/ຕອບຊ້ຳ ອາດເຮັດໃຫ້ >100% — ບັງຄັບ login ຖ້າຢາກນັບເປັນຄົນເອກະລັກ.</p>
             </div>
 
             @php
@@ -169,6 +201,28 @@
                     </svg>
                     <div class="flex gap-4 text-xs mt-1"><span class="text-sky-600">● Warehouse</span><span class="text-emerald-600">● Import-Export</span></div>
                 </div>
+            </div>
+
+            {{-- Insights & Recommendations (auto, PDCA) — after the results & trend --}}
+            <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-5">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h3 class="font-bold text-gray-800 text-sm">🎯 ບົດວິເຄາະ &amp; ຄຳແນະນຳ · Insights &amp; Recommendations</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ring-1 {{ $bandBadge[$insights['verdict'][1]] }}">ໂດຍລວມ {{ $grandMean ?? '—' }}/5 · {{ $insights['verdict'][0] }}</span>
+                        <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ring-1 {{ $bandBadge[$insights['t2bBand'][1]] }}">ພໍໃຈ 4–5: {{ $t2b ?? '—' }}% · {{ $insights['t2bBand'][0] }}</span>
+                        <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ring-1 {{ $b2b !== null && $b2b > 10 ? 'bg-red-50 text-red-700 ring-red-200' : 'bg-gray-100 text-gray-600 ring-gray-200' }}">ບໍ່ພໍໃຈ 1–2: {{ $b2b ?? '—' }}%</span>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    @forelse ($insights['recos'] as $r)
+                        <div class="flex items-start gap-2 border rounded-lg px-3 py-2 text-sm {{ $recoStyle[$r['level']][1] }}">
+                            <span class="shrink-0">{{ $recoStyle[$r['level']][0] }}</span><span>{{ $r['text'] }}</span>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-400">ຍັງບໍ່ມີຄຳແນະນຳ (ຂໍ້ມູນບໍ່ພຽງພໍ).</p>
+                    @endforelse
+                </div>
+                <p class="text-[11px] text-gray-400 mt-3">ເກນອ້າງອີງ: ສະເລ່ຍ ≥4.0 = ດີ · ພໍໃຈ(T2B) ≥80% = ດີ · ບໍ່ພໍໃຈ(B2B) ≤10% · ວົງຈອນ PDCA (ວາງແຜນ → ເຮັດ → ກວດ → ປັບປຸງ)</p>
             </div>
 
             {{-- comments --}}

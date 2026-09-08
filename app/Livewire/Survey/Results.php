@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Survey;
 
+use App\Models\Setting;
 use App\Models\SurveyResponse;
 use App\Models\Unit;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -34,9 +36,21 @@ class Results extends Component
     #[Url]
     public ?string $to = null;
 
+    /** Manager-set target staff count (survey population). Null = auto (active users). */
+    public ?int $targetStaff = null;
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('reports.view'), 403);
+        $this->targetStaff = Setting::get('survey')['target_staff'] ?? null;
+    }
+
+    /** Persist the manual target as it is edited (blank/0 = back to auto). */
+    public function updatedTargetStaff(): void
+    {
+        abort_unless(auth()->user()->can('reports.view'), 403);
+        $this->targetStaff = $this->targetStaff && $this->targetStaff > 0 ? (int) $this->targetStaff : null;
+        Setting::put('survey', array_merge(Setting::get('survey'), ['target_staff' => $this->targetStaff]), auth()->id());
     }
 
     public function resetFilters(): void
@@ -126,13 +140,31 @@ class Results extends Component
         $grandMean = $sectionMean(SurveyResponse::RATING_FIELDS);
         $insights = $this->buildInsights($grandMean, $t2b, $b2b, $qMeans, $sectionMean(SurveyResponse::WH_FIELDS), $sectionMean(SurveyResponse::IE_FIELDS), $total);
 
+        // ── participation / response rate ──
+        // denominator = active staff (respecting the unit filter); numerator = responses.
+        $staffQ = User::where('status', 'active')
+            ->when($this->unit_id, fn ($q, $v) => $q->where('unit_id', $v));
+        $totalStaff = (clone $staffQ)->count();
+        $staffByUnit = (clone $staffQ)->whereNotNull('unit_id')
+            ->groupBy('unit_id')->selectRaw('unit_id, count(*) as c')->pluck('c', 'unit_id');
+        $respByUnit = (clone $this->base())
+            ->groupBy('unit_id')->selectRaw('unit_id, count(*) as c')->pluck('c', 'unit_id');
+        $respByFreq = (clone $this->base())
+            ->groupBy('frequency')->selectRaw('frequency, count(*) as c')->pluck('c', 'frequency');
+        // overall denominator: manual target (whole-org) unless a unit filter is active
+        $manualTarget = ! $this->unit_id && $this->targetStaff && $this->targetStaff > 0;
+        $denominator = $manualTarget ? $this->targetStaff : $totalStaff;
+        $responseRate = $denominator ? (int) round($total / $denominator * 100) : null;
+        $units = Unit::orderBy('name')->get(['id', 'name']);
+        $unitNames = $units->pluck('name', 'id');
+
         // recent comments
         $comments = (clone $this->base())
             ->where(fn ($q) => $q->whereNotNull('doing_well')->orWhereNotNull('improve'))
             ->with('unit:id,name')->latest()->limit(20)->get();
 
         return view('livewire.survey.results', [
-            'units' => Unit::orderBy('name')->get(['id', 'name']),
+            'units' => $units,
             'total' => $total,
             'avgOf' => $avgOf,
             'whMean' => $sectionMean(SurveyResponse::WH_FIELDS),
@@ -146,6 +178,14 @@ class Results extends Component
             't2b' => $t2b,
             'b2b' => $b2b,
             'insights' => $insights,
+            'totalStaff' => $totalStaff,
+            'denominator' => $denominator,
+            'manualTarget' => $manualTarget,
+            'responseRate' => $responseRate,
+            'staffByUnit' => $staffByUnit,
+            'respByUnit' => $respByUnit,
+            'respByFreq' => $respByFreq,
+            'unitNames' => $unitNames,
         ]);
     }
 

@@ -80,6 +80,38 @@ test('results dashboard aggregates and filters', function () {
         ->and($c->viewData('total'))->toBe(2);
 });
 
+test('participation computes response rate against active staff', function () {
+    $this->seed(RolePermissionSeeder::class);
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $unit = makeUnit();
+    User::factory()->count(5)->create(['unit_id' => $unit->id, 'status' => 'active']);
+
+    SurveyResponse::create(['unit_id' => $unit->id, 'frequency' => 'daily', 'overall_wh' => 4]);
+    SurveyResponse::create(['unit_id' => $unit->id, 'frequency' => 'weekly', 'overall_wh' => 3]);
+
+    $c = Livewire::actingAs($admin)->test(Results::class)->set('unit_id', $unit->id);
+    expect($c->viewData('totalStaff'))->toBe(5)          // active staff in the unit
+        ->and($c->viewData('total'))->toBe(2)
+        ->and($c->viewData('responseRate'))->toBe(40);   // 2 / 5
+});
+
+test('manager can set a target staff count for the response rate', function () {
+    $this->seed(RolePermissionSeeder::class);
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    for ($i = 0; $i < 10; $i++) {
+        SurveyResponse::create(['frequency' => 'daily', 'overall_wh' => 4]);
+    }
+
+    $c = Livewire::actingAs($admin)->test(Results::class)->set('targetStaff', 50);
+    expect($c->viewData('denominator'))->toBe(50)
+        ->and($c->viewData('manualTarget'))->toBeTrue()
+        ->and($c->viewData('responseRate'))->toBe(20)          // 10 / 50
+        ->and(\App\Models\Setting::get('survey')['target_staff'])->toBe(50);   // persisted
+
+    $c->set('targetStaff', 0);                                 // clear → back to auto
+    expect($c->viewData('manualTarget'))->toBeFalse();
+});
+
 test('insights flags weak questions, strengths, and computes T2B/B2B', function () {
     $this->seed(RolePermissionSeeder::class);
     $admin = User::factory()->create(['is_super_admin' => true]);
