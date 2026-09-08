@@ -15,6 +15,8 @@ use App\Livewire\Settings\ConditionStatuses;
 use App\Livewire\Settings\Email;
 use App\Livewire\Settings\Ldap;
 use App\Livewire\Settings\Facilities;
+use App\Livewire\Survey\Form as SurveyForm;
+use App\Livewire\Survey\Results as SurveyResults;
 use App\Livewire\Settings\NotificationLog;
 use App\Livewire\Settings\Notifications;
 use App\Livewire\Settings\Organization;
@@ -509,5 +511,11 @@ Route::get('settings/translations', Translations::class)
 Route::get('settings/backup', Backup::class)
     ->middleware(['auth', 'verified'])
     ->name('settings.backup');
+
+// Customer Satisfaction Survey — public form (anonymous or logged-in) + admin results.
+Route::get('survey', SurveyForm::class)->name('survey');
+Route::get('survey/results', SurveyResults::class)
+    ->middleware(['auth', 'verified'])
+    ->name('survey.results');
 
 require __DIR__.'/auth.php';
