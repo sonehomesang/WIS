@@ -32,6 +32,13 @@ class SurveyResponse extends Model
 
     public const FREQUENCIES = ['daily', 'weekly', 'monthly', 'occasionally'];
 
+    /** Short Lao labels for each rating question (used by the dashboard insights). */
+    public const LABELS = [
+        'wh_receiving' => 'ຮັບສິນຄ້າ', 'wh_condition' => 'ສະພາບສິນຄ້າ', 'wh_storage' => 'ຈັດເກັບ/ວາງ',
+        'ie_customs' => 'ເຄລຍພາສີ', 'ie_communication' => 'ສື່ສານສະຖານະ', 'ie_urgent' => 'ສິນຄ້າດ່ວນ',
+        'overall_wh' => 'ໂດຍລວມ Warehouse', 'overall_ie' => 'ໂດຍລວມ Import-Export',
+    ];
+
     protected function casts(): array
     {
         return [

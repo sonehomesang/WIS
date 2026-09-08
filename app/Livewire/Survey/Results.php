@@ -110,6 +110,22 @@ class Results extends Component
             ];
         })->values();
 
+        // ── insights & recommendations (auto) ──
+        $totalRatings = array_sum($dist);
+        $t2b = $totalRatings ? (int) round(($dist[4] + $dist[5]) / $totalRatings * 100) : null;
+        $b2b = $totalRatings ? (int) round(($dist[1] + $dist[2]) / $totalRatings * 100) : null;
+
+        // per-question means (the 6 actionable section questions in scope)
+        $qFields = match ($this->service) {
+            'wh' => SurveyResponse::WH_FIELDS,
+            'ie' => SurveyResponse::IE_FIELDS,
+            default => [...SurveyResponse::WH_FIELDS, ...SurveyResponse::IE_FIELDS],
+        };
+        $qMeans = collect($qFields)->mapWithKeys(fn ($f) => [$f => $avgOf($f)])->filter(fn ($v) => $v !== null);
+
+        $grandMean = $sectionMean(SurveyResponse::RATING_FIELDS);
+        $insights = $this->buildInsights($grandMean, $t2b, $b2b, $qMeans, $sectionMean(SurveyResponse::WH_FIELDS), $sectionMean(SurveyResponse::IE_FIELDS), $total);
+
         // recent comments
         $comments = (clone $this->base())
             ->where(fn ($q) => $q->whereNotNull('doing_well')->orWhereNotNull('improve'))
@@ -123,10 +139,92 @@ class Results extends Component
             'ieMean' => $sectionMean(SurveyResponse::IE_FIELDS),
             'overallWh' => $avgOf('overall_wh'),
             'overallIe' => $avgOf('overall_ie'),
-            'grandMean' => $sectionMean(SurveyResponse::RATING_FIELDS),
+            'grandMean' => $grandMean,
             'dist' => $dist,
             'trend' => $trend,
             'comments' => $comments,
+            't2b' => $t2b,
+            'b2b' => $b2b,
+            'insights' => $insights,
         ]);
+    }
+
+    /** Score band for a 1–5 mean: [label, tailwind color name]. */
+    public static function band(?float $m): array
+    {
+        return match (true) {
+            $m === null => ['—', 'gray'],
+            $m >= 4.5 => ['ດີເລີດ · Excellent', 'emerald'],
+            $m >= 4.0 => ['ດີ · Good', 'green'],
+            $m >= 3.5 => ['ພໍໃຊ້ · Fair', 'amber'],
+            $m >= 3.0 => ['ຕ້ອງປັບປຸງ · Needs improvement', 'orange'],
+            default => ['ວິກິດ · Critical', 'red'],
+        };
+    }
+
+    /**
+     * Auto interpretation + prioritized recommendations, in the spirit of PDCA
+     * continuous improvement.
+     *
+     * @return array{verdict:array,recos:array<int,array{level:string,text:string}>}
+     */
+    private function buildInsights(?float $grand, ?int $t2b, ?int $b2b, $qMeans, ?float $whMean, ?float $ieMean, int $total): array
+    {
+        $L = SurveyResponse::LABELS;
+        $recos = [];
+
+        // 1. weaknesses — any question < 3.5, worst first (priority actions)
+        $weak = $qMeans->filter(fn ($v) => $v < 3.5)->sort();
+        foreach ($weak as $f => $m) {
+            $lvl = $m < 3.0 ? 'critical' : 'priority';
+            $recos[] = ['level' => $lvl, 'text' => "ຈຸດອ່ອນ: {$L[$f]} ({$m}/5) — ຫາສາເຫດຮາກ (5-Why) ແລ້ວວາງແຜນແກ້ໄຂ".($m < 3.0 ? ' ດ່ວນ' : '')];
+        }
+        // watch zone 3.5–3.99 (only if no critical/priority already flagged them)
+        foreach ($qMeans->filter(fn ($v) => $v >= 3.5 && $v < 4.0)->sort() as $f => $m) {
+            $recos[] = ['level' => 'watch', 'text' => "ເຝົ້າລະວັງ: {$L[$f]} ({$m}/5) — ໃກ້ເກນ, ຕິດຕາມ trend"];
+        }
+
+        // 2. strength — top question ≥ 4.0 → standardize (SOP)
+        if ($qMeans->isNotEmpty()) {
+            $topF = $qMeans->sortDesc()->keys()->first();
+            $topV = $qMeans->get($topF);
+            if ($topV >= 4.0) {
+                $recos[] = ['level' => 'strength', 'text' => "ຈຸດແຂງ: {$L[$topF]} ({$topV}/5) — ຮັກສາໄວ້, ເຮັດ SOP ມາດຕະຖານ"];
+            }
+        }
+
+        // 3. dissatisfaction alert (B2B)
+        if ($b2b !== null && $b2b > 10) {
+            $recos[] = ['level' => 'critical', 'text' => "ຄົນບໍ່ພໍໃຈ (1–2) = {$b2b}% (>10% ເກນ) — ຕ້ອງສືບສວນ ແລະ ແກ້ໄຂ"];
+        }
+
+        // 4. WH vs IE gap ≥ 0.5
+        if ($whMean !== null && $ieMean !== null && abs($whMean - $ieMean) >= 0.5) {
+            $lower = $whMean < $ieMean ? ['Warehouse', $whMean] : ['Import-Export', $ieMean];
+            $diff = round(abs($whMean - $ieMean), 1);
+            $recos[] = ['level' => 'watch', 'text' => "{$lower[0]} ({$lower[1]}) ຕ່ຳກວ່າ ອີກດ້ານ {$diff} ຄະແນນ — ໂຟກັດປັບປຸງ {$lower[0]}"];
+        }
+
+        // 5. sample-size caution
+        if ($total > 0 && $total < 20) {
+            $recos[] = ['level' => 'info', 'text' => "ຄຳຕອບ n={$total} ຍັງນ້ອຍ — ເກັບເພີ່ມ ເພື່ອຄວາມໜ້າເຊື່ອຖື (ແນະນຳ ≥30)"];
+        }
+
+        // 6. all good → sustain + raise target
+        if ($grand !== null && $grand >= 4.0 && ($t2b ?? 0) >= 80 && $weak->isEmpty()) {
+            $recos[] = ['level' => 'good', 'text' => 'ຜົນໂດຍລວມດີ — ຮັກສາມາດຕະຖານ, ຕັ້ງເປົ້າສູງຂຶ້ນ (≥4.5), ແບ່ງປັນ best practice ໃຫ້ທີມ'];
+        }
+
+        return [
+            'verdict' => self::band($grand),
+            't2bBand' => match (true) {
+                $t2b === null => ['—', 'gray'],
+                $t2b >= 85 => ['ດີເລີດ', 'emerald'],
+                $t2b >= 80 => ['ດີ', 'green'],
+                $t2b >= 70 => ['ພໍໃຊ້', 'amber'],
+                default => ['ຕ້ອງແກ້', 'red'],
+            },
+            'recos' => $recos,
+        ];
     }
 }

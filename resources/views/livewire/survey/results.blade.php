@@ -61,6 +61,46 @@
                 <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-4"><p class="text-xs text-gray-500">ຄະແນນສະເລ່ຍລວມ</p><p class="text-2xl font-bold text-amber-600">{{ $grandMean ?? '—' }} <span class="text-sm text-gray-400">/5</span></p></div>
             </div>
 
+            {{-- Insights & Recommendations (auto, PDCA) --}}
+            @php
+                $bandBadge = [
+                    'emerald' => 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+                    'green' => 'bg-green-50 text-green-700 ring-green-200',
+                    'amber' => 'bg-amber-50 text-amber-700 ring-amber-200',
+                    'orange' => 'bg-orange-50 text-orange-700 ring-orange-200',
+                    'red' => 'bg-red-50 text-red-700 ring-red-200',
+                    'gray' => 'bg-gray-100 text-gray-600 ring-gray-200',
+                ];
+                $recoStyle = [
+                    'critical' => ['🔴', 'bg-red-50 border-red-200 text-red-800'],
+                    'priority' => ['⚠️', 'bg-orange-50 border-orange-200 text-orange-800'],
+                    'watch'    => ['👀', 'bg-amber-50 border-amber-200 text-amber-800'],
+                    'strength' => ['💪', 'bg-green-50 border-green-200 text-green-800'],
+                    'good'     => ['✅', 'bg-emerald-50 border-emerald-200 text-emerald-800'],
+                    'info'     => ['ℹ️', 'bg-gray-50 border-gray-200 text-gray-700'],
+                ];
+            @endphp
+            <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-5">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h3 class="font-bold text-gray-800 text-sm">🎯 ບົດວິເຄາະ &amp; ຄຳແນะນຳ · Insights &amp; Recommendations</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ring-1 {{ $bandBadge[$insights['verdict'][1]] }}">ໂດຍລວມ {{ $grandMean ?? '—' }}/5 · {{ $insights['verdict'][0] }}</span>
+                        <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ring-1 {{ $bandBadge[$insights['t2bBand'][1]] }}">ພໍໃຈ 4–5: {{ $t2b ?? '—' }}% · {{ $insights['t2bBand'][0] }}</span>
+                        <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ring-1 {{ $b2b !== null && $b2b > 10 ? 'bg-red-50 text-red-700 ring-red-200' : 'bg-gray-100 text-gray-600 ring-gray-200' }}">ບໍ່ພໍໃຈ 1–2: {{ $b2b ?? '—' }}%</span>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    @forelse ($insights['recos'] as $r)
+                        <div class="flex items-start gap-2 border rounded-lg px-3 py-2 text-sm {{ $recoStyle[$r['level']][1] }}">
+                            <span class="shrink-0">{{ $recoStyle[$r['level']][0] }}</span><span>{{ $r['text'] }}</span>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-400">ຍັງບໍ່ມີຄຳແນະນຳ (ຂໍ້ມູນບໍ່ພຽງພໍ).</p>
+                    @endforelse
+                </div>
+                <p class="text-[11px] text-gray-400 mt-3">ເກນອ້າງອີງ: ສະເລ່ຍ ≥4.0 = ດີ · ພໍໃຈ(T2B) ≥80% = ດີ · ບໍ່ພໍໃຈ(B2B) ≤10% · ວົງຈອນ PDCA (ວາງແຜນ → ເຮັດ → ກວດ → ປັບປຸງ)</p>
+            </div>
+
             @php
                 $labels = [
                     'wh_receiving' => 'ຮັບສິນຄ້າ', 'wh_condition' => 'ສະພາບສິນຄ້າ', 'wh_storage' => 'ຈັດເກັບ/ວາງ',

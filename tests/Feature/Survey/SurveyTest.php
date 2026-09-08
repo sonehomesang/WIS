@@ -79,3 +79,28 @@ test('results dashboard aggregates and filters', function () {
     expect($c->viewData('overallIe'))->toBe(3.0)   // avgOf still computes; view hides IE section
         ->and($c->viewData('total'))->toBe(2);
 });
+
+test('insights flags weak questions, strengths, and computes T2B/B2B', function () {
+    $this->seed(RolePermissionSeeder::class);
+    $admin = User::factory()->create(['is_super_admin' => true]);
+
+    // 5 responses: warehouse-receiving strong (5), customs weak (2)
+    for ($i = 0; $i < 5; $i++) {
+        SurveyResponse::create([
+            'frequency' => 'weekly',
+            'wh_receiving' => 5, 'wh_condition' => 5, 'wh_storage' => 5,
+            'ie_customs' => 2, 'ie_communication' => 2, 'ie_urgent' => 2,
+            'overall_wh' => 5, 'overall_ie' => 2,
+        ]);
+    }
+
+    $c = Livewire::actingAs($admin)->test(Results::class);
+    $ins = $c->viewData('insights');
+    $texts = collect($ins['recos'])->pluck('text')->implode(' | ');
+
+    expect($c->viewData('t2b'))->toBe(50)      // half the ratings are 5, half are 2
+        ->and($c->viewData('b2b'))->toBe(50)
+        ->and($texts)->toContain('ເຄລຍພາສີ')   // weak question surfaced
+        ->and($texts)->toContain('ຮັບສິນຄ້າ')   // strength surfaced
+        ->and(collect($ins['recos'])->pluck('level'))->toContain('critical');  // customs 2.0 < 3
+});
