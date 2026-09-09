@@ -23,7 +23,7 @@
             <div class="grid md:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Domain Controller (host)</label>
-                    <input type="text" wire:model="host" placeholder="ຕົວຢ່າງ: 192.168.2.26 ຫຼື dc01.domain.com" class="w-full rounded-md border-gray-300 text-sm" />
+                    <input type="text" wire:model="host" placeholder="ຕົວຢ່າງ: IP ຂອງ DC ຫຼື dc01.example.com" class="w-full rounded-md border-gray-300 text-sm" />
                     @error('host')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div class="grid grid-cols-2 gap-3">

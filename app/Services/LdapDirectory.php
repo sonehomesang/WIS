@@ -61,7 +61,7 @@ class LdapDirectory
      * Relax TLS certificate checking for an internal CA.
      *
      * AD domain controllers usually present a certificate issued by an internal CA
-     * (here: NAMTHEUN2-SIGNATURE-CA) with an old/weak key, which OpenSSL rejects
+     * with an old/weak key, which OpenSSL then rejects
      * ("EE certificate key too weak"). This must be set on the GLOBAL (null) handle
      * before connecting — per-connection options are ignored for ldaps://.
      * The channel stays encrypted; only chain/strength verification is skipped.

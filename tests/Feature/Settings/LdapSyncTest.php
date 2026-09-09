@@ -222,7 +222,7 @@ test('config builds a valid LdapRecord connection (LDAPS, no unknown options)', 
     Setting::put('ldap', [
         'enabled' => true, 'host' => 'dc01.namtheun2.com', 'port' => 636,
         'encryption' => 'ssl', 'base_dn' => 'DC=namtheun2,DC=com',
-        'bind_username' => 'ldap@namtheun2.com',
+        'bind_username' => 'svc-ldap@example.com',
         'password' => Crypt::encryptString('secret'),
     ], null);
 
