@@ -144,6 +144,27 @@ test('rollback disables only imported accounts, never real users', function () {
         ->and($real->status)->toBe('active');     // real user untouched
 });
 
+test('kill switch never touches pre-created domain staff it did not import', function () {
+    // The app pre-creates real staff exactly like this (domain + pre_created).
+    // Scoping the rollback on those flags once permanently deleted genuine staff.
+    $staff = User::factory()->create([
+        'auth_provider' => 'domain',
+        'is_pre_created' => true,
+        'ldap_imported_at' => null,
+        'status' => 'active',
+    ]);
+
+    app(LdapDirectory::class)->syncRows([adRow(['guid' => 'imp-x', 'username' => 'impx', 'email' => 'impx@namtheun2.com'])]);
+
+    $svc = app(LdapDirectory::class);
+    expect($svc->importedCount())->toBe(1);          // only what the importer created
+
+    $svc->rollbackImported(delete: true);
+
+    expect(User::whereKey($staff->id)->exists())->toBeTrue()          // staff survives
+        ->and(User::where('username', 'impx')->exists())->toBeFalse(); // import removed
+});
+
 test('rollback remove soft-deletes only imported accounts', function () {
     $real = User::factory()->create(['auth_provider' => 'password', 'is_pre_created' => false]);
     app(LdapDirectory::class)->syncRows([adRow(['guid' => 'imp-9', 'username' => 'imp9', 'email' => 'imp9@namtheun2.com'])]);

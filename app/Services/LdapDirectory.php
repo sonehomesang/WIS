@@ -210,6 +210,8 @@ class LdapDirectory
                     'auth_provider' => 'domain',
                     'is_pre_created' => true,
                     'status' => 'pending',
+                    // stamp so the kill switch can identify exactly what IT created
+                    'ldap_imported_at' => now(),
                 ]);
                 $sum['created']++;
 
@@ -262,12 +264,16 @@ class LdapDirectory
     }
 
     /**
-     * Kill-switch scope: accounts CREATED by this import (pre-created domain accounts).
-     * Existing/linked real users are is_pre_created=false, so they are never in scope.
+     * Kill-switch scope: ONLY accounts this importer created, identified by the
+     * ldap_imported_at stamp.
+     *
+     * It must NOT key off auth_provider/is_pre_created — this app already
+     * pre-creates real staff as domain + pre_created, and scoping on those once
+     * permanently deleted genuine staff accounts during a rollback.
      */
     public function importedQuery(): Builder
     {
-        return User::query()->where('auth_provider', 'domain')->where('is_pre_created', true);
+        return User::query()->whereNotNull('ldap_imported_at');
     }
 
     public function importedCount(): int
