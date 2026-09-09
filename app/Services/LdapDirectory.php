@@ -57,6 +57,22 @@ class LdapDirectory
         ];
     }
 
+    /**
+     * Relax TLS certificate checking for an internal CA.
+     *
+     * AD domain controllers usually present a certificate issued by an internal CA
+     * (here: NAMTHEUN2-SIGNATURE-CA) with an old/weak key, which OpenSSL rejects
+     * ("EE certificate key too weak"). This must be set on the GLOBAL (null) handle
+     * before connecting — per-connection options are ignored for ldaps://.
+     * The channel stays encrypted; only chain/strength verification is skipped.
+     */
+    private function applyTlsPolicy(): void
+    {
+        if (($this->settings()['tls_skip_verify'] ?? false) && function_exists('ldap_set_option')) {
+            @ldap_set_option(null, LDAP_OPT_X_TLS_REQUIRE_CERT, LDAP_OPT_X_TLS_NEVER);
+        }
+    }
+
     /** Search base for user queries (Users OU if set, else base DN). */
     public function searchBase(): string
     {
@@ -73,6 +89,7 @@ class LdapDirectory
     public function testConnection(): array
     {
         try {
+            $this->applyTlsPolicy();
             $conn = new Connection($this->config());
             $conn->connect();                       // binds with the service account
 
@@ -96,6 +113,7 @@ class LdapDirectory
      */
     public function fetchUsers(bool $enabledOnly = true): array
     {
+        $this->applyTlsPolicy();
         $conn = new Connection($this->config());
         $conn->connect();
 

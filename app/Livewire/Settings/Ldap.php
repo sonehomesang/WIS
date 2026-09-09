@@ -40,6 +40,8 @@ class Ldap extends Component
 
     public bool $enabledOnly = true;       // pull only enabled AD accounts
 
+    public bool $tlsSkipVerify = false;    // internal-CA / weak cert → skip TLS chain verification
+
     public bool $linkExisting = false;     // "keep separate": false = never touch existing accounts
 
     public int $importedCount = 0;         // # of accounts created by import (kill-switch scope)
@@ -70,6 +72,7 @@ class Ldap extends Component
         $this->bind_username = $s['bind_username'] ?? '';
         $this->hasPassword = ! empty($s['password']);
         $this->linkExisting = (bool) ($s['link_existing'] ?? false);
+        $this->tlsSkipVerify = (bool) ($s['tls_skip_verify'] ?? false);
         $this->lastSync = Setting::get('ldap_last_sync', []) ?: null;
         $this->importedCount = app(LdapDirectory::class)->importedCount();
     }
@@ -105,6 +108,7 @@ class Ldap extends Component
             'bind_username' => $this->bind_username,
             'password' => $password,
             'link_existing' => $this->linkExisting,
+            'tls_skip_verify' => $this->tlsSkipVerify,
         ], auth()->id());
 
         Cache::forget('settings.ldap');

@@ -64,6 +64,14 @@
                 </div>
             </div>
 
+            <label class="flex items-start gap-2 text-sm text-gray-700 border-t border-gray-100 pt-3">
+                <input type="checkbox" wire:model="tlsSkipVerify" class="mt-0.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500" />
+                <span>
+                    ຂ້າມການກວດໃບຮັບຮອງ TLS ⚠️
+                    <span class="block text-xs text-gray-500">ເປີດເມື່ອ DC ໃຊ້ <b>CA ພາຍໃນ</b> ຫຼື ໃບຮັບຮອງ <b>ກະແຈອ່ອນ</b> (<code>key too weak</code>) ຫຼື ຕໍ່ດ້ວຍ <b>IP</b>. ການເຊື່ອມຕໍ່ <b>ຍັງເຂົ້າລະຫັດຢູ່</b> — ພຽງບໍ່ກວດ CA/ຄວາມແຮງກະແຈ.</span>
+                </span>
+            </label>
+
             <div class="flex flex-wrap items-center gap-3 pt-1">
                 <button type="button" wire:click="test" wire:loading.attr="disabled"
                         class="h-10 px-4 rounded-lg bg-white border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60">
