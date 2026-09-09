@@ -7,6 +7,7 @@ use App\Services\LdapDirectory;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
+use LdapRecord\Connection;
 use Livewire\Livewire;
 
 /** Build a normalized AD row like LdapDirectory::fetchUsers() returns. */
@@ -153,6 +154,24 @@ test('rollback remove soft-deletes only imported accounts', function () {
         ->and(User::where('username', 'imp9')->exists())->toBeFalse()          // gone from default scope
         ->and(User::withTrashed()->where('username', 'imp9')->exists())->toBeTrue()   // soft-deleted
         ->and(User::whereKey($real->id)->exists())->toBeTrue();               // real user kept
+});
+
+test('config builds a valid LdapRecord connection (LDAPS, no unknown options)', function () {
+    Setting::put('ldap', [
+        'enabled' => true, 'host' => 'dc01.namtheun2.com', 'port' => 636,
+        'encryption' => 'ssl', 'base_dn' => 'DC=namtheun2,DC=com',
+        'bind_username' => 'ldap@namtheun2.com',
+        'password' => Crypt::encryptString('secret'),
+    ], null);
+
+    $cfg = app(LdapDirectory::class)->config();
+    expect($cfg['use_tls'])->toBeTrue()           // ssl → LDAPS (ldaps://)
+        ->and($cfg['use_starttls'])->toBeFalse()
+        ->and($cfg)->not->toHaveKey('use_ssl');    // v4 removed use_ssl
+
+    // constructing the Connection validates option keys — throws on an unknown one
+    $conn = new Connection($cfg);
+    expect($conn)->toBeInstanceOf(Connection::class);
 });
 
 test('ldap settings page renders for admin', function () {

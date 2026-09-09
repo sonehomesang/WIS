@@ -48,11 +48,12 @@ class LdapDirectory
             'base_dn' => $s['base_dn'] ?? '',
             'username' => $s['bind_username'] ?? '',
             'password' => $password,
-            'use_ssl' => $enc === 'ssl',
-            'use_tls' => $enc === 'tls',
+            // LdapRecord v4: use_tls = LDAPS (ldaps://), use_starttls = StartTLS. No use_ssl.
+            'use_tls' => $enc === 'ssl',
+            'use_starttls' => $enc === 'tls',
             'timeout' => 8,
-            // AD servers issue referrals that break searches unless disabled.
-            'options' => [LDAP_OPT_REFERRALS => 0],
+            // AD referrals break subtree searches; keep them off (this is also the default).
+            'follow_referrals' => false,
         ];
     }
 
