@@ -178,9 +178,11 @@ class Users extends Component
         ];
 
         $isNew = ! $this->editingId;
+        $oldStatus = null;
         if ($this->editingId) {
             $user = User::findOrFail($this->editingId);
             $this->guardSuperAdminTarget($user);   // ຜູ້ ບໍ່ ແມ່ນ super ຫ້າມ ແກ້/demote super_admin
+            $oldStatus = $user->status;
             $user->fill($attrs);
             $user->save();
         } else {
@@ -212,7 +214,17 @@ class Users extends Component
             }
         }
         $user->syncPermissions($directPerms);
-        $this->logUserHistory($user, $isNew ? 'create' : 'update');
+
+        // Audit + notify every action. An edit that flips status to active
+        // counts as an activation exactly like the ✓ Approve button does.
+        $becameActive = $user->status === 'active' && ($isNew || $oldStatus !== 'active');
+        $action = match (true) {
+            $isNew => 'create',
+            $becameActive => 'activate',
+            $oldStatus !== $user->status && $user->status === 'locked' => 'lock',
+            default => 'update',
+        };
+        $this->recordUserAction($user, $action);
 
         $this->showModal = false;
         $this->dispatch('saved');
@@ -261,8 +273,14 @@ class Users extends Component
         $user = User::findOrFail($id);
         $this->guardSuperAdminTarget($user);
         $user->update(['status' => 'active']);
-        $this->logUserHistory($user, 'activate');
-        $this->notifyAdminsActivated($user);
+        $this->recordUserAction($user, 'activate');
+    }
+
+    /** Log the action to the audit trail AND notify the super admins (who · what · when). */
+    protected function recordUserAction(User $target, string $action, ?string $comment = null): void
+    {
+        $this->logUserHistory($target, $action, $comment);
+        $this->notifyAdminsUserAction($target, $action);
     }
 
     /**
@@ -285,20 +303,31 @@ class Users extends Component
         ]);
     }
 
-    /** ແຈ້ງ super admin ຄົນ ອື່ນ ວ່າ ມີ ການ ເປີດ ໃຊ້ ບັນຊີ (ໃຜ ເປີດ · ເມື່ອ ໃດ). */
-    protected function notifyAdminsActivated(User $target): void
+    /** Lao labels for user-account actions (bell title + message verb). */
+    protected const ACTION_LABELS = [
+        'create' => 'ສ້າງ ບັນຊີ',
+        'activate' => 'ເປີດ ໃຊ້ ບັນຊີ',
+        'lock' => 'ລັອກ ບັນຊີ',
+        'unlock' => 'ປົດ ລັອກ ບັນຊີ',
+        'update' => 'ແກ້ໄຂ ບັນຊີ',
+    ];
+
+    /** ແຈ້ງ super admin ທຸກ ຄົນ (ລວມ ຄົນ ທີ່ ກົດ) ວ່າ ໃຜ ເຮັດ ຫຍັງ ກັບ ບັນຊີ · ເມື່ອ ໃດ. */
+    protected function notifyAdminsUserAction(User $target, string $action): void
     {
         $actor = auth()->user();
         $ids = User::where('is_super_admin', true)
             ->where('status', 'active')
-            ->where('id', '!=', $actor->id)
             ->pluck('id')->all();
         if (empty($ids)) {
             return;
         }
+        $label = self::ACTION_LABELS[$action] ?? 'ຈັດການ ບັນຊີ';
         app(NotificationService::class)->notifyMany(
-            $ids, 'success', 'ເປີດ ໃຊ້ ບັນຊີ ໃໝ່',
-            ($actor->display_name ?: $actor->email).' ເປີດ ໃຊ້ ບັນຊີ '
+            $ids,
+            $action === 'lock' ? 'warning' : 'info',
+            $label,
+            ($actor->display_name ?: $actor->email).' '.$label.' '
                 .($target->display_name ?: $target->email).' ເມື່ອ '.now()->format('d/m/Y H:i'),
             route('settings.users'),
         );
@@ -311,7 +340,7 @@ class Users extends Component
         $target = $user->status === 'locked' ? 'active' : 'locked';
         abort_unless(auth()->user()->can('users.'.($target === 'locked' ? 'deactivate' : 'activate')), 403);
         $user->update(['status' => $target]);
-        $this->logUserHistory($user, $target === 'locked' ? 'lock' : 'unlock');
+        $this->recordUserAction($user, $target === 'locked' ? 'lock' : 'unlock');
     }
 
     protected function resetForm(): void
