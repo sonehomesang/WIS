@@ -29,6 +29,7 @@ class Audit extends Component
         'deposit' => ['deposit_history', 'deposit_records', 'request_number'],
         'da' => ['discrepancy_advice_history', 'discrepancy_advices', 'da_number'],
         'oga' => ['oga_history', 'outwards_goods_advices', 'oga_number'],
+        'user' => ['user_history', 'users', 'username'],   // account actions: create/activate/lock…
     ];
 
     public function mount(): void

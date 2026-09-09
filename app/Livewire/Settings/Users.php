@@ -7,6 +7,8 @@ use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\Unit;
 use App\Models\User;
+use App\Models\UserHistory;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -210,6 +212,7 @@ class Users extends Component
             }
         }
         $user->syncPermissions($directPerms);
+        $this->logUserHistory($user, $isNew ? 'create' : 'update');
 
         $this->showModal = false;
         $this->dispatch('saved');
@@ -258,6 +261,47 @@ class Users extends Component
         $user = User::findOrFail($id);
         $this->guardSuperAdminTarget($user);
         $user->update(['status' => 'active']);
+        $this->logUserHistory($user, 'activate');
+        $this->notifyAdminsActivated($user);
+    }
+
+    /**
+     * Append an audit row for a user-account action — record_id = the target
+     * user, user_name/role = the ACTOR (which admin), created_at = when. Shows
+     * up in Settings › Audit log (module "user").
+     */
+    protected function logUserHistory(User $target, string $action, ?string $comment = null): void
+    {
+        $actor = auth()->user();
+        UserHistory::create([
+            'record_id' => $target->id,
+            'action' => $action,
+            'status' => $target->status,
+            'user_id' => $actor?->id,
+            'user_name' => $actor?->display_name ?: $actor?->email,
+            'role' => $actor?->roles->first()?->name,
+            'comment' => $comment ?? $target->email,
+            'created_at' => now(),
+        ]);
+    }
+
+    /** ແຈ້ງ super admin ຄົນ ອື່ນ ວ່າ ມີ ການ ເປີດ ໃຊ້ ບັນຊີ (ໃຜ ເປີດ · ເມື່ອ ໃດ). */
+    protected function notifyAdminsActivated(User $target): void
+    {
+        $actor = auth()->user();
+        $ids = User::where('is_super_admin', true)
+            ->where('status', 'active')
+            ->where('id', '!=', $actor->id)
+            ->pluck('id')->all();
+        if (empty($ids)) {
+            return;
+        }
+        app(NotificationService::class)->notifyMany(
+            $ids, 'success', 'ເປີດ ໃຊ້ ບັນຊີ ໃໝ່',
+            ($actor->display_name ?: $actor->email).' ເປີດ ໃຊ້ ບັນຊີ '
+                .($target->display_name ?: $target->email).' ເມື່ອ '.now()->format('d/m/Y H:i'),
+            route('settings.users'),
+        );
     }
 
     public function toggleLock(int $id): void
@@ -267,6 +311,7 @@ class Users extends Component
         $target = $user->status === 'locked' ? 'active' : 'locked';
         abort_unless(auth()->user()->can('users.'.($target === 'locked' ? 'deactivate' : 'activate')), 403);
         $user->update(['status' => $target]);
+        $this->logUserHistory($user, $target === 'locked' ? 'lock' : 'unlock');
     }
 
     protected function resetForm(): void
