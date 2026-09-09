@@ -54,9 +54,6 @@ class System extends Component
     public array $depFields = [];
 
     // ── Security / Session ──
-    /** ບັງຄັບ ຢືນຢັນ email ກ່ອນ ໃຊ້ ລະບົບ (ບັນຊີ ທ້ອງຖິ່ນ). */
-    public bool $requireEmailVerification = false;
-
     /** ອອກ ຈາກ ລະບົບ ອັດຕະໂນມັດ ຫຼັງ idle ກີ່ ນາທີ (0 = ປິດ). */
     public int $idleTimeoutMinutes = 3;
 
@@ -123,7 +120,6 @@ class System extends Component
         $this->curSecondaryEnabled = (bool) ($cur['secondary_enabled'] ?? true);
 
         $sec = SecuritySettings::get();
-        $this->requireEmailVerification = $sec['require_email_verification'];
         $this->idleTimeoutMinutes = $sec['idle_timeout_minutes'];
 
         $lh = Setting::get('letterhead', []);
@@ -191,7 +187,6 @@ class System extends Component
         ], [], ['idleTimeoutMinutes' => 'idle timeout']);
 
         Setting::put('security', [
-            'require_email_verification' => $this->requireEmailVerification,
             'idle_timeout_minutes' => (int) $this->idleTimeoutMinutes,
         ], auth()->id());
 

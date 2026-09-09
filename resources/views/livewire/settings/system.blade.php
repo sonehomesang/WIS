@@ -27,18 +27,10 @@
         <div class="bg-white border border-gray-100 rounded-lg p-5 md:max-w-md space-y-4">
             <div>
                 <h3 class="font-medium text-gray-800">🔒 ຄວາມ ປອດໄພ (Security)</h3>
-                <p class="text-xs text-gray-500">ຢືນຢັນ email · idle auto-logout.</p>
+                <p class="text-xs text-gray-500">idle auto-logout.</p>
             </div>
 
-            <label class="flex items-start gap-2 text-sm text-gray-700">
-                <input type="checkbox" wire:model="requireEmailVerification" class="mt-0.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
-                <span>
-                    ບັງຄັບ ຢືນຢັນ email ກ່ອນ ໃຊ້ ລະບົບ ✉️
-                    <span class="block text-xs text-gray-500">ຫຼັງ admin ເປີດ ໃຊ້ ບັນຊີ → ສົ່ງ ລິ້ງ ຢືນຢັນ; ຜູ້ໃຊ້ ຕ້ອງ ກົດ ຢືນຢັນ ກ່ອນ ຈຶ່ງ ເຂົ້າ ໄດ້. ໃຊ້ ກັບ ບັນຊີ ທ້ອງຖິ່ນ ເທົ່ານັ້ນ — ບັນຊີ AD (domain) ຢືນຢັນ ຜ່ານ AD ຢູ່ ແລ້ວ, super admin ບໍ່ ບັງຄັບ (break-glass).</span>
-                </span>
-            </label>
-
-            <div class="border-t border-gray-100 pt-3">
+            <div>
                 <label class="block text-sm text-gray-600 mb-1">ອອກ ຈາກ ລະບົບ ອັດຕະໂນມັດ ຫຼັງ idle (ນາທີ)</label>
                 <div class="flex items-center gap-2">
                     <input type="number" min="0" max="1440" wire:model="idleTimeoutMinutes" class="w-28 rounded-md border-gray-300 text-sm" />

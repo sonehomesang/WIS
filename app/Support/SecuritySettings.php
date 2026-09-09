@@ -16,11 +16,10 @@ class SecuritySettings
     public const CACHE_KEY = 'settings.security';
 
     public const DEFAULTS = [
-        'require_email_verification' => false,
         'idle_timeout_minutes' => 3,   // 0 = off
     ];
 
-    /** @return array{require_email_verification:bool,idle_timeout_minutes:int} */
+    /** @return array{idle_timeout_minutes:int} */
     public static function get(): array
     {
         try {
@@ -33,14 +32,8 @@ class SecuritySettings
         }
 
         return [
-            'require_email_verification' => (bool) ($s['require_email_verification'] ?? self::DEFAULTS['require_email_verification']),
             'idle_timeout_minutes' => (int) ($s['idle_timeout_minutes'] ?? self::DEFAULTS['idle_timeout_minutes']),
         ];
-    }
-
-    public static function verificationRequired(): bool
-    {
-        return self::get()['require_email_verification'];
     }
 
     /** Minutes of inactivity before auto-logout; 0 = disabled. */
