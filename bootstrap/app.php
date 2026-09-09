@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureActiveUser;
+use App\Http\Middleware\EnsureEmailVerified;
 use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\MustChangePassword;
 use App\Http\Middleware\ReplaceTerms;
@@ -27,6 +28,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // ຕັດ session ທັນທີ ຖ້າ ບັນຊີ ຖືກ lock/deactivate ຫຼັງ login (M1).
         $middleware->appendToGroup('web', EnsureActiveUser::class);
+
+        // ບັງຄັບ ຢືນຢັນ email ກ່ອນ ໃຊ້ ລະບົບ (ເມື່ອ ເປີດ ນະໂຍບາຍ ໃນ Settings › System).
+        $middleware->appendToGroup('web', EnsureEmailVerified::class);
 
         // 404 ໂມດູລ ທີ່ admin ປິດ ໄວ້ ໃນ Settings (feature flag).
         $middleware->appendToGroup('web', EnsureModuleEnabled::class);

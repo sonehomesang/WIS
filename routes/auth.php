@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Livewire\Actions\Logout;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -38,4 +40,13 @@ Route::middleware('auth')->group(function () {
 
     Volt::route('confirm-password', 'pages.auth.confirm-password')
         ->name('password.confirm');
+
+    // POST logout ສຳລັບ auto-logout ຕອນ idle (ຟອມ JS ໃນ layout) — Livewire nav
+    // ຍັງ ໃຊ້ Logout action ໂດຍກົງ ຄື ເກົ່າ.
+    Route::post('logout', function (Request $request, Logout $logout) {
+        $idle = $request->input('reason') === 'idle';
+        $logout();
+
+        return redirect()->route('login', $idle ? ['idle' => 1] : []);
+    })->name('logout');
 });

@@ -31,6 +31,12 @@ new #[Layout('layouts.guest')] class extends Component
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    @if (request('idle'))
+        <div class="mb-4 text-sm rounded-lg bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2">
+            ⏳ ອອກ ຈາກ ລະບົບ ອັດຕະໂນມັດ ເນື່ອງ ຈາກ ບໍ່ ມີ ການ ໃຊ້ ງານ — ກະລຸນາ ເຂົ້າ ໃໝ່.
+        </div>
+    @endif
+
     <form wire:submit="login" class="space-y-4">
         <!-- Email Address -->
         <div>

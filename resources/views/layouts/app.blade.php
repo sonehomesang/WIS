@@ -168,5 +168,8 @@
         </div>
 
         @include('partials._lightbox')
+        @auth
+            @include('partials._idle-timeout')
+        @endauth
     </body>
 </html>

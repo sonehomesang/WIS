@@ -6,6 +6,7 @@ use App\Livewire\Deposit\Create;
 use App\Models\Setting;
 use App\Services\RequestService;
 use App\Support\Modules;
+use App\Support\SecuritySettings;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -51,6 +52,13 @@ class System extends Component
 
     /** @var array<string,bool> Deposit form optional item-fields ເປີດ/ປິດ */
     public array $depFields = [];
+
+    // ── Security / Session ──
+    /** ບັງຄັບ ຢືນຢັນ email ກ່ອນ ໃຊ້ ລະບົບ (ບັນຊີ ທ້ອງຖິ່ນ). */
+    public bool $requireEmailVerification = false;
+
+    /** ອອກ ຈາກ ລະບົບ ອັດຕະໂນມັດ ຫຼັງ idle ກີ່ ນາທີ (0 = ປິດ). */
+    public int $idleTimeoutMinutes = 3;
 
     // ── Letterhead (PDF) ──
     public string $lhCompanyLo = '';
@@ -114,6 +122,10 @@ class System extends Component
         $this->exchangeRate = $cur['exchange_rate'] ?? 0;
         $this->curSecondaryEnabled = (bool) ($cur['secondary_enabled'] ?? true);
 
+        $sec = SecuritySettings::get();
+        $this->requireEmailVerification = $sec['require_email_verification'];
+        $this->idleTimeoutMinutes = $sec['idle_timeout_minutes'];
+
         $lh = Setting::get('letterhead', []);
         $this->lhCompanyLo = array_key_exists('company_name', $lh) ? (string) ($lh['company_name'] ?? '') : 'ບໍລິສັດ ໄຟຟ້າ ນ້ຳເທີນ 2';
         $this->lhCompanyEn = ($lh['company_name_en'] ?? '') ?: 'Nam Theun 2 Power Company Ltd.';
@@ -168,6 +180,22 @@ class System extends Component
             $out[$mk] = (bool) ($this->modules[$mk] ?? true);
         }
         Setting::put('modules', $out, auth()->id());
+        $this->dispatch('saved');
+    }
+
+    public function saveSecurity(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $this->validate([
+            'idleTimeoutMinutes' => ['required', 'integer', 'min:0', 'max:1440'],
+        ], [], ['idleTimeoutMinutes' => 'idle timeout']);
+
+        Setting::put('security', [
+            'require_email_verification' => $this->requireEmailVerification,
+            'idle_timeout_minutes' => (int) $this->idleTimeoutMinutes,
+        ], auth()->id());
+
+        SecuritySettings::forget();
         $this->dispatch('saved');
     }
 

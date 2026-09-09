@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Notifications\SetPasswordNotification;
+use App\Notifications\VerifyEmailNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -57,6 +58,12 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new SetPasswordNotification($token));
+    }
+
+    /** ຢືນຢັນ email — ໃຊ້ notification ລາວ ຂອງ ເຮົາ (ໃຊ້ ຮ່ວມ approve + ໜ້າ resend). */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification);
     }
 
     /**

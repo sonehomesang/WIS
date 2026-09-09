@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\Unit;
 use App\Models\User;
+use App\Support\SecuritySettings;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -217,6 +218,7 @@ class Users extends Component
         // ບັນຊີ ໃໝ່ → ສ້າງ ລິ້ງ ຕັ້ງ ລະຫັດ + ສົ່ງ ອີເມລ (ຖ້າ SMTP ພ້ອມ).
         if ($isNew && config('features.local_auth')) {
             $this->issueSetPasswordLink($user);
+            $this->maybeSendVerification($user);   // + ລິ້ງ ຢືນຢັນ email ຖ້າ ບັງຄັບ
         }
     }
 
@@ -258,6 +260,22 @@ class Users extends Component
         $user = User::findOrFail($id);
         $this->guardSuperAdminTarget($user);
         $user->update(['status' => 'active']);
+        $this->maybeSendVerification($user);
+    }
+
+    /**
+     * ຖ້າ ເປີດ ນະໂຍບາຍ "ບັງຄັບ ຢືນຢັນ email" → ສົ່ງ ລິ້ງ ຢືນຢັນ ໃຫ້ ບັນຊີ ທ້ອງຖິ່ນ
+     * (auth_provider=password) ທີ່ ຍັງ ບໍ່ ຢືນຢັນ. ບັນຊີ domain ຢືນຢັນ ຜ່ານ AD ຢູ່ ແລ້ວ;
+     * super_admin (break-glass) ບໍ່ ບັງຄັບ ເພື່ອ ກັນ ລັອກ ຕົນເອງ ອອກ.
+     */
+    protected function maybeSendVerification(User $user): void
+    {
+        if (SecuritySettings::verificationRequired()
+            && $user->auth_provider === 'password'
+            && ! $user->is_super_admin
+            && ! $user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
+        }
     }
 
     public function toggleLock(int $id): void
