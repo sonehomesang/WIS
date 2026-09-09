@@ -93,12 +93,15 @@ class LdapDirectory
             $conn = new Connection($this->config());
             $conn->connect();                       // binds with the service account
 
-            $count = $conn->query()->in($this->searchBase())
+            // LdapRecord v4 query builders return a plain array (the LDAP 'count'
+            // key is already stripped by the builder) — not a Collection.
+            $results = $conn->query()->in($this->searchBase())
                 ->where('objectclass', '=', 'user')
                 ->where('objectcategory', '=', 'person')
                 ->limit(1000)
-                ->get()
-                ->count();
+                ->get();
+
+            $count = is_array($results) ? count($results) : 0;
 
             return ['ok' => true, 'message' => "bind OK · ພົບ {$count} users", 'count' => $count];
         } catch (\Throwable $e) {
