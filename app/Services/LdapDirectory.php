@@ -201,11 +201,11 @@ class LdapDirectory
 
             if (! $user) {
                 User::create([
-                    'ad_guid' => $guid,
-                    'username' => $username,
-                    'email' => $email,
-                    'display_name' => $name,
-                    'phone_number' => $this->clean($row['phone'] ?? null),
+                    'ad_guid' => $this->fit($guid, 64),
+                    'username' => $this->fit($username, 64),
+                    'email' => $this->fit($email, 256),
+                    'display_name' => $this->fit($name, 256),
+                    'phone_number' => $this->phone($row['phone'] ?? null),
                     'password' => Str::random(40),        // unusable — domain login is a later phase
                     'auth_provider' => 'domain',
                     'is_pre_created' => true,
@@ -229,16 +229,16 @@ class LdapDirectory
 
             // Existing account — backfill link fields without downgrading the person.
             $dirty = [];
-            if ($guid && $user->ad_guid !== $guid) {
-                $dirty['ad_guid'] = $guid;
+            if ($guid && $user->ad_guid !== ($g = $this->fit($guid, 64))) {
+                $dirty['ad_guid'] = $g;
             }
-            if ($username && $user->username !== $username && ! $this->usernameTaken($username, $user->id)) {
-                $dirty['username'] = $username;
+            if ($username && $user->username !== ($u = $this->fit($username, 64)) && ! $this->usernameTaken($username, $user->id)) {
+                $dirty['username'] = $u;
             }
-            if ($name && $user->display_name !== $name) {
-                $dirty['display_name'] = $name;
+            if ($name && $user->display_name !== ($n = $this->fit($name, 256))) {
+                $dirty['display_name'] = $n;
             }
-            if (($p = $this->clean($row['phone'] ?? null)) && $user->phone_number !== $p) {
+            if (($p = $this->phone($row['phone'] ?? null)) && $user->phone_number !== $p) {
                 $dirty['phone_number'] = $p;
             }
 
@@ -328,9 +328,11 @@ class LdapDirectory
         if (! is_string($raw) || $raw === '') {
             return null;
         }
-        // Already a readable GUID string?
-        if (Str::contains($raw, '-') && strlen($raw) <= 40) {
-            return Str::lower($raw);
+        // Already a canonical GUID string? Must match 8-4-4-4-12 hex — a loose
+        // "contains a dash" test is wrong, because the 16 raw bytes AD returns can
+        // themselves contain the 0x2D ('-') byte, which then stored binary garbage.
+        if (preg_match('/^\{?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}?$/i', $raw)) {
+            return Str::lower(trim($raw, '{}'));
         }
         if (strlen($raw) !== 16) {
             return null;
@@ -342,5 +344,28 @@ class LdapDirectory
             .substr($h, 16, 4).'-'.substr($h, 20, 12);
 
         return Str::lower($g);
+    }
+
+    /**
+     * Trim a value to what the column can hold. AD fields are free-text and can be
+     * far longer than our columns (e.g. telephoneNumber holding two numbers), which
+     * would otherwise abort the whole import with SQLSTATE 22001.
+     */
+    private function fit(?string $v, int $max): ?string
+    {
+        $v = $this->clean($v);
+
+        return $v === null ? null : mb_substr($v, 0, $max);
+    }
+
+    /** First phone number only — AD often stores several in one value. */
+    private function phone(?string $v): ?string
+    {
+        $v = $this->clean($v);
+        if ($v === null) {
+            return null;
+        }
+
+        return $this->fit(trim(explode(',', $v)[0]), 32);
     }
 }

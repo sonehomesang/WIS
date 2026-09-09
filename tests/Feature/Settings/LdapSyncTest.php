@@ -156,6 +156,32 @@ test('rollback remove soft-deletes only imported accounts', function () {
         ->and(User::whereKey($real->id)->exists())->toBeTrue();               // real user kept
 });
 
+test('long AD values are trimmed to fit their columns', function () {
+    app(LdapDirectory::class)->syncRows([adRow([
+        'guid' => 'g-fit',
+        'username' => 'fituser',
+        'email' => 'fituser@namtheun2.com',
+        'display_name' => str_repeat('ກ', 400),
+        'phone' => '020-55-613-855, 020-2223 5601 Ext 110',   // AD can hold several
+    ])]);
+
+    $u = User::where('username', 'fituser')->first();
+    expect($u)->not->toBeNull()
+        ->and(mb_strlen($u->display_name))->toBeLessThanOrEqual(256)
+        ->and($u->phone_number)->toBe('020-55-613-855')        // first number only
+        ->and(mb_strlen($u->phone_number))->toBeLessThanOrEqual(32);
+});
+
+test('binary objectGUID containing a dash byte is converted, not stored raw', function () {
+    // 16 raw bytes including 0x2d ('-') — the case that used to store binary garbage
+    $binary = hex2bin('c91adc67a69d2d4ab1e2f0a1b2c3d4e5');
+    $m = new ReflectionMethod(LdapDirectory::class, 'guid');
+    $m->setAccessible(true);
+
+    expect($m->invoke(app(LdapDirectory::class), ['objectguid' => [$binary]]))
+        ->toMatch('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/');
+});
+
 test('searchBase falls back to the base DN when the users OU is blank', function () {
     $base = 'DC=namtheun2,DC=com';
 
