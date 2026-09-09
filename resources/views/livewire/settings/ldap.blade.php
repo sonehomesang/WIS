@@ -23,7 +23,7 @@
             <div class="grid md:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Domain Controller (host)</label>
-                    <input type="text" wire:model="host" placeholder="dc01.namtheun2.com" class="w-full rounded-md border-gray-300 text-sm" />
+                    <input type="text" wire:model="host" placeholder="ຕົວຢ່າງ: 192.168.2.26 ຫຼື dc01.domain.com" class="w-full rounded-md border-gray-300 text-sm" />
                     @error('host')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -43,16 +43,16 @@
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Base DN</label>
-                    <input type="text" wire:model="base_dn" placeholder="DC=namtheun2,DC=com" class="w-full rounded-md border-gray-300 text-sm" />
+                    <input type="text" wire:model="base_dn" placeholder="ຕົວຢ່າງ: DC=namtheun2,DC=com" class="w-full rounded-md border-gray-300 text-sm" />
                     @error('base_dn')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Users OU / Filter <span class="text-gray-400">(ທາງເລືອກ)</span></label>
-                    <input type="text" wire:model="user_ou" placeholder="OU=Staff,DC=namtheun2,DC=com" class="w-full rounded-md border-gray-300 text-sm" />
+                    <input type="text" wire:model="user_ou" placeholder="ວ່າງ = ຄົ້ນທັງ domain (ບໍ່ບັງຄັບ)" class="w-full rounded-md border-gray-300 text-sm" />
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Bind username (authorize) 🔑</label>
-                    <input type="text" wire:model="bind_username" placeholder="svc-wh@namtheun2.com" class="w-full rounded-md border-gray-300 text-sm" />
+                    <input type="text" wire:model="bind_username" placeholder="ຕົວຢ່າງ: svc@domain.com" class="w-full rounded-md border-gray-300 text-sm" />
                     @error('bind_username')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>

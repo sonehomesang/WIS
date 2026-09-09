@@ -156,6 +156,21 @@ test('rollback remove soft-deletes only imported accounts', function () {
         ->and(User::whereKey($real->id)->exists())->toBeTrue();               // real user kept
 });
 
+test('searchBase falls back to the base DN when the users OU is blank', function () {
+    $base = 'DC=namtheun2,DC=com';
+
+    // blank string must fall back — searching a non-existent OU silently returns 0 users
+    Setting::put('ldap', ['base_dn' => $base, 'user_ou' => ''], null);
+    expect(app(LdapDirectory::class)->searchBase())->toBe($base);
+
+    Setting::put('ldap', ['base_dn' => $base, 'user_ou' => '   '], null);
+    expect(app(LdapDirectory::class)->searchBase())->toBe($base);
+
+    // a real OU is still honoured
+    Setting::put('ldap', ['base_dn' => $base, 'user_ou' => 'OU=Staff,'.$base], null);
+    expect(app(LdapDirectory::class)->searchBase())->toBe('OU=Staff,'.$base);
+});
+
 test('config builds a valid LdapRecord connection (LDAPS, no unknown options)', function () {
     Setting::put('ldap', [
         'enabled' => true, 'host' => 'dc01.namtheun2.com', 'port' => 636,

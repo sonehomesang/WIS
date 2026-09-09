@@ -73,12 +73,18 @@ class LdapDirectory
         }
     }
 
-    /** Search base for user queries (Users OU if set, else base DN). */
+    /**
+     * Search base for user queries: the Users OU when one is actually set,
+     * otherwise the base DN. An empty/blank OU must fall back — `??` would not,
+     * since a blank string is not null, and searching a non-existent OU silently
+     * returns zero users.
+     */
     public function searchBase(): string
     {
         $s = $this->settings();
+        $ou = trim((string) ($s['user_ou'] ?? ''));
 
-        return $s['user_ou'] ?? $s['base_dn'] ?? '';
+        return $ou !== '' ? $ou : trim((string) ($s['base_dn'] ?? ''));
     }
 
     /**
