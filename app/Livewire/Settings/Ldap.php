@@ -44,6 +44,8 @@ class Ldap extends Component
 
     public bool $linkExisting = false;     // "keep separate": false = never touch existing accounts
 
+    public bool $loginWithAd = false;      // Phase 2: verify domain passwords against AD at login
+
     public int $importedCount = 0;         // # of accounts created by import (kill-switch scope)
 
     /** @var array<int,array> fetched preview rows */
@@ -73,6 +75,7 @@ class Ldap extends Component
         $this->hasPassword = ! empty($s['password']);
         $this->linkExisting = (bool) ($s['link_existing'] ?? false);
         $this->tlsSkipVerify = (bool) ($s['tls_skip_verify'] ?? false);
+        $this->loginWithAd = (bool) ($s['login_with_ad'] ?? false);
         $this->lastSync = Setting::get('ldap_last_sync', []) ?: null;
         $this->importedCount = app(LdapDirectory::class)->importedCount();
     }
@@ -109,6 +112,7 @@ class Ldap extends Component
             'password' => $password,
             'link_existing' => $this->linkExisting,
             'tls_skip_verify' => $this->tlsSkipVerify,
+            'login_with_ad' => $this->loginWithAd,
         ], auth()->id());
 
         Cache::forget('settings.ldap');

@@ -57,6 +57,64 @@ class LdapDirectory
         ];
     }
 
+    /** Is signing in with the AD password switched on? */
+    public function loginEnabled(): bool
+    {
+        return $this->isEnabled() && (bool) ($this->settings()['login_with_ad'] ?? false);
+    }
+
+    /**
+     * Verify a person's own AD password by binding to the directory as them.
+     *
+     * An empty password MUST be rejected before it reaches the server: LDAP reads a
+     * bind carrying no password as an *unauthenticated* bind, and directories
+     * commonly answer success — which would let anyone through.
+     */
+    public function attemptBind(string $identity, string $password): bool
+    {
+        if (trim($identity) === '' || trim($password) === '') {
+            return false;
+        }
+
+        $this->applyTlsPolicy();
+        $config = $this->config();
+        $config['username'] = $identity;
+        $config['password'] = $password;
+
+        try {
+            (new Connection($config))->connect();
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Identities to try when binding as a user, best first: the UPN/mail we hold,
+     * then samAccountName@<domain derived from the base DN>, then the bare name.
+     *
+     * @return array<int,string>
+     */
+    public function bindIdentities(User $user): array
+    {
+        $ids = [];
+
+        if ($user->email && str_contains($user->email, '@')) {
+            $ids[] = $user->email;
+        }
+
+        if ($user->username) {
+            preg_match_all('/DC=([^,]+)/i', (string) ($this->settings()['base_dn'] ?? ''), $m);
+            if (! empty($m[1])) {
+                $ids[] = $user->username.'@'.implode('.', $m[1]);
+            }
+            $ids[] = $user->username;
+        }
+
+        return array_values(array_unique($ids));
+    }
+
     /**
      * Relax TLS certificate checking for an internal CA.
      *

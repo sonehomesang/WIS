@@ -72,6 +72,14 @@
                 </span>
             </label>
 
+            <label class="flex items-start gap-2 text-sm text-gray-700 border-t border-gray-100 pt-3">
+                <input type="checkbox" wire:model="loginWithAd" class="mt-0.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
+                <span>
+                    ເປີດ login ດ້ວຍ <b>ລະຫັດ AD</b> 🔑
+                    <span class="block text-xs text-gray-500">ເມື່ອເປີດ: ບັນຊີ <code>domain</code> (import ຈາກ AD) ຈະ login ດ້ວຍ <b>ລະຫັດ AD ໂດຍກົງ</b> — WH <b>ບໍ່ເກັບ</b> ລະຫັດ AD. ບັນຊີ <code>password</code> (ເຊັ່ນ admin) ຍັງໃຊ້ລະຫັດ WH ເປັນ <b>break-glass</b> ເຜື່ອ AD ລົ້ມ. ປິດ = ທຸກຄົນໃຊ້ລະຫັດ WH ຄືເກົ່າ.</span>
+                </span>
+            </label>
+
             <div class="flex flex-wrap items-center gap-3 pt-1">
                 <button type="button" wire:click="test" wire:loading.attr="disabled"
                         class="h-10 px-4 rounded-lg bg-white border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60">

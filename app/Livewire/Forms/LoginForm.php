@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Forms;
 
+use App\Models\User;
+use App\Services\LdapDirectory;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -30,9 +32,34 @@ class LoginForm extends Form
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
-            RateLimiter::hit($this->throttleKey());
-            RateLimiter::hit($this->accountKey());
+        $ldap = app(LdapDirectory::class);
+        $user = User::where('email', Str::lower(trim($this->email)))->first();
+
+        if ($ldap->loginEnabled() && $user && $user->auth_provider === 'domain') {
+            // Domain account → verify the typed password against AD by binding as
+            // the person. WH never stores the AD password. If AD is down, or the
+            // account was disabled/removed in AD, the bind simply fails — we never
+            // fall back to a stale local hash.
+            if (! $this->bindAgainstAd($ldap, $user)) {
+                $this->registerFailure();
+
+                throw ValidationException::withMessages([
+                    'form.email' => trans('auth.failed'),
+                ]);
+            }
+
+            // First successful AD sign-in activates a pre-created pending account.
+            if ($user->status === 'pending') {
+                $user->forceFill([
+                    'status' => 'active',
+                    'email_verified_at' => $user->email_verified_at ?? now(),
+                ])->save();
+            }
+
+            Auth::login($user, $this->remember);
+        } elseif (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
+            // password accounts (e.g. the break-glass admin) authenticate locally
+            $this->registerFailure();
 
             throw ValidationException::withMessages([
                 'form.email' => trans('auth.failed'),
@@ -43,8 +70,7 @@ class LoginForm extends Form
         if (Auth::user()->status !== 'active') {
             $status = Auth::user()->status;
             Auth::logout();
-            RateLimiter::hit($this->throttleKey());
-            RateLimiter::hit($this->accountKey());
+            $this->registerFailure();
 
             throw ValidationException::withMessages([
                 'form.email' => $status === 'pending'
@@ -55,6 +81,25 @@ class LoginForm extends Form
 
         RateLimiter::clear($this->throttleKey());
         RateLimiter::clear($this->accountKey());
+    }
+
+    /** Bind to AD as the user, trying each known identity (UPN, sam@domain, sam). */
+    protected function bindAgainstAd(LdapDirectory $ldap, User $user): bool
+    {
+        foreach ($ldap->bindIdentities($user) as $identity) {
+            if ($ldap->attemptBind($identity, $this->password)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Count a failed attempt against both rate-limit buckets. */
+    protected function registerFailure(): void
+    {
+        RateLimiter::hit($this->throttleKey());
+        RateLimiter::hit($this->accountKey());
     }
 
     /**
