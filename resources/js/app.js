@@ -200,13 +200,35 @@ document.addEventListener('alpine:init', () => {
 // Skip nodes flagged data-noexport (toolbars, ⚙ menus) when capturing.
 const exportFilter = (node) => !(node?.dataset && 'noexport' in node.dataset);
 
+// Reject if `promise` does not settle within `ms` — keeps a stalled capture from leaving
+// the button spinning forever with no feedback (the caller's catch shows the error alert).
+function withTimeout(promise, ms, label) {
+    let t;
+    const timeout = new Promise((_, reject) => {
+        t = setTimeout(
+            () => reject(new Error((label || 'ດຳເນີນການ') + ' ໃຊ້ ເວລາ ດົນ ເກີນ ' + Math.round(ms / 1000) + ' ວິ (timeout)')),
+            ms,
+        );
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(t));
+}
+
 // Wait for every <img> inside the node to finish loading before capture — html-to-image
 // rejects the whole render if an image is still pending, which makes the button "do nothing".
-async function waitForImages(el) {
+// Guard against hangs: an image that is already `complete` (loaded OR broken — a broken one is
+// complete with naturalWidth 0, and its onload/onerror will never fire again) resolves at once;
+// a still-pending image resolves on load/error OR after a short per-image cap, so one stalled
+// image just gets left out of the capture instead of freezing the whole export.
+async function waitForImages(el, perImageMs = 8000) {
     const imgs = Array.from(el.querySelectorAll('img'));
-    await Promise.all(imgs.map((img) => (img.complete && img.naturalWidth)
+    await Promise.all(imgs.map((img) => img.complete
         ? Promise.resolve()
-        : new Promise((res) => { img.onload = img.onerror = res; })));
+        : new Promise((res) => {
+            const done = () => { clearTimeout(t); res(); };
+            const t = setTimeout(done, perImageMs);
+            img.addEventListener('load', done, { once: true });
+            img.addEventListener('error', done, { once: true });
+        })));
 }
 
 // Export a DOM element to a downloaded .JPG (inspection sheet, borrow record…).
@@ -216,10 +238,14 @@ window.exportJpg = async (elementId, filename) => {
         return;
     }
     try {
-        await waitForImages(el);
+        await withTimeout(waitForImages(el), 12000, 'ໂຫຼດ ຮູບ');
         const { toJpeg } = await import('html-to-image');
         // skipFonts: ບໍ່ ຝັງ ຟອນ ພາຍນອກ (fonts.bunny.net) — ຫຼີກ SecurityError ຕອນ ອ່ານ CSS cross-origin.
-        const dataUrl = await toJpeg(el, { quality: 0.95, backgroundColor: '#ffffff', pixelRatio: 2, skipFonts: true, filter: exportFilter });
+        const dataUrl = await withTimeout(
+            toJpeg(el, { quality: 0.95, backgroundColor: '#ffffff', pixelRatio: 2, skipFonts: true, filter: exportFilter }),
+            25000,
+            'ດຶງ JPG',
+        );
         const a = document.createElement('a');
         a.href = dataUrl;
         a.download = filename || 'export.jpg';
@@ -237,9 +263,13 @@ window.exportPdf = async (elementId, filename) => {
         return;
     }
     try {
-        await waitForImages(el);
+        await withTimeout(waitForImages(el), 12000, 'ໂຫຼດ ຮູບ');
         const [{ toPng }, { jsPDF }] = await Promise.all([import('html-to-image'), import('jspdf')]);
-        const dataUrl = await toPng(el, { backgroundColor: '#ffffff', pixelRatio: 2, skipFonts: true, filter: exportFilter });
+        const dataUrl = await withTimeout(
+            toPng(el, { backgroundColor: '#ffffff', pixelRatio: 2, skipFonts: true, filter: exportFilter }),
+            25000,
+            'ດຶງ PDF',
+        );
         const img = new Image();
         img.onload = () => {
             const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
