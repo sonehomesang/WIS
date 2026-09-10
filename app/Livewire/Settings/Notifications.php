@@ -4,6 +4,8 @@ namespace App\Livewire\Settings;
 
 use App\Models\Setting;
 use App\Services\NotificationService;
+use App\Services\TeamsNotifier;
+use App\Support\TeamsSettings;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -30,6 +32,18 @@ class Notifications extends Component
      */
     public array $templates = [];
 
+    // ── Microsoft Teams channel ──
+    public bool $teamsEnabled = false;
+
+    public string $teamsDefaultWebhook = '';
+
+    /** @var array<string,array{enabled:bool,webhook:string}> */
+    public array $teamsModules = [];
+
+    public string $teamsResult = '';
+
+    public string $teamsResultType = '';   // ok · error
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('settings.view'), 403);
@@ -39,6 +53,11 @@ class Notifications extends Component
         $this->borrowReminder = (bool) ($flags['borrow_reminder'] ?? true);
         $lang = $flags['lang'] ?? 'lo';
         $this->lang = in_array($lang, ['lo', 'en'], true) ? $lang : 'lo';
+
+        $teams = TeamsSettings::get();
+        $this->teamsEnabled = $teams['enabled'];
+        $this->teamsDefaultWebhook = $teams['default_webhook'];
+        $this->teamsModules = $teams['modules'];
 
         $stored = Setting::get('notification_templates', []);
 
@@ -144,6 +163,44 @@ class Notifications extends Component
                 $this->email[$L][$f] = $dv;
             }
         }
+    }
+
+    public function saveTeams(): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $modules = [];
+        foreach (array_keys(TeamsSettings::MODULES) as $m) {
+            $modules[$m] = [
+                'enabled' => (bool) ($this->teamsModules[$m]['enabled'] ?? false),
+                'webhook' => trim((string) ($this->teamsModules[$m]['webhook'] ?? '')),
+            ];
+        }
+        Setting::put('teams', [
+            'enabled' => $this->teamsEnabled,
+            'default_webhook' => trim($this->teamsDefaultWebhook),
+            'modules' => $modules,
+        ], auth()->id());
+        TeamsSettings::forget();
+        $this->dispatch('saved');
+    }
+
+    /** Send a test card — to a module's resolved webhook, or the default one. */
+    public function testTeams(string $module = ''): void
+    {
+        abort_unless(auth()->user()->can('settings.edit'), 403);
+        $url = trim($module !== ''
+            ? (($this->teamsModules[$module]['webhook'] ?? '') ?: $this->teamsDefaultWebhook)
+            : $this->teamsDefaultWebhook);
+
+        if ($url === '') {
+            $this->teamsResult = 'ບໍ່ ມີ webhook URL ໃຫ້ ທົດສອບ';
+            $this->teamsResultType = 'error';
+
+            return;
+        }
+        $r = app(TeamsNotifier::class)->testWebhook($url);
+        $this->teamsResult = $r['message'];
+        $this->teamsResultType = $r['ok'] ? 'ok' : 'error';
     }
 
     public function render(): View

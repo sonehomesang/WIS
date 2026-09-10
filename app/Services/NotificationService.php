@@ -182,7 +182,16 @@ class NotificationService
         if ($t['title'] === '') {
             return;
         }
+        $this->teams($key, $t, $link);
         $this->notify($userId, $type, $t['title'], $t['message'], $link);
+    }
+
+    /** Fan the same event out to Microsoft Teams (once per event, master-gated). */
+    private function teams(string $key, array $t, ?string $link): void
+    {
+        if (self::enabled()) {
+            app(TeamsNotifier::class)->dispatch($key, $t['title'], $t['message'] ?? '', $link);
+        }
     }
 
     /** @param  array<int>  $userIds */
@@ -210,6 +219,7 @@ class NotificationService
         if ($t['title'] === '') {
             return;
         }
+        $this->teams($key, $t, $link);
         $this->notifyRole($role, $type, $t['title'], $t['message'], $link);
     }
 
@@ -223,6 +233,7 @@ class NotificationService
         if ($t['title'] === '') {
             return;
         }
+        $this->teams($key, $t, $link);
         $this->notifyMany($userIds, $type, $t['title'], $t['message'], $link);
     }
 }
