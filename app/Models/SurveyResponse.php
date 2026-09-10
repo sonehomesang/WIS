@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SurveyResponse extends Model
 {
     protected $fillable = [
-        'unit_id', 'user_id', 'frequency',
+        'unit_id', 'department_id', 'user_id', 'frequency',
         'wh_receiving', 'wh_condition', 'wh_storage',
         'ie_customs', 'ie_communication', 'ie_urgent',
         'overall_wh', 'overall_ie',
@@ -53,6 +53,11 @@ class SurveyResponse extends Model
         return $this->belongsTo(Unit::class);
     }
 
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -64,6 +69,7 @@ class SurveyResponse extends Model
         return $q
             ->when($f['frequency'] ?? null, fn ($q, $v) => $q->where('frequency', $v))
             ->when($f['unit_id'] ?? null, fn ($q, $v) => $q->where('unit_id', $v))
+            ->when($f['department_id'] ?? null, fn ($q, $v) => $q->where('department_id', $v))
             ->when($f['from'] ?? null, fn ($q, $v) => $q->whereDate('created_at', '>=', $v))
             ->when($f['to'] ?? null, fn ($q, $v) => $q->whereDate('created_at', '<=', $v));
     }

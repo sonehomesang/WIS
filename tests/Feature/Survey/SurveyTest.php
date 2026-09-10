@@ -2,11 +2,15 @@
 
 use App\Livewire\Survey\Form;
 use App\Livewire\Survey\Results;
+use App\Models\Setting;
 use App\Models\SurveyResponse;
 use App\Models\Unit;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Livewire\Livewire;
+
+// The survey now runs as an admin-launched campaign — open it for these tests.
+beforeEach(fn () => Setting::put('survey', ['active' => true], null));
 
 function makeUnit(string $slug = 'ciu', string $name = 'CIU'): Unit
 {
@@ -106,7 +110,7 @@ test('manager can set a target staff count for the response rate', function () {
     expect($c->viewData('denominator'))->toBe(50)
         ->and($c->viewData('manualTarget'))->toBeTrue()
         ->and($c->viewData('responseRate'))->toBe(20)          // 10 / 50
-        ->and(\App\Models\Setting::get('survey')['target_staff'])->toBe(50);   // persisted
+        ->and(Setting::get('survey')['target_staff'])->toBe(50);   // persisted
 
     $c->set('targetStaff', 0);                                 // clear → back to auto
     expect($c->viewData('manualTarget'))->toBeFalse();

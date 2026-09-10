@@ -1,6 +1,9 @@
 <div class="pb-8">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
 
+        <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
+             class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
+
         {{-- Header --}}
         <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-sky-100 bg-gradient-to-b from-sky-100 to-sky-50 flex items-center gap-3">
@@ -14,7 +17,7 @@
             </div>
 
             {{-- Filters --}}
-            <div class="p-4 grid md:grid-cols-5 gap-3 bg-gray-50/60">
+            <div class="p-4 grid md:grid-cols-6 gap-3 bg-gray-50/60">
                 <div>
                     <label class="text-[11px] font-semibold text-gray-500">ຄວາມຖີ່</label>
                     <select wire:model.live="frequency" class="mt-1 w-full h-9 rounded-lg border-gray-300 text-sm">
@@ -28,6 +31,13 @@
                     <select wire:model.live="unit_id" class="mt-1 w-full h-9 rounded-lg border-gray-300 text-sm">
                         <option value="">ທັງໝົດ</option>
                         @foreach ($units as $unit)<option value="{{ $unit->id }}">{{ $unit->name }}</option>@endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-gray-500">ພະແນກ</label>
+                    <select wire:model.live="department_id" class="mt-1 w-full h-9 rounded-lg border-gray-300 text-sm">
+                        <option value="">ທັງໝົດ</option>
+                        @foreach ($departments as $dept)<option value="{{ $dept->id }}">{{ $dept->name }}</option>@endforeach
                     </select>
                 </div>
                 <div>
@@ -49,6 +59,34 @@
                 </div>
             </div>
         </div>
+
+        {{-- Campaign config (admin): active window + identity toggle --}}
+        @canany(['survey.edit', 'reports.view'])
+            <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
+                <div class="flex flex-wrap items-end gap-4">
+                    <label class="inline-flex items-center gap-2 text-sm {{ $campaignActive ? 'text-emerald-700 font-semibold' : 'text-gray-600' }}">
+                        <input type="checkbox" wire:model="campaignActive" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                        ເປີດ ແຄມເປນ (ເດັ້ງ popup + ຮັບ ຄຳຕອບ)
+                    </label>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-500">ວັນ ເລີ່ມ</label>
+                        <input type="date" wire:model="startDate" class="mt-1 h-9 rounded-lg border-gray-300 text-sm">
+                        @error('startDate')<p class="text-[11px] text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-500">ວັນ ຈົບ</label>
+                        <input type="date" wire:model="endDate" class="mt-1 h-9 rounded-lg border-gray-300 text-sm">
+                        @error('endDate')<p class="text-[11px] text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <label class="inline-flex items-center gap-2 text-sm text-gray-600" title="ສະແດງ ຊື່ + ພະແນກ ຜູ້ຕອບ ໃນ ຄຳເຫັນ (ຖ້າ ປິດ = ບໍ່ ລະບຸ ຕົວ)">
+                        <input type="checkbox" wire:model="identify" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500">
+                        ສະແດງ ຊື່ + ພະແນກ ຜູ້ຕອບ
+                    </label>
+                    <button wire:click="saveCampaign" class="ml-auto h-9 px-5 rounded-lg bg-sky-600 text-white text-sm font-semibold hover:bg-sky-700">ບັນທຶກ</button>
+                </div>
+                <p class="text-[11px] text-gray-400 mt-2">💡 ຊ່ວງ ວັນທີ ຄຸມ ທັງ popup (ຄົນ login) ແລະ ລິ້ງ ສາທາລະນະ /survey. ວ່າງ = ບໍ່ ຈຳກັດ ດ້ານ ນັ້ນ.</p>
+            </div>
+        @endcanany
 
         @if ($total === 0)
             <div class="bg-white border border-gray-100 rounded-2xl p-10 text-center text-gray-400 text-sm">ຍັງບໍ່ມີຄຳຕອບ ຕາມເງື່ອນໄຂນີ້.</div>
@@ -231,7 +269,7 @@
                     <h3 class="font-bold text-emerald-700 text-sm mb-2">👍 ເຮັດໄດ້ດີ ({{ $comments->whereNotNull('doing_well')->count() }})</h3>
                     <ul class="text-sm text-gray-600 space-y-2 max-h-72 overflow-y-auto">
                         @forelse ($comments->whereNotNull('doing_well') as $c)
-                            <li class="border-b border-gray-100 pb-2">“{{ $c->doing_well }}” <span class="text-[11px] text-gray-400">— {{ $c->unit?->name ?? '—' }} · {{ ucfirst($c->frequency ?? '') }}</span></li>
+                            <li class="border-b border-gray-100 pb-2">“{{ $c->doing_well }}” <span class="text-[11px] text-gray-400">— @if ($identify && $c->user){{ $c->user->display_name }} · @endif{{ ($identify ? $c->department?->name : null) ?? $c->unit?->name ?? '—' }} · {{ ucfirst($c->frequency ?? '') }}</span></li>
                         @empty <li class="text-gray-400 text-xs">ຍັງບໍ່ມີ.</li> @endforelse
                     </ul>
                 </div>
@@ -239,7 +277,7 @@
                     <h3 class="font-bold text-rose-600 text-sm mb-2">🔧 ຄວນປັບປຸງ ({{ $comments->whereNotNull('improve')->count() }})</h3>
                     <ul class="text-sm text-gray-600 space-y-2 max-h-72 overflow-y-auto">
                         @forelse ($comments->whereNotNull('improve') as $c)
-                            <li class="border-b border-gray-100 pb-2">“{{ $c->improve }}” <span class="text-[11px] text-gray-400">— {{ $c->unit?->name ?? '—' }} · {{ ucfirst($c->frequency ?? '') }}</span></li>
+                            <li class="border-b border-gray-100 pb-2">“{{ $c->improve }}” <span class="text-[11px] text-gray-400">— @if ($identify && $c->user){{ $c->user->display_name }} · @endif{{ ($identify ? $c->department?->name : null) ?? $c->unit?->name ?? '—' }} · {{ ucfirst($c->frequency ?? '') }}</span></li>
                         @empty <li class="text-gray-400 text-xs">ຍັງບໍ່ມີ.</li> @endforelse
                     </ul>
                 </div>

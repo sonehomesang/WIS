@@ -194,19 +194,19 @@
                     </div>
                     <div class="md:col-span-2 border-t border-gray-100 pt-3">
                         <label class="block text-sm font-medium text-gray-700 mb-1">ສິດ ເພີ່ມເຕີມ ສະເພາະ ບຸກຄົນ</label>
-                        <p class="text-xs text-gray-400 mb-2">ເລືອກ ລະດັບ ສິດ ຕໍ່ ເມນູ (ນອກ ເໜືອ ຈາກ ບົດບາດ). ຕິກ "ເພີ່ມ/ແກ້" ຈະ ລວມ "ເບິ່ງ" ໃຫ້ ອັດຕະໂນມັດ.</p>
+                        <p class="text-xs text-gray-400 mb-2">ເລືອກ ລະດັບ ສິດ ຕໍ່ ເມນູ (ນອກ ເໜືອ ຈາກ ບົດບາດ). ຕິກ "ນຳໃຊ້/ແກ້" ຈະ ລວມ "ເບິ່ງ" ໃຫ້ ອັດຕະໂນມັດ.</p>
                         <div class="border border-gray-100 rounded-md divide-y divide-gray-100 overflow-hidden">
                             <div class="flex items-center px-3 py-1.5 text-[11px] text-gray-400 bg-gray-50">
                                 <span class="flex-1">ເມນູ</span>
                                 @foreach ($grantableActions as $act => $actLabel)
-                                    <span class="w-12 text-center">{{ $actLabel }}</span>
+                                    <span class="w-20 text-center leading-tight">{{ $actLabel }}</span>
                                 @endforeach
                             </div>
                             @foreach ($grantableMenus as $key => $label)
                                 <div class="flex items-center px-3 py-1.5 text-sm text-gray-700">
                                     <span class="flex-1">{{ $label }}</span>
                                     @foreach ($grantableActions as $act => $actLabel)
-                                        <span class="w-12 flex justify-center">
+                                        <span class="w-20 flex justify-center">
                                             <input type="checkbox" wire:model="extraPerms.{{ $key }}.{{ $act }}" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500">
                                         </span>
                                     @endforeach

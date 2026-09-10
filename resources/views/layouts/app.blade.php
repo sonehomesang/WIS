@@ -170,6 +170,7 @@
         @include('partials._lightbox')
         @auth
             @include('partials._idle-timeout')
+            <livewire:survey.prompt />
         @endauth
     </body>
 </html>

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Survey;
 
+use App\Models\Department;
 use App\Models\Setting;
 use App\Models\SurveyResponse;
 use App\Models\Unit;
@@ -28,6 +29,9 @@ class Results extends Component
     public ?int $unit_id = null;
 
     #[Url]
+    public ?int $department_id = null;
+
+    #[Url]
     public string $service = 'all';   // all | wh | ie
 
     #[Url]
@@ -39,12 +43,44 @@ class Results extends Component
     /** Manager-set target staff count (survey population). Null = auto (active users). */
     public ?int $targetStaff = null;
 
+    // ── campaign config (admin) ──
+    public bool $campaignActive = false;
+
+    public ?string $startDate = null;
+
+    public ?string $endDate = null;
+
+    public bool $identify = false;   // show respondent name + department in results
+
     public function mount(): void
     {
         // survey.view is the module's own permission; reports.view kept for
         // backward compatibility (managers who already had it keep access).
         abort_unless($this->canView(), 403);
-        $this->targetStaff = Setting::get('survey')['target_staff'] ?? null;
+        $s = Setting::get('survey', []) ?: [];
+        $this->targetStaff = $s['target_staff'] ?? null;
+        $this->campaignActive = (bool) ($s['active'] ?? false);
+        $this->startDate = $s['start_date'] ?? null;
+        $this->endDate = $s['end_date'] ?? null;
+        $this->identify = (bool) ($s['identify_respondents'] ?? false);
+    }
+
+    /** Save the campaign window + identity toggle (admin). */
+    public function saveCampaign(): void
+    {
+        abort_unless($this->canView(), 403);
+        $this->validate([
+            'startDate' => ['nullable', 'date'],
+            'endDate' => ['nullable', 'date', 'after_or_equal:startDate'],
+        ], [], ['startDate' => 'start date', 'endDate' => 'end date']);
+
+        Setting::put('survey', array_merge(Setting::get('survey', []) ?: [], [
+            'active' => $this->campaignActive,
+            'start_date' => $this->startDate ?: null,
+            'end_date' => $this->endDate ?: null,
+            'identify_respondents' => $this->identify,
+        ]), auth()->id());
+        $this->dispatch('saved');
     }
 
     /** May the current user open the survey results dashboard? */
@@ -65,7 +101,7 @@ class Results extends Component
 
     public function resetFilters(): void
     {
-        $this->reset(['frequency', 'unit_id', 'service', 'from', 'to']);
+        $this->reset(['frequency', 'unit_id', 'department_id', 'service', 'from', 'to']);
         $this->service = 'all';
     }
 
@@ -74,6 +110,7 @@ class Results extends Component
         return SurveyResponse::query()->filter([
             'frequency' => $this->frequency ?: null,
             'unit_id' => $this->unit_id,
+            'department_id' => $this->department_id,
             'from' => $this->from,
             'to' => $this->to,
         ]);
@@ -167,14 +204,18 @@ class Results extends Component
         $responseRate = $denominator ? (int) round($total / $denominator * 100) : null;
         $units = Unit::orderBy('name')->get(['id', 'name']);
         $unitNames = $units->pluck('name', 'id');
+        $departments = Department::when($this->unit_id, fn ($q, $v) => $q->where('unit_id', $v))
+            ->orderBy('name')->get(['id', 'name']);
 
         // recent comments
         $comments = (clone $this->base())
             ->where(fn ($q) => $q->whereNotNull('doing_well')->orWhereNotNull('improve'))
-            ->with('unit:id,name')->latest()->limit(20)->get();
+            ->with(['unit:id,name', 'department:id,name', 'user:id,display_name'])->latest()->limit(20)->get();
 
         return view('livewire.survey.results', [
             'units' => $units,
+            'departments' => $departments,
+            'identify' => $this->identify,
             'total' => $total,
             'avgOf' => $avgOf,
             'whMean' => $sectionMean(SurveyResponse::WH_FIELDS),

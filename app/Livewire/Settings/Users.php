@@ -87,7 +87,7 @@ class Users extends Component
      */
     public static function grantableActions(): array
     {
-        return ['view' => 'ເບິ່ງ', 'create' => 'ເພີ່ມ', 'edit' => 'ແກ້'];
+        return ['view' => 'ເບິ່ງ ຂໍ້ມູນ', 'create' => 'ນຳໃຊ້ ຂໍ້ມູນ', 'edit' => 'ແກ້ ຂໍ້ມູນ ທີ່ ນຳໃຊ້'];
     }
 
     /** ຕັ້ງ ໂຄງ extraPerms ໃຫ້ ທຸກ ເມນູ/action = false. */

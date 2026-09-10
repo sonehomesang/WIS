@@ -19,7 +19,14 @@
     ];
 @endphp
 
-@if ($done)
+@if ($closed)
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-8 text-center">
+        <div class="w-16 h-16 mx-auto rounded-full bg-gray-100 text-gray-400 grid place-items-center text-3xl">🕒</div>
+        <h1 class="mt-4 text-xl font-bold text-gray-800">ແບບສອບຖາມ ຍັງບໍ່ເປີດ / ປິດແລ້ວ</h1>
+        <p class="mt-1 text-sm text-gray-500">ຂະນະນີ້ ບໍ່ຢູ່ ໃນ ຊ່ວງ ເກັບ ຄຳຕອບ — ກະລຸນາ ຕິດຕໍ່ ຜູ້ດູແລ ຫຼື ລອງ ພາຍຫຼັງ.</p>
+        <p class="text-xs text-gray-400 mt-1">The survey is not open right now.</p>
+    </div>
+@elseif ($done)
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-8 text-center">
         <div class="w-16 h-16 mx-auto rounded-full bg-emerald-100 text-emerald-600 grid place-items-center text-3xl">✓</div>
         <h1 class="mt-4 text-xl font-bold text-gray-800">ຂອບໃຈຫຼາຍໆ!</h1>
@@ -40,14 +47,27 @@
             <div class="p-6">
                 <p class="text-sm text-gray-600 mb-4">ຄຳຕອບຂອງທ່ານຊ່ວຍໃຫ້ພວກເຮົາປັບປຸງການບໍລິການ · ~2 ນາທີ.</p>
                 @if ($isGuest)
-                    <label class="block text-xs font-semibold text-gray-500 mb-1">ໜ່ວຍງານ/ພະແນກ ຂອງທ່ານ · Your unit</label>
-                    <select wire:model="unit_id" class="w-full h-10 rounded-lg border-gray-300 text-sm">
-                        <option value="">— ເລືອກ / Select (ບໍ່ບັງຄັບ) —</option>
-                        @foreach ($units as $unit)
-                            <option value="{{ $unit->id }}">{{ $unit->name }}</option>
-                        @endforeach
-                    </select>
-                    <p class="text-[11px] text-gray-400 mt-1">🔒 ຕອບໄດ້ແບບບໍ່ລະບຸຕົວ (anonymous).</p>
+                    <div class="grid sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">ໜ່ວຍງານ ຂອງທ່ານ · Your unit</label>
+                            <select wire:model.live="unit_id" class="w-full h-10 rounded-lg border-gray-300 text-sm">
+                                <option value="">— ເລືອກ / Select (ບໍ່ບັງຄັບ) —</option>
+                                @foreach ($units as $unit)
+                                    <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">ພະແນກ · Department</label>
+                            <select wire:model="department_id" @disabled(! $unit_id) class="w-full h-10 rounded-lg border-gray-300 text-sm disabled:bg-gray-50 disabled:text-gray-400">
+                                <option value="">— {{ $unit_id ? 'ເລືອກ / Select (ບໍ່ບັງຄັບ)' : 'ເລືອກ ໜ່ວຍງານ ກ່ອນ' }} —</option>
+                                @foreach ($departments as $dept)
+                                    <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-gray-400 mt-1">🔒 ຕອບໄດ້ແບບບໍ່ລະບຸຕົວ (anonymous) — ໜ່ວຍງານ/ພະແນກ ໃຊ້ ຈັດ ໝວດ ຜົນ ເທົ່ານັ້ນ.</p>
                 @else
                     <span class="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-full px-3 py-1">👤 {{ auth()->user()->display_name }} · {{ auth()->user()->unit?->name ?? 'ບໍ່ມີໜ່ວຍງານ' }}</span>
                 @endif

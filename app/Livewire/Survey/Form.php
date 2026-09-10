@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Survey;
 
+use App\Models\Department;
 use App\Models\SurveyResponse;
 use App\Models\Unit;
+use App\Support\SurveyCampaign;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -18,6 +20,8 @@ use Livewire\Component;
 class Form extends Component
 {
     public ?int $unit_id = null;
+
+    public ?int $department_id = null;
 
     public ?string $frequency = null;
 
@@ -43,10 +47,23 @@ class Form extends Component
 
     public bool $done = false;
 
+    /** Campaign not open (inactive or outside the date window) → show a notice. */
+    public bool $closed = false;
+
     public function mount(): void
     {
+        $this->closed = ! SurveyCampaign::isOpen();
         if ($u = auth()->user()) {
             $this->unit_id = $u->unit_id;
+            $this->department_id = $u->department_id;
+        }
+    }
+
+    /** Guest changed unit → clear a now-mismatched department pick. */
+    public function updatedUnitId(): void
+    {
+        if (! auth()->check()) {
+            $this->department_id = null;
         }
     }
 
@@ -56,6 +73,7 @@ class Form extends Component
 
         return [
             'unit_id' => ['nullable', 'integer', 'exists:units,id'],
+            'department_id' => ['nullable', 'integer', 'exists:departments,id'],
             'frequency' => ['required', 'in:'.implode(',', SurveyResponse::FREQUENCIES)],
             'wh_receiving' => $rating, 'wh_condition' => $rating, 'wh_storage' => $rating,
             'ie_customs' => $rating, 'ie_communication' => $rating, 'ie_urgent' => $rating,
@@ -72,6 +90,12 @@ class Form extends Component
 
     public function submit(): void
     {
+        if ($this->closed || ! SurveyCampaign::isOpen()) {
+            $this->closed = true;
+
+            return;   // campaign closed — no submissions accepted
+        }
+
         $data = $this->validate();
 
         // require at least one rating so an empty form can't be submitted
@@ -83,9 +107,10 @@ class Form extends Component
         }
 
         $data['user_id'] = auth()->id();
-        // logged-in users always use their own unit
-        if (auth()->check()) {
-            $data['unit_id'] = auth()->user()->unit_id;
+        // logged-in users always use their own unit + department; guests may pick.
+        if ($u = auth()->user()) {
+            $data['unit_id'] = $u->unit_id;
+            $data['department_id'] = $u->department_id;
         }
 
         SurveyResponse::create($data);
@@ -96,6 +121,9 @@ class Form extends Component
     {
         return view('livewire.survey.form', [
             'units' => Unit::orderBy('name')->get(['id', 'name']),
+            'departments' => $this->unit_id
+                ? Department::where('unit_id', $this->unit_id)->where('is_active', true)->orderBy('name')->get(['id', 'name'])
+                : collect(),
             'isGuest' => ! auth()->check(),
         ]);
     }
