@@ -122,17 +122,21 @@ class RolePermissionSeeder extends Seeder
         $supplier['catalog'] = 'viewCreateEdit';
         $supplier['notifications'] = 'viewOnly';
 
-        // department_admin = ບໍລິຫານ Equipment & Tools ຂອງ ພະແນກ ຕົນ ເທົ່ານັ້ນ (ນ້ອຍ ກວ່າ SA).
-        // ສິດ equipment = adminPerm (ບໍ່ ມີ delete); ໂມດູລ ອື່ນ ເບິ່ງ ຢ່າງ ດຽວ. scope = ພະແນກ (ເບິ່ງ scopes()).
+        // department_admin = ບໍລິຫານ ທຸລະກຳ + ເຄື່ອງ ຂອງ ພະແນກ ຕົນ ເທົ່ານັ້ນ (scope = department).
+        // ສ້າງ/ແກ້ ໃບ ຢືມ/ຝາກ/ຂໍ ຂອງ ພະແນກ ໄດ້ · ຈັດການ ເຄື່ອງ ພະແນກ ໄດ້ · ແຕ່
+        // ຫ້າມ ແຕະ ຖານ inventory ຫຼັກ (inventory = view ຢ່າງ ດຽວ, ບໍ່ ມີ create/edit) ·
+        // ຫ້າມ ອະນຸມັດ (ບໍ່ ມີ activate) · ຫ້າມ ເມນູ admin (users/roles/settings/audit).
         $deptAdmin = $this->allMenus('allFalse');
         $deptAdmin['dashboard'] = 'viewOnly';
-        $deptAdmin['inventory'] = 'viewOnly';
         $deptAdmin['notifications'] = 'viewOnly';
-        $deptAdmin['equipment'] = 'adminPerm';
-        $deptAdmin['disposal'] = 'viewOnly';   // ເຫັນ ໃບ ຈຳໜ່າຍ ຂອງ ພະແນກ ຕົນ (ດຶງ ຈາກ Equipment ຕົນ)
-        // ເບິ່ງ transaction ຂອງ ພະແນກ ຕົນ (scope = department, ເບິ່ງ scopes())
+        $deptAdmin['reports'] = 'viewOnly';
+        $deptAdmin['inventory'] = 'viewOnly';   // ເບິ່ງ stock ໄດ້ ແຕ່ ເພີ່ມ/ແກ້ ຖານ ຫຼັກ ບໍ່ ໄດ້
+        $deptAdmin['catalog'] = 'viewOnly';
+        $deptAdmin['equipment'] = 'adminPerm';  // ຈັດການ ເຄື່ອງ ຂອງ ພະແນກ ຕົນ (scope = department)
+        $deptAdmin['disposal'] = 'viewOnly';    // ເຫັນ ໃບ ຈຳໜ່າຍ ຂອງ ພະແນກ ຕົນ
+        // ສ້າງ/ແກ້ ທຸລະກຳ ຂອງ ພະແນກ ຕົນ (scope = department) — ບໍ່ ລວມ ອະນຸມັດ/ລຶບ
         foreach (['borrow', 'deposit', 'request'] as $m) {
-            $deptAdmin[$m] = 'viewOnly';
+            $deptAdmin[$m] = 'viewCreateEdit';
         }
 
         return [
