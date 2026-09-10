@@ -34,8 +34,7 @@ test('department_admin can read stock + manage its own equipment', function () {
     expect($u->can('inventory.view'))->toBeTrue()      // read stock
         ->and($u->can('catalog.view'))->toBeTrue()
         ->and($u->can('equipment.create'))->toBeTrue()  // manage own-dept equipment
-        ->and($u->can('equipment.edit'))->toBeTrue()
-        ->and($u->can('reports.view'))->toBeTrue();
+        ->and($u->can('equipment.edit'))->toBeTrue();
 });
 
 test('SECURITY — department_admin can NEVER touch the master inventory', function () {
@@ -56,7 +55,9 @@ test('SECURITY — department_admin has no admin menus', function () {
         ->and($u->can('roles.view'))->toBeFalse()
         ->and($u->can('settings.view'))->toBeFalse()
         ->and($u->can('settings.edit'))->toBeFalse()
-        ->and($u->can('audit.view'))->toBeFalse();
+        ->and($u->can('audit.view'))->toBeFalse()
+        ->and($u->can('reports.view'))->toBeFalse()   // org reports are not for a dept admin
+        ->and($u->can('survey.view'))->toBeFalse();
 });
 
 test('SECURITY — department_admin cannot approve or delete transactions', function () {

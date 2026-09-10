@@ -17,7 +17,7 @@ class RolePermissionSeeder extends Seeder
     /** @var list<string> */
     private array $menus = [
         'dashboard', 'inventory', 'borrow', 'deposit', 'request', 'da', 'oga', 'expo', 'disposal', 'ansi',
-        'catalog', 'equipment', 'area_inspection', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
+        'catalog', 'equipment', 'area_inspection', 'survey', 'supplier', 'units', 'departments', 'locations', 'buildings', 'rooms',
         'users', 'roles', 'settings', 'reports', 'audit', 'notifications',
     ];
 
@@ -129,7 +129,6 @@ class RolePermissionSeeder extends Seeder
         $deptAdmin = $this->allMenus('allFalse');
         $deptAdmin['dashboard'] = 'viewOnly';
         $deptAdmin['notifications'] = 'viewOnly';
-        $deptAdmin['reports'] = 'viewOnly';
         $deptAdmin['inventory'] = 'viewOnly';   // ເບິ່ງ stock ໄດ້ ແຕ່ ເພີ່ມ/ແກ້ ຖານ ຫຼັກ ບໍ່ ໄດ້
         $deptAdmin['catalog'] = 'viewOnly';
         $deptAdmin['equipment'] = 'adminPerm';  // ຈັດການ ເຄື່ອງ ຂອງ ພະແນກ ຕົນ (scope = department)

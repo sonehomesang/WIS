@@ -73,6 +73,10 @@ class Users extends Component
             'da' => 'DA Claims',
             'oga' => 'OGA',
             'expo' => 'Expo Info',
+            'disposal' => 'Disposal',
+            'ansi' => 'New Stock Item (ANSI)',
+            'area_inspection' => 'Area Inspection',
+            'survey' => 'Satisfaction Survey',
         ];
     }
 

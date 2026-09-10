@@ -25,7 +25,7 @@ class DepartmentAdminPresetSeeder extends Seeder
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $perms = [
-            'dashboard.view', 'notifications.view', 'reports.view',
+            'dashboard.view', 'notifications.view',
             'inventory.view', 'catalog.view', 'disposal.view',
             'equipment.view', 'equipment.create', 'equipment.edit', 'equipment.activate', 'equipment.deactivate',
             'borrow.view', 'borrow.create', 'borrow.edit',

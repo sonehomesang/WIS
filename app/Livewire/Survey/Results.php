@@ -41,14 +41,24 @@ class Results extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->can('reports.view'), 403);
+        // survey.view is the module's own permission; reports.view kept for
+        // backward compatibility (managers who already had it keep access).
+        abort_unless($this->canView(), 403);
         $this->targetStaff = Setting::get('survey')['target_staff'] ?? null;
+    }
+
+    /** May the current user open the survey results dashboard? */
+    protected function canView(): bool
+    {
+        $u = auth()->user();
+
+        return (bool) $u && ($u->can('survey.view') || $u->can('reports.view'));
     }
 
     /** Persist the manual target as it is edited (blank/0 = back to auto). */
     public function updatedTargetStaff(): void
     {
-        abort_unless(auth()->user()->can('reports.view'), 403);
+        abort_unless($this->canView(), 403);
         $this->targetStaff = $this->targetStaff && $this->targetStaff > 0 ? (int) $this->targetStaff : null;
         Setting::put('survey', array_merge(Setting::get('survey'), ['target_staff' => $this->targetStaff]), auth()->id());
     }
