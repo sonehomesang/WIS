@@ -105,6 +105,46 @@ test('C3: action queue counts open corrective maintenance (CM) for staff', funct
         });
 });
 
+test('dashboard shows the module-status glance for staff (with totals)', function () {
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    $this->actingAs($admin);
+
+    BorrowRecord::create([
+        'request_number' => 'BR'.now()->year.'-9300', 'borrower_user_id' => $admin->id,
+        'borrower_email' => $admin->email, 'borrower_name' => 'A', 'borrow_type' => 'new_inventory',
+        'borrow_date' => now()->toDateString(), 'period_days' => 5, 'planned_return_date' => now()->addDays(5)->toDateString(),
+        'status' => 'active',
+    ]);
+
+    Livewire::test(Dashboard::class)
+        ->assertOk()
+        ->assertSee('ສະຖານະ ໂມດູລ')   // glance heading
+        ->assertViewHas('glance', function ($g) {
+            $keys = collect($g)->pluck('key')->all();
+            $borrow = collect($g)->firstWhere('key', 'borrow');
+
+            return in_array('borrow', $keys, true)
+                && in_array('equipment', $keys, true)   // equipment shown to staff
+                && $borrow['total'] >= 1;
+        });
+});
+
+test('SECURITY — the glance is scoped to what the user may see (no equipment/da for a requester)', function () {
+    $req = User::factory()->create(['is_super_admin' => false]);
+    $req->assignRole('requester');
+    $this->actingAs($req);
+
+    Livewire::test(Dashboard::class)
+        ->assertOk()
+        ->assertViewHas('glance', function ($g) {
+            $keys = collect($g)->pluck('key')->all();
+
+            return ! in_array('equipment', $keys, true)   // equipment.view is staff-only
+                && ! in_array('da', $keys, true)           // requester has no da.view
+                && ! in_array('oga', $keys, true);         // nor oga.view
+        });
+});
+
 test('widget toggle persists to the user dashboard_prefs', function () {
     $admin = User::factory()->create(['is_super_admin' => true]);
     $this->actingAs($admin);

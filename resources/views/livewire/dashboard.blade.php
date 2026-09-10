@@ -27,48 +27,62 @@
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div id="dash-capture" class="space-y-4">
 
-            {{-- header bar --}}
-            <div class="flex items-center justify-between gap-3">
-                <div class="min-w-0">
-                    <h1 class="text-lg font-semibold text-gray-800 truncate">ສະບາຍດີ, {{ auth()->user()->display_name }}</h1>
-                    <p class="text-sm text-gray-500 truncate">{{ auth()->user()->getRoleNames()->implode(', ') ?: '—' }}@if (auth()->user()->is_super_admin) · super_admin @endif · {{ now()->format('l, d M Y') }}</p>
-                </div>
-                <div class="flex items-center gap-1.5 shrink-0" data-noexport>
-                    <button onclick="window.exportPdf('dash-capture','dashboard-{{ now()->format('Ymd-Hi') }}.pdf')" class="text-xs text-gray-600 border border-gray-200 rounded-md px-2.5 py-1.5 hover:bg-gray-50" title="ສົ່ງອອກ PDF">📄 PDF</button>
-                    <button onclick="window.exportJpg('dash-capture','dashboard-{{ now()->format('Ymd-Hi') }}.jpg')" class="text-xs text-gray-600 border border-gray-200 rounded-md px-2.5 py-1.5 hover:bg-gray-50" title="ສົ່ງອອກ JPG">🖼 JPG</button>
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="text-xs text-gray-600 border border-gray-200 rounded-md px-2.5 py-1.5 hover:bg-gray-50">⚙</button>
-                        <div x-show="open" x-cloak @click.outside="open = false" x-transition class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-30 p-2">
-                            <p class="text-[11px] text-gray-400 px-2 py-1">ສະແດງ widget</p>
-                            @foreach ($widgetLabels as $key => $lbl)
-                                @if ($key !== 'charts' || $showCharts || ($prefs['charts'] ?? true))
-                                    <label class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer text-sm">
-                                        <input type="checkbox" wire:click="toggle('{{ $key }}')" @checked($prefs[$key] ?? true) class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" />
-                                        <span class="text-gray-700">{{ $lbl }}</span>
-                                    </label>
-                                @endif
-                            @endforeach
+            {{-- HERO band — elevated, distinct from the content below --}}
+            <div class="rounded-2xl overflow-hidden relative text-white shadow-lg" style="background:linear-gradient(120deg,#0b4a95,#0e63c4 55%,#1e88e5)">
+                <div class="absolute -right-16 -top-16 w-60 h-60 rounded-full bg-white/10"></div>
+                <div class="absolute -left-10 -bottom-20 w-52 h-52 rounded-full bg-white/5"></div>
+                <div class="relative p-5 sm:p-6">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <h1 class="text-xl sm:text-2xl font-bold truncate">ສະບາຍດີ, {{ auth()->user()->display_name }} 👋</h1>
+                            <p class="text-xs sm:text-sm text-white/80 truncate">{{ auth()->user()->getRoleNames()->implode(', ') ?: '—' }}@if (auth()->user()->is_super_admin) · super_admin @endif · {{ now()->format('l, d M Y') }} · ພາບ ລວມ ຄັງ ສິນຄ້າ</p>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0" data-noexport>
+                            <button onclick="window.exportPdf('dash-capture','dashboard-{{ now()->format('Ymd-Hi') }}.pdf')" class="text-xs bg-white/15 border border-white/25 text-white rounded-md px-2.5 py-1.5 hover:bg-white/25" title="ສົ່ງອອກ PDF">📄 PDF</button>
+                            <button onclick="window.exportJpg('dash-capture','dashboard-{{ now()->format('Ymd-Hi') }}.jpg')" class="text-xs bg-white/15 border border-white/25 text-white rounded-md px-2.5 py-1.5 hover:bg-white/25" title="ສົ່ງອອກ JPG">🖼 JPG</button>
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open" class="text-xs bg-white/15 border border-white/25 text-white rounded-md px-2.5 py-1.5 hover:bg-white/25">⚙</button>
+                                <div x-show="open" x-cloak @click.outside="open = false" x-transition class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-30 p-2 text-gray-700">
+                                    <p class="text-[11px] text-gray-400 px-2 py-1">ສະແດງ widget</p>
+                                    @foreach ($widgetLabels as $key => $lbl)
+                                        @if ($key !== 'charts' || $showCharts || ($prefs['charts'] ?? true))
+                                            <label class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer text-sm">
+                                                <input type="checkbox" wire:click="toggle('{{ $key }}')" @checked($prefs[$key] ?? true) class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" />
+                                                <span class="text-gray-700">{{ $lbl }}</span>
+                                            </label>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    @if (($prefs['kpi'] ?? true) && count($kpis))
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+                            @foreach ($kpis as $c)
+                                @php $tag = $c['route'] ? 'a' : 'div'; $warn = in_array($c['tone'], ['red', 'amber'], true); @endphp
+                                <{{ $tag }} @if ($c['route']) href="{{ route($c['route']) }}" wire:navigate @endif class="block rounded-xl bg-white/12 border border-white/20 p-3.5 hover:bg-white/20 transition">
+                                    <p class="text-[11.5px] text-white/85 truncate">{{ $c['label'] }}</p>
+                                    <p class="mt-0.5 text-3xl font-bold tabular-nums leading-tight">{{ number_format($c['value']) }}</p>
+                                    <p class="mt-0.5 text-[11px] truncate {{ $warn ? 'text-amber-200 font-semibold' : 'text-white/70' }}">{{ $c['hint'] }}</p>
+                                </{{ $tag }}>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             </div>
 
-            {{-- KPI cards (icon-square, WIS style) --}}
-            @if (($prefs['kpi'] ?? true) && count($kpis))
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    @foreach ($kpis as $c)
-                        @php $tag = $c['route'] ? 'a' : 'div'; @endphp
-                        <{{ $tag }} @if ($c['route']) href="{{ route($c['route']) }}" wire:navigate @endif class="flex items-start gap-3 p-4 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-2.5 rounded-lg {{ $toneBg[$c['tone']] ?? $toneBg['slate'] }}">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $kpiIcon[$c['key']] ?? $kpiIcon['bell'] }}" /></svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-medium text-gray-500 truncate">{{ $c['label'] }}</p>
-                                <p class="mt-0.5 text-2xl font-bold text-gray-900 tabular-nums">{{ number_format($c['value']) }}</p>
-                                <p class="mt-0.5 text-xs text-gray-500 truncate">{{ $c['hint'] }}</p>
-                            </div>
-                        </{{ $tag }}>
-                    @endforeach
+            {{-- attention band — surfaces urgent items (alert rows) --}}
+            @php $alerts = array_values(array_filter($actionRows, fn ($r) => $r['alert'])); @endphp
+            @if (count($alerts))
+                <div class="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3" data-noexport>
+                    <span class="bg-red-600 text-white text-xs font-bold rounded-full px-2.5 py-0.5 shrink-0">{{ count($alerts) }}</span>
+                    <div class="flex-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-700 min-w-0">
+                        <span class="font-medium text-red-700 shrink-0">⚠ ຕ້ອງ ໃສ່ ໃຈ:</span>
+                        @foreach ($alerts as $a)
+                            <a href="{{ route($a['route']) }}" wire:navigate class="text-red-700 hover:underline"><b>{{ $a['label'] }}</b> {{ $a['count'] }}</a>@unless ($loop->last)<span class="text-red-300">·</span>@endunless
+                        @endforeach
+                    </div>
                 </div>
             @endif
 
@@ -141,6 +155,31 @@
                             </div>
                         </div>
                     @endif
+                </div>
+            @endif
+
+            {{-- module status at a glance (cross-module overview) --}}
+            @if (count($glance))
+                <div class="bg-white border border-gray-200 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-base font-semibold text-gray-800">🗂️ ສະຖານະ ໂມດູລ ໂດຍ ຫຍໍ້</h2>
+                        <span class="text-xs text-gray-400">at a glance</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                        @foreach ($glance as $m)
+                            <a href="{{ route($m['route']) }}" wire:navigate class="block border border-gray-200 rounded-xl p-3 hover:shadow-md hover:border-sky-200 transition">
+                                <p class="text-xs font-semibold text-gray-500 truncate">{{ $m['label'] }}</p>
+                                <p class="mt-0.5 text-xl font-bold text-gray-900 tabular-nums">{{ $m['total'] !== null ? number_format($m['total']) : '—' }}</p>
+                                <div class="flex flex-wrap gap-1 mt-1.5 min-h-[1.25rem]">
+                                    @forelse ($m['tags'] as $t)
+                                        <span class="text-[10.5px] px-1.5 py-0.5 rounded-full {{ $chipTone[$t['tone']] ?? $chipTone['gray'] }}">{{ $t['t'] }}</span>
+                                    @empty
+                                        <span class="text-[10.5px] text-gray-400">—</span>
+                                    @endforelse
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
                 </div>
             @endif
 

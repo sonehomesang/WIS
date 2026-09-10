@@ -117,6 +117,62 @@ class Dashboard extends Component
         ];
     }
 
+    /**
+     * Compact per-module status for the "at a glance" panel — total + a couple of
+     * status chips per module the user can see. Scoped like the KPIs.
+     *
+     * @return array<int,array{key:string,label:string,route:string,total:?int,tags:array<int,array{t:string,tone:string}>}>
+     */
+    protected function moduleGlance(): array
+    {
+        $u = auth()->user();
+        $staff = $this->isStaff();
+        $g = [];
+        $tag = fn (int $n, string $t, string $tone) => $n > 0 ? ['t' => $t.' '.$n, 'tone' => $tone] : null;
+
+        if ($u->can('borrow.view')) {
+            $q = BorrowRecord::query()->when(! $staff, fn ($w) => $w->where('borrower_user_id', $u->id));
+            $active = (clone $q)->whereIn('status', ['active', 'overdue'])->count();
+            $overdue = (clone $q)->where('status', 'active')->whereDate('planned_return_date', '<', Carbon::today())->count();
+            $g[] = ['key' => 'borrow', 'label' => 'ການ ຢືມ', 'route' => 'borrow', 'total' => (clone $q)->count(),
+                'tags' => array_values(array_filter([$tag($active, 'active', 'sky'), $tag($overdue, 'overdue', 'red')]))];
+        }
+        if ($u->can('request.view')) {
+            $q = MaterialRequest::query()->when(! $staff && ! $u->hasRole('supplier'), fn ($w) => $w->where('requester_user_id', $u->id));
+            $open = (clone $q)->whereNotIn('status', ['completed', 'rejected', 'cancelled'])->count();
+            $done = (clone $q)->where('status', 'completed')->count();
+            $g[] = ['key' => 'request', 'label' => 'ໃບເບີກ', 'route' => 'request', 'total' => (clone $q)->count(),
+                'tags' => array_values(array_filter([$tag($open, 'open', 'violet'), $tag($done, 'done', 'emerald')]))];
+        }
+        if ($u->can('deposit.view')) {
+            $q = DepositRecord::query()->when(! $staff, fn ($w) => $w->where('owner_user_id', $u->id));
+            $stored = (clone $q)->where('status', 'stored')->count();
+            $fix = (clone $q)->where('status', 'needs_fix')->count();
+            $g[] = ['key' => 'deposit', 'label' => 'ຝາກ', 'route' => 'deposit', 'total' => (clone $q)->count(),
+                'tags' => array_values(array_filter([$tag($stored, 'stored', 'emerald'), $tag($fix, 'fix', 'amber')]))];
+        }
+        if ($u->can('da.view')) {
+            $review = DiscrepancyAdvice::whereIn('status', ['submitted', 'purchasing_review', 'pending_approval'])->count();
+            $resolved = DiscrepancyAdvice::where('status', 'resolved')->count();
+            $g[] = ['key' => 'da', 'label' => 'DA', 'route' => 'da', 'total' => DiscrepancyAdvice::count(),
+                'tags' => array_values(array_filter([$tag($review, 'review', 'amber'), $tag($resolved, 'resolved', 'emerald')]))];
+        }
+        if ($u->can('oga.view')) {
+            $q = OutwardsGoodsAdvice::query()->when($u->hasRole('supplier') && ! $staff, fn ($w) => $w->where('supplier_id', $u->supplier_id));
+            $disp = (clone $q)->where('status', 'dispatched')->count();
+            $deliv = (clone $q)->where('status', 'delivered')->count();
+            $g[] = ['key' => 'oga', 'label' => 'OGA', 'route' => 'oga', 'total' => (clone $q)->count(),
+                'tags' => array_values(array_filter([$tag($disp, 'dispatched', 'sky'), $tag($deliv, 'delivered', 'emerald')]))];
+        }
+        if ($staff && $u->can('equipment.view')) {
+            $cm = EquipmentMaintenance::openRepairs()->count();
+            $g[] = ['key' => 'equipment', 'label' => 'ເຄື່ອງມື', 'route' => 'equipment', 'total' => null,
+                'tags' => array_values(array_filter([$tag($cm, 'CM ຄ້າງ', 'red')]))];
+        }
+
+        return $g;
+    }
+
     /** @return array<int,array{label:string,count:int,route:string,alert:bool}> role-specific to-do rows (count>0 only). */
     protected function actionRows(): array
     {
@@ -261,6 +317,7 @@ class Dashboard extends Component
             'showCharts' => $staff && ($prefs['charts'] ?? true),
             'chart' => ($staff && ($prefs['charts'] ?? true)) ? $this->chartData() : null,
             'daOga' => $this->daOga(),
+            'glance' => $this->moduleGlance(),
         ]);
     }
 }
