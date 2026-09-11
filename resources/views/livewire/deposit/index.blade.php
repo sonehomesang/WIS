@@ -17,41 +17,42 @@
 
 <div class="pb-6">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
+        {{-- live KPIs (page identity is already in the app top bar — no duplicate title) --}}
+        @include('partials._kpi-band', ['tiles' => $kpi])
+
         {{-- frozen header group: toolbar + chips freeze together --}}
         <div class="sticky top-16 z-30 bg-gray-100/95 backdrop-blur">
-            <div class="flex flex-col gap-3 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3">
-                <div class="flex items-center gap-3 shrink-0">
-                    <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white flex items-center justify-center text-xl shadow-sm">📦</span>
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-800">ຝາກ ເຄື່ອງ <span class="text-gray-400 text-sm font-normal">· Deposit</span></h2>
-                        <p class="text-sm text-gray-400">{{ number_format($records->total()) }} ໃບ</p>
-                    </div>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <div class="relative">
+            <div class="flex flex-col gap-2 py-3 sm:py-2 sm:min-h-[52px] sm:flex-row sm:items-center sm:gap-3">
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:flex-1 sm:min-w-0">
+                    <div class="relative w-full sm:flex-1 sm:min-w-[9rem] sm:max-w-xs">
                         <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔎</span>
-                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ DP/ຊື່ເຈົ້າຂອງ…" class="w-48 pl-8 rounded-lg border-gray-300 text-sm" />
+                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ DP/ຊື່ເຈົ້າຂອງ…" class="w-full pl-8 rounded-lg border-gray-300 text-sm" />
                     </div>
-                    <select wire:model.live="statusFilter" class="w-40 rounded-lg border-gray-300 text-sm" title="ສະຖານະ ການ ຝາກ">
+                    <select wire:model.live="statusFilter" class="shrink-0 w-40 rounded-lg border-gray-300 text-sm" title="ສະຖານະ ການ ຝາກ">
                         <option value="">ທຸກ ສະຖານະການ ຝາກ</option>
                         <option value="draft">draft</option><option value="submitted">submitted</option>
                         <option value="accepted">accepted</option><option value="stored">stored</option>
                         <option value="needs_fix">needs_fix</option><option value="claimed">claimed</option><option value="cancelled">cancelled</option>
                         <option value="disposal">disposal</option><option value="disposed">disposed</option>
                     </select>
-                    <select wire:model.live="typeFilter" class="w-36 rounded-lg border-gray-300 text-sm" title="ປະເພດ ການ ຝາກ">
+                    <select wire:model.live="typeFilter" class="shrink-0 w-36 rounded-lg border-gray-300 text-sm" title="ປະເພດ ການ ຝາກ">
                         <option value="">ທຸກ ປະເພດ</option>
                         <option value="walk_in">Walk-in · ນຳມາແລ້ວ</option>
                         <option value="pre_request">Pre-request · ສົ່ງລ່ວງໜ້າ</option>
                         <option value="legacy">ເຄື່ອງຝາກເກົ່າ · ຄ້າງ ດົນ</option>
                     </select>
-                    <select wire:model.live="unitFilter" class="w-36 rounded-lg border-gray-300 text-sm" title="ໜ່ວຍງານ ເຈົ້າຂອງ">
+                    <select wire:model.live="unitFilter" class="shrink-0 w-36 rounded-lg border-gray-300 text-sm" title="ໜ່ວຍງານ ເຈົ້າຂອງ">
                         <option value="">ທຸກ ໜ່ວຍງານ</option>
                         @foreach ($units as $u)<option value="{{ $u->id }}">{{ $u->name }}</option>@endforeach
                     </select>
-                    <select wire:model.live="conditionFilter" class="w-44 rounded-lg border-gray-300 text-sm" title="ສະພາບ ເຄື່ອງ">
+                    <select wire:model.live="conditionFilter" class="shrink-0 w-44 rounded-lg border-gray-300 text-sm" title="ສະພາບ ເຄື່ອງ">
                         <option value="">ທຸກ ສະພາບເຄື່ອງ</option>
                         @foreach ($conditionOptions as $cv => $cl)<option value="{{ $cv }}">{{ $cl }}</option>@endforeach
+                    </select>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 shrink-0">
+                    <select wire:model.live="perPage" class="shrink-0 rounded-lg border-gray-300 text-sm min-h-[40px]" title="ຈຳນວນ ແຖວ ຕໍ່ ໜ້າ">
+                        @foreach ([8, 10, 25, 50, 100] as $n)<option value="{{ $n }}">{{ $n }} ແຖວ</option>@endforeach
                     </select>
                     @if ($canManageDeleted)<button wire:click="toggleDeleted" title="ເບິ່ງ ລາຍການ ທີ່ ລຶບ ແລ້ວ ເພື່ອ ກູ້ຄືນ" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">{{ $showDeleted ? '← ກັບ ລິສ' : '↩ ລາຍການ ທີ່ ຖືກ ລຶບ' }}</button>@endif
                     <a href="{{ route('deposit.report', ['search' => $search, 'status' => $statusFilter, 'type' => $typeFilter, 'unit' => $unitFilter, 'condition' => $conditionFilter]) }}" target="_blank" rel="noopener" title="ພິມ ບັນຊີ ລາຍການ (ຕາມ filter ນີ້) ພ້ອມ letterhead" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 inline-flex items-center transition whitespace-nowrap">🖨 ພິມ ບັນຊີ</a>
@@ -66,7 +67,7 @@
 
         {{-- Desktop table --}}
         <div class="hidden md:block bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="overflow-x-hidden overflow-y-auto max-h-[calc(100vh-16rem)]">
+            <div class="overflow-x-auto">
                 <table class="w-full text-sm table-fixed">
                     <colgroup>
                         <col style="width:8%"><col style="width:13%"><col style="width:21%"><col style="width:6%">

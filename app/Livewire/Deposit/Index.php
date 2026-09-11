@@ -4,6 +4,8 @@ namespace App\Livewire\Deposit;
 
 use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\DepositRecord;
+use App\Models\Unit;
+use App\Support\ConditionStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -28,6 +30,8 @@ class Index extends Component
 
     public string $conditionFilter = '';
 
+    public int $perPage = 8;               // rows per page (whitelisted in render) — no inner scroll
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('deposit.view'), 403);
@@ -49,6 +53,11 @@ class Index extends Component
     }
 
     public function updatingConditionFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage(): void
     {
         $this->resetPage();
     }
@@ -151,36 +160,37 @@ class Index extends Component
             ->when($this->unitFilter, fn ($q) => $q->where('owner_unit_id', $this->unitFilter))
             ->when($this->conditionFilter, fn ($q) => $q->whereHas('items', fn ($w) => $w->where('condition_status', $this->conditionFilter)))
             ->orderByDesc('id')
-            ->paginate(5);
+            ->paginate(in_array($this->perPage, [8, 10, 25, 50, 100], true) ? $this->perPage : 8);
+
+        $counts = $this->scopedQuery()->selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
+        $needsInfo = $this->scopedQuery()->needsOfficeInfo()->count();
+        $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
 
         return view('livewire.deposit.index', [
             'records' => $items,
             'canManageDeleted' => $this->canManageDeleted(),
-            'chips' => $this->statusChips(),
-            'units' => \App\Models\Unit::whereIn('id', $this->scopedQuery()->distinct()->pluck('owner_unit_id')->filter())->orderBy('name')->get(['id', 'name']),
-            'conditionOptions' => \App\Support\ConditionStatus::options(),
+            'chips' => [
+                $chip('', 'ທັງໝົດ', $counts->sum()),
+                $chip('needs_info', 'ຮ່າງ ລໍ ຕື່ມ ຂໍ້ມູນ', $needsInfo, true),
+                $chip('submitted', 'ລໍຮັບ', $counts['submitted'] ?? 0, true),
+                $chip('accepted', 'ຮັບແລ້ວ', $counts['accepted'] ?? 0),
+                $chip('stored', 'ເກັບໄວ້', $counts['stored'] ?? 0),
+                $chip('needs_fix', 'ຕ້ອງແກ້', $counts['needs_fix'] ?? 0, true),
+                $chip('claimed', 'ເອົາຄືນແລ້ວ', $counts['claimed'] ?? 0),
+                $chip('disposal', 'ກຳລັງຈຳໜ່າຍ', $counts['disposal'] ?? 0),
+                $chip('disposed', 'ຈຳໜ່າຍແລ້ວ', $counts['disposed'] ?? 0),
+                $chip('draft', 'draft', $counts['draft'] ?? 0),
+                $chip('cancelled', 'ຍົກເລີກ', $counts['cancelled'] ?? 0),
+            ],
+            'kpi' => [
+                ['label' => '📥 ໃບ ຝາກ ທັງໝົດ', 'value' => $counts->sum(), 'hint' => 'records'],
+                ['label' => '⚠️ ຮ່າງ ລໍ ຕື່ມ ຂໍ້ມູນ', 'value' => $needsInfo, 'hint' => 'needs info', 'tone' => 'text-amber-600'],
+                ['label' => '⏳ ລໍ ຮັບ', 'value' => $counts['submitted'] ?? 0, 'hint' => 'submitted', 'tone' => 'text-amber-600'],
+                ['label' => '📦 ເກັບ ໄວ້', 'value' => $counts['stored'] ?? 0, 'hint' => 'stored'],
+                ['label' => '✅ ເອົາ ຄືນ ແລ້ວ', 'value' => $counts['claimed'] ?? 0, 'hint' => 'claimed'],
+            ],
+            'units' => Unit::whereIn('id', $this->scopedQuery()->distinct()->pluck('owner_unit_id')->filter())->orderBy('name')->get(['id', 'name']),
+            'conditionOptions' => ConditionStatus::options(),
         ]);
-    }
-
-    protected function statusChips(): array
-    {
-        $counts = $this->scopedQuery()->selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
-        $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
-
-        $needsInfo = $this->scopedQuery()->needsOfficeInfo()->count();
-
-        return [
-            $chip('', 'ທັງໝົດ', $counts->sum()),
-            $chip('needs_info', 'ຮ່າງ ລໍ ຕື່ມ ຂໍ້ມູນ', $needsInfo, true),
-            $chip('submitted', 'ລໍຮັບ', $counts['submitted'] ?? 0, true),
-            $chip('accepted', 'ຮັບແລ້ວ', $counts['accepted'] ?? 0),
-            $chip('stored', 'ເກັບໄວ້', $counts['stored'] ?? 0),
-            $chip('needs_fix', 'ຕ້ອງແກ້', $counts['needs_fix'] ?? 0, true),
-            $chip('claimed', 'ເອົາຄືນແລ້ວ', $counts['claimed'] ?? 0),
-            $chip('disposal', 'ກຳລັງຈຳໜ່າຍ', $counts['disposal'] ?? 0),
-            $chip('disposed', 'ຈຳໜ່າຍແລ້ວ', $counts['disposed'] ?? 0),
-            $chip('draft', 'draft', $counts['draft'] ?? 0),
-            $chip('cancelled', 'ຍົກເລີກ', $counts['cancelled'] ?? 0),
-        ];
     }
 }
