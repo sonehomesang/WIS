@@ -220,7 +220,7 @@ test('searchBase falls back to the base DN when the users OU is blank', function
 
 test('config builds a valid LdapRecord connection (LDAPS, no unknown options)', function () {
     Setting::put('ldap', [
-        'enabled' => true, 'host' => 'dc01.namtheun2.com', 'port' => 636,
+        'enabled' => true, 'host' => 'dc01.example.com', 'port' => 636,
         'encryption' => 'ssl', 'base_dn' => 'DC=namtheun2,DC=com',
         'bind_username' => 'svc-ldap@example.com',
         'password' => Crypt::encryptString('secret'),
@@ -252,17 +252,17 @@ test('SECURITY — saving never stores the bind account or password (not kept at
 
     Livewire::test(Ldap::class)
         ->set('enabled', true)
-        ->set('host', 'dc01.namtheun2.com')
+        ->set('host', 'dc01.example.com')
         ->set('base_dn', 'DC=namtheun2,DC=com')
-        ->set('bind_username', 'svc-wh@namtheun2.com')
-        ->set('password', 's3cr3t!')
+        ->set('bind_username', 'svc-wh@example.com')
+        ->set('password', 'dummy-pass')
         ->call('save')
         ->assertHasNoErrors();
 
     $stored = Setting::get('ldap');
     expect($stored)->not->toHaveKey('password')          // secret never persisted
         ->and($stored)->not->toHaveKey('bind_username')  // nor the account name
-        ->and($stored['host'])->toBe('dc01.namtheun2.com')   // non-secret config IS saved
+        ->and($stored['host'])->toBe('dc01.example.com')   // non-secret config IS saved
         ->and($stored['login_with_ad'] ?? null)->toBe(false);
 });
 
@@ -288,7 +288,7 @@ test('SECURITY — preview/test require the bind account typed in (no stored fal
 
     Livewire::test(Ldap::class)
         ->set('enabled', true)
-        ->set('host', 'dc01.namtheun2.com')
+        ->set('host', 'dc01.example.com')
         ->set('base_dn', 'DC=namtheun2,DC=com')
         ->call('preview')                       // no bind_username / password set
         ->assertHasErrors(['bind_username', 'password']);
