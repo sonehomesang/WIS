@@ -129,7 +129,7 @@
                 @endphp
 
                 <!-- Global app header: title (left) + user menu (right) — ທຸກໜ້າ -->
-                <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+                <header class="sticky top-0 z-40 bg-gradient-to-r from-sky-50 via-white to-cyan-50 border-b border-gray-200 shadow-sm">
                     <div class="px-4 sm:px-6 lg:px-8">
                         <div class="h-16 flex items-center justify-between gap-3">
                             <div class="flex items-center gap-2 min-w-0">
@@ -137,9 +137,9 @@
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                                 </button>
                                 @if ($moduleIcon)
-                                    <span class="w-9 h-9 rounded-xl bg-white border border-gray-200 shadow-sm grid place-items-center text-lg shrink-0">{{ $moduleIcon }}</span>
+                                    <span class="w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm grid place-items-center text-xl shrink-0">{{ $moduleIcon }}</span>
                                 @endif
-                                <h1 class="text-lg font-semibold text-gray-800 truncate shrink-0">{{ $pageTitle }}</h1>
+                                <h1 class="text-2xl font-semibold text-gray-800 truncate shrink-0">{{ $pageTitle }}</h1>
                                 @if ($pageSubtitle)
                                     <span class="text-gray-300 hidden lg:inline">·</span>
                                     <span class="text-sm text-gray-400 truncate hidden lg:inline">{{ $pageSubtitle }}</span>
