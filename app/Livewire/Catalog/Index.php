@@ -31,6 +31,8 @@ class Index extends Component
 
     public string $statusFilter = '';
 
+    public int $perPage = 8;               // rows per page (whitelisted in render) — no inner scroll
+
     // ── modal / form ──
     public bool $showModal = false;
 
@@ -83,6 +85,11 @@ class Index extends Component
     }
 
     public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage(): void
     {
         $this->resetPage();
     }
@@ -280,10 +287,12 @@ class Index extends Component
             ->when($this->statusFilter === 'active', fn ($q) => $q->where('is_active', true))
             ->when($this->statusFilter === 'inactive', fn ($q) => $q->where('is_active', false))
             ->orderByDesc('id')
-            ->paginate(9);
+            ->paginate(in_array($this->perPage, [8, 10, 25, 50, 100], true) ? $this->perPage : 8);
 
         $total = $this->scopedQuery()->count();
         $inactive = $this->scopedQuery()->where('is_active', false)->count();
+        $categories = $this->scopedQuery()->distinct()->orderBy('category')->pluck('category')->filter()->values();
+        $suppliersUsed = $this->scopedQuery()->distinct()->pluck('supplier_id')->filter()->count();
 
         return view('livewire.catalog.index', [
             'materials' => $items,
@@ -292,8 +301,15 @@ class Index extends Component
                 ['key' => 'active', 'label' => 'active', 'count' => $total - $inactive, 'alert' => false],
                 ['key' => 'inactive', 'label' => 'inactive', 'count' => $inactive, 'alert' => false],
             ],
+            'kpi' => [
+                ['label' => '🏷️ ສິນຄ້າ ທັງໝົດ', 'value' => $total, 'hint' => 'materials'],
+                ['label' => '✅ active', 'value' => $total - $inactive, 'hint' => 'active'],
+                ['label' => '⏸️ inactive', 'value' => $inactive, 'hint' => 'inactive', 'tone' => 'text-amber-600'],
+                ['label' => '🏢 suppliers', 'value' => $suppliersUsed, 'hint' => 'ຮ້ານຄ້າ'],
+                ['label' => '🗂️ ປະເພດ', 'value' => $categories->count(), 'hint' => 'categories'],
+            ],
             'suppliers' => Supplier::where('is_active', true)->orderBy('name')->get(['id', 'name']),
-            'categories' => $this->scopedQuery()->distinct()->orderBy('category')->pluck('category')->filter()->values(),
+            'categories' => $categories,
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(),
             'canManage' => auth()->user()->can('catalog.create') || auth()->user()->can('catalog.edit'),
             'canManageDeleted' => $this->canManageDeleted(),

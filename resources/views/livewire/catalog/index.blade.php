@@ -8,6 +8,9 @@
 
 <div class="pb-6">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
+        {{-- live KPIs (page identity is already in the app top bar) --}}
+        @include('partials._kpi-band', ['tiles' => $kpi])
+
         {{-- frozen header group: toolbar + chips freeze together --}}
         <div class="sticky top-16 z-30 bg-gray-100">
         {{-- toolbar --}}
@@ -29,6 +32,9 @@
                 </select>
             </div>
             <div class="flex items-center gap-2 shrink-0">
+                <select wire:model.live="perPage" class="shrink-0 rounded-md border-gray-300 text-sm min-h-[40px]" title="ຈຳນວນ ແຖວ ຕໍ່ ໜ້າ">
+                    @foreach ([8, 10, 25, 50, 100] as $n)<option value="{{ $n }}">{{ $n }} ແຖວ</option>@endforeach
+                </select>
                 @if ($canManageDeleted)
                     <button wire:click="toggleDeleted" class="text-sm border rounded-md px-3 py-2 min-h-[40px] whitespace-nowrap {{ $showDeleted ? 'bg-gray-700 text-white border-gray-700' : 'text-gray-600 border-gray-300 bg-white hover:bg-gray-50' }}">
                         {{ $showDeleted ? '← ລາຍການ ປົກກະຕິ' : '🗑 ບັນທຶກ ການ ລຶບ' }}
@@ -44,10 +50,10 @@
         @if (session('ok'))<div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-2">{{ session('ok') }}</div>@endif
 
         {{-- Desktop table --}}
-        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-15rem)]">
+        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-x-auto">
             <table class="w-full text-sm">
-                <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm">
-                    <tr>
+                <thead class="bg-slate-100 text-slate-600 border-b-2 border-slate-200">
+                    <tr class="text-xs font-semibold uppercase tracking-wide">
                         <th class="text-left font-semibold px-4 py-2">ລະຫັດ <span class="text-gray-400">(Material No.)</span></th>
                         <th class="text-left font-semibold px-4 py-2 w-full">ສິນຄ້າ <span class="text-gray-400">(Item)</span></th>
                         <th class="text-left font-semibold px-4 py-2">Supplier</th>

@@ -128,8 +128,8 @@
         {{-- Desktop table --}}
         <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-x-auto">
             <table class="w-full text-sm">
-                <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm">
-                    <tr>
+                <thead class="bg-slate-100 text-slate-600 border-b-2 border-slate-200">
+                    <tr class="text-xs font-semibold uppercase tracking-wide">
                         <th x-show="cols.materialNo" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Material No.</th>
                         <th class="text-left font-semibold px-4 py-2 w-full">Item</th>
                         <th x-show="cols.brand" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Brand</th>

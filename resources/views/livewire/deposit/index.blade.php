@@ -63,7 +63,7 @@
             @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter, 'trailing' => number_format($records->total()).' records'])
         </div>{{-- /frozen header group --}}
 
-        @if (session('ok'))<div class="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 mb-3">{{ session('ok') }}</div>@endif
+        @if (session('ok'))<div class="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-1.5 mb-3">{{ session('ok') }}</div>@endif
 
         {{-- Desktop table --}}
         <div class="hidden md:block bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
@@ -73,8 +73,8 @@
                         <col style="width:8%"><col style="width:13%"><col style="width:21%"><col style="width:6%">
                         <col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:8%"><col style="width:14%">
                     </colgroup>
-                    <thead class="sticky top-0 z-10 bg-slate-50 text-slate-500 border-b border-gray-200">
-                        <tr class="text-[11px] uppercase tracking-wide">
+                    <thead class="bg-slate-100 text-slate-600 border-b-2 border-slate-200">
+                        <tr class="text-xs font-semibold uppercase tracking-wide">
                             <th class="text-left font-semibold px-3 py-2.5">ໄອດີ (DP)</th>
                             <th class="text-left font-semibold px-3 py-2.5">ໜ່ວຍງານ</th>
                             <th class="text-left font-semibold px-3 py-2.5">ເຄື່ອງຝາກ</th>
@@ -90,9 +90,9 @@
                         @forelse ($records as $r)
                             @php [$lbl, $cls] = $statusMeta($r->status); $first = $r->items->first(); $ph = $first?->photos->first(); @endphp
                             <tr wire:key="dp-{{ $r->id }}" class="transition {{ $locked($r->status) ? 'opacity-60 bg-gray-50/70' : 'hover:bg-sky-50/40' }}" @if ($locked($r->status)) title="ດຶງ ໄປ ຈຳໜ່າຍ ແລ້ວ — ລັອກ ການ ແກ້ໄຂ" @endif>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap"><a href="{{ route('deposit.show', $r) }}" wire:navigate class="font-mono text-sm font-medium text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
-                                <td class="px-4 py-2.5 align-top"><div class="font-semibold text-gray-800">{{ $r->unit?->name ?? '—' }}</div></td>
-                                <td class="px-4 py-2.5 align-top min-w-[13rem]">
+                                <td class="px-3 py-1.5 align-top whitespace-nowrap"><a href="{{ route('deposit.show', $r) }}" wire:navigate class="font-mono text-sm font-medium text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
+                                <td class="px-3 py-1.5 align-top"><div class="font-semibold text-gray-800">{{ $r->unit?->name ?? '—' }}</div></td>
+                                <td class="px-3 py-1.5 align-top min-w-[13rem]">
                                     <div class="flex gap-2.5">
                                         @if ($ph)<img src="{{ $ph->url }}" alt="" @click.stop.prevent="$dispatch('open-lightbox', { src: $el.src })" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0 cursor-zoom-in hover:ring-2 hover:ring-sky-300 transition" />
                                         @else<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-lg">📦</div>@endif
@@ -103,20 +103,20 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-2.5 align-top text-center whitespace-nowrap">
+                                <td class="px-3 py-1.5 align-top text-center whitespace-nowrap">
                                     <span class="font-semibold text-gray-800 tabular-nums">{{ $r->items->sum('qty') }}</span>
                                     @if ($first?->unit)<span class="text-xs text-gray-400"> {{ $first->unit }}</span>@endif
                                     @if ($r->items->count() > 1)<div class="text-[11px] text-gray-400">{{ $r->items->count() }} ລາຍການ</div>@endif
                                 </td>
-                                <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap">@if ($first?->asset_code)<span class="font-mono bg-gray-50 text-gray-600 border border-gray-200 rounded px-1.5 py-0.5">{{ $first->asset_code }}</span>@if ($r->items->count() > 1)<span class="text-gray-300"> …</span>@endif @else<span class="text-gray-300">—</span>@endif</td>
-                                <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap font-mono {{ $first?->fixed_asset_no ? 'text-gray-600' : 'text-gray-300' }}">{{ $first?->fixed_asset_no ?: '—' }}</td>
-                                <td class="px-4 py-2.5 align-top">
+                                <td class="px-3 py-1.5 align-top text-xs whitespace-nowrap">@if ($first?->asset_code)<span class="font-mono bg-gray-50 text-gray-600 border border-gray-200 rounded px-1.5 py-0.5">{{ $first->asset_code }}</span>@if ($r->items->count() > 1)<span class="text-gray-300"> …</span>@endif @else<span class="text-gray-300">—</span>@endif</td>
+                                <td class="px-3 py-1.5 align-top text-xs whitespace-nowrap font-mono {{ $first?->fixed_asset_no ? 'text-gray-600' : 'text-gray-300' }}">{{ $first?->fixed_asset_no ?: '—' }}</td>
+                                <td class="px-3 py-1.5 align-top">
                                     @php $conds = $r->items->pluck('condition_status')->map(fn ($c) => $c ?: 'in_service')->unique(); @endphp
                                     @foreach ($conds as $cs)
                                         <span class="inline-block text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($cs) }}">{{ \App\Support\ConditionStatus::shortLabel($cs) }}</span>
                                     @endforeach
                                 </td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
+                                <td class="px-3 py-1.5 align-top whitespace-nowrap"><span class="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span></td>
                                 <td class="px-3 py-2.5 align-top text-right">
                                     <div class="flex flex-wrap gap-1 justify-end">
                                     @if ($showDeleted)
