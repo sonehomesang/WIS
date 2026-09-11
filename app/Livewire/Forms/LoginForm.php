@@ -104,11 +104,11 @@ class LoginForm extends Form
 
     /**
      * Ensure the authentication request is not rate limited.
-     * per-(email+IP) = 5 · per-account across ALL IPs = 10 (ກັນ distributed password-spray).
+     * per-(email+IP) = 3 · per-account across ALL IPs = 10 (ກັນ distributed password-spray).
      */
     protected function ensureIsNotRateLimited(): void
     {
-        foreach ([$this->throttleKey() => 5, $this->accountKey() => 10] as $key => $max) {
+        foreach ([$this->throttleKey() => 3, $this->accountKey() => 10] as $key => $max) {
             if (! RateLimiter::tooManyAttempts($key, $max)) {
                 continue;
             }

@@ -43,6 +43,29 @@ test('users can not authenticate with invalid password', function () {
     $this->assertGuest();
 });
 
+test('SECURITY — login locks out after 3 wrong passwords (per email+IP)', function () {
+    $user = User::factory()->create();
+
+    // three wrong tries are each rejected as a normal auth failure
+    foreach (range(1, 3) as $i) {
+        Volt::test('pages.auth.login')
+            ->set('form.email', $user->email)
+            ->set('form.password', 'wrong-password')
+            ->call('login')
+            ->assertHasErrors('form.email');
+    }
+
+    // the 4th attempt is throttled — even the CORRECT password is refused with a wait message
+    Volt::test('pages.auth.login')
+        ->set('form.email', $user->email)
+        ->set('form.password', 'password')
+        ->call('login')
+        ->assertHasErrors('form.email')
+        ->assertNoRedirect();
+
+    $this->assertGuest();
+});
+
 test('navigation menu can be rendered', function () {
     $user = User::factory()->create();
 
