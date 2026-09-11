@@ -33,16 +33,9 @@
             ];
         @endphp
 
-        {{-- header band — identity + live stock KPIs (scrolls away; the toolbar below stays sticky) --}}
+        {{-- live stock KPIs (the page identity is already in the app top bar — no duplicate title) --}}
         <div class="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden mb-3">
-            <div class="flex items-center gap-3 px-4 sm:px-5 pt-4 pb-3">
-                <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-xl shadow-sm shrink-0">📦</span>
-                <div class="min-w-0">
-                    <h1 class="text-lg font-bold text-gray-800 truncate">ລາຍການ ສິນຄ້າ ໃນ ຄັງ · WH Inventory</h1>
-                    <p class="text-xs text-gray-400 truncate">ຄັງ ສິນຄ້າ ນ້ຳເທີນ 2 · ອັບເດດ {{ now()->format('d M Y') }}</p>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-gray-100 border-t border-gray-100">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-gray-100">
                 @php
                     $kpiTiles = [
                         ['label' => '📦 ລາຍການ ທັງໝົດ', 'value' => $kpi['items'], 'hint' => 'distinct items', 'tone' => 'text-gray-800'],

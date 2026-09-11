@@ -21,8 +21,7 @@ beforeEach(function () {
 test('header KPIs compute stock state from qty vs min_quantity', function () {
     Livewire::test(Index::class)
         ->assertOk()
-        ->assertSee('WH Inventory')          // header band
-        ->assertSee('ໝົດ stock')             // KPI label
+        ->assertSee('ໝົດ stock')             // KPI label in the header band
         ->assertViewHas('kpi', function ($k) {
             return $k['items'] === 5
                 && $k['qty'] === 18           // 0+0+3+5+10
