@@ -246,7 +246,7 @@ test('ldap settings page renders for admin', function () {
         ->assertSee('Bind username');
 });
 
-test('saving stores the bind password encrypted (blank keeps existing)', function () {
+test('SECURITY — saving never stores the bind account or password (not kept at rest)', function () {
     $this->seed(RolePermissionSeeder::class);
     $this->actingAs(User::factory()->create(['is_super_admin' => true]));
 
@@ -257,11 +257,63 @@ test('saving stores the bind password encrypted (blank keeps existing)', functio
         ->set('bind_username', 'svc-wh@namtheun2.com')
         ->set('password', 's3cr3t!')
         ->call('save')
-        ->assertHasNoErrors()
-        ->assertSet('password', '')          // cleared after save
-        ->assertSet('hasPassword', true);
+        ->assertHasNoErrors();
 
     $stored = Setting::get('ldap');
-    expect($stored['password'])->not->toBe('s3cr3t!')                    // not plain-text
-        ->and(Crypt::decryptString($stored['password']))->toBe('s3cr3t!');
+    expect($stored)->not->toHaveKey('password')          // secret never persisted
+        ->and($stored)->not->toHaveKey('bind_username')  // nor the account name
+        ->and($stored['host'])->toBe('dc01.namtheun2.com')   // non-secret config IS saved
+        ->and($stored['login_with_ad'] ?? null)->toBe(false);
+});
+
+test('SECURITY — forgetBindCredentials strips legacy stored creds, keeps config', function () {
+    Setting::put('ldap', [
+        'enabled' => true, 'host' => 'dc01', 'base_dn' => 'DC=x',
+        'bind_username' => 'legacy@x', 'password' => Crypt::encryptString('old-secret'),
+    ], null);
+
+    $had = app(LdapDirectory::class)->forgetBindCredentials();
+
+    $s = Setting::get('ldap');
+    expect($had['bind_username'])->toBeTrue()
+        ->and($had['password'])->toBeTrue()
+        ->and($s)->not->toHaveKey('bind_username')
+        ->and($s)->not->toHaveKey('password')
+        ->and($s['host'])->toBe('dc01');   // config preserved
+});
+
+test('SECURITY — preview/test require the bind account typed in (no stored fallback)', function () {
+    $this->seed(RolePermissionSeeder::class);
+    $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+
+    Livewire::test(Ldap::class)
+        ->set('enabled', true)
+        ->set('host', 'dc01.namtheun2.com')
+        ->set('base_dn', 'DC=namtheun2,DC=com')
+        ->call('preview')                       // no bind_username / password set
+        ->assertHasErrors(['bind_username', 'password']);
+});
+
+test('config uses the per-operation bind account, not a stored one', function () {
+    Setting::put('ldap', [
+        'host' => 'dc01', 'base_dn' => 'DC=x', 'encryption' => 'none', 'port' => 389,
+    ], null);   // NO stored bind creds
+
+    $cfg = app(LdapDirectory::class)->config('svc@run', 'run-pass');
+    expect($cfg['username'])->toBe('svc@run')
+        ->and($cfg['password'])->toBe('run-pass');
+
+    // with nothing passed and nothing stored, the bind fields are simply empty
+    $empty = app(LdapDirectory::class)->config();
+    expect($empty['username'])->toBe('')->and($empty['password'])->toBe('');
+});
+
+test('login bind identities derive from the user + base_dn (no stored bind account needed)', function () {
+    Setting::put('ldap', ['base_dn' => 'DC=namtheun2,DC=com'], null);   // config only, no creds
+    $u = User::factory()->make(['email' => 'somchai@namtheun2.com', 'username' => 'somchai']);
+
+    $ids = app(LdapDirectory::class)->bindIdentities($u);
+    expect($ids)->toContain('somchai@namtheun2.com')          // UPN/mail
+        ->and($ids)->toContain('somchai@namtheun2.com')
+        ->and($ids)->toContain('somchai');                     // bare sam
 });

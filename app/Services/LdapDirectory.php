@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -35,18 +36,26 @@ class LdapDirectory
         return (bool) ($this->settings()['enabled'] ?? false);
     }
 
-    /** Build the LdapRecord connection config from stored settings. */
-    public function config(): array
+    /**
+     * Build the LdapRecord connection config.
+     *
+     * The bind (authorize) account is supplied per-operation and is NOT kept at
+     * rest — pass it in for a sync/test. Any legacy stored value is used only as a
+     * fallback (older installs); after ldap:forget-bind / a save there is none, and
+     * login never needs it (attemptBind overrides username/password with the user's).
+     */
+    public function config(?string $bindUsername = null, ?string $bindPassword = null): array
     {
         $s = $this->settings();
         $enc = $s['encryption'] ?? 'ssl';          // ssl (636) · tls (389 StartTLS) · none (389)
-        $password = ! empty($s['password']) ? Crypt::decryptString($s['password']) : '';
+        $username = $bindUsername ?? ($s['bind_username'] ?? '');
+        $password = $bindPassword ?? (! empty($s['password']) ? Crypt::decryptString($s['password']) : '');
 
         return [
             'hosts' => array_filter([$s['host'] ?? '']),
             'port' => (int) ($s['port'] ?? ($enc === 'ssl' ? 636 : 389)),
             'base_dn' => $s['base_dn'] ?? '',
-            'username' => $s['bind_username'] ?? '',
+            'username' => $username,
             'password' => $password,
             // LdapRecord v4: use_tls = LDAPS (ldaps://), use_starttls = StartTLS. No use_ssl.
             'use_tls' => $enc === 'ssl',
@@ -150,11 +159,11 @@ class LdapDirectory
      *
      * @return array{ok:bool,message:string,count:int}
      */
-    public function testConnection(): array
+    public function testConnection(?string $bindUsername = null, ?string $bindPassword = null): array
     {
         try {
             $this->applyTlsPolicy();
-            $conn = new Connection($this->config());
+            $conn = new Connection($this->config($bindUsername, $bindPassword));
             $conn->connect();                       // binds with the service account
 
             // LdapRecord v4 query builders return a plain array (the LDAP 'count'
@@ -178,10 +187,10 @@ class LdapDirectory
      *
      * @return array<int,array{guid:?string,username:?string,email:?string,display_name:?string,phone:?string,department:?string,enabled:bool}>
      */
-    public function fetchUsers(bool $enabledOnly = true): array
+    public function fetchUsers(bool $enabledOnly = true, ?string $bindUsername = null, ?string $bindPassword = null): array
     {
         $this->applyTlsPolicy();
-        $conn = new Connection($this->config());
+        $conn = new Connection($this->config($bindUsername, $bindPassword));
         $conn->connect();
 
         $records = $conn->query()->in($this->searchBase())
@@ -211,10 +220,32 @@ class LdapDirectory
         return $rows;
     }
 
-    /** Fetch + sync in one call (used by the artisan command / cron). */
-    public function sync(bool $enabledOnly = true): array
+    /** Fetch + sync in one call (used by the artisan command). Bind account passed in — never stored. */
+    public function sync(bool $enabledOnly = true, ?string $bindUsername = null, ?string $bindPassword = null): array
     {
-        return $this->syncRows($this->fetchUsers($enabledOnly));
+        return $this->syncRows($this->fetchUsers($enabledOnly, $bindUsername, $bindPassword));
+    }
+
+    /**
+     * Remove the bind (authorize) account + password from stored settings.
+     *
+     * WH must never keep the AD service-account secret at rest — it is entered per
+     * sync. Non-secret connection config (host/port/base_dn/OU/tls/login flag) stays.
+     *
+     * @return array{bind_username:bool,password:bool} what was present before clearing
+     */
+    public function forgetBindCredentials(): array
+    {
+        $s = $this->settings();
+        $had = [
+            'bind_username' => ! empty($s['bind_username']),
+            'password' => ! empty($s['password']),
+        ];
+        unset($s['bind_username'], $s['password']);
+        Setting::put('ldap', $s, optional(auth()->user())->id);
+        Cache::forget('settings.ldap');
+
+        return $had;
     }
 
     /**

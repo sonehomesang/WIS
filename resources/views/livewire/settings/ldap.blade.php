@@ -50,17 +50,18 @@
                     <label class="block text-xs text-gray-500 mb-1">Users OU / Filter <span class="text-gray-400">(ທາງເລືອກ)</span></label>
                     <input type="text" wire:model="user_ou" placeholder="ວ່າງ = ຄົ້ນທັງ domain (ບໍ່ບັງຄັບ)" class="w-full rounded-md border-gray-300 text-sm" />
                 </div>
+                <div class="sm:col-span-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                    <p class="text-xs text-amber-800">🔐 <b>ບັນຊີ authorize (bind)</b> — ໃສ່ ສະເພາະ ຕອນ ຈະ <b>Test / Preview / Import</b> ເທົ່ານັ້ນ. WH <b>ບໍ່ ເກັບ ໄວ້</b> — ພິມ ໃໝ່ ທຸກ ຄັ້ງ ທີ່ ເປີດ ໜ້ານີ້ (login ຂອງ ຜູ້ໃຊ້ ບໍ່ ຕ້ອງ ໃຊ້ ບັນຊີ ນີ້).</p>
+                </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Bind username (authorize) 🔑</label>
-                    <input type="text" wire:model="bind_username" placeholder="ຕົວຢ່າງ: svc@domain.com" class="w-full rounded-md border-gray-300 text-sm" />
+                    <input type="text" wire:model="bind_username" autocomplete="off" placeholder="ຕົວຢ່າງ: svc@domain.com" class="w-full rounded-md border-gray-300 text-sm" />
                     @error('bind_username')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-500 mb-1">
-                        Bind password (authorize) 🔒
-                        @if ($hasPassword)<span class="text-green-600">— ຕັ້ງໄວ້ແລ້ວ (ວ່າງ = ຮັກສາເກົ່າ)</span>@endif
-                    </label>
-                    <input type="password" wire:model="password" placeholder="{{ $hasPassword ? '••••••••' : '' }}" autocomplete="new-password" class="w-full rounded-md border-gray-300 text-sm" />
+                    <label class="block text-xs text-gray-500 mb-1">Bind password (authorize) 🔒</label>
+                    <input type="password" wire:model="password" autocomplete="new-password" placeholder="ໃສ່ ຕອນ sync" class="w-full rounded-md border-gray-300 text-sm" />
+                    @error('password')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>
 
