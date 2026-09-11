@@ -129,7 +129,7 @@
                 @endphp
 
                 <!-- Global app header: title (left) + user menu (right) — ທຸກໜ້າ -->
-                <header class="sticky top-0 z-40 bg-gradient-to-r from-sky-200 to-white border-b border-gray-200 shadow-sm">
+                <header class="sticky top-0 z-40 border-b border-gray-200 shadow-sm" style="background:linear-gradient(to right,#38bdf8 0%,#7dd3fc 25%,#bae6fd 55%,#ffffff 95%)">
                     <div class="px-4 sm:px-6 lg:px-8">
                         <div class="h-16 flex items-center justify-between gap-3">
                             <div class="flex items-center gap-2 min-w-0">

@@ -76,6 +76,9 @@
                 </select>
             </div>
             <div class="flex items-center gap-2">
+                <select wire:model.live="perPage" class="rounded-md border-gray-300 text-sm min-h-[40px]" title="ຈຳນວນ ແຖວ ຕໍ່ ໜ້າ">
+                    @foreach ([8, 10, 25, 50, 100] as $n)<option value="{{ $n }}">{{ $n }} ແຖວ</option>@endforeach
+                </select>
                 <div class="relative hidden md:block" x-on:click.outside="colsOpen = false">
                     <button type="button" x-on:click="colsOpen = !colsOpen" class="text-sm text-gray-700 border border-gray-300 bg-white rounded-md px-3 py-2 min-h-[40px] hover:bg-gray-50 whitespace-nowrap">⚙ Columns</button>
                     <div x-show="colsOpen" x-cloak x-transition class="absolute right-0 z-20 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg p-2 space-y-1">
@@ -123,7 +126,7 @@
              class="fixed bottom-4 right-4 z-50 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 shadow-lg">ບັນທຶກແລ້ວ ✓</div>
 
         {{-- Desktop table --}}
-        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-auto max-h-[calc(100vh-15rem)]">
+        <div class="hidden md:block bg-white border border-gray-100 rounded-lg overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="sticky top-0 z-10 bg-gray-50 text-gray-700 border-b border-gray-200 shadow-sm">
                     <tr>

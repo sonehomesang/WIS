@@ -36,6 +36,8 @@ class Index extends Component
 
     public string $stockFilter = '';       // '' | ok | low | out — computed from qty vs min_quantity
 
+    public int $perPage = 8;               // rows per page (whitelisted in render) — no inner scroll
+
     public string $prefixFilter = '';
 
     public bool $showModal = false;
@@ -111,6 +113,11 @@ class Index extends Component
     }
 
     public function updatingStockFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage(): void
     {
         $this->resetPage();
     }
@@ -367,7 +374,7 @@ class Index extends Component
             ->when($this->stockFilter === 'ok', fn ($q) => $q->whereColumn('quantity', '>', 'min_quantity'))
             ->when($this->prefixFilter, fn ($q) => $q->where('slug', 'like', $this->prefixFilter.'%'))
             ->orderBy('name')
-            ->paginate(10);
+            ->paginate(in_array($this->perPage, [8, 10, 25, 50, 100], true) ? $this->perPage : 8);
 
         // Stock-state summary (whole live inventory) — out (qty≤0) · low (0<qty≤min) · ok (qty>min).
         // The three partition the set exactly, so ok = total − out − low (one fewer query).

@@ -57,6 +57,19 @@ test('stockFilter=ok shows only qty>min items', function () {
         ->assertDontSee('Low item B');
 });
 
+test('perPage limits the rows shown and rejects a non-whitelisted value', function () {
+    foreach (range(1, 8) as $i) {   // beforeEach made 5 → 13 total
+        InventoryItem::create(['slug' => 'P'.$i, 'name' => 'Pager '.$i, 'quantity' => 1, 'min_quantity' => 0]);
+    }
+
+    Livewire::test(Index::class)
+        ->assertViewHas('items', fn ($p) => $p->total() === 13 && $p->perPage() === 8 && count($p->items()) === 8)
+        ->set('perPage', 25)
+        ->assertViewHas('items', fn ($p) => $p->perPage() === 25 && count($p->items()) === 13)
+        ->set('perPage', 999)   // non-whitelisted → clamped back to 8
+        ->assertViewHas('items', fn ($p) => $p->perPage() === 8);
+});
+
 test('SECURITY — an unknown stockFilter value is ignored (no injection, shows all)', function () {
     Livewire::test(Index::class)
         ->set('stockFilter', "'; DROP TABLE inventory_items; --")
