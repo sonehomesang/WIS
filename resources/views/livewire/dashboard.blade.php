@@ -27,10 +27,14 @@
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div id="dash-capture" class="space-y-4">
 
-            {{-- HERO band — elevated, distinct from the content below --}}
-            <div class="rounded-2xl overflow-hidden relative text-white shadow-lg" style="background:linear-gradient(120deg,#0b4a95,#0e63c4 55%,#1e88e5)">
-                <div class="absolute -right-16 -top-16 w-60 h-60 rounded-full bg-white/10"></div>
-                <div class="absolute -left-10 -bottom-20 w-52 h-52 rounded-full bg-white/5"></div>
+            {{-- HERO band — elevated, distinct from the content below.
+                 NOTE: overflow-hidden goes on the decorative layer ONLY (to clip the circles),
+                 NOT the hero itself — otherwise it clips the ⚙ settings menu, which must float free. --}}
+            <div class="rounded-2xl relative text-white shadow-lg" style="background:linear-gradient(120deg,#0b4a95,#0e63c4 55%,#1e88e5)">
+                <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none" aria-hidden="true">
+                    <div class="absolute -right-16 -top-16 w-60 h-60 rounded-full bg-white/10"></div>
+                    <div class="absolute -left-10 -bottom-20 w-52 h-52 rounded-full bg-white/5"></div>
+                </div>
                 <div class="relative p-5 sm:p-6">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
@@ -42,7 +46,7 @@
                             <button onclick="window.exportJpg('dash-capture','dashboard-{{ now()->format('Ymd-Hi') }}.jpg')" class="text-xs bg-white/15 border border-white/25 text-white rounded-md px-2.5 py-1.5 hover:bg-white/25" title="ສົ່ງອອກ JPG">🖼 JPG</button>
                             <div class="relative" x-data="{ open: false }">
                                 <button @click="open = !open" class="text-xs bg-white/15 border border-white/25 text-white rounded-md px-2.5 py-1.5 hover:bg-white/25">⚙</button>
-                                <div x-show="open" x-cloak @click.outside="open = false" x-transition class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-30 p-2 text-gray-700">
+                                <div x-show="open" x-cloak @click.outside="open = false" x-transition class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-2 text-gray-700">
                                     <p class="text-[11px] text-gray-400 px-2 py-1">ສະແດງ widget</p>
                                     @foreach ($widgetLabels as $key => $lbl)
                                         @if ($key !== 'charts' || $showCharts || ($prefs['charts'] ?? true))
