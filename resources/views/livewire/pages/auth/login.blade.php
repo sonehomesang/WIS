@@ -48,7 +48,7 @@ new #[Layout('layouts.guest')] class extends Component
         <!-- Password -->
         <div>
             <label for="password" class="block text-sm font-medium text-gray-600 mb-1">ລະຫັດຜ່ານ</label>
-            <x-password-input wire:model="form.password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••" />
+            <x-password-input wire:model="form.password" id="password" name="password" required autocomplete="current-password" />
             <x-input-error :messages="$errors->get('form.password')" class="mt-2" />
         </div>
 

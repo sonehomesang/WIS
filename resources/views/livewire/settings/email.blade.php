@@ -44,7 +44,7 @@
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Password / App Password @if ($hasPassword)<span class="text-green-600">· ຕັ້ງ ໄວ້ ແລ້ວ</span>@endif</label>
-                        <input type="password" wire:model="password" placeholder="{{ $hasPassword ? '•••••• (ວ່າງ = ບໍ່ ປ່ຽນ)' : '' }}" class="w-full rounded-md border-gray-300 text-sm" autocomplete="new-password" />
+                        <input type="password" wire:model="password" placeholder="{{ $hasPassword ? 'ວ່າງ = ບໍ່ ປ່ຽນ ຄ່າ ເກົ່າ' : '' }}" class="w-full rounded-md border-gray-300 text-sm" autocomplete="new-password" />
                         <p class="text-[11px] text-gray-400 mt-1">ເກັບ ແບບ ເຂົ້າລະຫັດ ໄວ້. ວ່າງ = ຮັກສາ ຄ່າ ເກົ່າ.</p>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
