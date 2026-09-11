@@ -9,21 +9,59 @@
         'low-stock' => 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
         default => 'bg-gray-50 text-gray-600 ring-1 ring-gray-200',
     };
+    // stock state derived from qty vs min_quantity (matches the component filter)
+    $stockState = fn ($it) => $it->quantity <= 0 ? 'out' : ($it->quantity <= $it->min_quantity ? 'low' : 'ok');
+    $stockMeta = [
+        'out' => ['ໝົດ', 'bg-rose-50 text-rose-700 ring-1 ring-rose-200'],
+        'low' => ['ຕ່ຳ', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'],
+        'ok' => ['ພຽງພໍ', 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'],
+    ];
 @endphp
 
 <div class="pb-6">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8"
-         x-data="{ colsOpen: false, cols: $persist({ materialNo: true, brand: false, category: false, qty: true, location: true, status: true }).as('wh_inv_cols') }">
+         x-data="{ colsOpen: false, cols: $persist({ materialNo: true, brand: false, category: false, qty: true, stock: true, location: true, status: true }).as('wh_inv_cols_v2') }">
         @php
             $columns = [
                 'materialNo' => 'Material No.',
                 'brand' => 'Brand',
                 'category' => 'Category',
                 'qty' => 'Qty',
+                'stock' => 'Stock',
                 'location' => 'Location',
                 'status' => 'Status',
             ];
         @endphp
+
+        {{-- header band — identity + live stock KPIs (scrolls away; the toolbar below stays sticky) --}}
+        <div class="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden mb-3">
+            <div class="flex items-center gap-3 px-4 sm:px-5 pt-4 pb-3">
+                <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white grid place-items-center text-xl shadow-sm shrink-0">📦</span>
+                <div class="min-w-0">
+                    <h1 class="text-lg font-bold text-gray-800 truncate">ລາຍການ ສິນຄ້າ ໃນ ຄັງ · WH Inventory</h1>
+                    <p class="text-xs text-gray-400 truncate">ຄັງ ສິນຄ້າ ນ້ຳເທີນ 2 · ອັບເດດ {{ now()->format('d M Y') }}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-gray-100 border-t border-gray-100">
+                @php
+                    $kpiTiles = [
+                        ['label' => '📦 ລາຍການ ທັງໝົດ', 'value' => $kpi['items'], 'hint' => 'distinct items', 'tone' => 'text-gray-800'],
+                        ['label' => 'Σ ຈຳນວນ ລວມ', 'value' => $kpi['qty'], 'hint' => 'ທຸກ ໜ່ວຍ ລວມ', 'tone' => 'text-gray-800'],
+                        ['label' => '🔴 ໝົດ stock', 'value' => $kpi['out'], 'hint' => 'qty = 0', 'tone' => 'text-rose-600'],
+                        ['label' => '🟠 stock ຕ່ຳ', 'value' => $kpi['low'], 'hint' => 'qty ≤ min', 'tone' => 'text-amber-600'],
+                        ['label' => '📍 ຈຸດ ຈັດ ເກັບ', 'value' => $kpi['locations'], 'hint' => 'locations', 'tone' => 'text-gray-800'],
+                    ];
+                @endphp
+                @foreach ($kpiTiles as $t)
+                    <div class="bg-white px-4 py-3">
+                        <p class="text-[11px] text-gray-400 truncate">{{ $t['label'] }}</p>
+                        <p class="text-2xl font-bold tabular-nums leading-tight {{ $t['tone'] }}">{{ number_format($t['value']) }}</p>
+                        <p class="text-[11px] text-gray-500 truncate">{{ $t['hint'] }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
         {{-- frozen header group: toolbar + chips freeze together --}}
         <div class="sticky top-16 z-30 bg-gray-100">
         {{-- toolbar --}}
@@ -66,7 +104,26 @@
             </div>
         </div>
 
-        @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter, 'trailing' => number_format($items->total()).' ລາຍການ'])
+        {{-- stock-state chips (computed from qty vs min_quantity) --}}
+        <div class="flex flex-wrap items-center gap-2 pb-2">
+            @php
+                $stockChips = [
+                    ['k' => '', 'label' => 'ທັງໝົດ', 'count' => $kpi['items'], 'dot' => null],
+                    ['k' => 'ok', 'label' => 'ພຽງພໍ', 'count' => $kpi['ok'], 'dot' => 'bg-emerald-500'],
+                    ['k' => 'low', 'label' => 'ຕ່ຳ (≤min)', 'count' => $kpi['low'], 'dot' => 'bg-amber-500'],
+                    ['k' => 'out', 'label' => 'ໝົດ (0)', 'count' => $kpi['out'], 'dot' => 'bg-rose-500'],
+                ];
+            @endphp
+            @foreach ($stockChips as $c)
+                <button type="button" wire:click="$set('stockFilter', '{{ $c['k'] }}')"
+                        class="text-xs rounded-full px-3 py-1 border flex items-center gap-1.5 transition {{ $stockFilter === $c['k'] ? 'bg-sky-600 border-sky-600 text-white' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50' }}">
+                    @if ($c['dot'])<span class="w-1.5 h-1.5 rounded-full {{ $c['dot'] }}"></span>@endif
+                    {{ $c['label'] }}
+                    <span class="rounded-full px-1.5 tabular-nums {{ $stockFilter === $c['k'] ? 'bg-white/20' : 'bg-gray-100' }}">{{ number_format($c['count']) }}</span>
+                </button>
+            @endforeach
+            <span class="text-xs text-gray-400 ml-1">{{ number_format($items->total()) }} ລາຍການ</span>
+        </div>
         </div>{{-- /frozen header group --}}
 
         <div x-data="{ show: false }" x-on:saved.window="show = true; setTimeout(() => show = false, 2000)" x-show="show" style="display:none"
@@ -82,6 +139,7 @@
                         <th x-show="cols.brand" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Brand</th>
                         <th x-show="cols.category" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Category</th>
                         <th x-show="cols.qty" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Qty</th>
+                        <th x-show="cols.stock" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Stock</th>
                         <th x-show="cols.location" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Location</th>
                         <th x-show="cols.status" x-cloak class="text-left font-semibold px-4 py-2 whitespace-nowrap">Status</th>
                         <th class="px-4 py-2"></th>
@@ -97,7 +155,7 @@
                                         <img src="{{ $photo->url }}" alt="" class="w-9 h-9 rounded object-cover border border-gray-200 shrink-0" />
                                     @endif
                                     <div>
-                                        <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
+                                        <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:52ch" title="{{ $it->name }}">{{ $it->name }}</div>
                                         @if ($showDeleted)
                                             <div class="text-[11px] text-red-600 mt-0.5">🗑 ລຶບ: {{ $it->deleted_at?->format('d/m/Y H:i') }} · ໂດຍ {{ $it->deletedBy?->display_name ?? '—' }}@if ($it->deleted_reason) · ເຫດຜົນ: {{ $it->deleted_reason }}@endif</div>
                                         @endif
@@ -107,6 +165,7 @@
                             <td x-show="cols.brand" x-cloak class="px-4 py-2 text-xs text-gray-600 whitespace-nowrap">{{ $it->brand ?: '—' }}</td>
                             <td x-show="cols.category" x-cloak class="px-4 py-2 text-xs text-gray-600 whitespace-nowrap">{{ $it->category ?: '—' }}</td>
                             <td x-show="cols.qty" x-cloak class="px-4 py-2 text-gray-600 whitespace-nowrap">{{ $it->quantity }}@if ($it->unit) {{ $it->unit }}@endif</td>
+                            <td x-show="cols.stock" x-cloak class="px-4 py-2 whitespace-nowrap">@php $ss = $stockState($it); @endphp<span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $stockMeta[$ss][1] }}">{{ $stockMeta[$ss][0] }}</span></td>
                             <td x-show="cols.location" x-cloak class="px-4 py-2 text-gray-600 text-xs whitespace-nowrap">{{ collect([$it->location?->name, $it->building?->name, $it->room?->name, $it->shelf_label])->filter()->implode(' / ') ?: '—' }}</td>
                             <td x-show="cols.status" x-cloak class="px-4 py-2 whitespace-nowrap"><span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>@if ($it->condition_status && $it->condition_status !== 'in_service')<span class="block mt-1 text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($it->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($it->condition_status) }}</span>@endif</td>
                             <td class="px-4 py-2 text-right whitespace-nowrap text-gray-500">
@@ -120,7 +179,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="px-4 py-6 text-center text-gray-400">{{ $showDeleted ? 'ບໍ່ ມີ item ທີ່ ຖືກ ລຶບ' : 'ບໍ່ມີ item' }}</td></tr>
+                        <tr><td colspan="9" class="px-4 py-6 text-center text-gray-400">{{ $showDeleted ? 'ບໍ່ ມີ item ທີ່ ຖືກ ລຶບ' : 'ບໍ່ມີ item' }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -135,9 +194,13 @@
                             @if ($photo = $it->primaryPhoto)
                                 <img src="{{ $photo->url }}" alt="" class="w-8 h-8 rounded object-cover border border-gray-200 shrink-0" />
                             @endif
-                            <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}">{{ $it->name }}</div>
+                            <div class="font-medium text-gray-800 {{ $it->is_active ? '' : 'opacity-50' }}" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden" title="{{ $it->name }}">{{ $it->name }}</div>
                         </div>
-                        <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>@if ($it->condition_status && $it->condition_status !== 'in_service')<span class="text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($it->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($it->condition_status) }}</span>@endif
+                        <div class="flex items-center gap-1 shrink-0">
+                            @php $ss = $stockState($it); @endphp
+                            <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $stockMeta[$ss][1] }}">{{ $stockMeta[$ss][0] }}</span>
+                            <span class="text-xs font-medium rounded-full px-2 py-0.5 {{ $statusBadge($it->status) }}">{{ $it->status }}</span>@if ($it->condition_status && $it->condition_status !== 'in_service')<span class="text-xs rounded-full px-2 py-0.5 {{ \App\Support\ConditionStatus::badge($it->condition_status) }}">{{ \App\Support\ConditionStatus::shortLabel($it->condition_status) }}</span>@endif
+                        </div>
                     </div>
                     <div class="text-xs text-gray-500 mt-1"><span class="font-mono text-gray-400">{{ $it->slug }}</span> · Qty {{ $it->quantity }} {{ $it->unit }} · {{ collect([$it->location?->name, $it->building?->name])->filter()->implode(' / ') ?: '—' }}</div>
                     @if ($showDeleted)

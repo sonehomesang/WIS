@@ -5,11 +5,13 @@ namespace App\Livewire\Inventory;
 use App\Imports\InventoryCsvImporter;
 use App\Livewire\Concerns\SoftDeletesWithReason;
 use App\Models\Building;
+use App\Models\Department;
 use App\Models\InventoryItem;
 use App\Models\InventoryItemPhoto;
 use App\Models\Location;
 use App\Models\Room;
 use App\Models\Uom;
+use App\Support\ConditionStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -31,6 +33,8 @@ class Index extends Component
     public string $search = '';
 
     public string $statusFilter = '';
+
+    public string $stockFilter = '';       // '' | ok | low | out — computed from qty vs min_quantity
 
     public string $prefixFilter = '';
 
@@ -106,6 +110,11 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingStockFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function updatedLocationId(): void
     {
         $this->building_id = null;
@@ -177,7 +186,7 @@ class Index extends Component
             'shelf_label' => ['nullable', 'string', 'max:64'],
             'department_id' => ['nullable', 'exists:departments,id'],
             'status' => ['required', 'in:available,borrowed,maintenance,low-stock'],
-            'condition_status' => ['required', \App\Support\ConditionStatus::rule()],
+            'condition_status' => ['required', ConditionStatus::rule()],
             'is_active' => ['boolean'],
             'newPhotos' => ['array', 'max:'.self::MAX_PHOTOS],
             'newPhotos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
@@ -352,26 +361,34 @@ class Index extends Component
                 ->orWhere('brand', 'like', "%{$this->search}%")
                 ->orWhere('serial_number', 'like', "%{$this->search}%")))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
+            // stock state derived from qty vs min_quantity (whitelisted values, no raw input)
+            ->when($this->stockFilter === 'out', fn ($q) => $q->where('quantity', '<=', 0))
+            ->when($this->stockFilter === 'low', fn ($q) => $q->where('quantity', '>', 0)->whereColumn('quantity', '<=', 'min_quantity'))
+            ->when($this->stockFilter === 'ok', fn ($q) => $q->whereColumn('quantity', '>', 'min_quantity'))
             ->when($this->prefixFilter, fn ($q) => $q->where('slug', 'like', $this->prefixFilter.'%'))
             ->orderBy('name')
             ->paginate(10);
 
-        $sc = InventoryItem::selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
-        $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
+        // Stock-state summary (whole live inventory) — out (qty≤0) · low (0<qty≤min) · ok (qty>min).
+        // The three partition the set exactly, so ok = total − out − low (one fewer query).
+        $out = InventoryItem::where('quantity', '<=', 0)->count();
+        $low = InventoryItem::where('quantity', '>', 0)->whereColumn('quantity', '<=', 'min_quantity')->count();
+        $totalItems = InventoryItem::count();
 
         return view('livewire.inventory.index', [
             'items' => $items,
             'canManageDeleted' => $this->canManageDeleted(),
-            'chips' => [
-                $chip('', 'ທັງໝົດ', $sc->sum()),
-                $chip('available', 'available', $sc['available'] ?? 0),
-                $chip('borrowed', 'borrowed', $sc['borrowed'] ?? 0),
-                $chip('low-stock', 'low-stock', $sc['low-stock'] ?? 0, true),
-                $chip('maintenance', 'maintenance', $sc['maintenance'] ?? 0),
+            'kpi' => [
+                'items' => $totalItems,
+                'qty' => (int) InventoryItem::sum('quantity'),
+                'out' => $out,
+                'low' => $low,
+                'ok' => max(0, $totalItems - $out - $low),
+                'locations' => InventoryItem::whereNotNull('location_id')->distinct()->count('location_id'),
             ],
             'prefixCounts' => InventoryItem::prefixCounts(),
             'uoms' => Uom::where('is_active', true)->orderBy('name')->get(),
-            'departments' => \App\Models\Department::where('is_active', true)->with('unit:id,name')->orderBy('name')->get(['id', 'name', 'unit_id']),
+            'departments' => Department::where('is_active', true)->with('unit:id,name')->orderBy('name')->get(['id', 'name', 'unit_id']),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'formBuildings' => $this->location_id ? Building::where('location_id', $this->location_id)->where('is_active', true)->orderBy('name')->get() : collect(),
             'formRooms' => $this->building_id ? Room::where('building_id', $this->building_id)->where('is_active', true)->orderBy('name')->get() : collect(),
