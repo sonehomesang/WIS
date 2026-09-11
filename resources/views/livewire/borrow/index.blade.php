@@ -13,34 +13,56 @@
 
 <div class="pb-6">
     <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
-        {{-- frozen header group: toolbar + chips + count freeze together --}}
+        {{-- live KPIs (page identity is already in the app top bar — no duplicate title) --}}
+        <div class="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden mb-3">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-gray-100">
+                @php
+                    $kpiTiles = [
+                        ['label' => '📄 ໃບ ຢືມ ທັງໝົດ', 'value' => $kpi['total'], 'hint' => 'records', 'tone' => 'text-gray-800'],
+                        ['label' => '🔄 ກຳລັງ ຢືມ ຢູ່', 'value' => $kpi['active'], 'hint' => 'active', 'tone' => 'text-gray-800'],
+                        ['label' => '⚠️ ເກີນ ກຳນົດ', 'value' => $kpi['overdue'], 'hint' => 'overdue', 'tone' => 'text-rose-600'],
+                        ['label' => '⏰ ໃກ້ ຮອດ ກຳນົດ', 'value' => $kpi['due_soon'], 'hint' => 'ຄືນ ໃນ ≤3 ວັນ', 'tone' => 'text-amber-600'],
+                        ['label' => '✅ ສົ່ງ ຄືນ ແລ້ວ', 'value' => $kpi['returned'], 'hint' => 'returned', 'tone' => 'text-gray-800'],
+                    ];
+                @endphp
+                @foreach ($kpiTiles as $t)
+                    <div class="bg-white px-4 py-4">
+                        <p class="text-sm text-gray-500 truncate">{{ $t['label'] }}</p>
+                        <p class="text-3xl font-bold tabular-nums leading-tight mt-1 {{ $t['tone'] }}">{{ number_format($t['value']) }}</p>
+                        <p class="text-xs text-gray-500 truncate mt-0.5">{{ $t['hint'] }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- frozen header group: toolbar + chips freeze together --}}
         <div class="sticky top-16 z-30 bg-gray-100/95 backdrop-blur">
-            <div class="flex flex-col gap-3 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3">
-                <div class="flex items-center gap-3 shrink-0">
-                    <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center text-xl shadow-sm">🔄</span>
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-800">ຢືມ ເຄື່ອງ <span class="text-gray-400 text-sm font-normal">· Borrow</span></h2>
-                        <p class="text-sm text-gray-400">{{ number_format($records->total()) }} ໃບ</p>
-                    </div>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <div class="relative">
+            <div class="flex flex-col gap-2 py-3 sm:py-2 sm:min-h-[52px] sm:flex-row sm:items-center sm:gap-3">
+                {{-- left: search + filters (search flexes; the rest hold their width) --}}
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:flex-1 sm:min-w-0">
+                    <div class="relative w-full sm:flex-1 sm:min-w-[9rem] sm:max-w-xs">
                         <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔎</span>
-                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ BR/ຊື່ຜູ້ຢືມ…" class="w-44 pl-8 rounded-lg border-gray-300 text-sm" />
+                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ BR/ຊື່ຜູ້ຢືມ…" class="w-full pl-8 rounded-lg border-gray-300 text-sm" />
                     </div>
-                    <select wire:model.live="statusFilter" class="w-32 rounded-lg border-gray-300 text-sm">
+                    <select wire:model.live="statusFilter" class="shrink-0 w-32 rounded-lg border-gray-300 text-sm">
                         <option value="">All Statuses</option>
                         <option value="draft">draft</option><option value="acknowledged">acknowledged</option>
                         <option value="approved">approved</option><option value="active">active (in use)</option>
                         <option value="overdue">overdue</option><option value="returned">returned</option><option value="cancelled">cancelled</option>
                     </select>
-                    <select wire:model.live="typeFilter" class="w-28 rounded-lg border-gray-300 text-sm">
+                    <select wire:model.live="typeFilter" class="shrink-0 w-28 rounded-lg border-gray-300 text-sm">
                         <option value="">All Types</option>
                         <option value="new_inventory">Inventory</option><option value="tools_equipment">Tools/Equip</option>
                         <option value="deposited_tools">Deposited</option><option value="others">Others</option>
                     </select>
-                    <input type="date" wire:model.live="fromDate" class="w-36 rounded-lg border-gray-300 text-sm" title="ຈາກວັນທີ" />
-                    <input type="date" wire:model.live="toDate" class="w-36 rounded-lg border-gray-300 text-sm" title="ຫາວັນທີ" />
+                    <input type="date" wire:model.live="fromDate" class="shrink-0 w-36 rounded-lg border-gray-300 text-sm" title="ຈາກວັນທີ" />
+                    <input type="date" wire:model.live="toDate" class="shrink-0 w-36 rounded-lg border-gray-300 text-sm" title="ຫາວັນທີ" />
+                </div>
+                {{-- right: per-page + actions --}}
+                <div class="flex flex-wrap items-center gap-2 shrink-0">
+                    <select wire:model.live="perPage" class="shrink-0 rounded-lg border-gray-300 text-sm min-h-[40px]" title="ຈຳນວນ ແຖວ ຕໍ່ ໜ້າ">
+                        @foreach ([8, 10, 25, 50, 100] as $n)<option value="{{ $n }}">{{ $n }} ແຖວ</option>@endforeach
+                    </select>
                     @if ($canDailyCheck)<button wire:click="runDailyCheck" wire:loading.attr="disabled" class="text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 min-h-[40px] hover:bg-amber-100 transition whitespace-nowrap" title="ສົ່ງເຕືອນ ລາຍການ ໃກ້/ເກີນ ກຳນົດ">⏰ Daily Check</button>@endif
                     @if ($canManageDeleted)<button wire:click="toggleDeleted" class="text-sm rounded-lg px-3 py-2 min-h-[40px] border transition whitespace-nowrap {{ $showDeleted ? 'bg-rose-600 text-white border-rose-600' : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100' }}">🗑 {{ $showDeleted ? 'ກັບຄືນ' : 'Deleted' }}</button>@endif
                     @can('borrow.create')<a href="{{ route('borrow.create') }}" wire:navigate class="text-sm font-medium text-white bg-indigo-600 rounded-lg px-3.5 py-2 min-h-[40px] inline-flex items-center hover:bg-indigo-700 transition shadow-sm whitespace-nowrap">+ Borrow Request</a>@endcan
@@ -54,7 +76,7 @@
 
         {{-- Desktop table --}}
         <div class="hidden md:block bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="overflow-auto max-h-[calc(100vh-16rem)]">
+            <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead class="sticky top-0 z-10 bg-slate-50 text-slate-500 border-b border-gray-200">
                         <tr class="text-[11px] uppercase tracking-wide">

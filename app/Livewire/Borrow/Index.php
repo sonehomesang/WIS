@@ -5,6 +5,7 @@ namespace App\Livewire\Borrow;
 use App\Models\BorrowRecord;
 use App\Services\BorrowReminderService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -24,6 +25,8 @@ class Index extends Component
     public string $fromDate = '';
 
     public string $toDate = '';
+
+    public int $perPage = 8;               // rows per page (whitelisted in render) — no inner scroll
 
     /** ສະແດງ Deleted Log (onlyTrashed) ແທນລາຍການປົກກະຕິ. */
     public bool $showDeleted = false;
@@ -81,6 +84,11 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
     /**
      * Daily check — ສ້າງ notification ໃຫ້ຜູ້ຢືມ ສຳລັບລາຍການ ໃກ້/ເກີນ ກຳນົດຄືນ.
      * ເຄົາລົບ feature flag `notifications.borrow_reminder` + master switch.
@@ -134,32 +142,54 @@ class Index extends Component
             ->when($this->fromDate, fn ($q) => $q->whereDate('borrow_date', '>=', $this->fromDate))
             ->when($this->toDate, fn ($q) => $q->whereDate('borrow_date', '<=', $this->toDate))
             ->orderByDesc('id')
-            ->paginate(9);
+            ->paginate(in_array($this->perPage, [8, 10, 25, 50, 100], true) ? $this->perPage : 8);
+
+        $s = $this->summary();
+        $counts = $s['counts'];
+        $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
 
         return view('livewire.borrow.index', [
             'records' => $items,
             'canManageDeleted' => $this->canManageDeleted(),
             'canDailyCheck' => $this->isStaff(),
-            'chips' => $this->statusChips(),
+            'chips' => [
+                $chip('', 'ທັງໝົດ', $counts->sum()),
+                $chip('active', 'ໃຊ້ຢູ່', $counts['active'] ?? 0),
+                $chip('overdue', 'ເກີນກຳນົດ', $s['overdue'], true),
+                $chip('returned', 'ສົ່ງຄືນ', $counts['returned'] ?? 0),
+                $chip('approved', 'ອະນຸມັດ', $counts['approved'] ?? 0),
+                $chip('draft', 'draft', $counts['draft'] ?? 0),
+                $chip('cancelled', 'ຍົກເລີກ', $counts['cancelled'] ?? 0),
+            ],
+            'kpi' => [
+                'total' => $counts->sum(),
+                'active' => $counts['active'] ?? 0,
+                'overdue' => $s['overdue'],
+                'due_soon' => $s['dueSoon'],
+                'returned' => $counts['returned'] ?? 0,
+            ],
         ]);
     }
 
-    /** Sub-dashboard: ນັບ ຕໍ່ສະຖານະ (visibility scope, ບໍ່ນັບ deleted). */
-    protected function statusChips(): array
+    /**
+     * Live counts for the KPI band + status chips (visibility-scoped, excludes deleted
+     * unless the Deleted log is open). overdue = active past its planned return;
+     * dueSoon = active due within the next 3 days (not yet overdue).
+     *
+     * @return array{counts:Collection,overdue:int,dueSoon:int}
+     */
+    protected function summary(): array
     {
         $base = $this->scopedQuery();
-        $counts = (clone $base)->selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status');
-        $overdue = (clone $base)->where('status', 'active')->whereDate('planned_return_date', '<', Carbon::today())->count();
-        $chip = fn ($k, $l, $c, $a = false) => ['key' => $k, 'label' => $l, 'count' => $c, 'alert' => $a];
+        $today = Carbon::today();
 
         return [
-            $chip('', 'ທັງໝົດ', $counts->sum()),
-            $chip('active', 'ໃຊ້ຢູ່', $counts['active'] ?? 0),
-            $chip('overdue', 'ເກີນກຳນົດ', $overdue, true),
-            $chip('returned', 'ສົ່ງຄືນ', $counts['returned'] ?? 0),
-            $chip('approved', 'ອະນຸມັດ', $counts['approved'] ?? 0),
-            $chip('draft', 'draft', $counts['draft'] ?? 0),
-            $chip('cancelled', 'ຍົກເລີກ', $counts['cancelled'] ?? 0),
+            'counts' => (clone $base)->selectRaw('status, count(*) c')->groupBy('status')->pluck('c', 'status'),
+            'overdue' => (clone $base)->where('status', 'active')->whereDate('planned_return_date', '<', $today)->count(),
+            'dueSoon' => (clone $base)->where('status', 'active')
+                ->whereDate('planned_return_date', '>=', $today)
+                ->whereDate('planned_return_date', '<=', $today->copy()->addDays(3))
+                ->count(),
         ];
     }
 }
