@@ -10,7 +10,7 @@
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <h3 class="font-medium text-gray-800">🗂 Active Directory (LDAP) · ເຊື່ອມຕໍ່ໂດເມນ</h3>
-                    <p class="text-xs text-gray-500">ດຶງລາຍຊື່ຜູ້ໃຊ້ ຈາກ AD ຂອງ namtheun2.com → ສ້າງບັນຊີໄວ້ລ່ວງໜ້າ (Sync only · login ຄືເກົ່າ).</p>
+                    <p class="text-xs text-gray-500">ດຶງລາຍຊື່ຜູ້ໃຊ້ ຈາກ AD ຂອງ ອົງກອນ → ສ້າງບັນຊີໄວ້ລ່ວງໜ້າ (Sync only · login ຄືເກົ່າ).</p>
                 </div>
                 <span class="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200 shrink-0">Sync only</span>
             </div>
@@ -43,7 +43,7 @@
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Base DN</label>
-                    <input type="text" wire:model="base_dn" placeholder="ຕົວຢ່າງ: DC=namtheun2,DC=com" class="w-full rounded-md border-gray-300 text-sm" />
+                    <input type="text" wire:model="base_dn" placeholder="ຕົວຢ່າງ: DC=example,DC=com" class="w-full rounded-md border-gray-300 text-sm" />
                     @error('base_dn')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
@@ -193,7 +193,7 @@
                     </button>
                 </div>
             @else
-                <p class="px-5 py-8 text-center text-sm text-gray-400">ຍັງບໍ່ໄດ້ດຶງ — ກົດ "Preview from AD" (ຕ້ອງ run ຢູ່ server namtheun2 ທີ່ເຫັນ DC).</p>
+                <p class="px-5 py-8 text-center text-sm text-gray-400">ຍັງບໍ່ໄດ້ດຶງ — ກົດ "Preview from AD" (ຕ້ອງ run ຢູ່ server ທີ່ເຫັນ DC).</p>
             @endif
         </div>
 

@@ -7,14 +7,14 @@ use App\Notifications\SetPasswordNotification;
 use App\Services\NotificationService;
 
 test('the set-password email renders Lao defaults with a valid reset link', function () {
-    $user = User::factory()->create(['email' => 'staff@namtheun2.com', 'display_name' => 'Staff One']);
+    $user = User::factory()->create(['email' => 'staff@example.com', 'display_name' => 'Staff One']);
 
     $mail = (new SetPasswordNotification('tok-123'))->toMail($user);
 
     expect($mail->subject)->toBe('ຕັ້ງ / ຣີເຊັດ ລະຫັດຜ່ານ');
     expect($mail->actionText)->toBe('ຕັ້ງ ລະຫັດຜ່ານ');
     expect($mail->actionUrl)->toContain('/reset-password/tok-123');
-    expect($mail->actionUrl)->toContain('email=staff%40namtheun2.com');
+    expect($mail->actionUrl)->toContain('email=staff%40example.com');
     expect($mail->salutation)->toBe('ດ້ວຍ ຄວາມ ນັບຖື,');
     expect($mail->salutation)->not->toContain('Laravel');   // no framework leak
     expect(implode(' ', $mail->outroLines))->toContain('60'); // {minutes} replaced

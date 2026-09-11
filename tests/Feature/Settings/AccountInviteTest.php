@@ -24,15 +24,15 @@ test('creating a user sets no usable password and issues a set-password link', f
     Livewire::test(Users::class)
         ->call('newUser')
         ->set('display_name', 'New Staff')
-        ->set('email', 'newstaff@namtheun2.com')
+        ->set('email', 'newstaff@example.com')
         ->set('role', 'requester')
         ->set('status', 'active')
         ->call('save')
         ->assertHasNoErrors()
-        ->assertSet('setLinkEmail', 'newstaff@namtheun2.com')
+        ->assertSet('setLinkEmail', 'newstaff@example.com')
         ->assertSeeHtml('reset-password'); // the copy-link box shows the reset URL
 
-    $user = User::where('email', 'newstaff@namtheun2.com')->first();
+    $user = User::where('email', 'newstaff@example.com')->first();
     expect($user)->not->toBeNull();
     // admin never set a password; the random one is unguessable
     expect(Hash::check('password', $user->password))->toBeFalse();
@@ -42,13 +42,13 @@ test('creating a user sets no usable password and issues a set-password link', f
 
 test('the resend button (linkFor) issues a fresh set-password link', function () {
     Notification::fake();
-    $u = User::factory()->create(['email' => 'x@namtheun2.com']);
+    $u = User::factory()->create(['email' => 'x@example.com']);
     $u->syncRoles(['requester']);
 
     actingAs($this->admin);
     Livewire::test(Users::class)
         ->call('linkFor', $u->id)
-        ->assertSet('setLinkEmail', 'x@namtheun2.com')
+        ->assertSet('setLinkEmail', 'x@example.com')
         ->assertSeeHtml('reset-password');
 
     Notification::assertSentTo($u, SetPasswordNotification::class);

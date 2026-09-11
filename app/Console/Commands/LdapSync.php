@@ -6,14 +6,14 @@ use App\Services\LdapDirectory;
 use Illuminate\Console\Command;
 
 /**
- * Pull AD users → pre-create local accounts. Run on the namtheun2 server
+ * Pull AD users → pre-create local accounts. Run on the domain-joined server
  * (which can reach the DC). Schedulable for periodic directory sync.
  */
 class LdapSync extends Command
 {
     protected $signature = 'ldap:sync {--all : include disabled AD accounts} {--bind-user= : AD bind (authorize) username}';
 
-    protected $description = 'Sync users from Active Directory (namtheun2.com) into WH';
+    protected $description = 'Sync users from Active Directory into WH';
 
     public function handle(LdapDirectory $ldap): int
     {

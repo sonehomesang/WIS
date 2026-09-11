@@ -24,7 +24,7 @@ test('a requester does not see DA/OGA/Expo by default', function () {
 });
 
 test('granting only view gives view without create or edit', function () {
-    $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@namtheun2.com', 'status' => 'active']);
+    $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@example.com', 'status' => 'active']);
     $u->syncRoles(['requester']);
 
     actingAs($this->admin);
@@ -41,7 +41,7 @@ test('granting only view gives view without create or edit', function () {
 });
 
 test('granting create or edit implies view', function () {
-    $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@namtheun2.com', 'status' => 'active']);
+    $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@example.com', 'status' => 'active']);
     $u->syncRoles(['requester']);
 
     actingAs($this->admin);
@@ -58,7 +58,7 @@ test('granting create or edit implies view', function () {
 });
 
 test('revoking clears the direct permission', function () {
-    $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@namtheun2.com', 'status' => 'active']);
+    $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@example.com', 'status' => 'active']);
     $u->syncRoles(['requester']);
     $u->givePermissionTo('da.view', 'da.create', 'da.edit');
 
@@ -75,7 +75,7 @@ test('revoking clears the direct permission', function () {
 });
 
 test('escalation guard: admin menus cannot be granted per person', function () {
-    $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@namtheun2.com', 'status' => 'active']);
+    $u = User::factory()->create(['display_name' => 'Staff', 'email' => 'staff@example.com', 'status' => 'active']);
     $u->syncRoles(['requester']);
 
     actingAs($this->admin);
@@ -94,7 +94,7 @@ test('escalation guard: admin menus cannot be granted per person', function () {
 test('A-Z filter and search match display name, username, or email', function () {
     $u = User::factory()->create([
         'display_name' => 'Sone', 'username' => 'khamsone',
-        'email' => 'khamsone@namtheun2.com', 'status' => 'active',
+        'email' => 'khamsone@example.com', 'status' => 'active',
     ]);
     $u->syncRoles(['requester']);
 

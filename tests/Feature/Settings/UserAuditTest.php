@@ -42,7 +42,7 @@ test('activating a user notifies every super admin, including the actor', functi
 test('activating through the edit form also logs activate and notifies', function () {
     $this->seed(RolePermissionSeeder::class);
     $admin = User::factory()->create(['is_super_admin' => true, 'display_name' => 'Admin A']);
-    $target = User::factory()->create(['status' => 'pending', 'display_name' => 'User B', 'email' => 'userb@namtheun2.com']);
+    $target = User::factory()->create(['status' => 'pending', 'display_name' => 'User B', 'email' => 'userb@example.com']);
 
     Livewire::actingAs($admin)->test(Users::class)
         ->call('editUser', $target->id)

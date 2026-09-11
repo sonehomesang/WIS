@@ -64,7 +64,7 @@ new #[Layout('layouts.guest')] class extends Component
         <!-- Email Address -->
         <div>
             <label for="email" class="block text-sm font-medium text-gray-600 mb-1">ອີເມວ</label>
-            <x-text-input wire:model="email" id="email" class="block w-full" type="email" name="email" required autofocus placeholder="you@namtheun2.com" />
+            <x-text-input wire:model="email" id="email" class="block w-full" type="email" name="email" required autofocus placeholder="you@example.com" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
