@@ -72,30 +72,30 @@
             @include('partials._status-chips', ['chips' => $chips, 'current' => $statusFilter, 'trailing' => number_format($records->total()).' records'])
         </div>{{-- /frozen header group --}}
 
-        @if (session('ok'))<div class="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 mb-3">{{ session('ok') }}</div>@endif
+        @if (session('ok'))<div class="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-1.5 mb-3">{{ session('ok') }}</div>@endif
 
         {{-- Desktop table --}}
         <div class="hidden md:block bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
-                    <thead class="sticky top-0 z-10 bg-slate-50 text-slate-500 border-b border-gray-200">
-                        <tr class="text-[11px] uppercase tracking-wide">
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ໄອດີ (BR)</th>
-                            <th class="text-left font-semibold px-4 py-2.5 w-full">ຜູ້ຢືມ</th>
-                            <th class="text-left font-semibold px-4 py-2.5">ເຄື່ອງທີ່ຢືມ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ລະຫັດ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ວັນທີ</th>
-                            <th class="text-left font-semibold px-4 py-2.5 whitespace-nowrap">ສະຖານະ</th>
-                            <th class="text-right font-semibold px-4 py-2.5 whitespace-nowrap">ຈັດການ</th>
+                    <thead class="bg-slate-100 text-slate-600 border-b-2 border-slate-200">
+                        <tr class="text-xs font-semibold uppercase tracking-wide">
+                            <th class="text-left font-semibold px-3 py-1.5 whitespace-nowrap">ໄອດີ (BR)</th>
+                            <th class="text-left font-semibold px-3 py-1.5 w-full">ຜູ້ຢືມ</th>
+                            <th class="text-left font-semibold px-3 py-1.5">ເຄື່ອງທີ່ຢືມ</th>
+                            <th class="text-left font-semibold px-3 py-1.5 whitespace-nowrap">ລະຫັດ</th>
+                            <th class="text-left font-semibold px-3 py-1.5 whitespace-nowrap">ວັນທີ</th>
+                            <th class="text-left font-semibold px-3 py-1.5 whitespace-nowrap">ສະຖານະ</th>
+                            <th class="text-right font-semibold px-3 py-1.5 whitespace-nowrap">ຈັດການ</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($records as $r)
                             @php [$lbl, $cls] = $statusMeta($r->display_status); $first = $r->items->first(); $ph = $first?->photos->first() ?? $first?->inventoryItem?->primaryPhoto; $d = $r->days_left; @endphp
                             <tr wire:key="br-{{ $r->id }}" class="hover:bg-indigo-50/40 transition">
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap"><a href="{{ route('borrow.show', $r) }}" wire:navigate class="font-mono text-sm font-medium text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
-                                <td class="px-4 py-2.5 align-top w-full"><div class="font-semibold text-gray-800 truncate max-w-[220px]">{{ $r->borrower_name }}</div><div class="text-xs text-gray-400 truncate max-w-[220px]">{{ $r->unit?->name ?? $r->borrower_email }}</div></td>
-                                <td class="px-4 py-2.5 align-top">
+                                <td class="px-3 py-1.5 align-top whitespace-nowrap"><a href="{{ route('borrow.show', $r) }}" wire:navigate class="font-mono text-sm font-medium text-indigo-600 hover:underline">{{ $r->request_number }}</a></td>
+                                <td class="px-3 py-1.5 align-top w-full"><div class="font-semibold text-gray-800 truncate max-w-[220px]">{{ $r->borrower_name }}</div><div class="text-xs text-gray-400 truncate max-w-[220px]">{{ $r->unit?->name ?? $r->borrower_email }}</div></td>
+                                <td class="px-3 py-1.5 align-top">
                                     <div class="flex gap-2.5">
                                         @if ($ph)<img src="{{ $ph->url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0" />
                                         @else<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 shrink-0 flex items-center justify-center text-gray-300 text-lg">🔄</div>@endif
@@ -105,20 +105,20 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap">
+                                <td class="px-3 py-1.5 align-top whitespace-nowrap">
                                     @foreach ($r->items->take(2) as $bi)
                                         @if ($bi->inventoryItem)<span class="inline-block text-xs font-mono bg-gray-50 text-gray-600 border border-gray-200 rounded px-1.5 py-0.5 mb-0.5">{{ $bi->inventoryItem->slug }}</span>@endif
                                     @endforeach
                                 </td>
-                                <td class="px-4 py-2.5 align-top text-xs whitespace-nowrap">
+                                <td class="px-3 py-1.5 align-top text-xs whitespace-nowrap">
                                     <div class="text-gray-700 font-medium">{{ $r->borrow_date?->format('M d, Y') }}</div>
                                     <div class="text-[10px] uppercase tracking-wide text-gray-400 mt-0.5">↩ {{ $r->planned_return_date?->format('M d, Y') }}</div>
                                 </td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap">
+                                <td class="px-3 py-1.5 align-top whitespace-nowrap">
                                     <span class="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 {{ $cls }}">{{ $lbl }}</span>
                                     @if ($d !== null)<div class="text-xs mt-1 {{ $d < 0 ? 'text-rose-600 font-medium' : 'text-gray-400' }}">{{ $d < 0 ? 'ເກີນ '.abs($d).' ມື້' : 'ອີກ '.$d.' ມື້' }}</div>@endif
                                 </td>
-                                <td class="px-4 py-2.5 align-top whitespace-nowrap text-right">
+                                <td class="px-3 py-1.5 align-top whitespace-nowrap text-right">
                                     @if ($showDeleted)
                                         <button wire:click="restore({{ $r->id }})" wire:confirm="ກູ້ຄືນລາຍການນີ້?" class="text-xs font-medium text-emerald-700 border border-emerald-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 transition inline-block">↩ ກູ້ຄືນ</button>
                                         @if ($r->deleted_reason)<div class="text-xs text-gray-400 mt-1 max-w-[12rem] truncate ml-auto" title="{{ $r->deleted_reason }}">{{ $r->deleted_reason }}</div>@endif
