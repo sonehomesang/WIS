@@ -20,7 +20,7 @@ use LdapRecord\Connection;
  * login (SSO) is a separate later phase.
  *
  * fetchUsers()/testConnection() bind to the DC and only work where the server can
- * reach it (the namtheun2 server). syncRows() is pure DB logic and is unit-tested
+ * reach it (the domain-joined server). syncRows() is pure DB logic and is unit-tested
  * locally with fabricated rows (no LDAP needed).
  */
 class LdapDirectory
@@ -122,6 +122,18 @@ class LdapDirectory
         }
 
         return array_values(array_unique($ids));
+    }
+
+    /**
+     * Email domain for a fabricated address (an AD row with no mail), derived from the
+     * configured base DN (DC=a,DC=b → a.b) so no site-specific domain is hard-coded in
+     * source. Falls back to a neutral placeholder when the base DN is unset.
+     */
+    private function emailDomain(): string
+    {
+        preg_match_all('/DC=([^,]+)/i', (string) ($this->settings()['base_dn'] ?? ''), $m);
+
+        return ! empty($m[1]) ? Str::lower(implode('.', $m[1])) : 'ad.local';
     }
 
     /**
@@ -281,7 +293,7 @@ class LdapDirectory
             }
             // email is required + unique in schema — fabricate a domain one if AD lacks it.
             if (! $email) {
-                $email = Str::lower(($username ?: 'user').'@namtheun2.com');
+                $email = Str::lower(($username ?: 'user').'@'.$this->emailDomain());
             }
 
             $user = ($guid ? User::withTrashed()->where('ad_guid', $guid)->first() : null)

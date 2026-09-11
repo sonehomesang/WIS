@@ -16,7 +16,7 @@ function adRow(array $o = []): array
     return array_merge([
         'guid' => (string) Str::uuid(),
         'username' => 'souksavanh',
-        'email' => 'souksavanh@namtheun2.com',
+        'email' => 'souksavanh@example.com',
         'display_name' => 'Souksavanh V.',
         'phone' => '+85620555000',
         'department' => 'Warehouse',
@@ -25,7 +25,7 @@ function adRow(array $o = []): array
 }
 
 test('syncRows pre-creates pending domain accounts from AD', function () {
-    $sum = app(LdapDirectory::class)->syncRows([adRow(['username' => 'bounmy', 'email' => 'BounMy@Namtheun2.com', 'guid' => 'g-1'])]);
+    $sum = app(LdapDirectory::class)->syncRows([adRow(['username' => 'bounmy', 'email' => 'BounMy@Example.com', 'guid' => 'g-1'])]);
 
     expect($sum)->toMatchArray(['created' => 1, 'updated' => 0, 'unchanged' => 0, 'skipped' => 0]);
 
@@ -35,7 +35,7 @@ test('syncRows pre-creates pending domain accounts from AD', function () {
         ->and($u->is_pre_created)->toBeTrue()
         ->and($u->status)->toBe('pending')
         ->and($u->ad_guid)->toBe('g-1')
-        ->and($u->email)->toBe('bounmy@namtheun2.com');   // lowercased
+        ->and($u->email)->toBe('bounmy@example.com');   // lowercased
 });
 
 test('syncRows is idempotent — re-run leaves accounts unchanged', function () {
@@ -58,7 +58,7 @@ test('syncRows updates when AD display name changes', function () {
 
 test('keep-separate (default) leaves a matching REAL account completely untouched', function () {
     $local = User::factory()->create([
-        'email' => 'khamsone@namtheun2.com',
+        'email' => 'khamsone@example.com',
         'username' => 'khamsone',
         'auth_provider' => 'password',
         'is_pre_created' => false,
@@ -67,14 +67,14 @@ test('keep-separate (default) leaves a matching REAL account completely untouche
 
     // default linkExisting = false
     $sum = app(LdapDirectory::class)->syncRows([
-        adRow(['guid' => 'g-4', 'username' => 'khamsone', 'email' => 'khamsone@namtheun2.com', 'display_name' => 'Khamsone P.']),
+        adRow(['guid' => 'g-4', 'username' => 'khamsone', 'email' => 'khamsone@example.com', 'display_name' => 'Khamsone P.']),
     ]);
 
     $local->refresh();
     expect($sum['created'])->toBe(0)
         ->and($sum['matched'])->toBe(1)                                   // reported for review
         ->and($sum['updated'])->toBe(0)
-        ->and(User::where('email', 'khamsone@namtheun2.com')->count())->toBe(1)   // no duplicate
+        ->and(User::where('email', 'khamsone@example.com')->count())->toBe(1)   // no duplicate
         ->and($local->ad_guid)->toBeNull()                               // untouched
         ->and($local->auth_provider)->toBe('password')
         ->and($local->is_pre_created)->toBeFalse();
@@ -82,7 +82,7 @@ test('keep-separate (default) leaves a matching REAL account completely untouche
 
 test('linkExisting=true backfills a matching real account without downgrading it', function () {
     $local = User::factory()->create([
-        'email' => 'khamsone@namtheun2.com',
+        'email' => 'khamsone@example.com',
         'username' => 'khamsone-old',
         'auth_provider' => 'password',
         'is_pre_created' => false,
@@ -90,13 +90,13 @@ test('linkExisting=true backfills a matching real account without downgrading it
     ]);
 
     $sum = app(LdapDirectory::class)->syncRows([
-        adRow(['guid' => 'g-4', 'username' => 'khamsone', 'email' => 'khamsone@namtheun2.com', 'display_name' => 'Khamsone P.']),
+        adRow(['guid' => 'g-4', 'username' => 'khamsone', 'email' => 'khamsone@example.com', 'display_name' => 'Khamsone P.']),
     ], null, linkExisting: true);
 
     $local->refresh();
     expect($sum['created'])->toBe(0)
         ->and($sum['updated'])->toBe(1)
-        ->and(User::where('email', 'khamsone@namtheun2.com')->count())->toBe(1)
+        ->and(User::where('email', 'khamsone@example.com')->count())->toBe(1)
         ->and($local->ad_guid)->toBe('g-4')
         ->and($local->auth_provider)->toBe('password');   // NOT downgraded
 });
@@ -109,16 +109,23 @@ test('syncRows skips rows with no identifier', function () {
     expect($sum['skipped'])->toBe(1)->and(User::count())->toBe(0);
 });
 
-test('syncRows fabricates a domain email when AD lacks mail', function () {
+test('syncRows fabricates a domain email (from base DN) when AD lacks mail', function () {
+    Setting::put('ldap', ['base_dn' => 'DC=example,DC=com'], null);   // domain derived from base DN
     app(LdapDirectory::class)->syncRows([adRow(['guid' => 'g-5', 'username' => 'noemail', 'email' => null])]);
 
-    expect(User::where('username', 'noemail')->first()->email)->toBe('noemail@namtheun2.com');
+    expect(User::where('username', 'noemail')->first()->email)->toBe('noemail@example.com');
+});
+
+test('fabricated email uses a neutral domain (no real domain hard-coded) when base DN is unset', function () {
+    app(LdapDirectory::class)->syncRows([adRow(['guid' => 'g-nd', 'username' => 'nobasedn', 'email' => null])]);
+
+    expect(User::where('username', 'nobasedn')->first()->email)->toBe('nobasedn@ad.local');
 });
 
 test('syncRows onlyGuids restricts import to the selected rows', function () {
     $sum = app(LdapDirectory::class)->syncRows([
-        adRow(['guid' => 'sel-A', 'username' => 'aaa', 'email' => 'aaa@namtheun2.com']),
-        adRow(['guid' => 'sel-B', 'username' => 'bbb', 'email' => 'bbb@namtheun2.com']),
+        adRow(['guid' => 'sel-A', 'username' => 'aaa', 'email' => 'aaa@example.com']),
+        adRow(['guid' => 'sel-B', 'username' => 'bbb', 'email' => 'bbb@example.com']),
     ], ['sel-A']);
 
     expect($sum['created'])->toBe(1)
@@ -129,8 +136,8 @@ test('syncRows onlyGuids restricts import to the selected rows', function () {
 test('rollback disables only imported accounts, never real users', function () {
     $real = User::factory()->create(['auth_provider' => 'password', 'is_pre_created' => false, 'status' => 'active']);
     app(LdapDirectory::class)->syncRows([
-        adRow(['guid' => 'imp-1', 'username' => 'imp1', 'email' => 'imp1@namtheun2.com']),
-        adRow(['guid' => 'imp-2', 'username' => 'imp2', 'email' => 'imp2@namtheun2.com']),
+        adRow(['guid' => 'imp-1', 'username' => 'imp1', 'email' => 'imp1@example.com']),
+        adRow(['guid' => 'imp-2', 'username' => 'imp2', 'email' => 'imp2@example.com']),
     ]);
 
     $svc = app(LdapDirectory::class);
@@ -154,7 +161,7 @@ test('kill switch never touches pre-created domain staff it did not import', fun
         'status' => 'active',
     ]);
 
-    app(LdapDirectory::class)->syncRows([adRow(['guid' => 'imp-x', 'username' => 'impx', 'email' => 'impx@namtheun2.com'])]);
+    app(LdapDirectory::class)->syncRows([adRow(['guid' => 'imp-x', 'username' => 'impx', 'email' => 'impx@example.com'])]);
 
     $svc = app(LdapDirectory::class);
     expect($svc->importedCount())->toBe(1);          // only what the importer created
@@ -167,7 +174,7 @@ test('kill switch never touches pre-created domain staff it did not import', fun
 
 test('rollback remove soft-deletes only imported accounts', function () {
     $real = User::factory()->create(['auth_provider' => 'password', 'is_pre_created' => false]);
-    app(LdapDirectory::class)->syncRows([adRow(['guid' => 'imp-9', 'username' => 'imp9', 'email' => 'imp9@namtheun2.com'])]);
+    app(LdapDirectory::class)->syncRows([adRow(['guid' => 'imp-9', 'username' => 'imp9', 'email' => 'imp9@example.com'])]);
 
     $n = app(LdapDirectory::class)->rollbackImported(delete: true);
 
@@ -181,7 +188,7 @@ test('long AD values are trimmed to fit their columns', function () {
     app(LdapDirectory::class)->syncRows([adRow([
         'guid' => 'g-fit',
         'username' => 'fituser',
-        'email' => 'fituser@namtheun2.com',
+        'email' => 'fituser@example.com',
         'display_name' => str_repeat('ກ', 400),
         'phone' => '020-55-613-855, 020-2223 5601 Ext 110',   // AD can hold several
     ])]);
@@ -204,7 +211,7 @@ test('binary objectGUID containing a dash byte is converted, not stored raw', fu
 });
 
 test('searchBase falls back to the base DN when the users OU is blank', function () {
-    $base = 'DC=namtheun2,DC=com';
+    $base = 'DC=example,DC=com';
 
     // blank string must fall back — searching a non-existent OU silently returns 0 users
     Setting::put('ldap', ['base_dn' => $base, 'user_ou' => ''], null);
@@ -221,7 +228,7 @@ test('searchBase falls back to the base DN when the users OU is blank', function
 test('config builds a valid LdapRecord connection (LDAPS, no unknown options)', function () {
     Setting::put('ldap', [
         'enabled' => true, 'host' => 'dc01.example.com', 'port' => 636,
-        'encryption' => 'ssl', 'base_dn' => 'DC=namtheun2,DC=com',
+        'encryption' => 'ssl', 'base_dn' => 'DC=example,DC=com',
         'bind_username' => 'svc-ldap@example.com',
         'password' => Crypt::encryptString('secret'),
     ], null);
@@ -253,7 +260,7 @@ test('SECURITY — saving never stores the bind account or password (not kept at
     Livewire::test(Ldap::class)
         ->set('enabled', true)
         ->set('host', 'dc01.example.com')
-        ->set('base_dn', 'DC=namtheun2,DC=com')
+        ->set('base_dn', 'DC=example,DC=com')
         ->set('bind_username', 'svc-wh@example.com')
         ->set('password', 'dummy-pass')
         ->call('save')
@@ -289,7 +296,7 @@ test('SECURITY — preview/test require the bind account typed in (no stored fal
     Livewire::test(Ldap::class)
         ->set('enabled', true)
         ->set('host', 'dc01.example.com')
-        ->set('base_dn', 'DC=namtheun2,DC=com')
+        ->set('base_dn', 'DC=example,DC=com')
         ->call('preview')                       // no bind_username / password set
         ->assertHasErrors(['bind_username', 'password']);
 });
@@ -309,11 +316,11 @@ test('config uses the per-operation bind account, not a stored one', function ()
 });
 
 test('login bind identities derive from the user + base_dn (no stored bind account needed)', function () {
-    Setting::put('ldap', ['base_dn' => 'DC=namtheun2,DC=com'], null);   // config only, no creds
-    $u = User::factory()->make(['email' => 'somchai@namtheun2.com', 'username' => 'somchai']);
+    Setting::put('ldap', ['base_dn' => 'DC=example,DC=com'], null);   // config only, no creds
+    $u = User::factory()->make(['email' => 'somchai@example.com', 'username' => 'somchai']);
 
     $ids = app(LdapDirectory::class)->bindIdentities($u);
-    expect($ids)->toContain('somchai@namtheun2.com')          // UPN/mail
-        ->and($ids)->toContain('somchai@namtheun2.com')
+    expect($ids)->toContain('somchai@example.com')          // UPN/mail
+        ->and($ids)->toContain('somchai@example.com')
         ->and($ids)->toContain('somchai');                     // bare sam
 });

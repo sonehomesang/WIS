@@ -43,11 +43,11 @@ function fakeLdap(bool $enabled = true): FakeLdap
 test('a domain user signs in with the correct AD password', function () {
     $fake = fakeLdap();
     $user = User::factory()->create([
-        'email' => 'souksavanh@namtheun2.com',
+        'email' => 'souksavanh@example.com',
         'auth_provider' => 'domain',
         'status' => 'active',
     ]);
-    $fake->valid = ['souksavanh@namtheun2.com' => 'Ad-P@ss-123'];
+    $fake->valid = ['souksavanh@example.com' => 'Ad-P@ss-123'];
 
     Volt::test('pages.auth.login')
         ->set('form.email', $user->email)
@@ -62,11 +62,11 @@ test('a domain user signs in with the correct AD password', function () {
 test('a domain user is rejected with the wrong AD password', function () {
     $fake = fakeLdap();
     $user = User::factory()->create([
-        'email' => 'souksavanh@namtheun2.com',
+        'email' => 'souksavanh@example.com',
         'auth_provider' => 'domain',
         'status' => 'active',
     ]);
-    $fake->valid = ['souksavanh@namtheun2.com' => 'Ad-P@ss-123'];
+    $fake->valid = ['souksavanh@example.com' => 'Ad-P@ss-123'];
 
     Volt::test('pages.auth.login')
         ->set('form.email', $user->email)
@@ -80,12 +80,12 @@ test('a domain user is rejected with the wrong AD password', function () {
 test('first successful AD sign-in activates a pending imported account', function () {
     $fake = fakeLdap();
     $user = User::factory()->create([
-        'email' => 'newstaff@namtheun2.com',
+        'email' => 'newstaff@example.com',
         'auth_provider' => 'domain',
         'status' => 'pending',
         'email_verified_at' => null,
     ]);
-    $fake->valid = ['newstaff@namtheun2.com' => 'Welcome@2026'];
+    $fake->valid = ['newstaff@example.com' => 'Welcome@2026'];
 
     Volt::test('pages.auth.login')
         ->set('form.email', $user->email)
@@ -103,11 +103,11 @@ test('first successful AD sign-in activates a pending imported account', functio
 test('a locked domain user cannot enter even with the right AD password', function () {
     $fake = fakeLdap();
     $user = User::factory()->create([
-        'email' => 'locked@namtheun2.com',
+        'email' => 'locked@example.com',
         'auth_provider' => 'domain',
         'status' => 'locked',
     ]);
-    $fake->valid = ['locked@namtheun2.com' => 'Ad-P@ss-123'];
+    $fake->valid = ['locked@example.com' => 'Ad-P@ss-123'];
 
     Volt::test('pages.auth.login')
         ->set('form.email', $user->email)
@@ -121,7 +121,7 @@ test('a locked domain user cannot enter even with the right AD password', functi
 test('the break-glass password account still signs in locally while AD login is on', function () {
     fakeLdap();   // AD login enabled, but this account is a local one
     $user = User::factory()->create([
-        'email' => 'admin@namtheun2.com',
+        'email' => 'admin@example.com',
         'auth_provider' => 'password',
         'status' => 'active',
         'password' => bcrypt('wh-local-pass'),
@@ -140,12 +140,12 @@ test('the break-glass password account still signs in locally while AD login is 
 test('with AD login off, the AD password is never accepted for a domain user', function () {
     $fake = fakeLdap(enabled: false);
     $user = User::factory()->create([
-        'email' => 'souksavanh@namtheun2.com',
+        'email' => 'souksavanh@example.com',
         'auth_provider' => 'domain',
         'status' => 'active',
         'password' => bcrypt('unused-random'),
     ]);
-    $fake->valid = ['souksavanh@namtheun2.com' => 'Ad-P@ss-123'];
+    $fake->valid = ['souksavanh@example.com' => 'Ad-P@ss-123'];
 
     Volt::test('pages.auth.login')
         ->set('form.email', $user->email)
@@ -157,6 +157,6 @@ test('with AD login off, the AD password is never accepted for a domain user', f
 });
 
 test('attemptBind rejects an empty password without contacting a server', function () {
-    expect((new LdapDirectory)->attemptBind('someone@namtheun2.com', ''))->toBeFalse()
+    expect((new LdapDirectory)->attemptBind('someone@example.com', ''))->toBeFalse()
         ->and((new LdapDirectory)->attemptBind('', 'whatever'))->toBeFalse();
 });
