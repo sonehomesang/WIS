@@ -197,8 +197,16 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 
-// Skip nodes flagged data-noexport (toolbars, ⚙ menus) when capturing.
-const exportFilter = (node) => !(node?.dataset && 'noexport' in node.dataset);
+// html2canvas / image failures often surface as an Event (which prints as "[object Event]");
+// pull out something human-readable for the error alert.
+function errText(e) {
+    if (!e) return 'ບໍ່ ຮູ້ ສາເຫດ';
+    if (e.message) return e.message;
+    if (typeof Event !== 'undefined' && e instanceof Event) {
+        return (e.type || 'error') + (e.target && e.target.src ? ' @ ' + e.target.src : '');
+    }
+    return String(e);
+}
 
 // Reject if `promise` does not settle within `ms` — keeps a stalled capture from leaving
 // the button spinning forever with no feedback (the caller's catch shows the error alert).
@@ -231,7 +239,27 @@ async function waitForImages(el, perImageMs = 8000) {
         })));
 }
 
-// Export a DOM element to a downloaded .JPG (inspection sheet, borrow record…).
+// Capture a DOM element to a <canvas> with html2canvas. We use html2canvas (not the SVG
+// <foreignObject> approach) because it renders reliably across our pages AND works in a
+// background/hidden tab, where foreignObject-image capture silently fails with an error Event.
+// data-noexport nodes (toolbars, ⚙ menus) are dropped so the export image never shows the
+// export controls themselves.
+async function captureCanvas(el, label) {
+    const { default: html2canvas } = await import('html2canvas');
+    return withTimeout(
+        html2canvas(el, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            logging: false,
+            ignoreElements: (node) => node?.dataset && 'noexport' in node.dataset,
+        }),
+        30000,
+        label || 'ດຶງ ຮູບ',
+    );
+}
+
+// Export a DOM element to a downloaded .JPG (dashboard, inspection sheet, borrow record…).
 window.exportJpg = async (elementId, filename) => {
     const el = document.getElementById(elementId);
     if (!el) {
@@ -239,24 +267,21 @@ window.exportJpg = async (elementId, filename) => {
     }
     try {
         await withTimeout(waitForImages(el), 12000, 'ໂຫຼດ ຮູບ');
-        const { toJpeg } = await import('html-to-image');
-        // skipFonts: ບໍ່ ຝັງ ຟອນ ພາຍນອກ (fonts.bunny.net) — ຫຼີກ SecurityError ຕອນ ອ່ານ CSS cross-origin.
-        const dataUrl = await withTimeout(
-            toJpeg(el, { quality: 0.95, backgroundColor: '#ffffff', pixelRatio: 2, skipFonts: true, filter: exportFilter }),
-            25000,
-            'ດຶງ JPG',
-        );
+        const canvas = await captureCanvas(el, 'ດຶງ JPG');
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
         const a = document.createElement('a');
         a.href = dataUrl;
         a.download = filename || 'export.jpg';
         a.click();
     } catch (e) {
         console.error('JPG export failed', e);
-        alert('ດຶງ JPG ບໍ່ ສຳເລັດ — ' + (e && e.message ? e.message : e));
+        alert('ດຶງ JPG ບໍ່ ສຳເລັດ — ' + errText(e));
     }
 };
 
-// Export a DOM element to a single-page PDF (image fitted to A4 portrait).
+// Export a DOM element to an A4-portrait PDF. A tall capture (e.g. the dashboard) is sliced
+// across multiple A4 pages so nothing gets squashed into one unreadable sliver; short content
+// (a borrow record) stays a single page.
 window.exportPdf = async (elementId, filename) => {
     const el = document.getElementById(elementId);
     if (!el) {
@@ -264,27 +289,33 @@ window.exportPdf = async (elementId, filename) => {
     }
     try {
         await withTimeout(waitForImages(el), 12000, 'ໂຫຼດ ຮູບ');
-        const [{ toPng }, { jsPDF }] = await Promise.all([import('html-to-image'), import('jspdf')]);
-        const dataUrl = await withTimeout(
-            toPng(el, { backgroundColor: '#ffffff', pixelRatio: 2, skipFonts: true, filter: exportFilter }),
-            25000,
-            'ດຶງ PDF',
-        );
-        const img = new Image();
-        img.onload = () => {
-            const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-            const pw = pdf.internal.pageSize.getWidth();
-            const ph = pdf.internal.pageSize.getHeight();
-            const m = 24;
-            const scale = Math.min((pw - m * 2) / img.width, (ph - m * 2) / img.height);
-            const w = img.width * scale;
-            const h = img.height * scale;
-            pdf.addImage(dataUrl, 'PNG', (pw - w) / 2, m, w, h);
-            pdf.save(filename || 'export.pdf');
-        };
-        img.src = dataUrl;
+        const [canvas, { jsPDF }] = await Promise.all([captureCanvas(el, 'ດຶງ PDF'), import('jspdf')]);
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+        const m = 24;                                       // page margin (pt)
+        const cw = pdf.internal.pageSize.getWidth() - m * 2;  // content width on the page
+        const pageContentH = pdf.internal.pageSize.getHeight() - m * 2;
+        const sliceH = Math.max(1, Math.floor((pageContentH / cw) * canvas.width)); // source px per page
+        const slice = document.createElement('canvas');
+        slice.width = canvas.width;
+        const ctx = slice.getContext('2d');
+        let y = 0;
+        let first = true;
+        while (y < canvas.height) {
+            const h = Math.min(sliceH, canvas.height - y);
+            slice.height = h;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, slice.width, h);
+            ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+            if (!first) {
+                pdf.addPage();
+            }
+            pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', m, m, cw, (h * cw) / canvas.width);
+            first = false;
+            y += h;
+        }
+        pdf.save(filename || 'export.pdf');
     } catch (e) {
         console.error('PDF export failed', e);
-        alert('ດຶງ PDF ບໍ່ ສຳເລັດ — ' + (e && e.message ? e.message : e));
+        alert('ດຶງ PDF ບໍ່ ສຳເລັດ — ' + errText(e));
     }
 };
