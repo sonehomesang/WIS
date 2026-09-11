@@ -46,10 +46,10 @@
                     ];
                 @endphp
                 @foreach ($kpiTiles as $t)
-                    <div class="bg-white px-4 py-3">
-                        <p class="text-[11px] text-gray-400 truncate">{{ $t['label'] }}</p>
-                        <p class="text-2xl font-bold tabular-nums leading-tight {{ $t['tone'] }}">{{ number_format($t['value']) }}</p>
-                        <p class="text-[11px] text-gray-500 truncate">{{ $t['hint'] }}</p>
+                    <div class="bg-white px-4 py-4">
+                        <p class="text-sm text-gray-500 truncate">{{ $t['label'] }}</p>
+                        <p class="text-3xl font-bold tabular-nums leading-tight mt-1 {{ $t['tone'] }}">{{ number_format($t['value']) }}</p>
+                        <p class="text-xs text-gray-500 truncate mt-0.5">{{ $t['hint'] }}</p>
                     </div>
                 @endforeach
             </div>
