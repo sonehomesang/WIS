@@ -58,16 +58,16 @@
         {{-- frozen header group: toolbar + chips freeze together --}}
         <div class="sticky top-16 z-30 bg-gray-100">
         {{-- toolbar --}}
-        <div class="flex flex-col gap-2 py-3 sm:py-0 sm:h-[52px] sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-            <div class="flex flex-wrap items-center gap-2">
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ Material No./ຊື່/description…" class="w-full sm:w-96 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
-                <select wire:model.live="prefixFilter" class="rounded-md border-gray-300 text-sm" title="ໝວດຕາມ Material No.">
+        <div class="flex flex-col gap-2 py-3 sm:py-0 sm:min-h-[52px] sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:flex-1 sm:min-w-0">
+                <input type="text" wire:model.live.debounce.300ms="search" placeholder="ຄົ້ນຫາ Material No./ຊື່/description…" class="w-full sm:flex-1 sm:min-w-[12rem] sm:max-w-md rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm" />
+                <select wire:model.live="prefixFilter" class="shrink-0 rounded-md border-gray-300 text-sm" title="ໝວດຕາມ Material No.">
                     <option value="">ທຸກໝວດ (Material No.)</option>
                     @foreach ($prefixCounts as $pc)
                         <option value="{{ $pc->prefix }}">{{ $pc->prefix }}xxxxxx ({{ number_format($pc->total) }})</option>
                     @endforeach
                 </select>
-                <select wire:model.live="statusFilter" class="rounded-md border-gray-300 text-sm">
+                <select wire:model.live="statusFilter" class="shrink-0 rounded-md border-gray-300 text-sm">
                     <option value="">ທຸກ status</option>
                     <option value="available">available</option>
                     <option value="borrowed">borrowed</option>
@@ -75,8 +75,8 @@
                     <option value="low-stock">low-stock</option>
                 </select>
             </div>
-            <div class="flex items-center gap-2">
-                <select wire:model.live="perPage" class="rounded-md border-gray-300 text-sm min-h-[40px]" title="ຈຳນວນ ແຖວ ຕໍ່ ໜ້າ">
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <select wire:model.live="perPage" class="shrink-0 rounded-md border-gray-300 text-sm min-h-[40px]" title="ຈຳນວນ ແຖວ ຕໍ່ ໜ້າ">
                     @foreach ([8, 10, 25, 50, 100] as $n)<option value="{{ $n }}">{{ $n }} ແຖວ</option>@endforeach
                 </select>
                 <div class="relative hidden md:block" x-on:click.outside="colsOpen = false">
